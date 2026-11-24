@@ -2,6 +2,8 @@
 
 package com.metrolist.shared.ui.components
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,8 +28,11 @@ import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -35,7 +40,11 @@ import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.add_to_favorites
 import com.metrolist.shared.generated.resources.remove_from_favorites
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.mochy.pressBounce
+import com.metrolist.shared.ui.theme.mochyInterFontFamily
+import com.metrolist.shared.ui.theme.rememberReducedMotion
 import com.metrolist.shared.ui.tv.tvFocusHighlight
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -49,6 +58,7 @@ fun PlaylistHeaderActions(
     onFavorite: (() -> Unit)?,
     buttonHeight: Dp,
 ) {
+    val reducedMotion = rememberReducedMotion()
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -60,10 +70,17 @@ fun PlaylistHeaderActions(
             Spacer(Modifier.weight(1f))
         }
         if (onFavorite != null) {
+            val favoriteInteraction = remember { MutableInteractionSource() }
             ToggleButton(
                 checked = isFavorite,
                 onCheckedChange = { onFavorite() },
-                modifier = Modifier.height(buttonHeight).width(48.dp).tvFocusHighlight(CircleShape),
+                interactionSource = favoriteInteraction,
+                modifier =
+                    Modifier
+                        .height(buttonHeight)
+                        .width(48.dp)
+                        .pressBounce(favoriteInteraction, if (reducedMotion) 1f else 0.88f)
+                        .tvFocusHighlight(CircleShape),
                 shapes = ToggleButtonDefaults.shapesFor(buttonHeight).withStaticCorners(),
                 contentPadding = PaddingValues(0.dp),
             ) {
@@ -89,6 +106,10 @@ internal fun HeaderPlaybackButtons(
     tonalShuffle: Boolean = false,
     enabled: Boolean = true,
 ) {
+    val reducedMotion = rememberReducedMotion()
+    val scope = rememberCoroutineScope()
+    val shuffleSpin = remember { Animatable(0f) }
+    val shuffleIndex = if (playFirst) 1 else 0
     val labels = if (playFirst) listOf(playLabel, shuffleLabel) else listOf(shuffleLabel, playLabel)
     val icons =
         if (playFirst) {
@@ -99,7 +120,18 @@ internal fun HeaderPlaybackButtons(
         } else {
             listOf(MetrolistIcons.Rounded.Shuffle, MetrolistIcons.Default.PlayArrow)
         }
-    val callbacks = if (playFirst) listOf(onPlayAll, onShuffle) else listOf(onShuffle, onPlayAll)
+    val onShuffleTapped = {
+        if (!reducedMotion) {
+            scope.launch {
+                shuffleSpin.animateTo(
+                    shuffleSpin.targetValue + 180f,
+                    spring(dampingRatio = 0.55f, stiffness = 360f),
+                )
+            }
+        }
+        onShuffle()
+    }
+    val callbacks = if (playFirst) listOf(onPlayAll, onShuffleTapped) else listOf(onShuffleTapped, onPlayAll)
     ButtonGroup(
         overflowIndicator = { ButtonGroupDefaults.OverflowIndicator(it) },
         modifier = modifier,
@@ -122,14 +154,32 @@ internal fun HeaderPlaybackButtons(
                             .weight(1f)
                             .animateWidth(interactionSource, 12.dp)
                             .height(buttonHeight)
+                            .pressBounce(interactionSource, if (reducedMotion) 1f else 0.94f)
                             .tvFocusHighlight(shapes.shape)
                     val buttonShapes = ButtonDefaults.shapes(shape = shapes.shape, pressedShape = shapes.pressedShape)
                     val content: @Composable RowScope.() -> Unit = {
-                        Icon(icons[index], null, Modifier.size(20.dp))
+                        Icon(
+                            icons[index],
+                            null,
+                            Modifier.size(20.dp).then(
+                                if (index == shuffleIndex) {
+                                    Modifier.graphicsLayer { rotationZ = shuffleSpin.value }
+                                } else {
+                                    Modifier
+                                },
+                            ),
+                        )
                         Spacer(Modifier.width(8.dp))
-                        Text(label, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+                        Text(
+                            label,
+                            fontFamily = mochyInterFontFamily(),
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis,
+                        )
                     }
-                    if (tonalShuffle && index == if (playFirst) 1 else 0) {
+                    if (tonalShuffle && index == shuffleIndex) {
                         FilledTonalButton(
                             onClick = callbacks[index],
                             enabled = enabled,

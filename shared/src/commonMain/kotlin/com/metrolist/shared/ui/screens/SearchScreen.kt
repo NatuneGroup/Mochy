@@ -7,9 +7,11 @@
 
 package com.metrolist.shared.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -82,6 +84,9 @@ import com.metrolist.shared.model.SongItem
 import com.metrolist.shared.model.YTItem
 import com.metrolist.shared.ui.LocalIsTv
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.mochy.pressBounce
+import com.metrolist.shared.ui.theme.mochyInterFontFamily
+import com.metrolist.shared.ui.theme.rememberReducedMotion
 import com.metrolist.shared.ui.tv.tvFocusHighlight
 import com.metrolist.shared.viewmodels.SearchViewModel
 import org.jetbrains.compose.resources.stringResource
@@ -270,6 +275,8 @@ fun SearchBar(
         contentAlignment = Alignment.Center,
     ) {
         val isWide = maxWidth > 480.dp
+        val reducedMotion = rememberReducedMotion()
+        val barBorder = BorderStroke(0.75.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
 
         if (!isWide && !isTv) {
             val searchBarColors =
@@ -287,10 +294,26 @@ fun SearchBar(
                             Modifier
                                 .fillMaxWidth()
                                 .focusRequester(focusRequester),
-                        placeholder = { Text(text = placeholder, maxLines = 1, overflow = TextOverflow.Clip) },
+                        placeholder = {
+                            Text(
+                                text = placeholder,
+                                fontFamily = mochyInterFontFamily(),
+                                maxLines = 1,
+                                overflow = TextOverflow.Clip,
+                            )
+                        },
                         leadingIcon = {
                             if (isQuerySubmitted) {
-                                IconButton(onClick = onBack, modifier = Modifier.size(48.dp), shapes = IconButtonDefaults.shapes()) {
+                                val backInteraction = remember { MutableInteractionSource() }
+                                IconButton(
+                                    onClick = onBack,
+                                    interactionSource = backInteraction,
+                                    modifier =
+                                        Modifier
+                                            .size(48.dp)
+                                            .pressBounce(backInteraction, if (reducedMotion) 1f else 0.88f),
+                                    shapes = IconButtonDefaults.shapes(),
+                                ) {
                                     Icon(
                                         imageVector = MetrolistIcons.AutoMirrored.Filled.ArrowBack,
                                         contentDescription = backLabel,
@@ -307,13 +330,27 @@ fun SearchBar(
                         },
                         trailingIcon = {
                             if (query.isNotEmpty()) {
-                                IconButton(onClick = onClear, modifier = Modifier.size(48.dp), shapes = IconButtonDefaults.shapes()) {
+                                val clearInteraction = remember { MutableInteractionSource() }
+                                IconButton(
+                                    onClick = onClear,
+                                    interactionSource = clearInteraction,
+                                    modifier =
+                                        Modifier
+                                            .size(48.dp)
+                                            .pressBounce(clearInteraction, if (reducedMotion) 1f else 0.88f),
+                                    shapes = IconButtonDefaults.shapes(),
+                                ) {
                                     Icon(imageVector = MetrolistIcons.Default.Clear, contentDescription = clearLabel)
                                 }
                             } else if (onMicrophoneClick != null) {
+                                val micInteraction = remember { MutableInteractionSource() }
                                 IconButton(
                                     onClick = onMicrophoneClick,
-                                    modifier = Modifier.size(48.dp),
+                                    interactionSource = micInteraction,
+                                    modifier =
+                                        Modifier
+                                            .size(48.dp)
+                                            .pressBounce(micInteraction, if (reducedMotion) 1f else 0.88f),
                                     shapes = IconButtonDefaults.shapes(),
                                 ) {
                                     Icon(
@@ -329,6 +366,7 @@ fun SearchBar(
                 },
                 modifier = Modifier.fillMaxWidth(),
                 color = searchBarColors.containerColor,
+                border = barBorder,
                 tonalElevation = 0.dp,
                 shadowElevation = 0.dp,
             )
@@ -342,7 +380,8 @@ fun SearchBar(
                     Modifier
                         .fillMaxWidth()
                         .height(barHeight)
-                        .background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape),
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape)
+                        .border(barBorder, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Row(

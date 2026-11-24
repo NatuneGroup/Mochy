@@ -14,6 +14,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -90,6 +91,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
@@ -142,6 +144,7 @@ import com.metrolist.shared.ui.components.squareArtworkSlot
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.icons.SongStatusIcons
 import com.metrolist.shared.ui.menu.onSecondaryClick
+import com.metrolist.shared.ui.mochy.pressBounce
 import com.metrolist.shared.ui.navigation.acceptsInput
 import com.metrolist.shared.ui.navigation.blockInput
 import com.metrolist.shared.ui.navigation.navigationPopupSource
@@ -149,6 +152,8 @@ import com.metrolist.shared.ui.navigation.rememberNavigationMotion
 import com.metrolist.shared.ui.theme.ComponentShapes
 import com.metrolist.shared.ui.theme.gridCellInset
 import com.metrolist.shared.ui.theme.gridCellShape
+import com.metrolist.shared.ui.theme.mochyInterFontFamily
+import com.metrolist.shared.ui.theme.rememberReducedMotion
 import com.metrolist.shared.ui.theme.uiEnhanced
 import com.metrolist.shared.ui.tv.RequestTvFocus
 import com.metrolist.shared.ui.tv.tvFocusHighlight
@@ -561,31 +566,41 @@ private fun RecentSectionTitle(
     text: SearchContentText,
     clearing: Boolean = false,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineMediumEmphasized,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.weight(1f),
-        )
-        if (clearing) {
-            ContainedLoadingIndicator(
-                modifier = Modifier.size(48.dp),
-                label = stringResource(Res.string.clearing_search_history),
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineMediumEmphasized,
+                fontFamily = mochyInterFontFamily(),
+                fontWeight = FontWeight.Bold,
+                letterSpacing = (-0.03).em,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.weight(1f),
             )
-        } else {
-            IconButton(onClick = onClearClick, shapes = IconButtonDefaults.shapes()) {
-                Icon(
-                    imageVector = MetrolistIcons.Default.Close,
-                    contentDescription = text.clearSection(title),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            if (clearing) {
+                ContainedLoadingIndicator(
+                    modifier = Modifier.size(48.dp),
+                    label = stringResource(Res.string.clearing_search_history),
                 )
+            } else {
+                IconButton(onClick = onClearClick, shapes = IconButtonDefaults.shapes()) {
+                    Icon(
+                        imageVector = MetrolistIcons.Default.Close,
+                        contentDescription = text.clearSection(title),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
+        HorizontalDivider(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            thickness = 1.dp,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+        )
     }
 }
 
@@ -782,11 +797,17 @@ private fun SearchSuggestionRow(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
+    val reducedMotion = rememberReducedMotion()
 
     Surface(
         shape = shape,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+        border = BorderStroke(0.75.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp)
+                .pressBounce(interactionSource, if (reducedMotion) 1f else 0.985f),
     ) {
         Row(
             modifier =
@@ -867,6 +888,7 @@ private fun SearchRecommendationRow(
     Surface(
         shape = shape,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(0.75.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)),
         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
     ) {
         Row(
@@ -1221,8 +1243,9 @@ private fun TopResultCard(
             Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceBright,
+        border = BorderStroke(0.75.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)),
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             if (mainItem.thumbnail != null) {
@@ -2104,22 +2127,34 @@ private fun SectionHeader(
     modifier: Modifier = Modifier,
     isWide: Boolean = false,
 ) {
-    val titleStyle = MaterialTheme.typography.headlineMediumEmphasized
+    val titleStyle =
+        MaterialTheme.typography.headlineMediumEmphasized.copy(
+            fontFamily = mochyInterFontFamily(),
+            fontWeight = FontWeight.Bold,
+            letterSpacing = (-0.03).em,
+        )
     val rowHeight = 64.dp
 
-    Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .heightIn(min = rowHeight)
-                .padding(start = 16.dp, end = 16.dp, top = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = title,
-            style = titleStyle,
-            color = MaterialTheme.colorScheme.primary,
-            maxLines = 1,
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = rowHeight)
+                    .padding(start = 16.dp, end = 16.dp, top = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = title,
+                style = titleStyle,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+            )
+        }
+        HorizontalDivider(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            thickness = 1.dp,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
         )
     }
 }

@@ -5814,4 +5814,6 @@
     <string name="mochy_module_diagnostics">Diagnostics</string>
     <!-- Translators: Status label for a module that still needs credentials or configuration before use. -->
     <string name="mochy_module_not_configured">Not configured</string>
+    <!-- Translators: Accessibility label for the vertical A to Z quick-jump scrubber in the Library screen. -->
+    <string name="mochy_library_index_scrubber">Alphabetical index</string>
 </resources>

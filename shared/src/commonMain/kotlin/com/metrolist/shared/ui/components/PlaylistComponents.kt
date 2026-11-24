@@ -10,6 +10,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -42,15 +43,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.edit_playlist
 import com.metrolist.shared.model.PlaylistItem
 import com.metrolist.shared.ui.components.images.AsyncImage
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.playback.retainPlaybackKeyFocus
+import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import com.metrolist.shared.utils.highResolutionArtworkUrl
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -78,19 +82,27 @@ fun PlaylistHeader(
         modifier = modifier,
         mediumArtworkSize = mediumArtworkSize,
         artwork = { artworkModifier, cornerRadius ->
+            val shape = RoundedCornerShape(cornerRadius)
             PlaylistHeaderArtwork(
                 playlist = playlist,
                 cover = cover ?: playlist?.let(::libraryCover),
                 previewThumbnail = previewThumbnail,
                 fallbackIcon = fallbackIcon,
-                modifier = artworkModifier.clip(RoundedCornerShape(cornerRadius)),
+                modifier =
+                    artworkModifier
+                        .clip(shape)
+                        .border(0.75.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f), shape),
             )
         },
         actions = actions,
     ) {
         PlaylistTitleAndDescription(
             playlist,
-            MaterialTheme.typography.headlineMediumEmphasized,
+            MaterialTheme.typography.headlineMediumEmphasized.copy(
+                fontFamily = mochyInterFontFamily(),
+                fontWeight = FontWeight.Bold,
+                letterSpacing = (-0.03).em,
+            ),
             onEdit,
             songCountLabel,
             onAuthorClick,

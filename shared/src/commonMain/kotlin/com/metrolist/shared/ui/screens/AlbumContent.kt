@@ -2,9 +2,6 @@
 
 package com.metrolist.shared.ui.screens
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -41,9 +38,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.album_order_original
 import com.metrolist.shared.generated.resources.search_no_results
@@ -68,7 +66,10 @@ import com.metrolist.shared.ui.components.SongListItem
 import com.metrolist.shared.ui.components.mediumCollectionArtworkSize
 import com.metrolist.shared.ui.components.rememberItemPlayback
 import com.metrolist.shared.ui.menu.onSecondaryClick
+import com.metrolist.shared.ui.mochy.MochyCollapsingTopBar
+import com.metrolist.shared.ui.mochy.MochyDetailCoverBackdrop
 import com.metrolist.shared.ui.navigation.NavigationBackHandler
+import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import com.metrolist.shared.ui.utils.DragScrollableColumn
 import com.metrolist.shared.ui.utils.carouselScroll
 import com.metrolist.shared.ui.utils.verticalScrollWithDrag
@@ -192,23 +193,17 @@ fun AlbumContent(
             if (isSearchOpen) toggleSearch else onBackClick,
             onMoreOptions,
             title = {
-                BoxWithConstraints(Modifier.fillMaxWidth()) {
-                    AnimatedVisibility(
+                BoxWithConstraints(Modifier.fillMaxSize()) {
+                    MochyCollapsingTopBar(
                         visible = maxWidth < 960.dp && showCollapsedTitle && !isSearchOpen && !selectionActive,
-                        enter = fadeIn(MaterialTheme.motionScheme.fastEffectsSpec()),
-                        exit = fadeOut(MaterialTheme.motionScheme.fastEffectsSpec()),
-                    ) {
-                        Text(
-                            text = album.title,
-                            modifier = Modifier.padding(start = 64.dp, end = if (onMoreOptions != null) 64.dp else 16.dp),
-                            style = MaterialTheme.typography.titleLarge,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
+                        title = album.title,
+                        thumbnailUrl = album.thumbnail,
+                        hasMoreOptions = onMoreOptions != null,
+                    )
                 }
             },
             selectionControls = selectionControls.takeIf { selectionActive },
+            artworkBackdrop = { MochyDetailCoverBackdrop(album.thumbnail) },
         ) {
             BoxWithConstraints(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
                 val isWide = maxWidth >= 960.dp
@@ -388,6 +383,9 @@ fun AlbumContent(
                                                 Text(
                                                     text = text.otherVersions,
                                                     style = MaterialTheme.typography.titleLargeEmphasized,
+                                                    fontFamily = mochyInterFontFamily(),
+                                                    fontWeight = FontWeight.Bold,
+                                                    letterSpacing = (-0.02).em,
                                                     modifier = Modifier.padding(16.dp),
                                                 )
                                             }
@@ -554,6 +552,9 @@ fun AlbumContent(
                                         Text(
                                             text = text.otherVersions,
                                             style = MaterialTheme.typography.titleLargeEmphasized,
+                                            fontFamily = mochyInterFontFamily(),
+                                            fontWeight = FontWeight.Bold,
+                                            letterSpacing = (-0.02).em,
                                             modifier = Modifier.padding(16.dp),
                                         )
                                     }

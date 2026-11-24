@@ -4,7 +4,10 @@ package com.metrolist.shared.ui.screens
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -111,6 +114,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.metrolist.shared.constants.CarouselItemCornerRadius
 import com.metrolist.shared.constants.CarouselItemSize
@@ -183,10 +187,14 @@ import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.icons.SongStatusIcons
 import com.metrolist.shared.ui.menu.artworkMenuActions
 import com.metrolist.shared.ui.menu.onSecondaryClick
+import com.metrolist.shared.ui.mochy.MochyDetailCoverBackdrop
+import com.metrolist.shared.ui.mochy.pressBounce
 import com.metrolist.shared.ui.navigation.AlbumArtworkSource
 import com.metrolist.shared.ui.navigation.LocalNavSharedTransitionScope
 import com.metrolist.shared.ui.navigation.navigationPageSource
 import com.metrolist.shared.ui.navigation.navigationPopupSource
+import com.metrolist.shared.ui.theme.mochyInterFontFamily
+import com.metrolist.shared.ui.theme.rememberReducedMotion
 import com.metrolist.shared.ui.theme.uiEnhanced
 import com.metrolist.shared.ui.utils.DragScrollableColumn
 import com.metrolist.shared.ui.utils.carouselScroll
@@ -860,25 +868,32 @@ private fun ArtistHeader(
     ) {
         // Leaves the pinned picture behind the list visible until the content scrolls over it.
         Spacer(Modifier.fillMaxWidth().height(imageHeight))
-        Column(Modifier.widthIn(max = 1400.dp).fillMaxWidth()) {
-            ArtistHeaderDetails(
-                artist = artist,
-                isPlaceholder = isPlaceholder,
-                isWide = isWide,
-                isMedium = isMedium,
-                actionSize = actionSize,
-                isSubscribed = isSubscribed,
-                subscribeSuccessCount = subscribeSuccessCount,
-                showSubscribe = showSubscribe,
-                onPlayAllClick = onPlayAllClick,
-                onShuffleClick = onShuffleClick,
-                onMixClick = onMixClick,
-                onSubscribeClick = onSubscribeClick,
-                onUnblockClick = onUnblockClick,
-                onMenuClick = onMenuClick.takeUnless { actionSize == ArtistActionSize.Compact },
-                onTitleBottom = onTitleBottom,
-                modifier = Modifier.padding(horizontal = if (isWide) 32.dp else 20.dp, vertical = if (isWide) 24.dp else 16.dp),
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
+            MochyDetailCoverBackdrop(
+                thumbnailUrl = artist.thumbnail ?: artist.banner,
+                topDepth = 260.dp,
+                modifier = Modifier.matchParentSize(),
             )
+            Column(Modifier.widthIn(max = 1400.dp).fillMaxWidth()) {
+                ArtistHeaderDetails(
+                    artist = artist,
+                    isPlaceholder = isPlaceholder,
+                    isWide = isWide,
+                    isMedium = isMedium,
+                    actionSize = actionSize,
+                    isSubscribed = isSubscribed,
+                    subscribeSuccessCount = subscribeSuccessCount,
+                    showSubscribe = showSubscribe,
+                    onPlayAllClick = onPlayAllClick,
+                    onShuffleClick = onShuffleClick,
+                    onMixClick = onMixClick,
+                    onSubscribeClick = onSubscribeClick,
+                    onUnblockClick = onUnblockClick,
+                    onMenuClick = onMenuClick.takeUnless { actionSize == ArtistActionSize.Compact },
+                    onTitleBottom = onTitleBottom,
+                    modifier = Modifier.padding(horizontal = if (isWide) 32.dp else 20.dp, vertical = if (isWide) 24.dp else 16.dp),
+                )
+            }
         }
         if (!isPlaceholder && !description.isNullOrBlank()) {
             ArtistAbout(
@@ -1017,6 +1032,9 @@ private fun ArtistHeaderDetails(
     Column(modifier) {
         val titleStyle =
             MaterialTheme.typography.headlineLargeEmphasized.copy(
+                fontFamily = mochyInterFontFamily(),
+                fontWeight = FontWeight.Bold,
+                letterSpacing = (-0.03).em,
                 fontSize =
                     if (isWide) {
                         44.sp
@@ -1097,10 +1115,28 @@ private fun ArtistActionRow(
 ) {
     val compact = size == ArtistActionSize.Compact
     val rowHeight = 48.dp
+    val reducedMotion = rememberReducedMotion()
+    val scope = rememberCoroutineScope()
+    val shuffleSpin = remember { Animatable(0f) }
     val subscribeLabel = stringResource(if (isSubscribed) Res.string.subscribed else Res.string.subscribe)
     val radioLabel = stringResource(Res.string.radio)
     val shuffleLabel = stringResource(Res.string.shuffle)
-    val textStyle = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+    val onShuffleTapped = {
+        if (!reducedMotion) {
+            scope.launch {
+                shuffleSpin.animateTo(
+                    shuffleSpin.targetValue + 180f,
+                    spring(dampingRatio = 0.55f, stiffness = 360f),
+                )
+            }
+        }
+        onShuffleClick()
+    }
+    val textStyle =
+        MaterialTheme.typography.labelLarge.copy(
+            fontFamily = mochyInterFontFamily(),
+            fontWeight = FontWeight.Bold,
+        )
     val textMeasurer = rememberTextMeasurer()
     val density = LocalDensity.current
     val tonalColors = FilledTonalToggleButtonDefaults.colors()
@@ -1159,7 +1195,10 @@ private fun ArtistActionRow(
                                             checked = isSubscribed,
                                             onCheckedChange = { onSubscribeClick() },
                                             interactionSource = interactionSource,
-                                            modifier = Modifier.fillMaxSize(),
+                                            modifier =
+                                                Modifier
+                                                    .fillMaxSize()
+                                                    .pressBounce(interactionSource, if (reducedMotion) 1f else 0.92f),
                                             shapes =
                                                 FilledTonalToggleButtonDefaults.shapesFor(rowHeight).copy(
                                                     shape = MaterialTheme.shapes.small,
@@ -1189,7 +1228,7 @@ private fun ArtistActionRow(
                             )
                         }
                         listOf(radioLabel, shuffleLabel).forEachIndexed { index, label ->
-                            val onClick = if (index == 0) onMixClick else onShuffleClick
+                            val onClick = if (index == 0) onMixClick else onShuffleTapped
                             val showLabel = index == 0 && widths.labelRadio
                             customItem(
                                 buttonGroupContent = {
@@ -1207,14 +1246,21 @@ private fun ArtistActionRow(
                                             Modifier
                                                 .animateWidth(interactionSource, 12.dp)
                                                 .width(if (index == 0) widths.radioWidth else widths.shuffleWidth)
-                                                .height(rowHeight),
+                                                .height(rowHeight)
+                                                .pressBounce(interactionSource, if (reducedMotion) 1f else 0.90f),
                                         shapes = ButtonDefaults.shapes(shape = shapes.shape, pressedShape = shapes.pressedShape),
                                         contentPadding = PaddingValues(horizontal = if (showLabel) 12.dp else 0.dp),
                                     ) {
                                         Icon(
                                             if (index == 0) MetrolistIcons.Outlined.Sensors else MetrolistIcons.Rounded.Shuffle,
                                             if (showLabel) null else label,
-                                            Modifier.size(24.dp),
+                                            Modifier.size(24.dp).then(
+                                                if (index == 1) {
+                                                    Modifier.graphicsLayer { rotationZ = shuffleSpin.value }
+                                                } else {
+                                                    Modifier
+                                                },
+                                            ),
                                         )
                                         if (showLabel) {
                                             Spacer(Modifier.width(8.dp))
@@ -1232,7 +1278,12 @@ private fun ArtistActionRow(
                                 Button(
                                     onClick = onPlayAllClick,
                                     interactionSource = interactionSource,
-                                    modifier = Modifier.animateWidth(interactionSource, 12.dp).width(widths.playWidth).height(rowHeight),
+                                    modifier =
+                                        Modifier
+                                            .animateWidth(interactionSource, 12.dp)
+                                            .width(widths.playWidth)
+                                            .height(rowHeight)
+                                            .pressBounce(interactionSource, if (reducedMotion) 1f else 0.90f),
                                     shapes = ButtonDefaults.shapes(shape = shapes.shape, pressedShape = shapes.pressedShape),
                                     contentPadding = PaddingValues(0.dp),
                                 ) {
@@ -1328,6 +1379,7 @@ private fun ArtistSectionContent(
             modifier = if (isWide) Modifier.padding(horizontal = 24.dp).fillMaxWidth() else artistCardModifier(false),
             shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surfaceContainer,
+            border = BorderStroke(0.75.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)),
         ) {
             Row(
                 modifier =
@@ -1353,7 +1405,9 @@ private fun ArtistSectionContent(
                     Text(
                         release.title,
                         style = if (isSpacious) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.titleLarge,
+                        fontFamily = mochyInterFontFamily(),
                         fontWeight = FontWeight.Bold,
+                        letterSpacing = (-0.02).em,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )

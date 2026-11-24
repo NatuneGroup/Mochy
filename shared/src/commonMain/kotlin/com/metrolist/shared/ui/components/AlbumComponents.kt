@@ -7,6 +7,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -28,6 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import com.metrolist.shared.constants.currentGridThumbnailHeight
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.n_song
@@ -40,6 +42,7 @@ import com.metrolist.shared.ui.navigation.AlbumArtworkRole
 import com.metrolist.shared.ui.navigation.AlbumArtworkSource
 import com.metrolist.shared.ui.navigation.albumArtworkTransition
 import com.metrolist.shared.ui.navigation.navigationPageSource
+import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import org.jetbrains.compose.resources.pluralStringResource
 
 @Composable
@@ -69,12 +72,17 @@ fun AlbumHeader(
             text = album.title,
             modifier = titleModifier,
             style = MaterialTheme.typography.headlineMediumEmphasized,
+            fontFamily = mochyInterFontFamily(),
+            fontWeight = FontWeight.Bold,
+            letterSpacing = (-0.03).em,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
         Text(
             text = artistLinksText(album.artists, onArtistClick) ?: AnnotatedString(""),
             style = MaterialTheme.typography.titleLarge,
+            fontFamily = mochyInterFontFamily(),
+            fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.primary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -117,7 +125,15 @@ private fun AlbumHeaderArtwork(
     AsyncImage(
         url = album.thumbnail ?: "",
         previewUrl = CollectionPreviews.album(album.id)?.thumbnail ?: album.thumbnail,
-        modifier = Modifier.albumArtworkTransition(album.id, AlbumArtworkRole.Header, cornerRadius).then(modifier),
+        modifier =
+            Modifier
+                .albumArtworkTransition(album.id, AlbumArtworkRole.Header, cornerRadius)
+                .then(modifier)
+                .border(
+                    0.75.dp,
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+                    RoundedCornerShape(cornerRadius),
+                ),
         contentScale = ContentScale.Crop,
     )
 }

@@ -10,3 +10,5 @@ fun ColorScheme.settingsRowContainerColor(pressed: Boolean = false): Color {
     // Pure black collapses container tokens; tonal elevation retains the theme's surface tint.
     return if (container == background) surfaceColorAtElevation(if (pressed) 12.dp else 6.dp) else container
 }
+
+fun ColorScheme.settingsRowOutlineColor(): Color = onSurface.copy(alpha = 0.07f)

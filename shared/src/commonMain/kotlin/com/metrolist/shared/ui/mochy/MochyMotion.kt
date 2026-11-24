@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MonotonicFrameClock
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,11 +45,37 @@ import androidx.compose.ui.node.DrawModifierNode
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.coroutineContext
 import kotlin.math.abs
 import kotlin.math.hypot
 import kotlin.math.min
 import kotlin.math.sqrt
+
+private const val MAX_FRAME_NANOS = 25_000_000L
+
+private class CappedFrameClock(
+    private val real: MonotonicFrameClock,
+) : MonotonicFrameClock {
+    private var lastReal = 0L
+    private var shown = 0L
+
+    override suspend fun <R> withFrameNanos(onFrame: (frameTimeNanos: Long) -> R): R =
+        real.withFrameNanos { now ->
+            shown = if (lastReal == 0L) now else shown + (now - lastReal).coerceIn(0L, MAX_FRAME_NANOS)
+            lastReal = now
+            onFrame(shown)
+        }
+}
+
+/** Runs animations on frame steps capped at 25 ms so a slow layout frame glides instead of skipping. */
+internal suspend fun <T> smoothFrames(block: suspend CoroutineScope.() -> T): T {
+    val real = coroutineContext[MonotonicFrameClock] ?: return coroutineScope(block)
+    return withContext(CappedFrameClock(real), block)
+}
 
 private const val DEFAULT_MAX_TILT = 7f
 private const val DEFAULT_PRESSED_SCALE = 0.97f

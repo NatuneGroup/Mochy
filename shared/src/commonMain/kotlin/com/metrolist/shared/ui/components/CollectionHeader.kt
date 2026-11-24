@@ -1,5 +1,7 @@
 package com.metrolist.shared.ui.components
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +23,7 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
@@ -29,7 +32,9 @@ import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.go_back
 import com.metrolist.shared.generated.resources.more_options
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.mochy.pressBounce
 import com.metrolist.shared.ui.navigation.navigationPopupSource
+import com.metrolist.shared.ui.theme.rememberReducedMotion
 import com.metrolist.shared.ui.theme.uiEnhanced
 import com.metrolist.shared.ui.tv.tvFocusHighlight
 import org.jetbrains.compose.resources.stringResource
@@ -94,10 +99,12 @@ fun CollectionInfoCard(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val cardShape = collectionInfoCardShape()
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = collectionInfoCardShape(),
+        shape = cardShape,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        border = BorderStroke(0.75.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)),
     ) {
         Column(modifier = Modifier.padding(16.dp), content = content)
     }
@@ -109,9 +116,19 @@ fun DetailBackButton(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val reducedMotion = rememberReducedMotion()
+    val interactionSource = remember { MutableInteractionSource() }
     IconButton(
         onClick = onBackClick,
-        modifier = modifier.padding(start = 8.dp, top = 8.dp).tvFocusHighlight(CircleShape),
+        interactionSource = interactionSource,
+        modifier =
+            modifier
+                .padding(start = 8.dp, top = 8.dp)
+                .tvFocusHighlight(CircleShape)
+                .pressBounce(
+                    interactionSource = interactionSource,
+                    pressedScale = if (reducedMotion) 1f else 0.88f,
+                ),
         shapes = IconButtonDefaults.shapes(),
     ) {
         Icon(
@@ -129,8 +146,11 @@ fun CollectionHeaderNavigation(
     onMoreOptions: (() -> Unit)? = null,
     title: (@Composable () -> Unit)? = null,
     selectionControls: (@Composable () -> Unit)? = null,
+    topBarBackdrop: (@Composable () -> Unit)? = null,
+    artworkBackdrop: (@Composable () -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
+    val reducedMotion = rememberReducedMotion()
     Box(Modifier.fillMaxSize()) {
         if (selectionControls != null) {
             Column(Modifier.fillMaxSize()) {
@@ -138,22 +158,30 @@ fun CollectionHeaderNavigation(
                 Box(Modifier.weight(1f).fillMaxWidth()) { content() }
             }
         } else {
+            artworkBackdrop?.invoke()
             Box(Modifier.padding(top = if (onBackClick != null) 64.dp else 0.dp)) { content() }
             if (onBackClick != null) {
+                topBarBackdrop?.invoke()
                 if (title != null) {
                     Box(Modifier.fillMaxWidth().height(64.dp), contentAlignment = Alignment.CenterStart) { title() }
                 }
                 DetailBackButton(onBackClick)
                 if (onMoreOptions != null) {
+                    val moreInteractionSource = remember { MutableInteractionSource() }
                     IconButton(
                         onClick = onMoreOptions,
+                        interactionSource = moreInteractionSource,
                         modifier =
                             Modifier
                                 .align(
                                     Alignment.TopEnd,
                                 ).padding(end = 8.dp, top = 8.dp)
                                 .tvFocusHighlight(CircleShape)
-                                .navigationPopupSource(),
+                                .navigationPopupSource()
+                                .pressBounce(
+                                    interactionSource = moreInteractionSource,
+                                    pressedScale = if (reducedMotion) 1f else 0.88f,
+                                ),
                         shapes = IconButtonDefaults.shapes(),
                     ) {
                         Icon(MetrolistIcons.Default.MoreVert, stringResource(Res.string.more_options))

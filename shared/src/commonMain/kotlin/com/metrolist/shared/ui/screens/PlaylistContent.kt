@@ -2,9 +2,6 @@
 
 package com.metrolist.shared.ui.screens
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -49,8 +46,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.add_a_song
 import com.metrolist.shared.generated.resources.add_to_playlist
@@ -87,7 +85,10 @@ import com.metrolist.shared.ui.haptics.rememberMetrolistHaptics
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.menu.artworkMenuActions
 import com.metrolist.shared.ui.menu.onSecondaryClick
+import com.metrolist.shared.ui.mochy.MochyCollapsingTopBar
+import com.metrolist.shared.ui.mochy.MochyDetailCoverBackdrop
 import com.metrolist.shared.ui.navigation.NavigationBackHandler
+import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import com.metrolist.shared.ui.tv.TvReorderScrollTarget
 import com.metrolist.shared.ui.utils.DragScrollableColumn
 import com.metrolist.shared.ui.utils.desktopArrowScroll
@@ -286,28 +287,29 @@ fun PlaylistContent(
         derivedStateOf { activeListState.firstVisibleItemIndex > headerIndex || titleBottom <= listTop }
     }
 
+    val backdropThumbnail =
+        previewThumbnail
+            ?: headerPlaylist?.customThumbnail
+            ?: headerPlaylist?.thumbnail
+            ?: artworkSongs.firstOrNull { !it.thumbnail.isNullOrBlank() }?.thumbnail
+
     Box(modifier.fillMaxSize()) {
         CollectionHeaderNavigation(
             if (isSearchOpen) toggleSearch else onBackClick,
             onMoreOptions,
             title = {
-                BoxWithConstraints(Modifier.fillMaxWidth()) {
-                    AnimatedVisibility(
+                BoxWithConstraints(Modifier.fillMaxSize()) {
+                    MochyCollapsingTopBar(
                         visible = maxWidth < 960.dp && showCollapsedTitle && !isSearchOpen && !selectionActive && loadingHeader == null,
-                        enter = fadeIn(MaterialTheme.motionScheme.fastEffectsSpec()),
-                        exit = fadeOut(MaterialTheme.motionScheme.fastEffectsSpec()),
-                    ) {
-                        Text(
-                            text = playlist?.title.orEmpty(),
-                            modifier = Modifier.padding(start = 64.dp, end = if (onMoreOptions != null) 64.dp else 16.dp),
-                            style = MaterialTheme.typography.titleLarge,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
+                        title = playlist?.title.orEmpty(),
+                        thumbnailUrl = backdropThumbnail,
+                        hasMoreOptions = onMoreOptions != null,
+                        fallbackIcon = fallbackIcon,
+                    )
                 }
             },
             selectionControls = selectionControls.takeIf { selectionActive },
+            artworkBackdrop = { MochyDetailCoverBackdrop(backdropThumbnail) },
         ) {
             BoxWithConstraints(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
                 val isWide = maxWidth >= 960.dp
@@ -533,6 +535,9 @@ fun PlaylistContent(
                                                     Text(
                                                         text = text.suggestions,
                                                         style = MaterialTheme.typography.titleLargeEmphasized,
+                                                        fontFamily = mochyInterFontFamily(),
+                                                        fontWeight = FontWeight.Bold,
+                                                        letterSpacing = (-0.02).em,
                                                         modifier = Modifier.padding(16.dp),
                                                     )
                                                 }
@@ -734,6 +739,9 @@ fun PlaylistContent(
                                         Text(
                                             text = text.suggestions,
                                             style = MaterialTheme.typography.titleLargeEmphasized,
+                                            fontFamily = mochyInterFontFamily(),
+                                            fontWeight = FontWeight.Bold,
+                                            letterSpacing = (-0.02).em,
                                             modifier = Modifier.padding(16.dp),
                                         )
                                     }

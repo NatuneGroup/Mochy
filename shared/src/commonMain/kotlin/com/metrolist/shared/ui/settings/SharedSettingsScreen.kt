@@ -19,6 +19,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -104,6 +105,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.round
 import com.metrolist.shared.generated.resources.*
 import com.metrolist.shared.ui.LocalIsTv
@@ -119,8 +121,11 @@ import com.metrolist.shared.ui.menu.ExpressiveSelectionMenu
 import com.metrolist.shared.ui.menu.trackPressPosition
 import com.metrolist.shared.ui.mochy.MochyModulesScreen
 import com.metrolist.shared.ui.mochy.MochyProfileSettingsScreen
+import com.metrolist.shared.ui.mochy.pressBounce
 import com.metrolist.shared.ui.navigation.PredictiveNavigationContent
 import com.metrolist.shared.ui.navigation.rememberNavigationMotion
+import com.metrolist.shared.ui.theme.mochyInterFontFamily
+import com.metrolist.shared.ui.theme.rememberReducedMotion
 import com.metrolist.shared.ui.utils.DragScrollableColumn
 import com.metrolist.shared.ui.utils.desktopArrowScroll
 import com.metrolist.shared.ui.utils.segmentedGroupShape
@@ -277,6 +282,9 @@ internal fun SharedSettingsRegistryScreen(
                             Text(
                                 text = pageId?.let(registry::get)?.title.orEmpty(),
                                 style = MaterialTheme.typography.headlineMediumEmphasized,
+                                fontFamily = mochyInterFontFamily(),
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = (-0.02).em,
                                 maxLines = 1,
                                 modifier = Modifier.singleLineMarquee(),
                             )
@@ -390,13 +398,20 @@ private fun CompactSettingsHome(
                 title = {
                     when {
                         host.title != null -> {
-                            Text(host.title, fontWeight = MaterialTheme.typography.titleLargeEmphasized.fontWeight)
+                            Text(
+                                host.title,
+                                fontFamily = mochyInterFontFamily(),
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = (-0.02).em,
+                            )
                         }
 
                         host.platform != SettingsPlatform.DESKTOP -> {
                             Text(
                                 stringResource(Res.string.settings),
-                                fontWeight = MaterialTheme.typography.titleLargeEmphasized.fontWeight,
+                                fontFamily = mochyInterFontFamily(),
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = (-0.02).em,
                             )
                         }
 
@@ -489,7 +504,14 @@ private fun CompactSettingsDetail(
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             LargeFlexibleTopAppBar(
-                title = { Text(page.title, fontWeight = MaterialTheme.typography.titleLargeEmphasized.fontWeight) },
+                title = {
+                    Text(
+                        page.title,
+                        fontFamily = mochyInterFontFamily(),
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = (-0.02).em,
+                    )
+                },
                 navigationIcon = {
                     IconButton(
                         onClick = onBack,
@@ -572,6 +594,9 @@ private fun SettingsNavigationPane(
                         Text(
                             text = group.title,
                             style = MaterialTheme.typography.labelLarge,
+                            fontFamily = mochyInterFontFamily(),
+                            fontWeight = FontWeight.SemiBold,
+                            letterSpacing = (-0.01).em,
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp),
                         )
@@ -974,9 +999,11 @@ private fun SettingsRootGroup(
         Text(
             text = group.title,
             style = MaterialTheme.typography.titleSmall,
+            fontFamily = mochyInterFontFamily(),
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = (-0.01).em,
             color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(start = 16.dp, end = 32.dp, top = 8.dp, bottom = 12.dp),
+            modifier = Modifier.padding(start = 20.dp, end = 32.dp, top = 8.dp, bottom = 10.dp),
         )
         Column(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -1019,6 +1046,7 @@ internal fun SettingsNavigationRow(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
+    val reducedMotion = rememberReducedMotion()
     val shape = segmentedGroupShape(first, last, pressed)
     val containerColor by animateColorAsState(
         if (pressed) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.surfaceContainer,
@@ -1030,8 +1058,10 @@ internal fun SettingsNavigationRow(
                 .fillMaxWidth()
                 .heightIn(min = 72.dp)
                 .then(focusModifier(shape))
+                .pressBounce(interactionSource, if (reducedMotion) 1f else 0.99f)
                 .clip(shape)
                 .background(containerColor)
+                .border(0.75.dp, MaterialTheme.colorScheme.settingsRowOutlineColor(), shape)
                 .focusOutline(shape)
                 .clickable(interactionSource = interactionSource, indication = ripple(), onClick = onClick)
                 .padding(horizontal = 16.dp, vertical = 16.dp),
@@ -1053,6 +1083,8 @@ internal fun SettingsNavigationRow(
             Text(
                 title,
                 style = MaterialTheme.typography.bodyLarge,
+                fontFamily = mochyInterFontFamily(),
+                fontWeight = FontWeight.Medium,
                 fontSize = titleFontSize,
             )
             subtitle?.let {
@@ -1082,14 +1114,16 @@ internal fun SettingsItemGroup(
     Column(modifier = Modifier.fillMaxWidth().alpha(if (group.enabled) 1f else 0.6f)) {
         if (showHeading && group.title.isNotBlank()) {
             Column(
-                modifier = Modifier.padding(start = horizontalPadding, end = horizontalPadding * 2, bottom = 12.dp),
+                modifier = Modifier.padding(start = horizontalPadding + 4.dp, end = horizontalPadding * 2, bottom = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(
                     text = group.title,
                     style = MaterialTheme.typography.titleSmall,
+                    fontFamily = mochyInterFontFamily(),
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = (-0.01).em,
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Medium,
                     modifier = Modifier.semantics { heading() },
                 )
                 group.description?.let {
@@ -1163,6 +1197,7 @@ private fun SettingsItemRow(
     }
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
+    val reducedMotion = rememberReducedMotion()
     val shape = segmentedGroupShape(first, last, pressed)
     val background by animateColorAsState(
         targetValue =
@@ -1198,8 +1233,10 @@ private fun SettingsItemRow(
                     .bringIntoViewRequester(bringIntoViewRequester)
                     .fillMaxWidth()
                     .heightIn(min = 72.dp)
+                    .pressBounce(interactionSource, if (reducedMotion) 1f else 0.99f)
                     .clip(shape)
                     .background(background)
+                    .border(0.75.dp, MaterialTheme.colorScheme.settingsRowOutlineColor(), shape)
                     .focusOutline(shape)
                     .then(
                         if (item.control == SettingsControl.SWITCH && item.checked != null) {
@@ -1236,6 +1273,8 @@ private fun SettingsItemRow(
                     Text(
                         item.title,
                         style = MaterialTheme.typography.bodyLarge,
+                        fontFamily = mochyInterFontFamily(),
+                        fontWeight = FontWeight.Medium,
                         color =
                             if (item.enabled) {
                                 titleColor
@@ -1350,13 +1389,15 @@ private fun NavigationPaneItem(
         if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainer,
         label = "settingsNavigationItem",
     )
+    val shape = connectedShape(first, last, outer = 20.dp, inner = 5.dp)
     Row(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .heightIn(min = 64.dp)
-                .clip(connectedShape(first, last, outer = 20.dp, inner = 5.dp))
+                .clip(shape)
                 .background(background)
+                .border(0.75.dp, MaterialTheme.colorScheme.settingsRowOutlineColor(), shape)
                 .selectable(selected = selected, role = Role.Tab, onClick = onClick)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -1374,7 +1415,8 @@ private fun NavigationPaneItem(
             Text(
                 page.title,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                fontFamily = mochyInterFontFamily(),
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
             )
             page.subtitle?.let {
                 Text(
