@@ -5742,6 +5742,12 @@
     <string name="mochy_card_drag_hint">Drag the card to tilt and catch the sheen</string>
     <!-- Translators: Button label to launch the animated silver card celebration preview. -->
     <string name="mochy_card_celebrate_action">Preview welcome card</string>
+    <!-- Translators: Button label to choose a local profile photo for the Mochy ID card. -->
+    <string name="mochy_profile_choose_photo">Choose photo</string>
+    <!-- Translators: Button label to replace the existing local profile photo on the Mochy ID card. -->
+    <string name="mochy_profile_change_photo">Change photo</string>
+    <!-- Translators: Button label to remove the custom local profile photo from the Mochy ID card. -->
+    <string name="mochy_profile_remove_photo">Remove photo</string>
     <!-- Translators: Button label to close the animated silver card celebration overlay. -->
     <string name="mochy_card_celebrate_close">Tap to continue</string>
     <!-- Translators: Settings screen title for the local Mochy profile ID card. -->

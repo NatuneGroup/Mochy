@@ -1226,7 +1226,7 @@ class ExoPlaybackPlayer(
         source: PlaybackSeekSource,
     ) {
         if (currentSong.value?.isLive == true) return
-        transportFader.cancel()
+        transportFader.settleBeforeSeek()
         onPlaybackCommand()
         if (nextStarted) cancelNextInternal()
         val target = position.coerceAtLeast(0L)

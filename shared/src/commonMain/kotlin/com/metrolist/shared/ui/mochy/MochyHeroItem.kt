@@ -31,6 +31,7 @@ internal fun mochyHeroItems(
     currentSong: SongItem?,
     includePersonalHistory: Boolean,
     isItemEnabled: (YTItem) -> Boolean,
+    fallbackItems: List<YTItem> = emptyList(),
 ): List<MochyHeroItem> {
     fun YTItem.hasCover(): Boolean = !thumbnail.isNullOrBlank() && !isUnavailable && isItemEnabled(this)
 
@@ -98,5 +99,76 @@ internal fun mochyHeroItems(
             .take(5 - result.size)
             .forEach { add(it, Res.string.quick_picks) }
     }
+
+    if (result.isEmpty()) {
+        fun YTItem.isPlayableStarter(
+            allowLocal: Boolean,
+            requireCover: Boolean,
+        ): Boolean {
+            if (isUnavailable || isPodcast || !isItemEnabled(this)) return false
+            if (requireCover && thumbnail.isNullOrBlank()) return false
+            if (id.startsWith("FEmusic_library", ignoreCase = true)) return false
+            return when (this) {
+                is SongItem -> allowLocal || !isLocal
+                is PlaylistItem -> allowLocal || !isLocal
+                is AlbumItem, is ArtistItem -> true
+                else -> false
+            }
+        }
+
+        fun addFallback(
+            item: YTItem?,
+            reason: StringResource,
+            allowLocal: Boolean,
+            requireCover: Boolean,
+        ) {
+            if (result.size >= 8) return
+            if (item == null || !item.isPlayableStarter(allowLocal, requireCover)) return
+            if (!seen.add(canonicalHomeItemId(item))) return
+            result.add(MochyHeroItem(item, reason))
+        }
+
+        fun reasonFor(item: YTItem): StringResource =
+            if (item is PlaylistItem) Res.string.mochy_hero_playlist else Res.string.quick_picks
+
+        val onlineFallbackPool =
+            buildList {
+                addAll(feed.newReleases)
+                addAll(feed.albumCharts)
+                addAll(feed.speedDialItems)
+                addAll(feed.sections.flatMap { it.items })
+                addAll(feed.data.orEmpty().flatMap { it.items })
+                addAll(fallbackItems)
+            }
+        onlineFallbackPool.forEach { item ->
+            addFallback(item, reasonFor(item), allowLocal = false, requireCover = true)
+        }
+
+        if (result.isEmpty()) {
+            val localFallbackPool =
+                buildList {
+                    addAll(feed.speedDialItems)
+                    addAll(feed.quickPicks)
+                    addAll(feed.keepListening)
+                    addAll(feed.recentlyPlayed)
+                    addAll(feed.forgottenFavorites)
+                    addAll(feed.communityPlaylist)
+                    addAll(feed.sections.flatMap { it.items })
+                    addAll(feed.data.orEmpty().flatMap { it.items })
+                    addAll(fallbackItems)
+                }
+            addFallback(currentSong, Res.string.continue_action, allowLocal = true, requireCover = true)
+            localFallbackPool.forEach { item ->
+                addFallback(item, reasonFor(item), allowLocal = true, requireCover = true)
+            }
+            if (result.isEmpty()) {
+                addFallback(currentSong, Res.string.continue_action, allowLocal = true, requireCover = false)
+                localFallbackPool.forEach { item ->
+                    addFallback(item, reasonFor(item), allowLocal = true, requireCover = false)
+                }
+            }
+        }
+    }
+
     return result.take(8)
 }

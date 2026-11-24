@@ -57,6 +57,7 @@ import com.metrolist.shared.generated.resources.side_menu_welcome
 import com.metrolist.shared.generated.resources.yes
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.mochy.MochyProfileEditorContent
+import com.metrolist.shared.ui.mochy.rememberIosMochyProfilePhotoPicker
 import com.metrolist.shared.utils.isCrashReportingAvailable
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -159,7 +160,10 @@ internal fun IosOnboarding(onComplete: (sendCrashReports: Boolean, login: Boolea
             featureContent = { featurePage ->
                 when (featurePage) {
                     OnboardingPage.PROFILE -> {
-                        MochyProfileEditorContent(modifier = Modifier.padding(top = 24.dp))
+                        MochyProfileEditorContent(
+                            modifier = Modifier.padding(top = 24.dp),
+                            rememberPhotoPicker = { onPicked -> rememberIosMochyProfilePhotoPicker(onPicked) },
+                        )
                     }
 
                     OnboardingPage.FINISH -> {

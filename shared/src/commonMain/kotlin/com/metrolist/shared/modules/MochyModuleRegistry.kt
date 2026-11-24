@@ -75,6 +75,7 @@ private data class PersistedModulesState(
  */
 class MochyModuleRegistry(
     private val httpClientFactory: () -> HttpClient = ::createHttpClient,
+    private val settings: Settings = Settings.shared,
 ) {
     private val lock = SynchronizedObject()
     private val httpClient: HttpClient by lazy(httpClientFactory)
@@ -84,7 +85,8 @@ class MochyModuleRegistry(
             isLenient = true
         }
 
-    private var state: PersistedModulesState = loadPersisted()
+    private var lastPersistedJson: String = settings.mochyModulesStateJson
+    private var state: PersistedModulesState = decodePersisted(lastPersistedJson)
     private val registered = mutableListOf<Pair<MochyModule, ModuleOrigin>>()
 
     private val _entries = MutableStateFlow<List<ModuleEntry>>(emptyList())
@@ -95,19 +97,53 @@ class MochyModuleRegistry(
 
     init {
         rebuildModules()
+        settings.addReloadListener { reloadFromSettingsIfChanged() }
     }
 
-    fun isEnabled(id: String): Boolean = synchronized(lock) { state.enabled[id] ?: (id == YouTubeBuiltInModule.ID) }
+    fun reloadFromSettings() {
+        synchronized(lock) {
+            val raw = settings.mochyModulesStateJson
+            lastPersistedJson = raw
+            state = decodePersisted(raw)
+        }
+        rebuildModules()
+    }
+
+    private fun reloadFromSettingsIfChanged() {
+        val changed =
+            synchronized(lock) {
+                syncFromSettingsLocked()
+            }
+        if (changed) {
+            rebuildModules()
+        }
+    }
+
+    private fun syncFromSettingsLocked(): Boolean {
+        val raw = settings.mochyModulesStateJson
+        if (raw == lastPersistedJson) return false
+        lastPersistedJson = raw
+        state = decodePersisted(raw)
+        return true
+    }
+
+    fun isEnabled(id: String): Boolean {
+        reloadFromSettingsIfChanged()
+        return synchronized(lock) { state.enabled[id] ?: (id == YouTubeBuiltInModule.ID) }
+    }
 
     fun setEnabled(
         id: String,
         on: Boolean,
     ) {
-        synchronized(lock) {
-            state = state.copy(enabled = state.enabled + (id to on))
-            savePersisted()
-        }
-        refresh()
+        val needsRebuild =
+            synchronized(lock) {
+                val reloaded = syncFromSettingsLocked()
+                state = state.copy(enabled = state.enabled + (id to on))
+                savePersisted()
+                reloaded
+            }
+        if (needsRebuild) rebuildModules() else refresh()
     }
 
     fun setPick(
@@ -115,12 +151,15 @@ class MochyModuleRegistry(
         choiceId: String,
         optionId: String,
     ) {
-        synchronized(lock) {
-            val existing = state.picks[id].orEmpty()
-            state = state.copy(picks = state.picks + (id to (existing + (choiceId to optionId))))
-            savePersisted()
-        }
-        refresh()
+        val needsRebuild =
+            synchronized(lock) {
+                val reloaded = syncFromSettingsLocked()
+                val existing = state.picks[id].orEmpty()
+                state = state.copy(picks = state.picks + (id to (existing + (choiceId to optionId))))
+                savePersisted()
+                reloaded
+            }
+        if (needsRebuild) rebuildModules() else refresh()
     }
 
     fun setField(
@@ -128,15 +167,20 @@ class MochyModuleRegistry(
         fieldId: String,
         value: String,
     ) {
-        synchronized(lock) {
-            val existing = state.fields[id].orEmpty()
-            val updated = existing + (fieldId to value)
-            state = state.copy(fields = state.fields + (id to updated))
-            savePersisted()
-            val mod = registered.firstOrNull { it.first.info.id == id }?.first as? ModuleFields
-            mod?.onFields(mergedFieldValues(mod, updated))
-        }
-        refresh()
+        val needsRebuild =
+            synchronized(lock) {
+                val reloaded = syncFromSettingsLocked()
+                val existing = state.fields[id].orEmpty()
+                val updated = existing + (fieldId to value)
+                state = state.copy(fields = state.fields + (id to updated))
+                savePersisted()
+                if (!reloaded) {
+                    val mod = registered.firstOrNull { it.first.info.id == id }?.first as? ModuleFields
+                    mod?.onFields(mergedFieldValues(mod, updated))
+                }
+                reloaded
+            }
+        if (needsRebuild) rebuildModules() else refresh()
     }
 
     suspend fun addWebModule(rawLink: String): Result<ModuleEntry> =
@@ -153,6 +197,7 @@ class MochyModuleRegistry(
             val id = WebModuleManifest.idFor(base, manifest)
 
             synchronized(lock) {
+                syncFromSettingsLocked()
                 val filtered = state.webModules.filterNot { it.base.equals(base, ignoreCase = true) }
                 val saved = SavedWebModule(base = base, manifestJson = text, addedAt = Clock.System.now().toEpochMilliseconds())
                 state =
@@ -168,16 +213,34 @@ class MochyModuleRegistry(
 
     fun removeWebModule(id: String) {
         synchronized(lock) {
-            val target = registered.firstOrNull { it.first.info.id == id }?.second as? ModuleOrigin.Web ?: return
-            state =
-                state.copy(
-                    webModules = state.webModules.filterNot { it.base.equals(target.base, ignoreCase = true) },
-                    enabled = state.enabled - id,
-                    picks = state.picks - id,
-                    fields = state.fields - id,
-                    storage = state.storage - id,
-                )
-            savePersisted()
+            if (syncFromSettingsLocked()) {
+                // Rebuild state first so target web module matches restored settings.
+                val restoredTarget =
+                    state.webModules.firstOrNull { saved ->
+                        val manifest = WebModuleManifest.parse(saved.manifestJson) ?: return@firstOrNull false
+                        WebModuleManifest.idFor(saved.base, manifest) == id
+                    } ?: return
+                state =
+                    state.copy(
+                        webModules = state.webModules.filterNot { it.base.equals(restoredTarget.base, ignoreCase = true) },
+                        enabled = state.enabled - id,
+                        picks = state.picks - id,
+                        fields = state.fields - id,
+                        storage = state.storage - id,
+                    )
+                savePersisted()
+            } else {
+                val target = registered.firstOrNull { it.first.info.id == id }?.second as? ModuleOrigin.Web ?: return
+                state =
+                    state.copy(
+                        webModules = state.webModules.filterNot { it.base.equals(target.base, ignoreCase = true) },
+                        enabled = state.enabled - id,
+                        picks = state.picks - id,
+                        fields = state.fields - id,
+                        storage = state.storage - id,
+                    )
+                savePersisted()
+            }
         }
         rebuildModules()
     }
@@ -345,13 +408,18 @@ class MochyModuleRegistry(
         object : ModuleHost {
             override val storage: ModuleStorage =
                 object : ModuleStorage {
-                    override fun get(key: String): String? = synchronized(lock) { state.storage[moduleId]?.get(key) }
+                    override fun get(key: String): String? =
+                        synchronized(lock) {
+                            syncFromSettingsLocked()
+                            state.storage[moduleId]?.get(key)
+                        }
 
                     override fun set(
                         key: String,
                         value: String?,
                     ) {
                         synchronized(lock) {
+                            syncFromSettingsLocked()
                             val current = state.storage[moduleId].orEmpty()
                             val next = if (value == null) current - key else current + (key to value)
                             state = state.copy(storage = state.storage + (moduleId to next))
@@ -392,15 +460,16 @@ class MochyModuleRegistry(
         )
     }
 
-    private fun loadPersisted(): PersistedModulesState {
-        val raw = Settings.shared.mochyModulesStateJson
+    private fun decodePersisted(raw: String): PersistedModulesState {
         if (raw.isBlank()) return PersistedModulesState()
         return runCatching { json.decodeFromString(PersistedModulesState.serializer(), raw) }
             .getOrDefault(PersistedModulesState())
     }
 
     private fun savePersisted() {
-        Settings.shared.mochyModulesStateJson = json.encodeToString(state)
+        val encoded = json.encodeToString(state)
+        lastPersistedJson = encoded
+        settings.mochyModulesStateJson = encoded
     }
 
     companion object {

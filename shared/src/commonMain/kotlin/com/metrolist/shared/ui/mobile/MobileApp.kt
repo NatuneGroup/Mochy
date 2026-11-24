@@ -334,6 +334,7 @@ fun MobileApp(
     formatHistoryMonth: (Long) -> String,
     oauthCallbackUrls: Flow<String> = emptyFlow(),
     initialSettingsPage: SettingsPageId? = null,
+    rememberMochyProfilePhotoPicker: (@Composable (onPicked: (uri: String) -> Unit) -> () -> Unit)? = null,
     loginContent: @Composable (
         isSwitchingChannel: Boolean,
         onBack: () -> Unit,
@@ -1404,6 +1405,7 @@ fun MobileApp(
                                         lyricsPreview = { modifier -> PlayerLyricsSettingsPreview(playerViewModel, modifier) },
                                         initialPage = route.initialPage,
                                         isAudioProcessingAvailable = playerState.isAudioProcessingAvailable,
+                                        rememberMochyProfilePhotoPicker = rememberMochyProfilePhotoPicker,
                                         onClose = ::back,
                                         onOpenArtist = { open(MobileRoute.Artist(it, "")) },
                                         onSeedColorSelected = { appRevision++ },

@@ -227,6 +227,7 @@ fun HomeContent(
     onTogglePlayPause: (() -> Unit)? = null,
     heroCurrentSong: SongItem? = null,
     desktopHome: Boolean = false,
+    heroFallbackItems: List<YTItem> = emptyList(),
 ) {
     val activeSongId =
         remember(currentSongId) {
@@ -237,12 +238,6 @@ fun HomeContent(
     val isTv = LocalIsTv.current
     val contentObscured = LocalContentObscured.current
     val rootActive = LocalRootContentActive.current
-    val heroItems =
-        if (!isTv && uiState.selectedChip == null && !uiState.showLoadingPlaceholder) {
-            mochyHeroItems(uiState, heroCurrentSong, includePersonalHistory = !desktopHome, isItemEnabled = isItemEnabled)
-        } else {
-            emptyList()
-        }
     val windowSize = LocalWindowInfo.current.containerSize
     val windowHeight = with(LocalDensity.current) { windowSize.height.toDp() }
     val wideMobileHero = with(LocalDensity.current) { windowSize.width.toDp() >= 600.dp }
@@ -260,6 +255,18 @@ fun HomeContent(
             }
         val effectiveShelves =
             shelves ?: (shelfCache ?: localShelfCache).build(uiState, text, maxWidth)
+        val heroItems =
+            if (!isTv && uiState.selectedChip == null && !uiState.showLoadingPlaceholder) {
+                mochyHeroItems(
+                    feed = uiState,
+                    currentSong = heroCurrentSong,
+                    includePersonalHistory = !desktopHome,
+                    isItemEnabled = isItemEnabled,
+                    fallbackItems = effectiveShelves.flatMap { it.items } + heroFallbackItems,
+                )
+            } else {
+                emptyList()
+            }
         val topGlowCovers =
             remember(heroItems, effectiveShelves) {
                 val fromHero = heroItems.mapNotNull { it.item.thumbnail }

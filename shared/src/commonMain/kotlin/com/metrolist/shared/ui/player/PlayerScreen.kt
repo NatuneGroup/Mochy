@@ -134,6 +134,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -239,6 +240,7 @@ import com.metrolist.shared.ui.player.mochy.FlagshipBarHeight
 import com.metrolist.shared.ui.player.mochy.FlagshipBottomControls
 import com.metrolist.shared.ui.player.mochy.FlagshipControlsShade
 import com.metrolist.shared.ui.player.mochy.FlagshipHandle
+import com.metrolist.shared.ui.player.mochy.FlagshipLandscapePlayer
 import com.metrolist.shared.ui.player.mochy.FlagshipTransport
 import com.metrolist.shared.ui.player.mochy.flagshipFontFamily
 import com.metrolist.shared.ui.theme.ComponentShapes
@@ -318,9 +320,11 @@ internal fun Modifier.artworkSeekGestures(
     onTap: (() -> Unit)?,
     tapLabel: String?,
     progressive: Boolean = false,
+    onDoubleTap: ((Offset) -> Unit)? = null,
     onSeek: (Long) -> Unit,
 ): Modifier {
-    if (!seekEnabled && onTap != null) {
+    val hasDoubleTap = seekEnabled || onDoubleTap != null
+    if (!hasDoubleTap && onTap != null) {
         return focusOutline(RoundedCornerShape(PlayerArtworkCornerRadius)).clickable(
             interactionSource = null,
             indication = null,
@@ -328,15 +332,20 @@ internal fun Modifier.artworkSeekGestures(
             onClick = onTap,
         )
     }
-    if (!seekEnabled) return this
+    if (!hasDoubleTap) return this
+    val currentSeekEnabled by rememberUpdatedState(seekEnabled)
     val currentOnTap by rememberUpdatedState(onTap)
+    val currentOnDoubleTap by rememberUpdatedState(onDoubleTap)
     val currentOnSeek by rememberUpdatedState(onSeek)
     val currentProgressive by rememberUpdatedState(progressive)
+    var rootPosition by remember { mutableStateOf(Offset.Zero) }
     var skipMultiplier by remember { mutableStateOf(1) }
     var lastTapMark by remember { mutableStateOf<TimeMark?>(null) }
     return this
         .focusOutline(RoundedCornerShape(PlayerArtworkCornerRadius))
-        .semantics {
+        .onGloballyPositioned { coordinates ->
+            rootPosition = coordinates.positionInRoot()
+        }.semantics {
             if (onTap != null) {
                 role = Role.Button
                 onClick(label = tapLabel) {
@@ -356,12 +365,17 @@ internal fun Modifier.artworkSeekGestures(
             detectTapGestures(
                 onTap = { currentOnTap?.invoke() },
                 onDoubleTap = { offset ->
-                    val elapsedMs = lastTapMark?.elapsedNow()?.inWholeMilliseconds ?: Long.MAX_VALUE
-                    skipMultiplier =
-                        if (currentProgressive) nextSeekMultiplier(skipMultiplier, elapsedMs) else 1
-                    lastTapMark = TimeSource.Monotonic.markNow()
-                    val amount = stepMs * skipMultiplier
-                    currentOnSeek(if (offset.x < size.width / 2f) -amount else amount)
+                    val doubleTapAction = currentOnDoubleTap
+                    if (doubleTapAction != null) {
+                        doubleTapAction(rootPosition + offset)
+                    } else if (currentSeekEnabled) {
+                        val elapsedMs = lastTapMark?.elapsedNow()?.inWholeMilliseconds ?: Long.MAX_VALUE
+                        skipMultiplier =
+                            if (currentProgressive) nextSeekMultiplier(skipMultiplier, elapsedMs) else 1
+                        lastTapMark = TimeSource.Monotonic.markNow()
+                        val amount = stepMs * skipMultiplier
+                        currentOnSeek(if (offset.x < size.width / 2f) -amount else amount)
+                    }
                 },
             )
         }
@@ -600,6 +614,7 @@ fun PlayerScreen(
     var showPlayerMenu by remember { mutableStateOf(false) }
     var showBedsideClock by remember { mutableStateOf(false) }
     val likeBurstState = remember { LikeBurstState() }
+    var flagshipLandscapeQueueVisible by rememberSaveable { mutableStateOf(false) }
     var showSongDetails by remember { mutableStateOf(false) }
     var showSleepTimerDialog by remember { mutableStateOf(false) }
     var showLyricsMenu by remember { mutableStateOf(false) }
@@ -627,6 +642,7 @@ fun PlayerScreen(
     NavigationBackHandler(enabled = isPlayerBackHandlerEnabled) {
         when {
             showLyricsOffsetEditor -> showLyricsOffsetEditor = false
+            flagshipLandscapeQueueVisible -> flagshipLandscapeQueueVisible = false
             uiState.isQueueVisible -> viewModel.setQueueVisible(false)
             isFullscreen && !uiState.isLyricsVisible -> viewModel.toggleFullscreen()
             else -> onClose()
@@ -971,7 +987,25 @@ fun PlayerScreen(
             val queueHandlesBack by remember(queueSheetState, useLandscapeLayout) {
                 derivedStateOf { !useLandscapeLayout && queueSheetState.progress > 0.2f }
             }
-            val landscapeQueueVisible = useLandscapeLayout && !queueSheetState.isCollapsed
+            LaunchedEffect(usesMochyFlagship, useLandscapeLayout) {
+                if (!usesMochyFlagship || !useLandscapeLayout) {
+                    flagshipLandscapeQueueVisible = false
+                }
+            }
+            val onFlagshipArtworkDoubleTap: ((Offset) -> Unit)? =
+                if (usesMochyFlagship && currentSong != null) {
+                    { rootPos ->
+                        hapticManager.toggle(!isLiked)
+                        likeBurstState.likeFromDoubleTap(
+                            rootPosition = rootPos,
+                            liked = isLiked,
+                            toggleLike = toggleDisplayedLike,
+                        )
+                    }
+                } else {
+                    null
+                }
+            val landscapeQueueVisible = useLandscapeLayout && !usesMochyFlagship && !queueSheetState.isCollapsed
             // Phone landscape has no room above the controls, so cast and the audio/video switch move into the player menu.
             val landscapeMenuActions =
                 if (useLandscapeLayout && !isTv && !landscapeQueueVisible) {
@@ -1320,7 +1354,68 @@ fun PlayerScreen(
                                 isBuffering = castState.isBuffering,
                             )
                         } else if (useLandscapeLayout) {
-                            if (useTabletLayout || landscapeQueueVisible) {
+                            if (usesMochyFlagship) {
+                                FlagshipLandscapePlayer(
+                                    viewModel = viewModel,
+                                    queueSession = queueSession,
+                                    artworkOverlay = artworkOverlay,
+                                    currentSong = currentSong,
+                                    crossfadeNextArtworkUrl = crossfadeNextArtworkUrl,
+                                    artworkCrossfadeProgress = artworkCrossfadeProgress,
+                                    isPlaying = isPlaying,
+                                    isPlaybackLoading = isPlaybackLoading,
+                                    duration = duration,
+                                    isLiked = isLiked,
+                                    uiState = uiState,
+                                    isQueueVisible = flagshipLandscapeQueueVisible,
+                                    isMenuOpen = showPlayerMenu,
+                                    showLyricsOffsetEditor = showLyricsOffsetEditor,
+                                    onLyricsOffsetChange = { offset -> currentSong?.let { viewModel.setLyricsOffset(it.id, offset) } },
+                                    onDoneLyricsOffset = { showLyricsOffsetEditor = false },
+                                    likeBurstState = likeBurstState,
+                                    volume =
+                                        platform.rememberFlagshipVolume(
+                                            session = playerConnection,
+                                            listening = contentActive,
+                                            useDeviceVolume = !castState.isConnected,
+                                        ),
+                                    castState = castState,
+                                    isListenTogetherGuest = isListenTogetherGuest,
+                                    artworkSwipeEnabled = artworkSwipeEnabled,
+                                    artworkSwipeSensitivity = Settings.shared.swipeSensitivity,
+                                    showVideoSurface = showVideoSurface,
+                                    onToggleFullscreen = onToggleFullscreen,
+                                    onArtworkDoubleTap = onFlagshipArtworkDoubleTap,
+                                    onSongInfo = { showSongDetails = true },
+                                    onToggleLike = toggleDisplayedLike,
+                                    onShowPlayerMenu = { showPlayerMenu = !showPlayerMenu },
+                                    onToggleLyrics = {
+                                        val next = !uiState.isLyricsVisible
+                                        hapticManager.toggle(next)
+                                        if (next) flagshipLandscapeQueueVisible = false
+                                        viewModel.setLyricsVisible(next)
+                                    },
+                                    onToggleQueue = {
+                                        val next = !flagshipLandscapeQueueVisible
+                                        hapticManager.perform(HapticEvent.PRESS)
+                                        if (next && uiState.isLyricsVisible) viewModel.setLyricsVisible(false)
+                                        flagshipLandscapeQueueVisible = next
+                                    },
+                                    onCloseQueue = { flagshipLandscapeQueueVisible = false },
+                                    onOutput = {
+                                        hapticManager.perform(HapticEvent.PRESS)
+                                        if (platform.supportsCasting && Settings.shared.castEnabled) {
+                                            openCastDialog()
+                                        } else {
+                                            showDeviceConnectSheet = true
+                                        }
+                                    },
+                                    onShowSleepTimer = { showSleepTimerDialog = true },
+                                    onNavigateToArtist = onNavigateToArtist,
+                                    onNavigateToAlbum = onNavigateToAlbum,
+                                    onNavigateToListenTogether = onNavigateToListenTogether,
+                                )
+                            } else if (useTabletLayout || landscapeQueueVisible) {
                                 TabletPlayerContent(
                                     viewModel = viewModel,
                                     artworkOverlay = artworkOverlay,
@@ -1837,6 +1932,7 @@ fun PlayerScreen(
                                                                         null
                                                                     },
                                                                 progressive = Settings.shared.seekExtraSeconds,
+                                                                onDoubleTap = onFlagshipArtworkDoubleTap,
                                                                 onSeek = onArtworkSeek,
                                                             ),
                                                 ) {
@@ -2615,7 +2711,7 @@ fun PlayerScreen(
                         )
                     }
 
-                    if (useLandscapeLayout) {
+                    if (useLandscapeLayout && !usesMochyFlagship) {
                         Box(
                             Modifier
                                 .align(Alignment.CenterEnd)

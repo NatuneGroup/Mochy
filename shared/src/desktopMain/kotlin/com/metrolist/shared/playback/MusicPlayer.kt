@@ -1001,7 +1001,7 @@ class MusicPlayer(
 
     fun seekTo(position: Long) {
         if (_currentSong.value?.isLive == true) return
-        transportFader.cancel()
+        transportFader.settleBeforeSeek()
         seekToImmediate(position)
     }
 

@@ -150,7 +150,7 @@ fun SharedSettingsScreen(
                         isAudioProcessingAvailable = host.isAudioProcessingAvailable,
                     )
                 } else if (page == SettingsPageId.MOCHY_PROFILE) {
-                    MochyProfileSettingsScreen()
+                    MochyProfileSettingsScreen(rememberPhotoPicker = host.rememberMochyProfilePhotoPicker)
                 } else if (page == SettingsPageId.MOCHY_MODULES) {
                     MochyModulesScreen()
                 } else if (page == SettingsPageId.LYRICS_AI_SETUP) {

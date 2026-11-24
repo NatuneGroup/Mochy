@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import com.metrolist.desktop.backup.DesktopBackupRestoreManager
 import com.metrolist.desktop.state.DesktopLocaleManager
 import com.metrolist.desktop.state.appLanguageChoices
+import com.metrolist.desktop.ui.components.rememberMochyProfilePhotoPicker
 import com.metrolist.desktop.utils.pickDesktopFile
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.app_name
@@ -271,7 +272,10 @@ fun DesktopOnboarding(onComplete: (sendCrashReports: Boolean, openLogin: Boolean
 
     DesktopOnboardingCard(content, previousContent) { targetPage ->
         if (targetPage == OnboardingPage.PROFILE) {
-            MochyProfileEditorContent(modifier = Modifier.padding(top = 24.dp))
+            MochyProfileEditorContent(
+                modifier = Modifier.padding(top = 24.dp),
+                rememberPhotoPicker = { onPicked -> rememberMochyProfilePhotoPicker(onPicked) },
+            )
         }
         if (targetPage == OnboardingPage.LANGUAGE_LYRICS || targetPage == OnboardingPage.PLAYBACK) {
             OnboardingPreferences(

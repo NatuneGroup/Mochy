@@ -5,6 +5,9 @@ import com.metrolist.shared.constants.DownloadedCollectionSortKey
 import com.metrolist.shared.model.CollectionSort
 import com.metrolist.shared.model.LyricsProvider
 import com.metrolist.shared.model.SortDirection
+import com.metrolist.shared.modules.ArchivePoolModule
+import com.metrolist.shared.modules.MochyModuleRegistry
+import com.metrolist.shared.modules.MonochromeModule
 import com.russhwolf.settings.MapSettings
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -745,6 +748,34 @@ class LegacySettingsMigrationTest {
         assertFalse(backing.hasKey("proxyUrl"))
         assertFalse(backing.hasKey("proxyUsername"))
         assertFalse(backing.hasKey("proxyPassword"))
+    }
+
+    @Test
+    fun mochyModuleRegistryReloadsRestoredBackupSettingsBeforeSubsequentEdits() {
+        val settings = Settings(MapSettings())
+        val registry = MochyModuleRegistry(settings = settings)
+
+        registry.setEnabled(ArchivePoolModule.ID, true)
+        val backup = settings.exportBackupSettings()
+
+        registry.setEnabled(ArchivePoolModule.ID, false)
+        assertFalse(registry.isEnabled(ArchivePoolModule.ID))
+
+        settings.importBackupSettings(backup)
+        assertTrue(registry.isEnabled(ArchivePoolModule.ID))
+        assertTrue(registry.entries.value.first { it.id == ArchivePoolModule.ID }.enabled)
+
+        // A later edit on another module must preserve the restored ArchivePool toggle.
+        registry.setEnabled(MonochromeModule.ID, true)
+        assertTrue(registry.isEnabled(ArchivePoolModule.ID))
+        assertTrue(registry.isEnabled(MonochromeModule.ID))
+
+        // Rollback snapshot restore also keeps the singleton synchronized.
+        val beforeRollback = settings.exportBackupSettings()
+        registry.setEnabled(ArchivePoolModule.ID, false)
+        settings.restoreBackupSettingsSnapshot(beforeRollback)
+        assertTrue(registry.isEnabled(ArchivePoolModule.ID))
+        assertTrue(registry.isEnabled(MonochromeModule.ID))
     }
 }
 

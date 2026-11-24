@@ -13,6 +13,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -82,8 +83,57 @@ internal fun FlagshipActions(
     }
 }
 
+/**
+ * Vertically stacked like + chevron actions used at the bottom-end corner of Mochy's Flagship
+ * landscape player.
+ */
 @Composable
-private fun FlagshipActionButton(
+internal fun FlagshipCoverButtons(
+    liked: Boolean,
+    menuOpen: Boolean,
+    onLike: () -> Unit,
+    onMenu: () -> Unit,
+    modifier: Modifier = Modifier,
+    contentColor: Color = Color.White,
+    likeBurstState: LikeBurstState? = null,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        FlagshipActionButton(
+            icon = if (liked) Res.drawable.mochy_heart else Res.drawable.mochy_heart_outline,
+            description = stringResource(if (liked) Res.string.unlike else Res.string.action_like),
+            tint = contentColor.copy(alpha = if (liked) 1f else 0.85f),
+            background = contentColor.copy(alpha = if (liked) 0.30f else 0.15f),
+            onClick = onLike,
+            modifier = Modifier.likeButtonTarget(likeBurstState, LikeSlot.PLAYER),
+        )
+        val rotation by animateFloatAsState(
+            if (menuOpen) 180f else 0f,
+            spring(dampingRatio = 0.55f, stiffness = 380f),
+            label = "flagshipLandscapeChevron",
+        )
+        val surface by animateColorAsState(
+            contentColor.copy(alpha = if (menuOpen) 0.32f else 0.15f),
+            tween(durationMillis = 280, easing = FastOutSlowInEasing),
+            label = "flagshipLandscapeChevronSurface",
+        )
+        FlagshipActionButton(
+            icon = Res.drawable.mochy_expand_less,
+            description = stringResource(Res.string.more_options),
+            tint = contentColor.copy(alpha = if (menuOpen) 1f else 0.90f),
+            background = surface,
+            onClick = onMenu,
+            modifier = Modifier.navigationPopupSource(),
+            iconModifier = Modifier.graphicsLayer { rotationZ = rotation },
+        )
+    }
+}
+
+@Composable
+internal fun FlagshipActionButton(
     icon: DrawableResource,
     description: String,
     tint: Color,

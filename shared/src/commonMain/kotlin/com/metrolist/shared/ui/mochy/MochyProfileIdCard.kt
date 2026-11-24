@@ -34,8 +34,10 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -92,7 +94,10 @@ import com.metrolist.shared.generated.resources.mochy_card_local_member
 import com.metrolist.shared.generated.resources.mochy_card_of_name
 import com.metrolist.shared.generated.resources.mochy_card_profile_usr
 import com.metrolist.shared.generated.resources.mochy_hello
+import com.metrolist.shared.generated.resources.mochy_profile_change_photo
+import com.metrolist.shared.generated.resources.mochy_profile_choose_photo
 import com.metrolist.shared.generated.resources.mochy_profile_picture
+import com.metrolist.shared.generated.resources.mochy_profile_remove_photo
 import com.metrolist.shared.generated.resources.mochy_username_label
 import com.metrolist.shared.generated.resources.mochy_username_placeholder
 import com.metrolist.shared.generated.resources.mochy_welcome_to_mochy
@@ -226,8 +231,7 @@ fun ProfileIdCard(
                                 modifier = Modifier.size(unit * 34f),
                             )
                         } else {
-                            val firstChar = name.firstOrNull()
-                            val initial = firstChar?.uppercaseChar()?.toString().orEmpty()
+                            val initial = firstDisplayCluster(name)
                             Text(
                                 text = initial,
                                 color = Color.White.copy(alpha = 0.9f),
@@ -304,6 +308,7 @@ fun InteractiveProfileIdCard(
     joinedText: String,
     silver: Boolean,
     modifier: Modifier = Modifier,
+    onPhotoClick: (() -> Unit)? = null,
 ) {
     val scope = rememberCoroutineScope()
     val tiltX = remember { Animatable(0f) }
@@ -339,6 +344,7 @@ fun InteractiveProfileIdCard(
             cardNumber = cardNumber,
             joinedText = joinedText,
             silver = silver,
+            onPhotoClick = onPhotoClick,
             sheen = { 0.5f + tiltY.value / 42f },
         )
     }
@@ -352,15 +358,22 @@ fun InteractiveProfileIdCard(
 fun MochyProfileEditorContent(
     modifier: Modifier = Modifier,
     showCelebrateButton: Boolean = true,
+    rememberPhotoPicker: (@Composable (onPicked: (uri: String) -> Unit) -> () -> Unit)? = null,
 ) {
     val settings = Settings.shared
     val cardNumber = remember { ensureMochyCardNumber() }
     var username by remember { mutableStateOf(settings.mochyUsername.ifBlank { settings.accountName }) }
     var silver by remember { mutableStateOf(settings.mochyProfileCardSilver) }
+    var localPhotoUri by remember { mutableStateOf(settings.mochyProfilePhotoUri) }
     var showCelebration by remember { mutableStateOf(false) }
 
-    val photoUrl = settings.mochyProfilePhotoUri.ifBlank { settings.accountThumbnail }.takeIf { it.isNotBlank() }
+    val photoUrl = localPhotoUri.ifBlank { settings.accountThumbnail }.takeIf { it.isNotBlank() }
     val joinedText = stringResource(Res.string.mochy_card_local_member)
+    val launchPhotoPicker =
+        rememberPhotoPicker?.invoke { pickedUri ->
+            localPhotoUri = pickedUri
+            settings.mochyProfilePhotoUri = pickedUri
+        }
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -372,6 +385,7 @@ fun MochyProfileEditorContent(
             cardNumber = cardNumber,
             joinedText = joinedText,
             silver = silver,
+            onPhotoClick = launchPhotoPicker,
             modifier = Modifier.widthIn(max = 420.dp),
         )
 
@@ -381,10 +395,41 @@ fun MochyProfileEditorContent(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
+        if (launchPhotoPicker != null || localPhotoUri.isNotBlank()) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (launchPhotoPicker != null) {
+                    OutlinedButton(onClick = launchPhotoPicker) {
+                        Text(
+                            stringResource(
+                                if (localPhotoUri.isNotBlank()) {
+                                    Res.string.mochy_profile_change_photo
+                                } else {
+                                    Res.string.mochy_profile_choose_photo
+                                },
+                            ),
+                        )
+                    }
+                }
+                if (localPhotoUri.isNotBlank()) {
+                    TextButton(
+                        onClick = {
+                            localPhotoUri = ""
+                            settings.mochyProfilePhotoUri = ""
+                        },
+                    ) {
+                        Text(stringResource(Res.string.mochy_profile_remove_photo))
+                    }
+                }
+            }
+        }
+
         OutlinedTextField(
             value = username,
             onValueChange = { updated ->
-                val clipped = updated.take(32)
+                val clipped = truncateDisplayName(updated)
                 username = clipped
                 settings.mochyUsername = clipped
             },
@@ -441,7 +486,10 @@ fun MochyProfileEditorContent(
 
 /** Settings page wrapper around [MochyProfileEditorContent]. */
 @Composable
-fun MochyProfileSettingsScreen(modifier: Modifier = Modifier) {
+fun MochyProfileSettingsScreen(
+    modifier: Modifier = Modifier,
+    rememberPhotoPicker: (@Composable (onPicked: (uri: String) -> Unit) -> () -> Unit)? = null,
+) {
     Column(
         modifier =
             modifier
@@ -450,9 +498,104 @@ fun MochyProfileSettingsScreen(modifier: Modifier = Modifier) {
                 .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        MochyProfileEditorContent(showCelebrateButton = true)
+        MochyProfileEditorContent(
+            showCelebrateButton = true,
+            rememberPhotoPicker = rememberPhotoPicker,
+        )
     }
 }
+
+private const val MAX_MOCHY_USERNAME_CLUSTERS = 32
+
+internal fun truncateDisplayName(
+    input: String,
+    maxClusters: Int = MAX_MOCHY_USERNAME_CLUSTERS,
+): String {
+    if (input.isEmpty() || maxClusters <= 0) return ""
+    var count = 0
+    var index = 0
+    while (index < input.length && count < maxClusters) {
+        index = nextDisplayClusterEnd(input, index)
+        count++
+    }
+    return input.substring(0, index)
+}
+
+internal fun firstDisplayCluster(input: String): String {
+    if (input.isEmpty()) return ""
+    val end = nextDisplayClusterEnd(input, 0)
+    val cluster = input.substring(0, end)
+    return if (cluster.length == 1) cluster[0].uppercaseChar().toString() else cluster
+}
+
+private fun nextDisplayClusterEnd(
+    text: String,
+    start: Int,
+): Int {
+    if (start >= text.length) return start
+    var index = advanceCodePoint(text, start)
+    val firstCodePoint = codePointAt(text, start)
+    if (isRegionalIndicator(firstCodePoint) && index < text.length && isRegionalIndicator(codePointAt(text, index))) {
+        index = advanceCodePoint(text, index)
+    }
+    while (index < text.length) {
+        val cp = codePointAt(text, index)
+        if (cp == 0x200D) {
+            val afterZwj = advanceCodePoint(text, index)
+            if (afterZwj < text.length) {
+                index = advanceCodePoint(text, afterZwj)
+                continue
+            }
+            index = afterZwj
+            break
+        }
+        if (isClusterContinuation(cp)) {
+            index = advanceCodePoint(text, index)
+        } else {
+            break
+        }
+    }
+    return index
+}
+
+private fun advanceCodePoint(
+    text: String,
+    index: Int,
+): Int {
+    val ch = text[index]
+    return if (ch.isHighSurrogate() && index + 1 < text.length && text[index + 1].isLowSurrogate()) {
+        index + 2
+    } else {
+        index + 1
+    }
+}
+
+private fun codePointAt(
+    text: String,
+    index: Int,
+): Int {
+    val ch = text[index]
+    if (ch.isHighSurrogate() && index + 1 < text.length && text[index + 1].isLowSurrogate()) {
+        val high = ch.code - 0xD800
+        val low = text[index + 1].code - 0xDC00
+        return 0x10000 + (high shl 10) + low
+    }
+    return ch.code
+}
+
+private fun isRegionalIndicator(cp: Int): Boolean = cp in 0x1F1E6..0x1F1FF
+
+private fun isClusterContinuation(cp: Int): Boolean =
+    cp == 0xFE0E ||
+        cp == 0xFE0F ||
+        cp == 0x20E3 ||
+        cp in 0x1F3FB..0x1F3FF ||
+        cp in 0x0300..0x036F ||
+        cp in 0x1AB0..0x1AFF ||
+        cp in 0x1DC0..0x1DFF ||
+        cp in 0x20D0..0x20FF ||
+        cp in 0xFE20..0xFE2F ||
+        cp in 0xE0020..0xE007F
 
 /**
  * Full-screen animated silver ID card celebration ported from Mochy's `HelloCardStep`:

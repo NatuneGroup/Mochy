@@ -138,6 +138,7 @@ data class SharedSettingsHost(
     val refreshablePages: Set<SettingsPageId> = emptySet(),
     val onPageRefresh: (SettingsPageId) -> Unit = {},
     val rememberMetroEqProfilePicker: (@Composable (onPicked: (fileName: String, content: String) -> Unit) -> () -> Unit)? = null,
+    val rememberMochyProfilePhotoPicker: (@Composable (onPicked: (uri: String) -> Unit) -> () -> Unit)? = null,
 )
 
 enum class SettingsControl {

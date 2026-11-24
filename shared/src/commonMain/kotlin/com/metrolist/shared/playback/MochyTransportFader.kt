@@ -31,6 +31,8 @@ class MochyTransportFader(
     private var job: Job? = null
     private var level = 1f
     private var playIntentOverride: Boolean? = null
+    private var pendingPauseImmediate: (() -> Unit)? = null
+    private var pendingPauseOnIntentChanged: ((Boolean?) -> Unit)? = null
 
     val gain: Float
         get() = level
@@ -51,10 +53,31 @@ class MochyTransportFader(
         job = null
         phase = Phase.IDLE
         playIntentOverride = null
+        pendingPauseImmediate = null
+        pendingPauseOnIntentChanged = null
         level = 1f
         if (hadActiveFade) {
             onGainChanged(1f)
         }
+    }
+
+    /**
+     * Settles any in-flight fade before seeking to a new playback position.
+     *
+     * When a pause fade is active, completes the pause immediately without rewinding to the old
+     * pause anchor so audio stays paused at the new seek target until resumed.
+     */
+    fun settleBeforeSeek() {
+        if (phase == Phase.PAUSING) {
+            val finishPause = pendingPauseImmediate
+            val notifyIntent = pendingPauseOnIntentChanged
+            stopJobAndReset(resetGain = false)
+            finishPause?.invoke()
+            setGain(1f)
+            notifyIntent?.invoke(null)
+            return
+        }
+        cancel()
     }
 
     fun pause(
@@ -100,6 +123,8 @@ class MochyTransportFader(
         val fadeMs = max((lengthMs * from).roundToLong(), MIN_PARTIAL_FADE_MS)
         phase = Phase.PAUSING
         playIntentOverride = false
+        pendingPauseImmediate = pauseImmediate
+        pendingPauseOnIntentChanged = onIntentChanged
         onIntentChanged?.invoke(false)
         job =
             scope.launch {
@@ -216,6 +241,8 @@ class MochyTransportFader(
         job = null
         phase = Phase.IDLE
         playIntentOverride = null
+        pendingPauseImmediate = null
+        pendingPauseOnIntentChanged = null
         if (resetGain) {
             setGain(1f)
         }

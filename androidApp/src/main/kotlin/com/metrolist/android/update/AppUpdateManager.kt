@@ -72,10 +72,16 @@ data class GitHubRelease(
                         BLOCKED_APK_MARKERS.none { marker -> asset.name.contains(marker, ignoreCase = true) }
                 }
             val preferredNames =
-                PREFERRED_APK_NAMES + listOf("metrolist-android-$version.apk", "metrolist-android-$version-universal.apk")
+                PREFERRED_APK_NAMES +
+                    listOf(
+                        "mochy-android-$version.apk",
+                        "mochy-android-$version-universal.apk",
+                        "metrolist-android-$version.apk",
+                        "metrolist-android-$version-universal.apk",
+                    )
             return preferredNames.firstNotNullOfOrNull { preferred ->
                 candidates.singleOrNull { it.name.equals(preferred, ignoreCase = true) }
-            }
+            } ?: candidates.singleOrNull()
         }
 }
 
@@ -123,8 +129,8 @@ enum class UpdateFailure { CHECK, NO_APK, DOWNLOAD, DIGEST, INSTALL }
 
 object AppUpdateManager {
     const val CHANNEL_ID = "updates"
-    private const val RELEASES_URL = "https://api.github.com/repos/MetrolistGroup/Metrolist/releases?per_page=50"
-    private const val NIGHTLY_RELEASE_URL = "https://api.github.com/repos/MetrolistGroup/Metrolist/releases/tags/$NIGHTLY_TAG"
+    private const val RELEASES_URL = "https://api.github.com/repos/NatuneGroup/Mochy/releases?per_page=50"
+    private const val NIGHTLY_RELEASE_URL = "https://api.github.com/repos/NatuneGroup/Mochy/releases/tags/$NIGHTLY_TAG"
     private const val NOTIFICATION_ID = 1400
     private const val MAX_APK_BYTES = 512L * 1024 * 1024
     private const val MIN_FREE_SPACE_BYTES = 16L * 1024 * 1024
@@ -710,9 +716,12 @@ object AppUpdateManager {
 }
 
 private const val CHECK_INTERVAL_MILLIS = 60 * 60 * 1_000L
-private const val CACHE_SOURCE = "github-releases-metrolist-v1"
+private const val CACHE_SOURCE = "github-releases-mochy-v1"
 private val PREFERRED_APK_NAMES =
     listOf(
+        "Mochy.apk",
+        "Mochy-Android-release.apk",
+        "nightly-Mochy-Android-release.apk",
         "Metrolist.apk",
         "Metrolist-Android-release.apk",
         "androidApp-release.apk",

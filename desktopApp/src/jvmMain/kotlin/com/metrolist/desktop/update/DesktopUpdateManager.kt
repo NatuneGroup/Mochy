@@ -39,7 +39,7 @@ import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
 
 object DesktopUpdateManager {
-    private const val API_BASE = "https://api.github.com/repos/MetrolistGroup/Metrolist"
+    private const val API_BASE = "https://api.github.com/repos/NatuneGroup/Mochy"
     internal const val RELEASES_URL = "$API_BASE/releases?per_page=50"
     private const val REGISTRY_PATH = "Software\\Metrolist\\Desktop"
     private const val MAX_MANAGER_BYTES = 128L * 1024 * 1024
@@ -88,11 +88,11 @@ object DesktopUpdateManager {
     suspend fun cachedReleases(): List<GitHubDesktopRelease> =
         withContext(Dispatchers.IO) {
             runCatching {
-                if (Settings.shared.updateCacheSource != "desktop-github-releases-metrolist-v1") {
+                if (Settings.shared.updateCacheSource != "desktop-github-releases-mochy-v1") {
                     Settings.shared.cachedUpdateReleasesJson = ""
                     Settings.shared.lastUpdateCheckTimestamp = 0L
                     Settings.shared.lastUpdateCheckAttemptTimestamp = 0L
-                    Settings.shared.updateCacheSource = "desktop-github-releases-metrolist-v1"
+                    Settings.shared.updateCacheSource = "desktop-github-releases-mochy-v1"
                 }
                 parseReleases(Settings.shared.cachedUpdateReleasesJson)
             }.getOrDefault(emptyList())
@@ -310,10 +310,12 @@ data class GitHubDesktopRelease(
                     }
             }
     val installer: GitHubDesktopAsset?
-        get() = assets.singleOrNull { it.name == "metrolist-installer-windows-x64-$version.exe" }
+        get() =
+            assets.singleOrNull { it.name == "mochy-installer-windows-x64-$version.exe" }
+                ?: assets.singleOrNull { it.name == "metrolist-installer-windows-x64-$version.exe" }
     val url: String get() =
         nightlyAsset?.takeIf { isNightly }?.downloadUrl
-            ?: "https://github.com/MetrolistGroup/Metrolist/releases/tag/$tagName"
+            ?: "https://github.com/NatuneGroup/Mochy/releases/tag/$tagName"
 
     internal fun canInstall(registeredInstallation: Boolean): Boolean =
         registeredInstallation && !draft && !prerelease && ReleaseVersion.parse(version)?.prerelease?.isEmpty() == true

@@ -20,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -41,6 +42,8 @@ import com.metrolist.desktop.ui.components.PlaylistContextMenu
 import com.metrolist.desktop.ui.components.PodcastContextMenu
 import com.metrolist.desktop.ui.components.RetryableError
 import com.metrolist.desktop.ui.components.SongContextMenu
+import com.metrolist.shared.db.MusicDatabase
+import com.metrolist.shared.db.entities.toSongItem
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.home_unavailable
 import com.metrolist.shared.generated.resources.pin_to_speed_dial
@@ -73,6 +76,7 @@ import com.metrolist.shared.ui.screens.pageKey
 import com.metrolist.shared.ui.screens.toHomeSection
 import com.metrolist.shared.ui.theme.MdSpacing
 import org.jetbrains.compose.resources.stringResource
+import org.koin.core.context.GlobalContext
 
 @Composable
 fun HomeScreen() {
@@ -81,6 +85,26 @@ fun HomeScreen() {
     val contextMenu = rememberCursorContextMenuState()
     var selectedMenuItem by remember { mutableStateOf<YTItem?>(null) }
     var showSurpriseMenu by remember { mutableStateOf(false) }
+    val hasNoHomeContent = uiState.hasNoHomeContent()
+    val offlineHeroFallbackItems by produceState<List<YTItem>>(emptyList(), hasNoHomeContent) {
+        if (!hasNoHomeContent) {
+            value = emptyList()
+            return@produceState
+        }
+        val database = GlobalContext.get().get<MusicDatabase>()
+        database.dao().allSongs().collect { songs ->
+            value =
+                songs
+                    .asSequence()
+                    .filter { entry ->
+                        val song = entry.song
+                        !song.isUnavailable && !song.isEpisode && (song.isLocal || song.isDownloaded || song.isCached)
+                    }.map { it.toSongItem() }
+                    .sortedByDescending { !it.thumbnail.isNullOrBlank() }
+                    .take(8)
+                    .toList()
+        }
+    }
 
     fun dismissContextMenu() {
         contextMenu.dismiss()
@@ -91,7 +115,7 @@ fun HomeScreen() {
         return
     }
 
-    if (uiState.error != null && uiState.hasNoHomeContent()) {
+    if (uiState.error != null && hasNoHomeContent && offlineHeroFallbackItems.isEmpty() && PlayerState.currentTrack == null) {
         RetryableError(stringResource(Res.string.home_unavailable), HomeState::refresh)
         return
     }
@@ -128,7 +152,9 @@ fun HomeScreen() {
             onShuffleSongs = { songs -> PlayerState.shuffleQueue(songs) },
             onPlaySongs = { songs -> songs.firstOrNull()?.let { PlayerState.playTrack(it, songs) } },
             onTogglePlayPause = PlayerState::togglePlay,
+            heroCurrentSong = PlayerState.currentTrack,
             desktopHome = true,
+            heroFallbackItems = offlineHeroFallbackItems,
             onSpeedDialItemSecondaryClick = { item ->
                 if (item !is BrowseItem) {
                     selectedMenuItem = item

@@ -88,6 +88,7 @@ import com.metrolist.shared.ui.mobile.MobileApp
 import com.metrolist.shared.ui.mobile.iosLyricsShareAction
 import com.metrolist.shared.ui.mobile.pickIosPlaylistCover
 import com.metrolist.shared.ui.mobile.rememberVoiceOverEnabled
+import com.metrolist.shared.ui.mochy.rememberIosMochyProfilePhotoPicker
 import com.metrolist.shared.ui.onboarding.IosOnboarding
 import com.metrolist.shared.ui.settings.BackupRestorePage
 import com.metrolist.shared.ui.settings.BackupRestoreStatus
@@ -492,6 +493,7 @@ fun MetrolistIOSApp() {
                 MobileApp(
                     onExportStatistics = { IosNativeFiles.shareImage(presenter, it) },
                     onPickPlaylistCover = { pickIosPlaylistCover(presenter) },
+                    rememberMochyProfilePhotoPicker = { onPicked -> rememberIosMochyProfilePhotoPicker(onPicked) },
                     onSavePlaylistCover = { playlist, bytes ->
                         try {
                             val repository = GlobalYouTubeRepository.instance

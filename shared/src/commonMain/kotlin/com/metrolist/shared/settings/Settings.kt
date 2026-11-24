@@ -249,6 +249,19 @@ class Settings(
     private val settingTypes = mutableMapOf<String, SettingType>()
     private val preferenceRefreshers = mutableMapOf<String, () -> Unit>()
     private val preferenceDefaults = mutableMapOf<String, Any?>()
+    private val reloadListenersLock = SynchronizedObject()
+    private val reloadListeners = mutableListOf<() -> Unit>()
+
+    internal fun addReloadListener(listener: () -> Unit) {
+        synchronized(reloadListenersLock) {
+            reloadListeners += listener
+        }
+    }
+
+    private fun notifyReloadListeners() {
+        val snapshot = synchronized(reloadListenersLock) { reloadListeners.toList() }
+        snapshot.forEach { it() }
+    }
 
     init {
         if ((settings as? DeferredSecretMigrationSettings)?.secretRecoveryPending != true) migrateInitialSettings()
@@ -1206,11 +1219,13 @@ class Settings(
         settings.applyBatch(entries.values.toList(), removedKeys)
         flush()
         preferenceRefreshers.values.forEach { it() }
+        notifyReloadListeners()
     }
 
     internal fun applyStringBatch(values: Map<String, String>) {
         settings.applyBatch(values.map { (key, value) -> PortableSetting(key, SettingType.STRING, value) }, emptySet())
         values.keys.forEach { preferenceRefreshers[it]?.invoke() }
+        notifyReloadListeners()
     }
 
     var credentialsPending by mutableStateOf((settings as? DeferredSecretMigrationSettings)?.secretRecoveryPending == true)
@@ -1219,6 +1234,7 @@ class Settings(
     internal fun refreshStoredValues() {
         preferenceRefreshers.values.forEach { it() }
         credentialsPending = (settings as? DeferredSecretMigrationSettings)?.secretRecoveryPending == true
+        notifyReloadListeners()
     }
 
     internal fun finishPendingSecretMigrations() {

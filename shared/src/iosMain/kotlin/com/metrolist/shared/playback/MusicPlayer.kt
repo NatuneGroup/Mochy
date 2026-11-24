@@ -1250,7 +1250,7 @@ class MusicPlayer internal constructor(
     }
 
     fun seekTo(position: Long) {
-        transportFader.cancel()
+        transportFader.settleBeforeSeek()
         seekToImmediate(position)
     }
 

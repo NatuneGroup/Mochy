@@ -40,6 +40,7 @@ import coil3.compose.SubcomposeAsyncImage
 import com.metrolist.android.R
 import com.metrolist.android.ui.component.Material3SettingsGroup
 import com.metrolist.android.ui.component.Material3SettingsItem
+import com.metrolist.android.ui.component.rememberMochyProfilePhotoPicker
 import com.metrolist.shared.api.lastfm.LastFM
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.action_login
@@ -126,7 +127,10 @@ private fun EditorialFeature(
         }
 
         OnboardingPage.PROFILE -> {
-            MochyProfileEditorContent(modifier = Modifier.padding(top = 24.dp))
+            MochyProfileEditorContent(
+                modifier = Modifier.padding(top = 24.dp),
+                rememberPhotoPicker = { onPicked -> rememberMochyProfilePhotoPicker(onPicked) },
+            )
         }
 
         OnboardingPage.FINISH -> {

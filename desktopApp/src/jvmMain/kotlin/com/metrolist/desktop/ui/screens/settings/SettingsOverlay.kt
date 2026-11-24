@@ -55,6 +55,7 @@ import com.metrolist.desktop.storage.DownloadManager
 import com.metrolist.desktop.storage.SongCacheManager
 import com.metrolist.desktop.ui.components.LocalCaptionBarInsets
 import com.metrolist.desktop.ui.components.rememberMetroEqProfilePicker
+import com.metrolist.desktop.ui.components.rememberMochyProfilePhotoPicker
 import com.metrolist.desktop.utils.AppLogger
 import com.metrolist.desktop.utils.DesktopFontManager
 import com.metrolist.desktop.utils.SentryManager
@@ -373,6 +374,7 @@ fun SettingsOverlay(colorScheme: ColorScheme) {
                             )
                         },
                         rememberMetroEqProfilePicker = { onPicked -> rememberMetroEqProfilePicker(onPicked) },
+                        rememberMochyProfilePhotoPicker = { onPicked -> rememberMochyProfilePhotoPicker(onPicked) },
                         storageSummary = storageSummary,
                         onClose = {
                             UiState.showSettings = false

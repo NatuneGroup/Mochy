@@ -51,6 +51,7 @@ import com.metrolist.android.playback.PlayerConnection
 import com.metrolist.android.spotifyimport.SpotifyLoginScreen
 import com.metrolist.android.spotifyimport.androidSpotifyImportManager
 import com.metrolist.android.ui.component.rememberMetroEqProfilePicker
+import com.metrolist.android.ui.component.rememberMochyProfilePhotoPicker
 import com.metrolist.android.ui.download.rememberDownloadPermissionGate
 import com.metrolist.android.ui.player.CanvasCache
 import com.metrolist.android.ui.screens.settings.AndroidAboutScreen
@@ -393,6 +394,7 @@ fun SettingsScreen(
                         )
                     },
                     rememberMetroEqProfilePicker = { onPicked -> rememberMetroEqProfilePicker(onPicked) },
+                    rememberMochyProfilePhotoPicker = { onPicked -> rememberMochyProfilePhotoPicker(onPicked) },
                     onClose = onNavigateBack,
                     onOpenArtist = onNavigateToArtist,
                     homeSections = settingsHomeSections(homeState),
