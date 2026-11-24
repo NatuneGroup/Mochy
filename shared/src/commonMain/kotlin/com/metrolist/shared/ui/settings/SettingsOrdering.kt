@@ -33,7 +33,7 @@ internal fun List<SettingsGroupRegistration>.prioritized(page: SettingsPageId): 
             }
 
             SettingsPageId.PLAYER_STYLE -> {
-                listOf("layout", "background", "progress")
+                listOf("layout", "ipod", "background", "progress")
             }
 
             SettingsPageId.PLAYER_ARTWORK -> {
@@ -165,6 +165,10 @@ internal fun List<SettingsGroupRegistration>.prioritized(page: SettingsPageId): 
                         "showPlayerVideoButton",
                         "musicVideoQuality",
                     )
+                }
+
+                SettingsPageId.PLAYER_STYLE to "ipod" -> {
+                    listOf("ipodTheme", "ipodWheelColor", "ipodShadow", "ipodTallScreen")
                 }
 
                 SettingsPageId.LYRICS_AI_TRANSLATION to "runtime" -> {

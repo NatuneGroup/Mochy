@@ -24,6 +24,8 @@ class MochyLook internal constructor(
             when {
                 player.equals("flagship", ignoreCase = true) -> PlayerType.MOCHY
                 player.equals("standard", ignoreCase = true) -> PlayerType.MODERN
+                player.equals("turntable", ignoreCase = true) -> PlayerType.TURNTABLE
+                player.equals("ipod", ignoreCase = true) -> PlayerType.IPOD
                 else -> PlayerType.entries.firstOrNull { it.name.equals(player, ignoreCase = true) } ?: Settings.shared.playerType
             }
 

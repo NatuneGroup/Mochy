@@ -65,6 +65,7 @@ import com.metrolist.shared.ui.player.QueueScreen
 import com.metrolist.shared.ui.player.QueueSession
 import com.metrolist.shared.ui.player.artworkSeekGestures
 import com.metrolist.shared.ui.player.artworkSwipe
+import com.metrolist.shared.ui.player.mochy.turntable.TurntableStage
 import com.metrolist.shared.viewmodels.PlayerViewModel
 import org.jetbrains.compose.resources.stringResource
 
@@ -129,6 +130,10 @@ internal fun FlagshipLandscapePlayer(
     onNavigateToAlbum: (String) -> Unit,
     onNavigateToListenTogether: () -> Unit,
     modifier: Modifier = Modifier,
+    turntableMode: Boolean = false,
+    canSeek: Boolean = !isListenTogetherGuest,
+    onSeek: (Long) -> Unit = {},
+    positionProvider: () -> Long = { 0L },
 ) {
     val platform = LocalPlayerPlatform.current
     val haptics = rememberMetrolistHaptics()
@@ -169,55 +174,82 @@ internal fun FlagshipLandscapePlayer(
                     .background(EvenShade),
         )
 
-        Box(
-            modifier =
-                Modifier
-                    .align(Alignment.CenterStart)
-                    .padding(start = squareStart)
-                    .size(squareSide)
-                    .shadow(24.dp, SquareShape)
-                    .clip(SquareShape)
-                    .artworkSwipe(
-                        enabled = artworkSwipeEnabled,
-                        sensitivity = artworkSwipeSensitivity,
-                        onPrevious = viewModel::previous,
-                        onNext = viewModel::next,
-                    ).artworkSeekGestures(
-                        seekEnabled = false,
-                        stepMs = 0L,
-                        onTap = null,
-                        tapLabel = null,
-                        onDoubleTap = onArtworkDoubleTap,
-                        onSeek = {},
-                    ),
-        ) {
-            if (showVideoSurface) {
-                platform.MusicVideoSurface(
-                    cornerRadius = 22.dp,
-                    fillContainer = true,
-                    showControls = true,
-                    useSurfaceView = false,
-                    onFullscreenClick = onToggleFullscreen,
-                    onPiPClick = {
-                        platform.enterPictureInPicture(
-                            isPlaying = isPlaying,
-                            hasVideo = true,
-                        )
-                    },
-                    modifier = Modifier.fillMaxSize(),
-                )
-            } else {
-                CrossfadeArtwork(
-                    animate = LocalPlayerContentActive.current,
-                    currentUrl = currentSong?.displayThumbnail,
-                    nextUrl = crossfadeNextArtworkUrl,
-                    progress = artworkCrossfadeProgress,
-                    contentDescription = stringResource(Res.string.album_art),
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop,
-                )
-                if (!uiState.isLyricsVisible) {
-                    artworkOverlay(Modifier.fillMaxSize())
+        if (turntableMode && !showVideoSurface) {
+            TurntableStage(
+                artworkUrl = currentSong?.displayThumbnail,
+                nextArtworkUrl = crossfadeNextArtworkUrl,
+                crossfadeProgressProvider = artworkCrossfadeProgress,
+                contentDescription = stringResource(Res.string.album_art),
+                positionProvider = positionProvider,
+                duration = duration,
+                songId = currentSong?.id,
+                isPlaying = isPlaying,
+                spinActive = LocalPlayerContentActive.current,
+                canSeek = canSeek,
+                swipeEnabled = artworkSwipeEnabled,
+                swipeSensitivity = artworkSwipeSensitivity,
+                onPrevious = viewModel::previous,
+                onNext = viewModel::next,
+                onSeek = onSeek,
+                artworkOverlay = artworkOverlay.takeUnless { uiState.isLyricsVisible },
+                modifier =
+                    Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(start = startInset)
+                        .size(width = coverWidth - 16.dp, height = maxHeight)
+                        .padding(bottom = bottomInset),
+            )
+        } else {
+            Box(
+                modifier =
+                    Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(start = squareStart)
+                        .size(squareSide)
+                        .shadow(24.dp, SquareShape)
+                        .clip(SquareShape)
+                        .artworkSwipe(
+                            enabled = artworkSwipeEnabled,
+                            sensitivity = artworkSwipeSensitivity,
+                            onPrevious = viewModel::previous,
+                            onNext = viewModel::next,
+                        ).artworkSeekGestures(
+                            seekEnabled = false,
+                            stepMs = 0L,
+                            onTap = null,
+                            tapLabel = null,
+                            onDoubleTap = onArtworkDoubleTap,
+                            onSeek = {},
+                        ),
+            ) {
+                if (showVideoSurface) {
+                    platform.MusicVideoSurface(
+                        cornerRadius = 22.dp,
+                        fillContainer = true,
+                        showControls = true,
+                        useSurfaceView = false,
+                        onFullscreenClick = onToggleFullscreen,
+                        onPiPClick = {
+                            platform.enterPictureInPicture(
+                                isPlaying = isPlaying,
+                                hasVideo = true,
+                            )
+                        },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                } else {
+                    CrossfadeArtwork(
+                        animate = LocalPlayerContentActive.current,
+                        currentUrl = currentSong?.displayThumbnail,
+                        nextUrl = crossfadeNextArtworkUrl,
+                        progress = artworkCrossfadeProgress,
+                        contentDescription = stringResource(Res.string.album_art),
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                    )
+                    if (!uiState.isLyricsVisible) {
+                        artworkOverlay(Modifier.fillMaxSize())
+                    }
                 }
             }
         }

@@ -165,6 +165,22 @@ enum class PlayerType {
     VINTAGE,
     CLASSIC,
     MOCHY,
+    TURNTABLE,
+    IPOD,
+}
+
+enum class IpodTheme {
+    SILVER,
+    BLACK,
+    U2,
+    TRUE_DARK,
+}
+
+enum class IpodWheelColor {
+    THEME,
+    WHITE,
+    BLACK,
+    RED,
 }
 
 enum class MiniPlayerType {

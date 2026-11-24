@@ -169,6 +169,8 @@ private val enumTypes =
         DownloadedCollectionSortDirectionKey to SortDirection.entries.map { it.name },
         "appFont" to FontOption.entries.map { it.name },
         "playerType" to PlayerType.entries.map { it.name },
+        "ipodTheme" to IpodTheme.entries.map { it.name },
+        "ipodWheelColor" to IpodWheelColor.entries.map { it.name },
         "miniPlayerType" to MiniPlayerType.entries.map { it.name },
         "keepScreenOnMode" to KeepScreenOnMode.entries.map { it.name },
         AnimatedCoverResolutionKey to AnimatedCoverResolution.entries.map { it.name },

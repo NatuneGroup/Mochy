@@ -5816,4 +5816,71 @@
     <string name="mochy_module_not_configured">Not configured</string>
     <!-- Translators: Accessibility label for the vertical A to Z quick-jump scrubber in the Library screen. -->
     <string name="mochy_library_index_scrubber">Alphabetical index</string>
+    <!-- Translators: Player layout option showing a spinning vinyl platter and movable tonearm. -->
+    <string name="player_type_turntable">Turntable</string>
+    <!-- Translators: Player layout option modeled on a classic click-wheel portable music player. -->
+    <string name="player_type_ipod">iPod Classic</string>
+    <!-- Translators: Setting title choosing the shell finish of the iPod player style. -->
+    <string name="ipod_theme">iPod finish</string>
+    <!-- Translators: Silver finish option for the iPod player style. -->
+    <string name="ipod_theme_silver">Silver</string>
+    <!-- Translators: Black finish option for the iPod player style. -->
+    <string name="ipod_theme_black">Black</string>
+    <!-- Translators: U2 red-and-black finish option for the iPod player style. -->
+    <string name="ipod_theme_u2">U2 Edition</string>
+    <!-- Translators: True dark matte black finish option for the iPod player style. -->
+    <string name="ipod_theme_true_dark">True Dark</string>
+    <!-- Translators: Setting title choosing the color of the click wheel in the iPod player style. -->
+    <string name="ipod_wheel_color">Click wheel color</string>
+    <!-- Translators: Click wheel option that automatically follows the chosen iPod finish. -->
+    <string name="ipod_wheel_theme">Match finish</string>
+    <!-- Translators: White click wheel color option for the iPod player style. -->
+    <string name="ipod_wheel_white">White</string>
+    <!-- Translators: Black click wheel color option for the iPod player style. -->
+    <string name="ipod_wheel_black">Black</string>
+    <!-- Translators: Red click wheel color option for the iPod player style. -->
+    <string name="ipod_wheel_red">Red</string>
+    <!-- Translators: Setting toggle adding subtle edge shading to the iPod player shell. -->
+    <string name="ipod_shadow">Case vignette</string>
+    <!-- Translators: Supporting description for the iPod case vignette setting. -->
+    <string name="ipod_shadow_description">Add subtle shading along the edges of the iPod shell</string>
+    <!-- Translators: Setting toggle expanding the iPod screen to fill the upper half on tall phone displays. -->
+    <string name="ipod_tall_screen">Tall screen</string>
+    <!-- Translators: Supporting description for the iPod tall screen setting. -->
+    <string name="ipod_tall_screen_description">Stretch the screen to fill the upper half on phones</string>
+    <!-- Translators: Menu label in the iPod player style for browsing album artwork in 3D Cover Flow. -->
+    <string name="ipod_cover_flow">Cover Flow</string>
+    <!-- Translators: Menu label in the iPod player style for browsing the local music library. -->
+    <string name="ipod_music">Music</string>
+    <!-- Translators: Menu and header label in the iPod player style for the current track screen. -->
+    <string name="ipod_now_playing">Now Playing</string>
+    <!-- Translators: Menu and header label in the iPod player style for library playlists. -->
+    <string name="ipod_playlists">Playlists</string>
+    <!-- Translators: Menu and header label in the iPod player style for library artists. -->
+    <string name="ipod_artists">Artists</string>
+    <!-- Translators: Menu and header label in the iPod player style for library albums. -->
+    <string name="ipod_albums">Albums</string>
+    <!-- Translators: Menu and header label in the iPod player style for all library songs. -->
+    <string name="ipod_songs">Songs</string>
+    <!-- Translators: Menu and header label in the iPod player style for liked songs. -->
+    <string name="ipod_liked_songs">Liked Songs</string>
+    <!-- Translators: Menu action in the iPod player style that shuffles all songs in the library. -->
+    <string name="ipod_shuffle_songs">Shuffle Songs</string>
+    <!-- Translators: Placeholder row in the iPod menu while a library list is loading. -->
+    <string name="ipod_loading">Loading…</string>
+    <!-- Translators: Empty state shown in iPod Cover Flow and Albums when no albums exist in the library. -->
+    <string name="ipod_no_albums">No albums yet</string>
+    <!-- Translators: Empty state shown in the iPod Playlists list when no playlists exist. -->
+    <string name="ipod_no_playlists">No playlists yet</string>
+    <!-- Translators: Empty state shown in the iPod Artists list when no artists exist. -->
+    <string name="ipod_no_artists">No artists yet</string>
+    <!-- Translators: Empty state shown in the iPod Songs list when no songs exist. -->
+    <string name="ipod_no_songs">No songs yet</string>
+    <!-- Translators: Message shown when tracks for an album could not be loaded inside the iPod player. -->
+    <string name="ipod_album_load_failed">Could not load this album</string>
+    <!-- Translators: Pluralized track count subtitle shown on iPod playlists and artist rows. %1$d is the track count. -->
+    <plurals name="ipod_song_count">
+        <item quantity="one">%1$d song</item>
+        <item quantity="other">%1$d songs</item>
+    </plurals>
 </resources>

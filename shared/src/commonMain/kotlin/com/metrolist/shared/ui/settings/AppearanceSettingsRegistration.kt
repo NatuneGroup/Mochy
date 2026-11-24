@@ -21,6 +21,8 @@ import com.metrolist.shared.generated.resources.*
 import com.metrolist.shared.settings.AnimatedCoverResolution
 import com.metrolist.shared.settings.AppLayout
 import com.metrolist.shared.settings.DensityScale
+import com.metrolist.shared.settings.IpodTheme
+import com.metrolist.shared.settings.IpodWheelColor
 import com.metrolist.shared.settings.LibraryGridColumnsRange
 import com.metrolist.shared.settings.MiniPlayerType
 import com.metrolist.shared.settings.MusicVideoQuality
@@ -592,13 +594,17 @@ internal fun SettingsUiRegistryBuilder.registerAppearanceSettings(host: SharedSe
                     SettingsChoice(PlayerType.VINTAGE.name, stringResource(Res.string.player_type_vintage)),
                     SettingsChoice(PlayerType.CLASSIC.name, stringResource(Res.string.player_type_classic)),
                     SettingsChoice(PlayerType.MOCHY.name, stringResource(Res.string.player_type_mochy)),
+                    SettingsChoice(PlayerType.TURNTABLE.name, stringResource(Res.string.player_type_turntable)),
+                    SettingsChoice(PlayerType.IPOD.name, stringResource(Res.string.player_type_ipod)),
                 )
             }
         val selectedPlayerType =
             when {
                 host.platform != SettingsPlatform.DESKTOP -> settings.playerType
                 settings.playerType == PlayerType.CLASSIC -> PlayerType.VINTAGE
-                settings.playerType == PlayerType.MOCHY -> PlayerType.MODERN
+                settings.playerType == PlayerType.MOCHY ||
+                    settings.playerType == PlayerType.TURNTABLE ||
+                    settings.playerType == PlayerType.IPOD -> PlayerType.MODERN
                 else -> settings.playerType
             }
         val playerBackgroundChoices =
@@ -691,6 +697,50 @@ internal fun SettingsUiRegistryBuilder.registerAppearanceSettings(host: SharedSe
                         description = stringResource(Res.string.settings_swap_player_controls_description),
                         checked = settings.swapPlayerControls,
                     ) { settings.swapPlayerControls = it }
+                }
+            }
+            if (host.platform != SettingsPlatform.DESKTOP && selectedPlayerType == PlayerType.IPOD) {
+                val ipodThemeChoices =
+                    listOf(
+                        SettingsChoice(IpodTheme.SILVER.name, stringResource(Res.string.ipod_theme_silver)),
+                        SettingsChoice(IpodTheme.BLACK.name, stringResource(Res.string.ipod_theme_black)),
+                        SettingsChoice(IpodTheme.U2.name, stringResource(Res.string.ipod_theme_u2)),
+                        SettingsChoice(IpodTheme.TRUE_DARK.name, stringResource(Res.string.ipod_theme_true_dark)),
+                    )
+                val ipodWheelChoices =
+                    listOf(
+                        SettingsChoice(IpodWheelColor.THEME.name, stringResource(Res.string.ipod_wheel_theme)),
+                        SettingsChoice(IpodWheelColor.WHITE.name, stringResource(Res.string.ipod_wheel_white)),
+                        SettingsChoice(IpodWheelColor.BLACK.name, stringResource(Res.string.ipod_wheel_black)),
+                        SettingsChoice(IpodWheelColor.RED.name, stringResource(Res.string.ipod_wheel_red)),
+                    )
+                group("ipod", stringResource(Res.string.player_type_ipod)) {
+                    choice(
+                        id = "ipodTheme",
+                        title = stringResource(Res.string.ipod_theme),
+                        valueLabel = ipodThemeChoices.first { it.id == settings.ipodTheme.name }.label,
+                        choices = ipodThemeChoices,
+                        selectedChoiceId = settings.ipodTheme.name,
+                    ) { settings.ipodTheme = IpodTheme.valueOf(it) }
+                    choice(
+                        id = "ipodWheelColor",
+                        title = stringResource(Res.string.ipod_wheel_color),
+                        valueLabel = ipodWheelChoices.first { it.id == settings.ipodWheelColor.name }.label,
+                        choices = ipodWheelChoices,
+                        selectedChoiceId = settings.ipodWheelColor.name,
+                    ) { settings.ipodWheelColor = IpodWheelColor.valueOf(it) }
+                    switch(
+                        id = "ipodShadow",
+                        title = stringResource(Res.string.ipod_shadow),
+                        description = stringResource(Res.string.ipod_shadow_description),
+                        checked = settings.ipodShadow,
+                    ) { settings.ipodShadow = it }
+                    switch(
+                        id = "ipodTallScreen",
+                        title = stringResource(Res.string.ipod_tall_screen),
+                        description = stringResource(Res.string.ipod_tall_screen_description),
+                        checked = settings.ipodTallScreen,
+                    ) { settings.ipodTallScreen = it }
                 }
             }
             group("background", stringResource(Res.string.background)) {

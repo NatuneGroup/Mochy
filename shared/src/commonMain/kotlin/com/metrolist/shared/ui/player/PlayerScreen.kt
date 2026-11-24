@@ -243,6 +243,12 @@ import com.metrolist.shared.ui.player.mochy.FlagshipHandle
 import com.metrolist.shared.ui.player.mochy.FlagshipLandscapePlayer
 import com.metrolist.shared.ui.player.mochy.FlagshipTransport
 import com.metrolist.shared.ui.player.mochy.flagshipFontFamily
+import com.metrolist.shared.ui.player.mochy.ipod.IpodPlayerStyle
+import com.metrolist.shared.ui.player.mochy.ipod.isIpodWholeDevice
+import com.metrolist.shared.ui.player.mochy.ipod.rememberIpodLook
+import com.metrolist.shared.ui.player.mochy.turntable.TurntableControls
+import com.metrolist.shared.ui.player.mochy.turntable.TurntablePills
+import com.metrolist.shared.ui.player.mochy.turntable.TurntableStage
 import com.metrolist.shared.ui.theme.ComponentShapes
 import com.metrolist.shared.ui.theme.rememberMochyLook
 import com.metrolist.shared.ui.utils.supportsNativeBlur
@@ -675,10 +681,19 @@ fun PlayerScreen(
             )
 
     val playerType =
-        rememberMochyLook().playerType.let { if (isTv && it == PlayerType.MOCHY) PlayerType.MODERN else it }
+        rememberMochyLook().playerType.let {
+            if (isTv && (it == PlayerType.MOCHY || it == PlayerType.TURNTABLE || it == PlayerType.IPOD)) {
+                PlayerType.MODERN
+            } else {
+                it
+            }
+        }
     val usesMochyFlagship = playerType == PlayerType.MOCHY
-    val flagshipFont = if (usesMochyFlagship) flagshipFontFamily() else null
-    val usesFullscreenThumbnail = playerThumbnailStyle == PlayerThumbnailStyle.FULLSCREEN
+    val usesMochyTurntable = playerType == PlayerType.TURNTABLE
+    val usesIpodPlayer = playerType == PlayerType.IPOD
+    val usesMochyChrome = usesMochyFlagship || usesMochyTurntable
+    val flagshipFont = if (usesMochyChrome) flagshipFontFamily() else null
+    val usesFullscreenThumbnail = playerThumbnailStyle == PlayerThumbnailStyle.FULLSCREEN && !usesMochyTurntable && !usesIpodPlayer
     val prefersTallCover = usesFullscreenThumbnail && !isLandscape
     val playbackNetwork by PlaybackNetworkStateStore.state.collectAsState()
     val artworkAllowedOnNetwork = Settings.shared.isAnimatedArtworkAllowedOnNetwork(playbackNetwork)
@@ -787,6 +802,7 @@ fun PlayerScreen(
         targetValue =
             if (
                 isCanvasBackdropVisible ||
+                (usesMochyTurntable && !uiState.isLyricsVisible) ||
                 (
                     usesFullscreenThumbnail && currentSong?.displayThumbnail != null && !uiState.isLyricsVisible &&
                         !(
@@ -813,11 +829,20 @@ fun PlayerScreen(
         animationSpec = if (!playerContentState.isActive) snap() else spring(),
         label = "TextBackgroundColor",
     )
+    val ipodLook = if (usesIpodPlayer) rememberIpodLook() else null
+    val windowWidthDp = with(LocalDensity.current) { windowSize.width.toDp() }
+    val windowHeightDp = with(LocalDensity.current) { windowSize.height.toDp() }
+    val ipodLightIcons =
+        if (usesIpodPlayer && !isFullscreen && !showVideoSurface && !uiState.isLyricsVisible && ipodLook != null) {
+            ipodLook.body.light && !isIpodWholeDevice(windowWidthDp, windowHeightDp)
+        } else {
+            null
+        }
     platform.PlayerWindowEffects(
         hideSystemBars = shouldHideSystemBars,
         lockLandscape =
             !isTv && isFullscreen && !bottomSheetState.isCollapsed && !bottomSheetState.isDismissed && !isInPipMode,
-        lightStatusBars = (textBackgroundColor.luminance() < 0.5f).takeIf { playerContentState.isVisible },
+        lightStatusBars = (ipodLightIcons ?: (textBackgroundColor.luminance() < 0.5f)).takeIf { playerContentState.isVisible },
     )
 
     var canvasMinimalUi by rememberSaveable { mutableStateOf(false) }
@@ -935,7 +960,7 @@ fun PlayerScreen(
                     if (isImmersive) 16.dp else 0.dp,
                 )
             val portraitControlsHeight =
-                if (usesMochyFlagship) FlagshipBarHeight + FlagshipBarBottomGap else QueuePeekHeight + 16.dp
+                if (usesMochyChrome) FlagshipBarHeight + FlagshipBarBottomGap else QueuePeekHeight + 16.dp
             val queuePeekHeight = if (useLandscapeLayout) 0.dp else portraitControlsHeight + navigationBarBottomPadding
             val queueSheetState =
                 rememberBottomSheetState(
@@ -987,13 +1012,13 @@ fun PlayerScreen(
             val queueHandlesBack by remember(queueSheetState, useLandscapeLayout) {
                 derivedStateOf { !useLandscapeLayout && queueSheetState.progress > 0.2f }
             }
-            LaunchedEffect(usesMochyFlagship, useLandscapeLayout) {
-                if (!usesMochyFlagship || !useLandscapeLayout) {
+            LaunchedEffect(usesMochyChrome, useLandscapeLayout) {
+                if (!usesMochyChrome || !useLandscapeLayout) {
                     flagshipLandscapeQueueVisible = false
                 }
             }
             val onFlagshipArtworkDoubleTap: ((Offset) -> Unit)? =
-                if (usesMochyFlagship && currentSong != null) {
+                if (usesMochyChrome && currentSong != null) {
                     { rootPos ->
                         hapticManager.toggle(!isLiked)
                         likeBurstState.likeFromDoubleTap(
@@ -1005,7 +1030,7 @@ fun PlayerScreen(
                 } else {
                     null
                 }
-            val landscapeQueueVisible = useLandscapeLayout && !usesMochyFlagship && !queueSheetState.isCollapsed
+            val landscapeQueueVisible = useLandscapeLayout && !usesMochyChrome && !queueSheetState.isCollapsed
             // Phone landscape has no room above the controls, so cast and the audio/video switch move into the player menu.
             val landscapeMenuActions =
                 if (useLandscapeLayout && !isTv && !landscapeQueueVisible) {
@@ -1276,6 +1301,14 @@ fun PlayerScreen(
                                     )
                                 }
 
+                                if (usesMochyTurntable && !uiState.isLyricsVisible) {
+                                    Box(
+                                        Modifier
+                                            .fillMaxSize()
+                                            .background(Color.Black.copy(alpha = 0.48f)),
+                                    )
+                                }
+
                                 if (canRenderCanvasThumbnail && renderAnimatedCover && !showVideoSurface) {
                                     Box(Modifier.fillMaxSize()) {
                                         canvasLayers.Render(
@@ -1306,6 +1339,7 @@ fun PlayerScreen(
                         }
                     }
 
+                    val currentPosMs by viewModel.currentPosition.collectWhilePlayerActive(LocalPlayerPositionActive.current)
                     SharedTransitionLayout(
                         modifier =
                             Modifier
@@ -1353,8 +1387,24 @@ fun PlayerScreen(
                                 isCasting = castState.isConnected,
                                 isBuffering = castState.isBuffering,
                             )
+                        } else if (usesIpodPlayer && !showVideoSurface && !uiState.isLyricsVisible) {
+                            IpodPlayerStyle(
+                                active = contentActive,
+                                volumeControl =
+                                    platform.rememberFlagshipVolume(
+                                        session = playerConnection,
+                                        listening = contentActive,
+                                        useDeviceVolume = !castState.isConnected,
+                                    ),
+                                artworkCrossfade = artworkCrossfade,
+                                onCollapse = {
+                                    hapticManager.perform(HapticEvent.PRESS)
+                                    onClose()
+                                },
+                                modifier = Modifier.fillMaxSize(),
+                            )
                         } else if (useLandscapeLayout) {
-                            if (usesMochyFlagship) {
+                            if (usesMochyChrome) {
                                 FlagshipLandscapePlayer(
                                     viewModel = viewModel,
                                     queueSession = queueSession,
@@ -1414,6 +1464,10 @@ fun PlayerScreen(
                                     onNavigateToArtist = onNavigateToArtist,
                                     onNavigateToAlbum = onNavigateToAlbum,
                                     onNavigateToListenTogether = onNavigateToListenTogether,
+                                    turntableMode = usesMochyTurntable,
+                                    canSeek = !isListenTogetherGuest,
+                                    onSeek = viewModel::seekToPosition,
+                                    positionProvider = { currentPosMs },
                                 )
                             } else if (useTabletLayout || landscapeQueueVisible) {
                                 TabletPlayerContent(
@@ -1518,6 +1572,7 @@ fun PlayerScreen(
                                     portraitScroll.scrollTo(snapshotFlow { portraitScroll.maxValue }.first { it > 0 })
                                 }
                             }
+                            val isPortraitTurntableStage = usesMochyTurntable && !uiState.isLyricsVisible && !showVideoSurface
                             Column(
                                 modifier =
                                     Modifier
@@ -1535,10 +1590,18 @@ fun PlayerScreen(
                                         ).windowInsetsPadding(WindowInsets.safeDrawing)
                                         .windowInsetsPadding(
                                             WindowInsets.mandatorySystemGestures.only(WindowInsetsSides.Bottom),
-                                        ).padding(horizontal = if (usesMochyFlagship) 32.dp else 24.dp)
-                                        .padding(top = if (usesMochyFlagship) 0.dp else 16.dp),
+                                        ).padding(
+                                            horizontal =
+                                                when {
+                                                    usesMochyFlagship -> 32.dp
+                                                    isPortraitTurntableStage -> 0.dp
+                                                    usesMochyTurntable -> 28.dp
+                                                    else -> 24.dp
+                                                },
+                                        )
+                                        .padding(top = if (usesMochyChrome) 0.dp else 16.dp),
                             ) {
-                                if (usesMochyFlagship && !canvasMinimalUi) {
+                                if (usesMochyChrome && !canvasMinimalUi) {
                                     FlagshipHandle(
                                         color = textBackgroundColor,
                                         closing = bottomSheetState.targetAnchor != EXPANDED_ANCHOR,
@@ -1546,145 +1609,201 @@ fun PlayerScreen(
                                         modifier = Modifier.align(Alignment.CenterHorizontally),
                                     )
                                 }
-                                AnimatedContent(
-                                    targetState = uiState.isLyricsVisible,
-                                    transitionSpec = {
-                                        fadeIn(animationSpec = tween(400, delayMillis = 90))
-                                            .togetherWith(fadeOut(animationSpec = tween(400)))
-                                    },
-                                    label = "lyricsToggle",
-                                    modifier = Modifier.weight(1f),
-                                ) { showLyrics ->
-                                    if (showLyrics) {
-                                        LyricsViewWithPosition(
-                                            viewModel = viewModel,
-                                            lyrics = uiState.lyrics,
-                                            songwriters = uiState.lyricsSongwriters,
-                                            agents = uiState.lyricsAgents,
-                                            provider = uiState.lyricsProvider,
-                                            timingOffsetMs = uiState.lyricsOffsetMs,
+                                if (isPortraitTurntableStage) {
+                                    Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                                        TurntableStage(
+                                            artworkUrl = currentSong?.displayThumbnail,
+                                            nextArtworkUrl = crossfadeNextArtworkUrl,
+                                            crossfadeProgressProvider = artworkCrossfadeProgress,
+                                            contentDescription = stringResource(Res.string.album_art),
+                                            positionProvider = { currentPosMs },
+                                            duration = duration,
+                                            songId = currentSong?.id,
+                                            isPlaying = isPlaying,
+                                            spinActive = LocalPlayerContentActive.current,
+                                            canSeek = !isListenTogetherGuest,
+                                            swipeEnabled = artworkSwipeEnabled,
+                                            swipeSensitivity = Settings.shared.swipeSensitivity,
+                                            onPrevious = viewModel::previous,
+                                            onNext = viewModel::next,
                                             onSeek = viewModel::seekToPosition,
-                                            isLoading = uiState.isLyricsLoading,
-                                            textColor = textBackgroundColor,
-                                            isCasting = castState.isConnected,
-                                            isBuffering = castState.isBuffering,
-                                        )
-                                    } else {
-                                        Column(
+                                            artworkOverlay = artworkOverlay,
                                             modifier = Modifier.fillMaxSize(),
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                        ) {
-                                            AnimatedVisibility(
-                                                visible = !canvasMinimalUi,
-                                                enter = canvasControlsEnter,
-                                                exit = canvasControlsExit,
+                                        )
+                                        if (showVideoButton) {
+                                            VintageAudioVideoModeSwitcher(
+                                                songDescription = stringResource(Res.string.song),
+                                                videoDescription = stringResource(Res.string.video),
+                                                isVideoActive = isVideoModeActive,
+                                                isResolving = isVideoModeResolving,
+                                                contentColor = textBackgroundColor,
+                                                onSongClick = {
+                                                    hapticManager.perform(HapticEvent.PRESS)
+                                                    playerConnection?.setVideoMode(false)
+                                                },
+                                                onVideoClick = {
+                                                    hapticManager.perform(HapticEvent.PRESS)
+                                                    playerConnection?.setVideoMode(true)
+                                                },
+                                                modifier =
+                                                    Modifier
+                                                        .align(Alignment.TopCenter)
+                                                        .padding(top = 4.dp)
+                                                        .playerControlBlend(),
+                                            )
+                                        }
+                                    }
+                                    TurntableControls(
+                                        title = currentSong?.title ?: stringResource(Res.string.unknown),
+                                        artists = currentSong?.artists.orEmpty(),
+                                        isPlaying = isPlaying,
+                                        isLoading = isPlaybackLoading,
+                                        isLiked = isLiked,
+                                        menuOpen = showPlayerMenu,
+                                        onToggleMenu = {
+                                            hapticManager.perform(HapticEvent.PRESS)
+                                            showPlayerMenu = !showPlayerMenu
+                                        },
+                                        onToggleLike = {
+                                            hapticManager.toggle(!isLiked)
+                                            likeBurstState.likeFromButton(
+                                                slot = LikeSlot.PLAYER,
+                                                liked = isLiked,
+                                                toggleLike = toggleDisplayedLike,
+                                            )
+                                        },
+                                        onPlayPause = viewModel::togglePlayPause,
+                                        onPrevious = viewModel::previous,
+                                        onNext = viewModel::next,
+                                        onSongInfo = { if (currentSong != null) showSongDetails = true },
+                                        onNavigateToArtist = onNavigateToArtist,
+                                        contentColor = textBackgroundColor,
+                                        likeBurstState = likeBurstState,
+                                        modifier = Modifier.padding(top = 8.dp),
+                                    )
+                                    Spacer(modifier = Modifier.height(portraitControlsHeight + 16.dp))
+                                } else {
+                                    AnimatedContent(
+                                        targetState = uiState.isLyricsVisible,
+                                        transitionSpec = {
+                                            fadeIn(animationSpec = tween(400, delayMillis = 90))
+                                                .togetherWith(fadeOut(animationSpec = tween(400)))
+                                        },
+                                        label = "lyricsToggle",
+                                        modifier = Modifier.weight(1f),
+                                    ) { showLyrics ->
+                                        if (showLyrics) {
+                                            LyricsViewWithPosition(
+                                                viewModel = viewModel,
+                                                lyrics = uiState.lyrics,
+                                                songwriters = uiState.lyricsSongwriters,
+                                                agents = uiState.lyricsAgents,
+                                                provider = uiState.lyricsProvider,
+                                                timingOffsetMs = uiState.lyricsOffsetMs,
+                                                onSeek = viewModel::seekToPosition,
+                                                isLoading = uiState.isLyricsLoading,
+                                                textColor = textBackgroundColor,
+                                                isCasting = castState.isConnected,
+                                                isBuffering = castState.isBuffering,
+                                            )
+                                        } else {
+                                            Column(
+                                                modifier = Modifier.fillMaxSize(),
+                                                horizontalAlignment = Alignment.CenterHorizontally,
                                             ) {
-                                                Box(
-                                                    modifier =
-                                                        Modifier
-                                                            .fillMaxWidth()
-                                                            .padding(
-                                                                bottom = if (compactPortraitHeight) 0.dp else 12.dp,
-                                                            ).height(48.dp),
-                                                    contentAlignment = Alignment.Center,
+                                                AnimatedVisibility(
+                                                    visible = !canvasMinimalUi,
+                                                    enter = canvasControlsEnter,
+                                                    exit = canvasControlsExit,
                                                 ) {
-                                                    val songText =
-                                                        stringResource(Res.string.song)
-                                                    val videoText =
-                                                        stringResource(Res.string.video)
-                                                    val isVideoActive = isVideoModeActive
-                                                    val isVideoResolving = isVideoModeResolving
-                                                    val isResolvingToVideo = isVideoResolving && !isVideoActive
-                                                    val isResolvingToSong = isVideoResolving && isVideoActive
+                                                    Box(
+                                                        modifier =
+                                                            Modifier
+                                                                .fillMaxWidth()
+                                                                .padding(
+                                                                    bottom = if (compactPortraitHeight) 0.dp else 12.dp,
+                                                                ).height(48.dp),
+                                                        contentAlignment = Alignment.Center,
+                                                    ) {
+                                                        val songText =
+                                                            stringResource(Res.string.song)
+                                                        val videoText =
+                                                            stringResource(Res.string.video)
+                                                        val isVideoActive = isVideoModeActive
+                                                        val isVideoResolving = isVideoModeResolving
+                                                        val isResolvingToVideo = isVideoResolving && !isVideoActive
+                                                        val isResolvingToSong = isVideoResolving && isVideoActive
 
-                                                    if (showVideoButton && playerType == PlayerType.CLASSIC) {
-                                                        VintageAudioVideoModeSwitcher(
-                                                            songDescription = songText,
-                                                            videoDescription = videoText,
-                                                            isVideoActive = isVideoActive,
-                                                            isResolving = isVideoResolving,
-                                                            contentColor = textBackgroundColor,
-                                                            onSongClick = {
-                                                                hapticManager.perform(HapticEvent.PRESS)
-                                                                playerConnection?.setVideoMode(false)
-                                                            },
-                                                            onVideoClick = {
-                                                                hapticManager.perform(HapticEvent.PRESS)
-                                                                playerConnection?.setVideoMode(true)
-                                                            },
-                                                            modifier = Modifier.playerControlBlend(),
-                                                        )
-                                                    }
-
-                                                    if (showVideoButton && playerType != PlayerType.CLASSIC) {
-                                                        ButtonGroup(
-                                                            overflowIndicator = { menuState ->
-                                                                ButtonGroupDefaults.OverflowIndicator(menuState)
-                                                            },
-                                                            horizontalArrangement =
-                                                                Arrangement.spacedBy(
-                                                                    ButtonGroupDefaults.ConnectedSpaceBetween,
-                                                                ),
-                                                            modifier = Modifier.height(40.dp),
-                                                        ) {
-                                                            val songSelected = !isVideoActive
-                                                            customItem(
-                                                                buttonGroupContent = {
-                                                                    val interactionSource = remember { MutableInteractionSource() }
-                                                                    ToggleButton(
-                                                                        interactionSource = interactionSource,
-                                                                        checked = songSelected,
-                                                                        enabled = !isVideoResolving,
-                                                                        onCheckedChange = {
-                                                                            hapticManager.perform(HapticEvent.PRESS)
-                                                                            playerConnection?.setVideoMode(false)
-                                                                        },
-                                                                        shapes = staticConnectedLeadingButtonShapes(),
-                                                                        contentPadding = PaddingValues(0.dp),
-                                                                        colors =
-                                                                            ToggleButtonDefaults.colors(
-                                                                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                                                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                                                checkedContainerColor = MaterialTheme.colorScheme.primary,
-                                                                                checkedContentColor = MaterialTheme.colorScheme.onPrimary,
-                                                                                disabledContainerColor =
-                                                                                    MaterialTheme.colorScheme.surfaceVariant,
-                                                                                disabledContentColor =
-                                                                                    MaterialTheme.colorScheme.onSurfaceVariant,
-                                                                            ),
-                                                                        modifier =
-                                                                            Modifier
-                                                                                .size(
-                                                                                    width = 46.dp,
-                                                                                    height = 40.dp,
-                                                                                ).animateWidth(interactionSource, 12.dp)
-                                                                                .playerControlBlend(),
-                                                                    ) {
-                                                                        if (isResolvingToSong && LocalPlayerContentActive.current) {
-                                                                            LoadingIndicator(
-                                                                                modifier = Modifier.size(18.dp),
-                                                                                color = MaterialTheme.colorScheme.primary,
-                                                                            )
-                                                                        } else {
-                                                                            Icon(
-                                                                                imageVector =
-                                                                                    if (songSelected) {
-                                                                                        MetrolistIcons.Filled.Headphones
-                                                                                    } else {
-                                                                                        MetrolistIcons.Outlined.Headphones
-                                                                                    },
-                                                                                contentDescription = songText,
-                                                                                modifier = Modifier.size(20.dp),
-                                                                            )
-                                                                        }
-                                                                    }
+                                                        if (showVideoButton && playerType == PlayerType.CLASSIC) {
+                                                            VintageAudioVideoModeSwitcher(
+                                                                songDescription = songText,
+                                                                videoDescription = videoText,
+                                                                isVideoActive = isVideoActive,
+                                                                isResolving = isVideoResolving,
+                                                                contentColor = textBackgroundColor,
+                                                                onSongClick = {
+                                                                    hapticManager.perform(HapticEvent.PRESS)
+                                                                    playerConnection?.setVideoMode(false)
                                                                 },
-                                                                menuContent = {
-                                                                    DropdownMenuItem(
-                                                                        leadingIcon = {
+                                                                onVideoClick = {
+                                                                    hapticManager.perform(HapticEvent.PRESS)
+                                                                    playerConnection?.setVideoMode(true)
+                                                                },
+                                                                modifier = Modifier.playerControlBlend(),
+                                                            )
+                                                        }
+
+                                                        if (showVideoButton && playerType != PlayerType.CLASSIC) {
+                                                            ButtonGroup(
+                                                                overflowIndicator = { menuState ->
+                                                                    ButtonGroupDefaults.OverflowIndicator(menuState)
+                                                                },
+                                                                horizontalArrangement =
+                                                                    Arrangement.spacedBy(
+                                                                        ButtonGroupDefaults.ConnectedSpaceBetween,
+                                                                    ),
+                                                                modifier = Modifier.height(40.dp),
+                                                            ) {
+                                                                val songSelected = !isVideoActive
+                                                                customItem(
+                                                                    buttonGroupContent = {
+                                                                        val interactionSource = remember { MutableInteractionSource() }
+                                                                        ToggleButton(
+                                                                            interactionSource = interactionSource,
+                                                                            checked = songSelected,
+                                                                            enabled = !isVideoResolving,
+                                                                            onCheckedChange = {
+                                                                                hapticManager.perform(HapticEvent.PRESS)
+                                                                                playerConnection?.setVideoMode(false)
+                                                                            },
+                                                                            shapes = staticConnectedLeadingButtonShapes(),
+                                                                            contentPadding = PaddingValues(0.dp),
+                                                                            colors =
+                                                                                ToggleButtonDefaults.colors(
+                                                                                    containerColor =
+                                                                                        MaterialTheme.colorScheme.surfaceVariant,
+                                                                                    contentColor =
+                                                                                        MaterialTheme.colorScheme.onSurfaceVariant,
+                                                                                    checkedContainerColor =
+                                                                                        MaterialTheme.colorScheme.primary,
+                                                                                    checkedContentColor =
+                                                                                        MaterialTheme.colorScheme.onPrimary,
+                                                                                    disabledContainerColor =
+                                                                                        MaterialTheme.colorScheme.surfaceVariant,
+                                                                                    disabledContentColor =
+                                                                                        MaterialTheme.colorScheme.onSurfaceVariant,
+                                                                                ),
+                                                                            modifier =
+                                                                                Modifier
+                                                                                    .size(
+                                                                                        width = 46.dp,
+                                                                                        height = 40.dp,
+                                                                                    ).animateWidth(interactionSource, 12.dp)
+                                                                                    .playerControlBlend(),
+                                                                        ) {
                                                                             if (isResolvingToSong && LocalPlayerContentActive.current) {
                                                                                 LoadingIndicator(
-                                                                                    modifier = Modifier.size(20.dp),
+                                                                                    modifier = Modifier.size(18.dp),
                                                                                     color = MaterialTheme.colorScheme.primary,
                                                                                 )
                                                                             } else {
@@ -1695,77 +1814,81 @@ fun PlayerScreen(
                                                                                         } else {
                                                                                             MetrolistIcons.Outlined.Headphones
                                                                                         },
-                                                                                    contentDescription = null,
+                                                                                    contentDescription = songText,
+                                                                                    modifier = Modifier.size(20.dp),
                                                                                 )
                                                                             }
-                                                                        },
-                                                                        text = { Text(songText) },
-                                                                        enabled = !isVideoResolving,
-                                                                        onClick = {
-                                                                            hapticManager.perform(HapticEvent.PRESS)
-                                                                            playerConnection?.setVideoMode(false)
-                                                                        },
-                                                                    )
-                                                                },
-                                                            )
-
-                                                            customItem(
-                                                                buttonGroupContent = {
-                                                                    val interactionSource = remember { MutableInteractionSource() }
-                                                                    ToggleButton(
-                                                                        interactionSource = interactionSource,
-                                                                        checked = isVideoActive,
-                                                                        enabled = showVideoButton && !isVideoResolving,
-                                                                        onCheckedChange = {
-                                                                            hapticManager.perform(HapticEvent.PRESS)
-                                                                            playerConnection?.setVideoMode(true)
-                                                                        },
-                                                                        shapes = staticConnectedTrailingButtonShapes(),
-                                                                        contentPadding = PaddingValues(0.dp),
-                                                                        colors =
-                                                                            ToggleButtonDefaults.colors(
-                                                                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                                                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                                                checkedContainerColor = MaterialTheme.colorScheme.primary,
-                                                                                checkedContentColor = MaterialTheme.colorScheme.onPrimary,
-                                                                                disabledContainerColor =
-                                                                                    MaterialTheme.colorScheme.surfaceVariant,
-                                                                                disabledContentColor =
-                                                                                    MaterialTheme.colorScheme.onSurfaceVariant,
-                                                                            ),
-                                                                        modifier =
-                                                                            Modifier
-                                                                                .size(
-                                                                                    width = 46.dp,
-                                                                                    height = 40.dp,
-                                                                                ).animateWidth(interactionSource, 12.dp)
-                                                                                .playerControlBlend(),
-                                                                    ) {
-                                                                        if (isResolvingToVideo && LocalPlayerContentActive.current) {
-                                                                            LoadingIndicator(
-                                                                                modifier = Modifier.size(18.dp),
-                                                                                color = MaterialTheme.colorScheme.primary,
-                                                                            )
-                                                                        } else {
-                                                                            Icon(
-                                                                                imageVector =
-                                                                                    if (isVideoActive) {
-                                                                                        MetrolistIcons.Filled.SmartDisplay
-                                                                                    } else {
-                                                                                        MetrolistIcons.Outlined.SmartDisplay
-                                                                                    },
-                                                                                contentDescription = videoText,
-                                                                                modifier = Modifier.size(20.dp),
-                                                                            )
                                                                         }
-                                                                    }
-                                                                },
-                                                                menuContent = {
-                                                                    DropdownMenuItem(
-                                                                        leadingIcon = {
+                                                                    },
+                                                                    menuContent = {
+                                                                        DropdownMenuItem(
+                                                                            leadingIcon = {
+                                                                                if (isResolvingToSong && LocalPlayerContentActive.current) {
+                                                                                    LoadingIndicator(
+                                                                                        modifier = Modifier.size(20.dp),
+                                                                                        color = MaterialTheme.colorScheme.primary,
+                                                                                    )
+                                                                                } else {
+                                                                                    Icon(
+                                                                                        imageVector =
+                                                                                            if (songSelected) {
+                                                                                                MetrolistIcons.Filled.Headphones
+                                                                                            } else {
+                                                                                                MetrolistIcons.Outlined.Headphones
+                                                                                            },
+                                                                                        contentDescription = null,
+                                                                                    )
+                                                                                }
+                                                                            },
+                                                                            text = { Text(songText) },
+                                                                            enabled = !isVideoResolving,
+                                                                            onClick = {
+                                                                                hapticManager.perform(HapticEvent.PRESS)
+                                                                                playerConnection?.setVideoMode(false)
+                                                                            },
+                                                                        )
+                                                                    },
+                                                                )
+
+                                                                customItem(
+                                                                    buttonGroupContent = {
+                                                                        val interactionSource = remember { MutableInteractionSource() }
+                                                                        ToggleButton(
+                                                                            interactionSource = interactionSource,
+                                                                            checked = isVideoActive,
+                                                                            enabled = showVideoButton && !isVideoResolving,
+                                                                            onCheckedChange = {
+                                                                                hapticManager.perform(HapticEvent.PRESS)
+                                                                                playerConnection?.setVideoMode(true)
+                                                                            },
+                                                                            shapes = staticConnectedTrailingButtonShapes(),
+                                                                            contentPadding = PaddingValues(0.dp),
+                                                                            colors =
+                                                                                ToggleButtonDefaults.colors(
+                                                                                    containerColor =
+                                                                                        MaterialTheme.colorScheme.surfaceVariant,
+                                                                                    contentColor =
+                                                                                        MaterialTheme.colorScheme.onSurfaceVariant,
+                                                                                    checkedContainerColor =
+                                                                                        MaterialTheme.colorScheme.primary,
+                                                                                    checkedContentColor =
+                                                                                        MaterialTheme.colorScheme.onPrimary,
+                                                                                    disabledContainerColor =
+                                                                                        MaterialTheme.colorScheme.surfaceVariant,
+                                                                                    disabledContentColor =
+                                                                                        MaterialTheme.colorScheme.onSurfaceVariant,
+                                                                                ),
+                                                                            modifier =
+                                                                                Modifier
+                                                                                    .size(
+                                                                                        width = 46.dp,
+                                                                                        height = 40.dp,
+                                                                                    ).animateWidth(interactionSource, 12.dp)
+                                                                                    .playerControlBlend(),
+                                                                        ) {
                                                                             if (isResolvingToVideo && LocalPlayerContentActive.current) {
                                                                                 LoadingIndicator(
-                                                                                    modifier = Modifier.size(20.dp),
+                                                                                    modifier = Modifier.size(18.dp),
                                                                                     color = MaterialTheme.colorScheme.primary,
                                                                                 )
                                                                             } else {
@@ -1776,193 +1899,327 @@ fun PlayerScreen(
                                                                                         } else {
                                                                                             MetrolistIcons.Outlined.SmartDisplay
                                                                                         },
-                                                                                    contentDescription = null,
+                                                                                    contentDescription = videoText,
+                                                                                    modifier = Modifier.size(20.dp),
                                                                                 )
                                                                             }
-                                                                        },
-                                                                        text = { Text(videoText) },
-                                                                        enabled = showVideoButton && !isVideoResolving,
-                                                                        onClick = {
-                                                                            hapticManager.perform(HapticEvent.PRESS)
-                                                                            playerConnection?.setVideoMode(true)
-                                                                        },
-                                                                    )
-                                                                },
-                                                            )
-                                                        }
-                                                    }
-
-                                                    if (!showVideoButton && playerType == PlayerType.CLASSIC) {
-                                                        Column(
-                                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                                            modifier = Modifier.align(Alignment.Center).padding(horizontal = 52.dp),
-                                                        ) {
-                                                            Text(
-                                                                text = stringResource(Res.string.now_playing),
-                                                                style = MaterialTheme.typography.titleMedium,
-                                                                color = textBackgroundColor,
-                                                                maxLines = 1,
-                                                            )
-                                                            uiState.queueTitle?.takeIf { it.isNotBlank() }?.let { playingFrom ->
-                                                                Text(
-                                                                    text = playingFrom,
-                                                                    style = MaterialTheme.typography.titleMedium,
-                                                                    color = textBackgroundColor.copy(alpha = 0.8f),
-                                                                    maxLines = 1,
-                                                                    modifier =
-                                                                        Modifier.playbackMarquee(
-                                                                            iterations = if (LocalPlayerContentActive.current) 1 else 0,
-                                                                            initialDelayMillis = 3000,
-                                                                            velocity = 30.dp,
-                                                                        ),
+                                                                        }
+                                                                    },
+                                                                    menuContent = {
+                                                                        DropdownMenuItem(
+                                                                            leadingIcon = {
+                                                                                if (
+                                                                                    isResolvingToVideo &&
+                                                                                    LocalPlayerContentActive.current
+                                                                                ) {
+                                                                                    LoadingIndicator(
+                                                                                        modifier = Modifier.size(20.dp),
+                                                                                        color = MaterialTheme.colorScheme.primary,
+                                                                                    )
+                                                                                } else {
+                                                                                    Icon(
+                                                                                        imageVector =
+                                                                                            if (isVideoActive) {
+                                                                                                MetrolistIcons.Filled.SmartDisplay
+                                                                                            } else {
+                                                                                                MetrolistIcons.Outlined.SmartDisplay
+                                                                                            },
+                                                                                        contentDescription = null,
+                                                                                    )
+                                                                                }
+                                                                            },
+                                                                            text = { Text(videoText) },
+                                                                            enabled = showVideoButton && !isVideoResolving,
+                                                                            onClick = {
+                                                                                hapticManager.perform(HapticEvent.PRESS)
+                                                                                playerConnection?.setVideoMode(true)
+                                                                            },
+                                                                        )
+                                                                    },
                                                                 )
                                                             }
                                                         }
-                                                    }
 
-                                                    if (!usesMochyFlagship) {
-                                                        FilledIconButton(
-                                                            onClick = {
-                                                                hapticManager.perform(HapticEvent.PRESS)
-                                                                onClose()
-                                                            },
-                                                            shapes = IconButtonDefaults.shapes(shape = CircleShape),
-                                                            colors =
-                                                                IconButtonDefaults.filledIconButtonColors(
-                                                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                                                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                                ),
-                                                            modifier =
-                                                                Modifier
-                                                                    .align(Alignment.CenterStart)
-                                                                    .size(36.dp)
-                                                                    .playerControlBlend(),
-                                                        ) {
-                                                            Icon(
-                                                                imageVector = MetrolistIcons.Outlined.KeyboardArrowDown,
-                                                                contentDescription = stringResource(Res.string.collapse),
-                                                                modifier = Modifier.size(24.dp),
-                                                            )
+                                                        if (!showVideoButton && playerType == PlayerType.CLASSIC) {
+                                                            Column(
+                                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                                modifier = Modifier.align(Alignment.Center).padding(horizontal = 52.dp),
+                                                            ) {
+                                                                Text(
+                                                                    text = stringResource(Res.string.now_playing),
+                                                                    style = MaterialTheme.typography.titleMedium,
+                                                                    color = textBackgroundColor,
+                                                                    maxLines = 1,
+                                                                )
+                                                                uiState.queueTitle?.takeIf { it.isNotBlank() }?.let { playingFrom ->
+                                                                    Text(
+                                                                        text = playingFrom,
+                                                                        style = MaterialTheme.typography.titleMedium,
+                                                                        color = textBackgroundColor.copy(alpha = 0.8f),
+                                                                        maxLines = 1,
+                                                                        modifier =
+                                                                            Modifier.playbackMarquee(
+                                                                                iterations = if (LocalPlayerContentActive.current) 1 else 0,
+                                                                                initialDelayMillis = 3000,
+                                                                                velocity = 30.dp,
+                                                                            ),
+                                                                    )
+                                                                }
+                                                            }
                                                         }
-                                                    }
 
-                                                    Row(
-                                                        modifier = Modifier.align(Alignment.CenterEnd),
-                                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                        verticalAlignment = Alignment.CenterVertically,
-                                                    ) {
-                                                        if (!isTv && !isListenTogetherGuest && platform.supportsCasting &&
-                                                            Settings.shared.isPlayerCastButtonVisible
-                                                        ) {
+                                                        if (!usesMochyChrome) {
                                                             FilledIconButton(
                                                                 onClick = {
                                                                     hapticManager.perform(HapticEvent.PRESS)
-                                                                    openCastDialog()
+                                                                    onClose()
                                                                 },
                                                                 shapes = IconButtonDefaults.shapes(shape = CircleShape),
                                                                 colors =
                                                                     IconButtonDefaults.filledIconButtonColors(
-                                                                        containerColor =
-                                                                            if (castState.isConnected) {
-                                                                                MaterialTheme.colorScheme.primary
-                                                                            } else {
-                                                                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                                                                            },
-                                                                        contentColor =
-                                                                            if (castState.isConnected) {
-                                                                                MaterialTheme.colorScheme.onPrimary
-                                                                            } else {
-                                                                                MaterialTheme.colorScheme.onSurfaceVariant
-                                                                            },
+                                                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                                                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                                                                     ),
-                                                                modifier = Modifier.size(36.dp).playerControlBlend(),
+                                                                modifier =
+                                                                    Modifier
+                                                                        .align(Alignment.CenterStart)
+                                                                        .size(36.dp)
+                                                                        .playerControlBlend(),
                                                             ) {
                                                                 Icon(
-                                                                    imageVector =
-                                                                        if (castState.isConnected) {
-                                                                            MetrolistIcons.Filled.Cast
-                                                                        } else {
-                                                                            MetrolistIcons.Outlined.Cast
-                                                                        },
-                                                                    contentDescription = stringResource(Res.string.cast),
-                                                                    modifier = Modifier.size(20.dp),
+                                                                    imageVector = MetrolistIcons.Outlined.KeyboardArrowDown,
+                                                                    contentDescription = stringResource(Res.string.collapse),
+                                                                    modifier = Modifier.size(24.dp),
                                                                 )
+                                                            }
+                                                        }
+
+                                                        Row(
+                                                            modifier = Modifier.align(Alignment.CenterEnd),
+                                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                        ) {
+                                                            if (!isTv && !isListenTogetherGuest && platform.supportsCasting &&
+                                                                Settings.shared.isPlayerCastButtonVisible
+                                                            ) {
+                                                                FilledIconButton(
+                                                                    onClick = {
+                                                                        hapticManager.perform(HapticEvent.PRESS)
+                                                                        openCastDialog()
+                                                                    },
+                                                                    shapes = IconButtonDefaults.shapes(shape = CircleShape),
+                                                                    colors =
+                                                                        IconButtonDefaults.filledIconButtonColors(
+                                                                            containerColor =
+                                                                                if (castState.isConnected) {
+                                                                                    MaterialTheme.colorScheme.primary
+                                                                                } else {
+                                                                                    MaterialTheme.colorScheme.surfaceVariant.copy(
+                                                                                        alpha = 0.5f,
+                                                                                    )
+                                                                                },
+                                                                            contentColor =
+                                                                                if (castState.isConnected) {
+                                                                                    MaterialTheme.colorScheme.onPrimary
+                                                                                } else {
+                                                                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                                                                },
+                                                                        ),
+                                                                    modifier = Modifier.size(36.dp).playerControlBlend(),
+                                                                ) {
+                                                                    Icon(
+                                                                        imageVector =
+                                                                            if (castState.isConnected) {
+                                                                                MetrolistIcons.Filled.Cast
+                                                                            } else {
+                                                                                MetrolistIcons.Outlined.Cast
+                                                                            },
+                                                                        contentDescription = stringResource(Res.string.cast),
+                                                                        modifier = Modifier.size(20.dp),
+                                                                    )
+                                                                }
                                                             }
                                                         }
                                                     }
                                                 }
-                                            }
 
-                                            Column(
-                                                modifier = Modifier.weight(1f),
-                                                horizontalAlignment = Alignment.CenterHorizontally,
-                                                verticalArrangement =
-                                                    if (usesFullscreenThumbnail) {
-                                                        Arrangement.Bottom
-                                                    } else {
-                                                        Arrangement.Center
-                                                    },
-                                            ) {
-                                                Box(
-                                                    contentAlignment = Alignment.Center,
-                                                    modifier =
-                                                        Modifier
-                                                            .fillMaxWidth()
-                                                            .weight(1f, fill = usesCanvasThumbnail || usesFullscreenThumbnail)
-                                                            .artworkSwipe(
-                                                                enabled = artworkSwipeEnabled,
-                                                                sensitivity = Settings.shared.swipeSensitivity,
-                                                                onPrevious = viewModel::previous,
-                                                                onNext = viewModel::next,
-                                                            ).artworkSeekGestures(
-                                                                seekEnabled = !isListenTogetherGuest,
-                                                                stepMs = artworkSeekStepMs,
-                                                                onTap =
-                                                                    if (isCanvasBackdropVisible && allowArtworkExpansion) {
-                                                                        { canvasMinimalUi = !canvasMinimalUi }
-                                                                    } else {
-                                                                        null
-                                                                    },
-                                                                tapLabel =
-                                                                    if (isCanvasBackdropVisible && allowArtworkExpansion) {
-                                                                        stringResource(
-                                                                            if (canvasMinimalUi) Res.string.expand else Res.string.collapse,
-                                                                        )
-                                                                    } else {
-                                                                        null
-                                                                    },
-                                                                progressive = Settings.shared.seekExtraSeconds,
-                                                                onDoubleTap = onFlagshipArtworkDoubleTap,
-                                                                onSeek = onArtworkSeek,
-                                                            ),
+                                                Column(
+                                                    modifier = Modifier.weight(1f),
+                                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                                    verticalArrangement =
+                                                        if (usesFullscreenThumbnail) {
+                                                            Arrangement.Bottom
+                                                        } else {
+                                                            Arrangement.Center
+                                                        },
                                                 ) {
-                                                    if (showVideoSurface) {
-                                                        platform.MusicVideoSurface(
-                                                            cornerRadius = 0.dp,
-                                                            fillContainer = true,
-                                                            showControls = true,
-                                                            useSurfaceView = false,
-                                                            onFullscreenClick = onToggleFullscreen,
-                                                            onPiPClick = {
-                                                                platform.enterPictureInPicture(
-                                                                    isPlaying = isPlaying,
-                                                                    hasVideo = true,
-                                                                )
-                                                            },
-                                                            modifier =
-                                                                Modifier.requiredWidthIn(max = windowWidth),
-                                                        )
-                                                    } else if (
-                                                        !usesFullscreenThumbnail &&
-                                                        !usesCanvasThumbnail &&
-                                                        !artworkBesideTitle &&
-                                                        currentSong?.displayThumbnail != null &&
-                                                        !(
-                                                            isVideoModeActive &&
-                                                                videoPlaybackResource?.hasVideo == true &&
-                                                                bottomSheetState.isCollapsed
-                                                        )
+                                                    Box(
+                                                        contentAlignment = Alignment.Center,
+                                                        modifier =
+                                                            Modifier
+                                                                .fillMaxWidth()
+                                                                .weight(1f, fill = usesCanvasThumbnail || usesFullscreenThumbnail)
+                                                                .artworkSwipe(
+                                                                    enabled = artworkSwipeEnabled,
+                                                                    sensitivity = Settings.shared.swipeSensitivity,
+                                                                    onPrevious = viewModel::previous,
+                                                                    onNext = viewModel::next,
+                                                                ).artworkSeekGestures(
+                                                                    seekEnabled = !isListenTogetherGuest,
+                                                                    stepMs = artworkSeekStepMs,
+                                                                    onTap =
+                                                                        if (isCanvasBackdropVisible && allowArtworkExpansion) {
+                                                                            { canvasMinimalUi = !canvasMinimalUi }
+                                                                        } else {
+                                                                            null
+                                                                        },
+                                                                    tapLabel =
+                                                                        if (isCanvasBackdropVisible && allowArtworkExpansion) {
+                                                                            stringResource(
+                                                                                if (canvasMinimalUi) {
+                                                                                    Res.string.expand
+                                                                                } else {
+                                                                                    Res.string.collapse
+                                                                                },
+                                                                            )
+                                                                        } else {
+                                                                            null
+                                                                        },
+                                                                    progressive = Settings.shared.seekExtraSeconds,
+                                                                    onDoubleTap = onFlagshipArtworkDoubleTap,
+                                                                    onSeek = onArtworkSeek,
+                                                                ),
                                                     ) {
+                                                        if (showVideoSurface) {
+                                                            platform.MusicVideoSurface(
+                                                                cornerRadius = 0.dp,
+                                                                fillContainer = true,
+                                                                showControls = true,
+                                                                useSurfaceView = false,
+                                                                onFullscreenClick = onToggleFullscreen,
+                                                                onPiPClick = {
+                                                                    platform.enterPictureInPicture(
+                                                                        isPlaying = isPlaying,
+                                                                        hasVideo = true,
+                                                                    )
+                                                                },
+                                                                modifier =
+                                                                    Modifier.requiredWidthIn(max = windowWidth),
+                                                            )
+                                                        } else if (
+                                                            !usesFullscreenThumbnail &&
+                                                            !usesCanvasThumbnail &&
+                                                            !artworkBesideTitle &&
+                                                            currentSong?.displayThumbnail != null &&
+                                                            !(
+                                                                isVideoModeActive &&
+                                                                    videoPlaybackResource?.hasVideo == true &&
+                                                                    bottomSheetState.isCollapsed
+                                                            )
+                                                        ) {
+                                                            with(sharedTransitionScope) {
+                                                                Box(
+                                                                    modifier =
+                                                                        Modifier
+                                                                            .sharedElement(
+                                                                                sharedContentState =
+                                                                                    rememberSharedContentState(
+                                                                                        ALBUM_ART_SHARED_KEY,
+                                                                                    ),
+                                                                                animatedVisibilityScope = this@AnimatedContent,
+                                                                                boundsTransform = albumArtBoundsTransform,
+                                                                                clipInOverlayDuringTransition = OverlayClip(albumArtShape),
+                                                                            ).aspectRatio(1f)
+                                                                            .clip(albumArtShape),
+                                                                ) {
+                                                                    CrossfadeArtwork(
+                                                                        animate = LocalPlayerContentActive.current,
+                                                                        currentUrl = currentSong.displayThumbnail,
+                                                                        nextUrl = crossfadeNextArtworkUrl,
+                                                                        progress = artworkCrossfadeProgress,
+                                                                        contentDescription = stringResource(Res.string.album_art),
+                                                                        modifier = Modifier.fillMaxSize(),
+                                                                        contentScale = ContentScale.Crop,
+                                                                    )
+                                                                    if (!uiState.isLyricsVisible) artworkOverlay(Modifier.fillMaxSize())
+                                                                }
+                                                            }
+                                                        }
+                                                        SeekFeedbackOverlay(
+                                                            feedback = seekFeedback,
+                                                            visible = seekFeedbackVisible,
+                                                        )
+                                                    }
+
+                                                    ActiveLyricsLine(
+                                                        viewModel = viewModel,
+                                                        lyrics = uiState.lyrics,
+                                                        songId = currentSong?.id,
+                                                        timingOffsetMs = uiState.lyricsOffsetMs,
+                                                        isPlaying = isPlaying,
+                                                        showLyrics = Settings.shared.showLyricsOnPlayer || canvasMinimalUi,
+                                                        textColor =
+                                                            if (usesFullscreenThumbnail || canvasMinimalUi) {
+                                                                Color.White
+                                                            } else {
+                                                                textBackgroundColor
+                                                            },
+                                                        isCasting = castState.isConnected,
+                                                        isBuffering = castState.isBuffering,
+                                                        hasBackground = usesFullscreenThumbnail || canvasMinimalUi,
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    AnimatedVisibility(
+                                        visible = uiState.isLyricsVisible && showLyricsOffsetEditor,
+                                        enter = expandVertically() + fadeIn(),
+                                        exit = shrinkVertically() + fadeOut(),
+                                    ) {
+                                        LyricsOffsetEditor(
+                                            offsetMs = uiState.lyricsOffsetMs,
+                                            onOffsetChange = { offset -> currentSong?.let { viewModel.setLyricsOffset(it.id, offset) } },
+                                            onDone = { showLyricsOffsetEditor = false },
+                                            contentColor = textBackgroundColor,
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(if (showLyricsOffsetEditor || compactPortraitHeight) 8.dp else 24.dp))
+
+                                    Row(
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.weight(1f),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                        ) {
+                                            AnimatedVisibility(
+                                                visible =
+                                                    (usesCanvasThumbnail || uiState.isLyricsVisible || artworkBesideTitle) &&
+                                                        currentSong?.displayThumbnail != null,
+                                                enter = expandHorizontally(clip = false) + fadeIn(),
+                                                exit = shrinkHorizontally(clip = false) + fadeOut(),
+                                            ) {
+                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                    if (usesFullscreenThumbnail) {
+                                                        CrossfadeArtwork(
+                                                            animate = LocalPlayerContentActive.current,
+                                                            currentUrl = currentSong?.displayThumbnail,
+                                                            nextUrl = crossfadeNextArtworkUrl,
+                                                            progress = artworkCrossfadeProgress,
+                                                            contentDescription = stringResource(Res.string.small_album_art),
+                                                            modifier =
+                                                                Modifier
+                                                                    .size(48.dp)
+                                                                    .clip(smallAlbumArtShape),
+                                                            contentScale = ContentScale.Crop,
+                                                        )
+                                                    } else {
                                                         with(sharedTransitionScope) {
                                                             Box(
                                                                 modifier =
@@ -1972,534 +2229,439 @@ fun PlayerScreen(
                                                                                 rememberSharedContentState(
                                                                                     ALBUM_ART_SHARED_KEY,
                                                                                 ),
-                                                                            animatedVisibilityScope = this@AnimatedContent,
+                                                                            animatedVisibilityScope = this@AnimatedVisibility,
                                                                             boundsTransform = albumArtBoundsTransform,
-                                                                            clipInOverlayDuringTransition = OverlayClip(albumArtShape),
-                                                                        ).aspectRatio(1f)
-                                                                        .clip(albumArtShape),
+                                                                            clipInOverlayDuringTransition =
+                                                                                OverlayClip(
+                                                                                    smallAlbumArtShape,
+                                                                                ),
+                                                                        ).size(48.dp)
+                                                                        .clip(smallAlbumArtShape),
                                                             ) {
                                                                 CrossfadeArtwork(
                                                                     animate = LocalPlayerContentActive.current,
-                                                                    currentUrl = currentSong.displayThumbnail,
+                                                                    currentUrl = currentSong?.displayThumbnail,
                                                                     nextUrl = crossfadeNextArtworkUrl,
                                                                     progress = artworkCrossfadeProgress,
-                                                                    contentDescription = stringResource(Res.string.album_art),
+                                                                    contentDescription = stringResource(Res.string.small_album_art),
                                                                     modifier = Modifier.fillMaxSize(),
                                                                     contentScale = ContentScale.Crop,
                                                                 )
-                                                                if (!uiState.isLyricsVisible) artworkOverlay(Modifier.fillMaxSize())
+                                                                if (uiState.isLyricsVisible) artworkOverlay(Modifier.fillMaxSize())
                                                             }
                                                         }
                                                     }
-                                                    SeekFeedbackOverlay(
-                                                        feedback = seekFeedback,
-                                                        visible = seekFeedbackVisible,
-                                                    )
+                                                    Spacer(modifier = Modifier.width(12.dp))
                                                 }
+                                            }
 
-                                                ActiveLyricsLine(
-                                                    viewModel = viewModel,
-                                                    lyrics = uiState.lyrics,
-                                                    songId = currentSong?.id,
-                                                    timingOffsetMs = uiState.lyricsOffsetMs,
-                                                    isPlaying = isPlaying,
-                                                    showLyrics = Settings.shared.showLyricsOnPlayer || canvasMinimalUi,
-                                                    textColor =
-                                                        if (usesFullscreenThumbnail || canvasMinimalUi) {
-                                                            Color.White
+                                            Column(
+                                                modifier = Modifier.weight(1f),
+                                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                                            ) {
+                                                val titleEffectsSpec = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
+                                                AnimatedContent(
+                                                    targetState = currentSong,
+                                                    contentKey = { it?.id },
+                                                    transitionSpec = {
+                                                        (fadeIn(titleEffectsSpec) togetherWith fadeOut(titleEffectsSpec))
+                                                            .using(SizeTransform(clip = false))
+                                                    },
+                                                    contentAlignment = Alignment.CenterStart,
+                                                    label = "titleAnimation",
+                                                    modifier =
+                                                        if (usesFullscreenThumbnail) {
+                                                            Modifier.onGloballyPositioned { coordinates ->
+                                                                playerRootCoordinates?.let { root ->
+                                                                    // Exclude the sheet translation from the artwork crop bounds.
+                                                                    songTitleTopPx = root.localPositionOf(coordinates, Offset.Zero).y
+                                                                }
+                                                            }
                                                         } else {
-                                                            textBackgroundColor
+                                                            Modifier
                                                         },
-                                                    isCasting = castState.isConnected,
-                                                    isBuffering = castState.isBuffering,
-                                                    hasBackground = usesFullscreenThumbnail || canvasMinimalUi,
-                                                    modifier = Modifier.fillMaxWidth(),
+                                                ) { displayedSong ->
+                                                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                                        Text(
+                                                            text = displayedSong?.title ?: stringResource(Res.string.unknown),
+                                                            style =
+                                                                (
+                                                                    if (usesCanvasThumbnail) {
+                                                                        MaterialTheme.typography.titleMedium
+                                                                    } else {
+                                                                        MaterialTheme.typography.titleLarge
+                                                                    }
+                                                                ).let { style ->
+                                                                    flagshipFont?.let { style.copy(fontFamily = it) } ?: style
+                                                                },
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = textBackgroundColor,
+                                                            maxLines = 1,
+                                                            softWrap = false,
+                                                            overflow = TextOverflow.Ellipsis,
+                                                            modifier =
+                                                                Modifier
+                                                                    .clickable(
+                                                                        enabled =
+                                                                            displayedSong != null &&
+                                                                                (usesMochyChrome || displayedSong.albumId != null),
+                                                                    ) {
+                                                                        if (usesMochyChrome) {
+                                                                            showSongDetails = true
+                                                                        } else {
+                                                                            displayedSong?.albumId?.let(onNavigateToAlbum)
+                                                                        }
+                                                                    }.then(
+                                                                        displayedSong?.let { song ->
+                                                                            rememberTrackMarquee(
+                                                                                trackId = song.id,
+                                                                                enabled = LocalPlayerContentActive.current,
+                                                                                initialDelayMillis = 3000L,
+                                                                            )
+                                                                        } ?: Modifier,
+                                                                    ),
+                                                        )
+                                                        PlayerArtistLine(
+                                                            artists = displayedSong?.artists,
+                                                            onNavigateToArtist = onNavigateToArtist,
+                                                            iterations = if (LocalPlayerContentActive.current) 1 else 0,
+                                                            style =
+                                                                (
+                                                                    if (usesCanvasThumbnail) {
+                                                                        MaterialTheme.typography.bodyMedium
+                                                                    } else {
+                                                                        MaterialTheme.typography.titleMedium
+                                                                    }
+                                                                ).let { style ->
+                                                                    flagshipFont?.let { style.copy(fontFamily = it) } ?: style
+                                                                },
+                                                            color =
+                                                                textBackgroundColor.copy(
+                                                                    alpha =
+                                                                        if (playerBackground == PlayerBackgroundStyle.LIQUID &&
+                                                                            MaterialTheme.colorScheme.surface.luminance() >= 0.5f
+                                                                        ) {
+                                                                            1f
+                                                                        } else {
+                                                                            0.7f
+                                                                        },
+                                                                ),
+                                                            modifier =
+                                                                Modifier
+                                                                    .then(
+                                                                        if (usesFullscreenThumbnail) {
+                                                                            Modifier.onGloballyPositioned { coordinates ->
+                                                                                playerRootCoordinates?.let { root ->
+                                                                                    artistBottomPx =
+                                                                                        root.localPositionOf(coordinates, Offset.Zero).y +
+                                                                                        coordinates.size.height
+                                                                                }
+                                                                            }
+                                                                        } else {
+                                                                            Modifier
+                                                                        },
+                                                                    ),
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        Spacer(modifier = Modifier.width(12.dp))
+
+                                        AnimatedVisibility(
+                                            visible = !canvasMinimalUi,
+                                            enter =
+                                                expandHorizontally(animationSpec = canvasSpatialSpec) +
+                                                    fadeIn(animationSpec = canvasEffectsSpec),
+                                            exit =
+                                                shrinkHorizontally(animationSpec = canvasSpatialSpec) +
+                                                    fadeOut(animationSpec = canvasEffectsSpec),
+                                        ) {
+                                            if (playerType == PlayerType.CLASSIC) {
+                                                VintageClassicActionButtons(
+                                                    isLyricsVisible = uiState.isLyricsVisible,
+                                                    isLyricsExpanded = uiState.isLyricsExpanded,
+                                                    shareDescription = stringResource(Res.string.share),
+                                                    expandDescription = stringResource(Res.string.expand),
+                                                    collapseDescription = stringResource(Res.string.collapse),
+                                                    moreDescription = stringResource(Res.string.more_options),
+                                                    moreLyricsDescription = stringResource(Res.string.more_lyrics_options),
+                                                    onToggleLyricsExpanded = {
+                                                        Logger.d(
+                                                            "Haptics",
+                                                            "Trigger lyrics expand click expanded=${!uiState.isLyricsExpanded}",
+                                                        )
+                                                        hapticManager.perform(HapticEvent.PRESS)
+                                                        viewModel.setLyricsExpanded(!uiState.isLyricsExpanded)
+                                                    },
+                                                    onShowLyricsMenu = {
+                                                        hapticManager.perform(HapticEvent.PRESS)
+                                                        showLyricsMenu = true
+                                                    },
+                                                    onShareClick = {
+                                                        Logger.d("Haptics", "Trigger PlayerScreen share click")
+                                                        hapticManager.perform(HapticEvent.PRESS)
+                                                        shareDisplayedSong()
+                                                    },
+                                                    onShowPlayerMenu = {
+                                                        hapticManager.perform(HapticEvent.PRESS)
+                                                        showPlayerMenu = true
+                                                    },
+                                                    buttonColor = textBackgroundColor,
+                                                    onButtonColor = vintageOnButtonColor(textBackgroundColor),
+                                                )
+                                            } else if (usesMochyChrome && !uiState.isLyricsVisible) {
+                                                FlagshipActions(
+                                                    liked = isLiked,
+                                                    menuOpen = showPlayerMenu,
+                                                    onLike = {
+                                                        hapticManager.toggle(!isLiked)
+                                                        likeBurstState.likeFromButton(
+                                                            slot = LikeSlot.PLAYER,
+                                                            liked = isLiked,
+                                                            toggleLike = toggleDisplayedLike,
+                                                        )
+                                                    },
+                                                    onMenu = {
+                                                        hapticManager.perform(HapticEvent.PRESS)
+                                                        showPlayerMenu = !showPlayerMenu
+                                                    },
+                                                    contentColor = textBackgroundColor,
+                                                    likeBurstState = likeBurstState,
+                                                )
+                                            } else {
+                                                PlayerActionRow(
+                                                    isLyricsVisible = uiState.isLyricsVisible,
+                                                    isLyricsExpanded = uiState.isLyricsExpanded,
+                                                    onToggleLyricsExpanded = {
+                                                        Logger.d(
+                                                            "Haptics",
+                                                            "Trigger lyrics expand click expanded=${!uiState.isLyricsExpanded}",
+                                                        )
+                                                        hapticManager.perform(HapticEvent.PRESS)
+                                                        viewModel.setLyricsExpanded(!uiState.isLyricsExpanded)
+                                                    },
+                                                    onShowLyricsMenu = { showLyricsMenu = true },
+                                                    isLiked = isLiked,
+                                                    onLikeClick = {
+                                                        Logger.d("Haptics", "Trigger PlayerScreen like click liked=$isLiked")
+                                                        hapticManager.toggle(!isLiked)
+                                                        toggleDisplayedLike()
+                                                    },
+                                                    onShareClick = {
+                                                        Logger.d("Haptics", "Trigger PlayerScreen share click")
+                                                        hapticManager.perform(HapticEvent.PRESS)
+                                                        shareDisplayedSong()
+                                                    },
+                                                    onAltShareClick = {
+                                                        Logger.d("Haptics", "Trigger PlayerScreen alt share click")
+                                                        hapticManager.perform(HapticEvent.PRESS)
+                                                        copyDisplayedSongLink()
+                                                    },
                                                 )
                                             }
                                         }
                                     }
-                                }
 
-                                AnimatedVisibility(
-                                    visible = uiState.isLyricsVisible && showLyricsOffsetEditor,
-                                    enter = expandVertically() + fadeIn(),
-                                    exit = shrinkVertically() + fadeOut(),
-                                ) {
-                                    LyricsOffsetEditor(
-                                        offsetMs = uiState.lyricsOffsetMs,
-                                        onOffsetChange = { offset -> currentSong?.let { viewModel.setLyricsOffset(it.id, offset) } },
-                                        onDone = { showLyricsOffsetEditor = false },
-                                        contentColor = textBackgroundColor,
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.height(if (showLyricsOffsetEditor || compactPortraitHeight) 8.dp else 24.dp))
-
-                                Row(
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.fillMaxWidth(),
-                                ) {
-                                    Row(
-                                        modifier = Modifier.weight(1f),
-                                        verticalAlignment = Alignment.CenterVertically,
+                                    playerControlsTransition.AnimatedVisibility(
+                                        visible = { (expanded, _) -> !expanded || showControlsInFullscreen },
+                                        enter = canvasControlsEnter,
+                                        exit = canvasControlsExit,
                                     ) {
-                                        AnimatedVisibility(
-                                            visible =
-                                                (usesCanvasThumbnail || uiState.isLyricsVisible || artworkBesideTitle) &&
-                                                    currentSong?.displayThumbnail != null,
-                                            enter = expandHorizontally(clip = false) + fadeIn(),
-                                            exit = shrinkHorizontally(clip = false) + fadeOut(),
-                                        ) {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                if (usesFullscreenThumbnail) {
-                                                    CrossfadeArtwork(
-                                                        animate = LocalPlayerContentActive.current,
-                                                        currentUrl = currentSong?.displayThumbnail,
-                                                        nextUrl = crossfadeNextArtworkUrl,
-                                                        progress = artworkCrossfadeProgress,
-                                                        contentDescription = stringResource(Res.string.small_album_art),
-                                                        modifier =
-                                                            Modifier
-                                                                .size(48.dp)
-                                                                .clip(smallAlbumArtShape),
-                                                        contentScale = ContentScale.Crop,
-                                                    )
-                                                } else {
-                                                    with(sharedTransitionScope) {
-                                                        Box(
-                                                            modifier =
-                                                                Modifier
-                                                                    .sharedElement(
-                                                                        sharedContentState =
-                                                                            rememberSharedContentState(
-                                                                                ALBUM_ART_SHARED_KEY,
-                                                                            ),
-                                                                        animatedVisibilityScope = this@AnimatedVisibility,
-                                                                        boundsTransform = albumArtBoundsTransform,
-                                                                        clipInOverlayDuringTransition =
-                                                                            OverlayClip(
-                                                                                smallAlbumArtShape,
-                                                                            ),
-                                                                    ).size(48.dp)
-                                                                    .clip(smallAlbumArtShape),
-                                                        ) {
-                                                            CrossfadeArtwork(
-                                                                animate = LocalPlayerContentActive.current,
-                                                                currentUrl = currentSong?.displayThumbnail,
-                                                                nextUrl = crossfadeNextArtworkUrl,
-                                                                progress = artworkCrossfadeProgress,
-                                                                contentDescription = stringResource(Res.string.small_album_art),
-                                                                modifier = Modifier.fillMaxSize(),
-                                                                contentScale = ContentScale.Crop,
-                                                            )
-                                                            if (uiState.isLyricsVisible) artworkOverlay(Modifier.fillMaxSize())
-                                                        }
+                                        Column {
+                                            Spacer(modifier = Modifier.height(12.dp))
+                                            PlayerProgressSlider(
+                                                viewModel = viewModel,
+                                                duration = duration,
+                                                isPlaying = isPlaying,
+                                                textBackgroundColor = textBackgroundColor,
+                                                canSeek = !isListenTogetherGuest,
+                                                isCasting = castState.isConnected,
+                                                songId = currentSong?.id,
+                                                progressColor = textBackgroundColor.takeIf { playerType == PlayerType.CLASSIC },
+                                                isLive = uiState.isLive || playbackResource?.isLive == true,
+                                                mochyTrack = usesMochyChrome,
+                                                timerTextStyle =
+                                                    MaterialTheme.typography.labelMedium.let {
+                                                        if (flagshipFont == null) it else it.copy(fontFamily = flagshipFont)
+                                                    },
+                                            )
+                                        }
+                                    }
+
+                                    playerControlsTransition.AnimatedVisibility(
+                                        visible = { (expanded, minimalUi) ->
+                                            (!expanded || showControlsInFullscreen) &&
+                                                !minimalUi
+                                        },
+                                        enter = canvasControlsEnter,
+                                        exit = canvasControlsExit,
+                                    ) {
+                                        Column {
+                                            if (!isListenTogetherGuest) {
+                                                Spacer(modifier = Modifier.height(if (usesMochyChrome) 24.dp else 8.dp))
+
+                                                when (playerType) {
+                                                    PlayerType.CLASSIC -> {
+                                                        VintageClassicControls(
+                                                            playPauseFocusRequester = playPauseFocusRequester,
+                                                            text =
+                                                                VintageClassicControlsText(
+                                                                    repeat = stringResource(Res.string.repeat),
+                                                                    previous = stringResource(Res.string.previous),
+                                                                    play = stringResource(Res.string.play),
+                                                                    pause = stringResource(Res.string.pause),
+                                                                    next = stringResource(Res.string.next),
+                                                                    like = stringResource(Res.string.action_like),
+                                                                    unlike = stringResource(Res.string.unlike),
+                                                                ),
+                                                            isPlaying = isPlaying,
+                                                            isLoading = isPlaybackLoading && contentActive,
+                                                            showLoadingIndicator = !hasVisibleVideoTransitionIndicator,
+                                                            repeatMode = repeatMode,
+                                                            isLiked = isLiked,
+                                                            onToggleRepeat = {
+                                                                hapticManager.perform(HapticEvent.PRESS)
+                                                                viewModel.toggleRepeat()
+                                                            },
+                                                            onSkipPrevious = {
+                                                                Logger.d("Haptics", "Trigger PlayerScreen previous click")
+                                                                hapticManager.perform(HapticEvent.PRESS)
+                                                                viewModel.previous()
+                                                            },
+                                                            onTogglePlay = {
+                                                                Logger.d(
+                                                                    "Haptics",
+                                                                    "Trigger PlayerScreen play pause click isPlaying=$isPlaying",
+                                                                )
+                                                                viewModel.togglePlayPause()
+                                                            },
+                                                            onSkipNext = {
+                                                                Logger.d("Haptics", "Trigger PlayerScreen next click")
+                                                                hapticManager.perform(HapticEvent.PRESS)
+                                                                viewModel.next()
+                                                            },
+                                                            onToggleLike = {
+                                                                Logger.d("Haptics", "Trigger PlayerScreen like click liked=$isLiked")
+                                                                hapticManager.toggle(!isLiked)
+                                                                toggleDisplayedLike()
+                                                            },
+                                                            contentColor = textBackgroundColor,
+                                                            buttonColor = textBackgroundColor,
+                                                            onButtonColor = vintageOnButtonColor(textBackgroundColor),
+                                                            modifier = Modifier.fillMaxWidth(),
+                                                            buttonSize = primaryControlSize,
+                                                        )
+                                                    }
+
+                                                    PlayerType.VINTAGE -> {
+                                                        VintagePlayerControls(
+                                                            playPauseFocusRequester = playPauseFocusRequester,
+                                                            text = vintagePlayerControlsText(),
+                                                            buttonSize = primaryControlSize,
+                                                            iconSize = 54.dp,
+                                                            isPlaying = isPlaying,
+                                                            isLoading = isPlaybackLoading && contentActive,
+                                                            showLoadingIndicator = !hasVisibleVideoTransitionIndicator,
+                                                            onSkipPrevious = {
+                                                                Logger.d("Haptics", "Trigger PlayerScreen previous click")
+                                                                hapticManager.perform(HapticEvent.PRESS)
+                                                                viewModel.previous()
+                                                            },
+                                                            onTogglePlay = {
+                                                                Logger.d(
+                                                                    "Haptics",
+                                                                    "Trigger PlayerScreen play pause click isPlaying=$isPlaying",
+                                                                )
+                                                                viewModel.togglePlayPause()
+                                                            },
+                                                            onSkipNext = {
+                                                                Logger.d("Haptics", "Trigger PlayerScreen next click")
+                                                                hapticManager.perform(HapticEvent.PRESS)
+                                                                viewModel.next()
+                                                            },
+                                                            sideButtonColor = textBackgroundColor,
+                                                            modifier = Modifier.fillMaxWidth(),
+                                                        )
+                                                    }
+
+                                                    PlayerType.MOCHY,
+                                                    PlayerType.TURNTABLE,
+                                                    PlayerType.IPOD,
+                                                    -> {
+                                                        FlagshipTransport(
+                                                            playing = isPlaying,
+                                                            loading = isPlaybackLoading,
+                                                            onPlayPause = viewModel::togglePlayPause,
+                                                            onPrevious = viewModel::previous,
+                                                            onNext = viewModel::next,
+                                                            compact = compactPortraitHeight,
+                                                            contentColor = textBackgroundColor,
+                                                        )
+                                                    }
+
+                                                    PlayerType.MODERN -> {
+                                                        PlayerPrimaryControls(
+                                                            isPlaying = isPlaying,
+                                                            isLoading = isPlaybackLoading && contentActive,
+                                                            showLoadingIndicator = !hasVisibleVideoTransitionIndicator,
+                                                            playText = stringResource(Res.string.play),
+                                                            pauseText = stringResource(Res.string.pause),
+                                                            onSkipPrevious = {
+                                                                Logger.d("Haptics", "Trigger PlayerScreen previous click")
+                                                                hapticManager.perform(HapticEvent.PRESS)
+                                                                viewModel.previous()
+                                                            },
+                                                            onTogglePlay = {
+                                                                Logger.d(
+                                                                    "Haptics",
+                                                                    "Trigger PlayerScreen play pause click isPlaying=$isPlaying",
+                                                                )
+                                                                viewModel.togglePlayPause()
+                                                            },
+                                                            onSkipNext = {
+                                                                Logger.d("Haptics", "Trigger PlayerScreen next click")
+                                                                hapticManager.perform(HapticEvent.PRESS)
+                                                                viewModel.next()
+                                                            },
+                                                            showLabels = true,
+                                                            sideButtonContainerColor = sideButtonContainerColor,
+                                                            sideButtonContentColor = sideButtonContentColor,
+                                                            useRoundedRect = Settings.shared.useRoundedRectPlayButton,
+                                                            modifier = Modifier.fillMaxWidth(),
+                                                            buttonHeight = primaryControlSize,
+                                                            playPauseFocusRequester = playPauseFocusRequester,
+                                                        )
                                                     }
                                                 }
-                                                Spacer(modifier = Modifier.width(12.dp))
-                                            }
-                                        }
-
-                                        Column(
-                                            modifier = Modifier.weight(1f),
-                                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                                        ) {
-                                            val titleEffectsSpec = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
-                                            AnimatedContent(
-                                                targetState = currentSong,
-                                                contentKey = { it?.id },
-                                                transitionSpec = {
-                                                    (fadeIn(titleEffectsSpec) togetherWith fadeOut(titleEffectsSpec))
-                                                        .using(SizeTransform(clip = false))
-                                                },
-                                                contentAlignment = Alignment.CenterStart,
-                                                label = "titleAnimation",
-                                                modifier =
-                                                    if (usesFullscreenThumbnail) {
-                                                        Modifier.onGloballyPositioned { coordinates ->
-                                                            playerRootCoordinates?.let { root ->
-                                                                // Exclude the sheet translation from the artwork crop bounds.
-                                                                songTitleTopPx = root.localPositionOf(coordinates, Offset.Zero).y
-                                                            }
-                                                        }
-                                                    } else {
-                                                        Modifier
-                                                    },
-                                            ) { displayedSong ->
-                                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                                    Text(
-                                                        text = displayedSong?.title ?: stringResource(Res.string.unknown),
-                                                        style =
-                                                            (
-                                                                if (usesCanvasThumbnail) {
-                                                                    MaterialTheme.typography.titleMedium
-                                                                } else {
-                                                                    MaterialTheme.typography.titleLarge
-                                                                }
-                                                            ).let { if (flagshipFont == null) it else it.copy(fontFamily = flagshipFont) },
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = textBackgroundColor,
-                                                        maxLines = 1,
-                                                        softWrap = false,
-                                                        overflow = TextOverflow.Ellipsis,
-                                                        modifier =
-                                                            Modifier
-                                                                .clickable(
-                                                                    enabled =
-                                                                        displayedSong != null &&
-                                                                            (usesMochyFlagship || displayedSong.albumId != null),
-                                                                ) {
-                                                                    if (usesMochyFlagship) {
-                                                                        showSongDetails = true
-                                                                    } else {
-                                                                        displayedSong?.albumId?.let(onNavigateToAlbum)
-                                                                    }
-                                                                }.then(
-                                                                    displayedSong?.let { song ->
-                                                                        rememberTrackMarquee(
-                                                                            trackId = song.id,
-                                                                            enabled = LocalPlayerContentActive.current,
-                                                                            initialDelayMillis = 3000L,
-                                                                        )
-                                                                    } ?: Modifier,
-                                                                ),
-                                                    )
-                                                    PlayerArtistLine(
-                                                        artists = displayedSong?.artists,
-                                                        onNavigateToArtist = onNavigateToArtist,
-                                                        iterations = if (LocalPlayerContentActive.current) 1 else 0,
-                                                        style =
-                                                            (
-                                                                if (usesCanvasThumbnail) {
-                                                                    MaterialTheme.typography.bodyMedium
-                                                                } else {
-                                                                    MaterialTheme.typography.titleMedium
-                                                                }
-                                                            ).let { if (flagshipFont == null) it else it.copy(fontFamily = flagshipFont) },
-                                                        color =
-                                                            textBackgroundColor.copy(
-                                                                alpha =
-                                                                    if (playerBackground == PlayerBackgroundStyle.LIQUID &&
-                                                                        MaterialTheme.colorScheme.surface.luminance() >= 0.5f
-                                                                    ) {
-                                                                        1f
-                                                                    } else {
-                                                                        0.7f
-                                                                    },
-                                                            ),
-                                                        modifier =
-                                                            Modifier
-                                                                .then(
-                                                                    if (usesFullscreenThumbnail) {
-                                                                        Modifier.onGloballyPositioned { coordinates ->
-                                                                            playerRootCoordinates?.let { root ->
-                                                                                artistBottomPx =
-                                                                                    root.localPositionOf(coordinates, Offset.Zero).y +
-                                                                                    coordinates.size.height
-                                                                            }
-                                                                        }
-                                                                    } else {
-                                                                        Modifier
-                                                                    },
-                                                                ),
-                                                    )
-                                                }
                                             }
                                         }
                                     }
 
-                                    Spacer(modifier = Modifier.width(12.dp))
-
-                                    AnimatedVisibility(
-                                        visible = !canvasMinimalUi,
-                                        enter =
-                                            expandHorizontally(animationSpec = canvasSpatialSpec) +
-                                                fadeIn(animationSpec = canvasEffectsSpec),
-                                        exit =
-                                            shrinkHorizontally(animationSpec = canvasSpatialSpec) +
-                                                fadeOut(animationSpec = canvasEffectsSpec),
+                                    playerControlsTransition.AnimatedVisibility(
+                                        visible = { (_, minimalUi) -> !minimalUi },
+                                        enter = canvasControlsEnter,
+                                        exit = canvasControlsExit,
                                     ) {
-                                        if (playerType == PlayerType.CLASSIC) {
-                                            VintageClassicActionButtons(
-                                                isLyricsVisible = uiState.isLyricsVisible,
-                                                isLyricsExpanded = uiState.isLyricsExpanded,
-                                                shareDescription = stringResource(Res.string.share),
-                                                expandDescription = stringResource(Res.string.expand),
-                                                collapseDescription = stringResource(Res.string.collapse),
-                                                moreDescription = stringResource(Res.string.more_options),
-                                                moreLyricsDescription = stringResource(Res.string.more_lyrics_options),
-                                                onToggleLyricsExpanded = {
-                                                    Logger.d(
-                                                        "Haptics",
-                                                        "Trigger PlayerScreen lyrics expand click expanded=${!uiState.isLyricsExpanded}",
-                                                    )
-                                                    hapticManager.perform(HapticEvent.PRESS)
-                                                    viewModel.setLyricsExpanded(!uiState.isLyricsExpanded)
-                                                },
-                                                onShowLyricsMenu = {
-                                                    hapticManager.perform(HapticEvent.PRESS)
-                                                    showLyricsMenu = true
-                                                },
-                                                onShareClick = {
-                                                    Logger.d("Haptics", "Trigger PlayerScreen share click")
-                                                    hapticManager.perform(HapticEvent.PRESS)
-                                                    shareDisplayedSong()
-                                                },
-                                                onShowPlayerMenu = {
-                                                    hapticManager.perform(HapticEvent.PRESS)
-                                                    showPlayerMenu = true
-                                                },
-                                                buttonColor = textBackgroundColor,
-                                                onButtonColor = vintageOnButtonColor(textBackgroundColor),
-                                            )
-                                        } else if (usesMochyFlagship && !uiState.isLyricsVisible) {
-                                            FlagshipActions(
-                                                liked = isLiked,
-                                                menuOpen = showPlayerMenu,
-                                                onLike = {
-                                                    hapticManager.toggle(!isLiked)
-                                                    likeBurstState.likeFromButton(
-                                                        slot = LikeSlot.PLAYER,
-                                                        liked = isLiked,
-                                                        toggleLike = toggleDisplayedLike,
-                                                    )
-                                                },
-                                                onMenu = {
-                                                    hapticManager.perform(HapticEvent.PRESS)
-                                                    showPlayerMenu = !showPlayerMenu
-                                                },
-                                                contentColor = textBackgroundColor,
-                                                likeBurstState = likeBurstState,
-                                            )
-                                        } else {
-                                            PlayerActionRow(
-                                                isLyricsVisible = uiState.isLyricsVisible,
-                                                isLyricsExpanded = uiState.isLyricsExpanded,
-                                                onToggleLyricsExpanded = {
-                                                    Logger.d(
-                                                        "Haptics",
-                                                        "Trigger PlayerScreen lyrics expand click expanded=${!uiState.isLyricsExpanded}",
-                                                    )
-                                                    hapticManager.perform(HapticEvent.PRESS)
-                                                    viewModel.setLyricsExpanded(!uiState.isLyricsExpanded)
-                                                },
-                                                onShowLyricsMenu = { showLyricsMenu = true },
-                                                isLiked = isLiked,
-                                                onLikeClick = {
-                                                    Logger.d("Haptics", "Trigger PlayerScreen like click liked=$isLiked")
-                                                    hapticManager.toggle(!isLiked)
-                                                    toggleDisplayedLike()
-                                                },
-                                                onShareClick = {
-                                                    Logger.d("Haptics", "Trigger PlayerScreen share click")
-                                                    hapticManager.perform(HapticEvent.PRESS)
-                                                    shareDisplayedSong()
-                                                },
-                                                onAltShareClick = {
-                                                    Logger.d("Haptics", "Trigger PlayerScreen alt share click")
-                                                    hapticManager.perform(HapticEvent.PRESS)
-                                                    copyDisplayedSongLink()
-                                                },
-                                            )
-                                        }
+                                        Spacer(modifier = Modifier.height(portraitControlsHeight + 16.dp))
                                     }
+                                    playerControlsTransition.AnimatedVisibility(
+                                        visible = { (expanded, minimalUi) ->
+                                            expanded && playerType == PlayerType.CLASSIC && controlsVisible &&
+                                                !minimalUi
+                                        },
+                                        enter = canvasControlsEnter,
+                                        exit = canvasControlsExit,
+                                    ) {
+                                        Spacer(modifier = Modifier.height(24.dp))
                                 }
-
-                                playerControlsTransition.AnimatedVisibility(
-                                    visible = { (expanded, _) -> !expanded || showControlsInFullscreen },
-                                    enter = canvasControlsEnter,
-                                    exit = canvasControlsExit,
-                                ) {
-                                    Column {
-                                        Spacer(modifier = Modifier.height(12.dp))
-                                        PlayerProgressSlider(
-                                            viewModel = viewModel,
-                                            duration = duration,
-                                            isPlaying = isPlaying,
-                                            textBackgroundColor = textBackgroundColor,
-                                            canSeek = !isListenTogetherGuest,
-                                            isCasting = castState.isConnected,
-                                            songId = currentSong?.id,
-                                            progressColor = textBackgroundColor.takeIf { playerType == PlayerType.CLASSIC },
-                                            isLive = uiState.isLive || playbackResource?.isLive == true,
-                                            mochyTrack = usesMochyFlagship,
-                                            timerTextStyle =
-                                                MaterialTheme.typography.labelMedium.let {
-                                                    if (flagshipFont == null) it else it.copy(fontFamily = flagshipFont)
-                                                },
-                                        )
-                                    }
-                                }
-
-                                playerControlsTransition.AnimatedVisibility(
-                                    visible = { (expanded, minimalUi) ->
-                                        (!expanded || showControlsInFullscreen) &&
-                                            !minimalUi
-                                    },
-                                    enter = canvasControlsEnter,
-                                    exit = canvasControlsExit,
-                                ) {
-                                    Column {
-                                        if (!isListenTogetherGuest) {
-                                            Spacer(modifier = Modifier.height(if (usesMochyFlagship) 24.dp else 8.dp))
-
-                                            when (playerType) {
-                                                PlayerType.CLASSIC -> {
-                                                    VintageClassicControls(
-                                                        playPauseFocusRequester = playPauseFocusRequester,
-                                                        text =
-                                                            VintageClassicControlsText(
-                                                                repeat = stringResource(Res.string.repeat),
-                                                                previous = stringResource(Res.string.previous),
-                                                                play = stringResource(Res.string.play),
-                                                                pause = stringResource(Res.string.pause),
-                                                                next = stringResource(Res.string.next),
-                                                                like = stringResource(Res.string.action_like),
-                                                                unlike = stringResource(Res.string.unlike),
-                                                            ),
-                                                        isPlaying = isPlaying,
-                                                        isLoading = isPlaybackLoading && contentActive,
-                                                        showLoadingIndicator = !hasVisibleVideoTransitionIndicator,
-                                                        repeatMode = repeatMode,
-                                                        isLiked = isLiked,
-                                                        onToggleRepeat = {
-                                                            hapticManager.perform(HapticEvent.PRESS)
-                                                            viewModel.toggleRepeat()
-                                                        },
-                                                        onSkipPrevious = {
-                                                            Logger.d("Haptics", "Trigger PlayerScreen previous click")
-                                                            hapticManager.perform(HapticEvent.PRESS)
-                                                            viewModel.previous()
-                                                        },
-                                                        onTogglePlay = {
-                                                            Logger.d(
-                                                                "Haptics",
-                                                                "Trigger PlayerScreen play pause click isPlaying=$isPlaying",
-                                                            )
-                                                            viewModel.togglePlayPause()
-                                                        },
-                                                        onSkipNext = {
-                                                            Logger.d("Haptics", "Trigger PlayerScreen next click")
-                                                            hapticManager.perform(HapticEvent.PRESS)
-                                                            viewModel.next()
-                                                        },
-                                                        onToggleLike = {
-                                                            Logger.d("Haptics", "Trigger PlayerScreen like click liked=$isLiked")
-                                                            hapticManager.toggle(!isLiked)
-                                                            toggleDisplayedLike()
-                                                        },
-                                                        contentColor = textBackgroundColor,
-                                                        buttonColor = textBackgroundColor,
-                                                        onButtonColor = vintageOnButtonColor(textBackgroundColor),
-                                                        modifier = Modifier.fillMaxWidth(),
-                                                        buttonSize = primaryControlSize,
-                                                    )
-                                                }
-
-                                                PlayerType.VINTAGE -> {
-                                                    VintagePlayerControls(
-                                                        playPauseFocusRequester = playPauseFocusRequester,
-                                                        text = vintagePlayerControlsText(),
-                                                        buttonSize = primaryControlSize,
-                                                        iconSize = 54.dp,
-                                                        isPlaying = isPlaying,
-                                                        isLoading = isPlaybackLoading && contentActive,
-                                                        showLoadingIndicator = !hasVisibleVideoTransitionIndicator,
-                                                        onSkipPrevious = {
-                                                            Logger.d("Haptics", "Trigger PlayerScreen previous click")
-                                                            hapticManager.perform(HapticEvent.PRESS)
-                                                            viewModel.previous()
-                                                        },
-                                                        onTogglePlay = {
-                                                            Logger.d(
-                                                                "Haptics",
-                                                                "Trigger PlayerScreen play pause click isPlaying=$isPlaying",
-                                                            )
-                                                            viewModel.togglePlayPause()
-                                                        },
-                                                        onSkipNext = {
-                                                            Logger.d("Haptics", "Trigger PlayerScreen next click")
-                                                            hapticManager.perform(HapticEvent.PRESS)
-                                                            viewModel.next()
-                                                        },
-                                                        sideButtonColor = textBackgroundColor,
-                                                        modifier = Modifier.fillMaxWidth(),
-                                                    )
-                                                }
-
-                                                PlayerType.MOCHY -> {
-                                                    FlagshipTransport(
-                                                        playing = isPlaying,
-                                                        loading = isPlaybackLoading,
-                                                        onPlayPause = viewModel::togglePlayPause,
-                                                        onPrevious = viewModel::previous,
-                                                        onNext = viewModel::next,
-                                                        compact = compactPortraitHeight,
-                                                        contentColor = textBackgroundColor,
-                                                    )
-                                                }
-
-                                                PlayerType.MODERN -> {
-                                                    PlayerPrimaryControls(
-                                                        isPlaying = isPlaying,
-                                                        isLoading = isPlaybackLoading && contentActive,
-                                                        showLoadingIndicator = !hasVisibleVideoTransitionIndicator,
-                                                        playText = stringResource(Res.string.play),
-                                                        pauseText = stringResource(Res.string.pause),
-                                                        onSkipPrevious = {
-                                                            Logger.d("Haptics", "Trigger PlayerScreen previous click")
-                                                            hapticManager.perform(HapticEvent.PRESS)
-                                                            viewModel.previous()
-                                                        },
-                                                        onTogglePlay = {
-                                                            Logger.d(
-                                                                "Haptics",
-                                                                "Trigger PlayerScreen play pause click isPlaying=$isPlaying",
-                                                            )
-                                                            viewModel.togglePlayPause()
-                                                        },
-                                                        onSkipNext = {
-                                                            Logger.d("Haptics", "Trigger PlayerScreen next click")
-                                                            hapticManager.perform(HapticEvent.PRESS)
-                                                            viewModel.next()
-                                                        },
-                                                        showLabels = true,
-                                                        sideButtonContainerColor = sideButtonContainerColor,
-                                                        sideButtonContentColor = sideButtonContentColor,
-                                                        useRoundedRect = Settings.shared.useRoundedRectPlayButton,
-                                                        modifier = Modifier.fillMaxWidth(),
-                                                        buttonHeight = primaryControlSize,
-                                                        playPauseFocusRequester = playPauseFocusRequester,
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-
-                                playerControlsTransition.AnimatedVisibility(
-                                    visible = { (_, minimalUi) -> !minimalUi },
-                                    enter = canvasControlsEnter,
-                                    exit = canvasControlsExit,
-                                ) {
-                                    Spacer(modifier = Modifier.height(portraitControlsHeight + 16.dp))
-                                }
-                                playerControlsTransition.AnimatedVisibility(
-                                    visible = { (expanded, minimalUi) ->
-                                        expanded && playerType == PlayerType.CLASSIC && controlsVisible &&
-                                            !minimalUi
-                                    },
-                                    enter = canvasControlsEnter,
-                                    exit = canvasControlsExit,
-                                ) {
-                                    Spacer(modifier = Modifier.height(24.dp))
                                 }
                             }
                         }
                     }
 
-                    if (!useLandscapeLayout) {
+                    if (!useLandscapeLayout && !(usesIpodPlayer && !showVideoSurface && !uiState.isLyricsVisible)) {
                         playerControlsTransition.AnimatedVisibility(
                             visible = { (_, minimalUi) -> !minimalUi },
                             enter =
@@ -2538,7 +2700,7 @@ fun PlayerScreen(
                                     }
                                 },
                                 collapsedContent = {
-                                    if (usesMochyFlagship) {
+                                    if (usesMochyChrome) {
                                         FlagshipBottomControls(
                                             volume =
                                                 platform.rememberFlagshipVolume(
@@ -2711,7 +2873,7 @@ fun PlayerScreen(
                         )
                     }
 
-                    if (useLandscapeLayout && !usesMochyFlagship) {
+                    if (useLandscapeLayout && !usesMochyChrome && !usesIpodPlayer) {
                         Box(
                             Modifier
                                 .align(Alignment.CenterEnd)
@@ -2801,7 +2963,7 @@ fun PlayerScreen(
                         )
                     }
 
-                    if (usesMochyFlagship) {
+                    if (usesMochyChrome) {
                         LikeBurstOverlay(state = likeBurstState)
                     }
 
