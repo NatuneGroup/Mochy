@@ -158,6 +158,14 @@ class MusicPlayer(
     private var currentVolume = 1f
     private var sleepTimerGain = 1f
     private var transitionGain = 1f
+    private var transportFadeGain = 1f
+    private val transportFader =
+        MochyTransportFader(scope) { gain ->
+            synchronized(playerLock) {
+                transportFadeGain = gain.coerceIn(0f, 1f)
+                applyPlaybackGains()
+            }
+        }
     private var nextTransitionGain = 0f
 
     @Volatile
@@ -198,7 +206,10 @@ class MusicPlayer(
     private var pendingPlaybackIntent: Boolean? = null
 
     val wantsPlayback: Boolean
-        get() = controllerClock?.playback?.playing ?: synchronized(playerLock) { pendingPlaybackIntent ?: audioPlayer.wantsPlayback }
+        get() =
+            controllerClock?.playback?.playing ?: synchronized(playerLock) {
+                pendingPlaybackIntent ?: transportFader.effectiveWantsPlayback(audioPlayer.wantsPlayback)
+            }
 
     fun setExternalReportingEnabled(enabled: Boolean) {
         playbackReporter.setReportingEnabled(enabled)
@@ -408,7 +419,7 @@ class MusicPlayer(
                 }
                 synchronized(playerLock) {
                     if (sampledInstanceId == currentPlaybackInstanceId && controllerClock == null) {
-                        _isPlaying.value = playing
+                        _isPlaying.value = transportFader.effectivePlaying(playing)
                         _isStalled.value = stalled
                         _currentPosition.value = position
                         _bufferedPosition.value = boundedBufferedPosition(position, bufferedPosition, duration)
@@ -861,7 +872,7 @@ class MusicPlayer(
         }
     }
 
-    fun pause() {
+    private fun pauseImmediate() {
         PlaybackEventLog.info(
             PlaybackEventKind.PLAYER,
             "Pause requested.",
@@ -876,7 +887,39 @@ class MusicPlayer(
         }
     }
 
-    fun resume() {
+    fun pause() {
+        val song = _currentSong.value
+        val (playing, canFade) =
+            synchronized(playerLock) {
+                val active = (pendingPlaybackIntent ?: audioPlayer.wantsPlayback) || audioPlayer.isPlaying()
+                val fadeAllowed =
+                    controllerClock == null &&
+                        !isCrossfading &&
+                        sleepTimerGain > 0.05f &&
+                        currentPlaybackInstanceId != 0L &&
+                        audioPlayer.isPrepared
+                active to fadeAllowed
+            }
+        transportFader.pause(
+            songId = song?.id,
+            currentSongId = { _currentSong.value?.id },
+            isLive = song?.isLive == true || _currentPlaybackResource.value?.isLive == true,
+            isPlaying = playing,
+            canFade = canFade,
+            currentPositionMs = { currentPlaybackPositionMs() },
+            pauseImmediate = { pauseImmediate() },
+            rewindTo = { anchorMs -> seekToImmediate(anchorMs) },
+            onIntentChanged = { intent ->
+                synchronized(playerLock) {
+                    if (controllerClock == null) {
+                        _isPlaying.value = intent ?: audioPlayer.isPlaying()
+                    }
+                }
+            },
+        )
+    }
+
+    private fun resumeImmediate() {
         PlaybackEventLog.info(
             PlaybackEventKind.PLAYER,
             "Resume requested.",
@@ -891,6 +934,35 @@ class MusicPlayer(
         }
     }
 
+    fun resume() {
+        val song = _currentSong.value
+        val (alreadyPlaying, canFade) =
+            synchronized(playerLock) {
+                val active = (pendingPlaybackIntent ?: audioPlayer.wantsPlayback) && audioPlayer.isPlaying()
+                val fadeAllowed =
+                    controllerClock == null &&
+                        !isCrossfading &&
+                        sleepTimerGain > 0.05f &&
+                        currentPlaybackInstanceId != 0L &&
+                        audioPlayer.isPrepared
+                active to fadeAllowed
+            }
+        transportFader.resume(
+            songId = song?.id,
+            currentSongId = { _currentSong.value?.id },
+            isAlreadyPlaying = alreadyPlaying,
+            canFade = canFade,
+            resumeImmediate = { resumeImmediate() },
+            onIntentChanged = { intent ->
+                synchronized(playerLock) {
+                    if (controllerClock == null) {
+                        _isPlaying.value = intent ?: audioPlayer.isPlaying()
+                    }
+                }
+            },
+        )
+    }
+
     fun stop() {
         stopPlayback(replacementSong = null)
     }
@@ -898,6 +970,7 @@ class MusicPlayer(
     fun beginPendingPlayback(song: SongItem): Long = stopPlayback(replacementSong = song)
 
     private fun stopPlayback(replacementSong: SongItem?): Long {
+        transportFader.cancel()
         controllerClock = null
         cancelNext()
         var stoppedPlayback: Pair<Long, Long>? = null
@@ -928,6 +1001,12 @@ class MusicPlayer(
     }
 
     fun seekTo(position: Long) {
+        if (_currentSong.value?.isLive == true) return
+        transportFader.cancel()
+        seekToImmediate(position)
+    }
+
+    private fun seekToImmediate(position: Long) {
         if (_currentSong.value?.isLive == true) return
         PlaybackEventLog.info(
             PlaybackEventKind.PLAYER,
@@ -998,6 +1077,7 @@ class MusicPlayer(
             sleepTimerGain,
             transition,
             resource.normalizationGain().coerceAtMost(1f),
+            transportFadeGain,
         )
 
     private fun PlaybackResource?.normalizationGain(): Float =

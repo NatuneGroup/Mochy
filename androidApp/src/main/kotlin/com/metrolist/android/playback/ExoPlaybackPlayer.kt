@@ -58,6 +58,7 @@ import com.metrolist.shared.equalizer.AudioSpectrumMeter
 import com.metrolist.shared.equalizer.EqualizerProfiles
 import com.metrolist.shared.model.SongItem
 import com.metrolist.shared.model.isLive
+import com.metrolist.shared.playback.MochyTransportFader
 import com.metrolist.shared.playback.MusicQueue
 import com.metrolist.shared.playback.MusicQueueSnapshot
 import com.metrolist.shared.playback.PlaybackFailure
@@ -657,6 +658,12 @@ class ExoPlaybackPlayer(
     private var sleepTimerGain = 1f
     private var transitionGain = 1f
     private var nextTransitionGain = 0f
+    private var transportFadeGain = 1f
+    private val transportFader =
+        MochyTransportFader(scope) { gain ->
+            transportFadeGain = gain.coerceIn(0f, 1f)
+            applyPlaybackGains()
+        }
 
     private val _currentSong = MutableStateFlow<SongItem?>(null)
     private val _isPlaying = MutableStateFlow(false)
@@ -676,7 +683,8 @@ class ExoPlaybackPlayer(
     private val streamFailureState = MutableSharedFlow<AndroidPlaybackRecoveryRequest>(extraBufferCapacity = 1)
     override val currentSong: StateFlow<SongItem?> = _currentSong.asStateFlow()
     override val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
-    override val wantsPlayback: Boolean get() = controllerClock?.playback?.playing ?: exo.playWhenReady
+    override val wantsPlayback: Boolean
+        get() = controllerClock?.playback?.playing ?: transportFader.effectiveWantsPlayback(exo.playWhenReady)
 
     override fun setExternalReportingEnabled(enabled: Boolean) {
         playbackReporter.setReportingEnabled(enabled)
@@ -723,7 +731,7 @@ class ExoPlaybackPlayer(
                 if (source !== exo || controllerClock != null) return
                 scheduleScreenOffFocusRecovery(_wantsPlayback.value, playWhenReady, reason)
                 syncNextPlayback()
-                _wantsPlayback.value = playWhenReady
+                _wantsPlayback.value = transportFader.effectiveWantsPlayback(playWhenReady)
                 recordPlaybackState("Android playback intent changed.", mapOf("playWhenReadyReason" to reason.toString()))
             }
 
@@ -734,7 +742,7 @@ class ExoPlaybackPlayer(
 
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 if (source !== exo || controllerClock != null) return
-                _isPlaying.value = isPlaying
+                _isPlaying.value = transportFader.effectivePlaying(isPlaying)
                 sabrPlaybackCache.setPlaying(isPlaying)
                 recordPlaybackState("Android audio rendering changed.")
                 val isLive = currentResource?.isLive == true || currentSongValue?.isLive == true || exo.isCurrentMediaItemLive
@@ -763,7 +771,7 @@ class ExoPlaybackPlayer(
                 events: Player.Events,
             ) {
                 if (source !== exo || player !== source || controllerClock != null) return
-                _wantsPlayback.value = player.playWhenReady
+                _wantsPlayback.value = transportFader.effectiveWantsPlayback(player.playWhenReady)
                 updateProgressState(reportSample = false)
             }
 
@@ -1042,6 +1050,7 @@ class ExoPlaybackPlayer(
         resource: PlaybackResource,
         startPlaying: Boolean,
     ) {
+        transportFader.cancel()
         onPlaybackCommand()
         cancelScreenOffFocusRecovery()
         requestCounter++
@@ -1091,7 +1100,7 @@ class ExoPlaybackPlayer(
         _playbackState.value = if (playback.ready) Player.STATE_READY else Player.STATE_BUFFERING
     }
 
-    override fun pause() {
+    private fun pauseImmediate() {
         onPlaybackCommand()
         cancelScreenOffFocusRecovery()
         logCommand("pause")
@@ -1100,7 +1109,34 @@ class ExoPlaybackPlayer(
         maybeRecoverAudioOutput(userAction = AudioOutputUserAction.PAUSE)
     }
 
-    override fun resume() {
+    override fun pause() {
+        val song = currentSongValue ?: _currentSong.value
+        val canFade = controllerClock == null && !nextStarted && sleepTimerGain > 0.05f && exo.playbackState != Player.STATE_ENDED
+        transportFader.pause(
+            songId = song?.id,
+            currentSongId = { (currentSongValue ?: _currentSong.value)?.id },
+            isLive = currentResource?.isLive == true || song?.isLive == true || exo.isCurrentMediaItemLive,
+            isPlaying = exo.playWhenReady || exo.isPlaying,
+            canFade = canFade,
+            currentPositionMs = { exo.currentPosition.coerceAtLeast(0L) },
+            pauseImmediate = { pauseImmediate() },
+            rewindTo = { anchorMs ->
+                minimumPositionMs = anchorMs
+                _currentPosition.value = anchorMs
+                activeAudioSource?.updatePlaybackPosition(anchorMs)
+                activeVideoSource?.updatePlaybackPosition(anchorMs)
+                exo.seekTo(anchorMs)
+            },
+            onIntentChanged = { intent ->
+                if (controllerClock == null) {
+                    _wantsPlayback.value = intent ?: exo.playWhenReady
+                    _isPlaying.value = intent ?: exo.isPlaying
+                }
+            },
+        )
+    }
+
+    private fun resumeImmediate() {
         onPlaybackCommand()
         cancelScreenOffFocusRecovery()
         logCommand("resume")
@@ -1115,7 +1151,27 @@ class ExoPlaybackPlayer(
         maybeRecoverAudioOutput(userAction = AudioOutputUserAction.RESUME)
     }
 
+    override fun resume() {
+        if (currentResource == null && retryPendingQueuePlayback()) return
+        val song = currentSongValue ?: _currentSong.value
+        val canFade = controllerClock == null && !nextStarted && sleepTimerGain > 0.05f && currentResource != null
+        transportFader.resume(
+            songId = song?.id,
+            currentSongId = { (currentSongValue ?: _currentSong.value)?.id },
+            isAlreadyPlaying = exo.playWhenReady && exo.playbackState != Player.STATE_ENDED,
+            canFade = canFade,
+            resumeImmediate = { resumeImmediate() },
+            onIntentChanged = { intent ->
+                if (controllerClock == null) {
+                    _wantsPlayback.value = intent ?: exo.playWhenReady
+                    _isPlaying.value = intent ?: exo.isPlaying
+                }
+            },
+        )
+    }
+
     override fun stop() {
+        transportFader.cancel()
         onPlaybackCommand()
         cancelScreenOffFocusRecovery()
         outputRecoveryState = outputRecoveryState.cancelUserRecovery()
@@ -1168,6 +1224,7 @@ class ExoPlaybackPlayer(
         source: PlaybackSeekSource,
     ) {
         if (currentSong.value?.isLive == true) return
+        transportFader.cancel()
         onPlaybackCommand()
         if (nextStarted) cancelNextInternal()
         val target = position.coerceAtLeast(0L)
@@ -1542,6 +1599,7 @@ class ExoPlaybackPlayer(
             }
 
     override fun release() {
+        transportFader.cancel()
         cancelScreenOffFocusRecovery()
         a2dpMonitor.close()
         requestCounter++
@@ -2146,6 +2204,7 @@ class ExoPlaybackPlayer(
                 effectivePlaybackVolume(_volume.value, audioOutputEnabled),
                 sleepTimerGain,
                 transitionGain,
+                transportFadeGain = transportFadeGain,
             )
         nextPlayer?.let { player ->
             player.volume =
@@ -2153,6 +2212,7 @@ class ExoPlaybackPlayer(
                     effectivePlaybackVolume(_volume.value, audioOutputEnabled),
                     sleepTimerGain,
                     nextTransitionGain,
+                    transportFadeGain = transportFadeGain,
                 )
         }
     }

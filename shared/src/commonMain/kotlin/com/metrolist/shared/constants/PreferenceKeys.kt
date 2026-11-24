@@ -22,6 +22,8 @@ val SponsorBlockEnabledKey = "sponsorBlockEnabled"
 val SleepTimerDefaultMinutesKey = "sleepTimerDefaultMinutes"
 val SleepTimerDefaultFinishCurrentSongKey = "sleepTimerDefaultFinishCurrentSong"
 val SleepTimerDefaultFadeOutKey = "sleepTimerDefaultFadeOut"
+val TransportFadeEnabledKey = "transportFadeEnabled"
+val TransportFadeSecondsKey = "transportFadeSeconds"
 
 val CastEnabledKey = "castEnabled"
 val CastVolumeStepKey = "castVolumeStep"

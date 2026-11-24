@@ -138,7 +138,9 @@ fun playbackOutputGain(
     sleepTimerGain: Float,
     transitionGain: Float,
     normalizationGain: Float = 1f,
+    transportFadeGain: Float = 1f,
 ): Float =
     (requestedVolume.coerceIn(0f, 1f) * normalizationGain.coerceAtLeast(0f)).coerceAtMost(1f) *
         sleepTimerGain.coerceIn(0f, 1f) *
-        transitionGain.coerceIn(0f, 1f)
+        transitionGain.coerceIn(0f, 1f) *
+        transportFadeGain.coerceIn(0f, 1f)

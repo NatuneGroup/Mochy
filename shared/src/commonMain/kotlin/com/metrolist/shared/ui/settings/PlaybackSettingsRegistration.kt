@@ -291,6 +291,28 @@ internal fun SettingsUiRegistryBuilder.registerPlaybackSettings(host: SharedSett
                 settings.crossfadeGapless = it
                 host.onSettingChanged(SettingsChangeEffect.AUDIO, null)
             }
+            switch(
+                id = "transportFadeEnabled",
+                title = stringResource(Res.string.mochy_transport_fade_title),
+                description = stringResource(Res.string.mochy_transport_fade_desc),
+                checked = settings.transportFadeEnabled,
+            ) {
+                settings.transportFadeEnabled = it
+            }
+            val transportFadeHalfSeconds = (settings.transportFadeSeconds * 2f).roundToInt().coerceIn(1, 20)
+            val transportFadeText = "${transportFadeHalfSeconds / 2}.${if (transportFadeHalfSeconds % 2 == 0) 0 else 5}"
+            inlineSlider(
+                id = "transportFadeSeconds",
+                title = stringResource(Res.string.mochy_transport_fade_duration),
+                valueLabel = stringResource(Res.string.mochy_transport_fade_seconds_value, transportFadeText),
+                value = transportFadeHalfSeconds / 2f,
+                defaultValue = settings.defaultValue(settings::transportFadeSeconds),
+                range = 0.5f..10f,
+                steps = 18,
+                enabled = settings.transportFadeEnabled,
+            ) { value ->
+                settings.transportFadeSeconds = ((value * 2f).roundToInt().coerceIn(1, 20)) / 2f
+            }
         }
         group("queue", stringResource(Res.string.queue)) {
             switch(

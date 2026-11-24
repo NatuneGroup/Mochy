@@ -368,6 +368,12 @@ class MusicPlayer internal constructor(
     private val _volume = MutableStateFlow(1f)
     val volume: StateFlow<Float> = _volume.asStateFlow()
     private var sleepTimerGain: Float = 1f
+    private var transportFadeGain: Float = 1f
+    private val transportFader =
+        MochyTransportFader(scope) { gain ->
+            transportFadeGain = gain.coerceIn(0f, 1f)
+            applyPlaybackVolume()
+        }
 
     fun setSleepTimerGain(gain: Float) {
         sleepTimerGain = gain.coerceIn(0f, 1f)
@@ -757,6 +763,7 @@ class MusicPlayer internal constructor(
         startPlaying: Boolean = true,
         startPositionMs: Long = 0L,
     ): Boolean {
+        transportFader.cancel()
         pauseOnMute.cancelResume()
         val wasPlaying = wantsPlayback
         val positionMs = if (preservePlaybackInstance) currentPositionMs() else startPositionMs.coerceAtLeast(0L)
@@ -1084,7 +1091,7 @@ class MusicPlayer internal constructor(
         play(song, resource.url, resource.headers, resource, startPlaying = startPlaying, startPositionMs = startPositionMs)
     }
 
-    fun pause() {
+    private fun pauseImmediate() {
         playbackCommandEvents.update { it + 1 }
         failedPlaybackWanted = false
         _currentPosition.value = currentPositionMs()
@@ -1105,7 +1112,30 @@ class MusicPlayer internal constructor(
         updateNowPlayingInfo()
     }
 
+    fun pause() {
+        val song = _currentSong.value
+        val canFade = crossfadeStartMs == null && sleepTimerGain > 0.05f && !isQueueTransitionPending
+        transportFader.pause(
+            songId = song?.id,
+            currentSongId = { _currentSong.value?.id },
+            isLive = song?.isLive == true || _currentPlaybackResource.value?.isLive == true,
+            isPlaying = wantsPlayback || _isPlaying.value,
+            canFade = canFade,
+            currentPositionMs = { currentPositionMs() },
+            pauseImmediate = { pauseImmediate() },
+            rewindTo = { anchorMs -> seekToImmediate(anchorMs) },
+            onIntentChanged = { intent ->
+                if (intent != null) {
+                    wantsPlayback = intent
+                    _isPlaying.value = intent
+                    updateNowPlayingInfo()
+                }
+            },
+        )
+    }
+
     internal fun suspendForQueueTransition(nextVideoId: String? = null) {
+        transportFader.cancel()
         if (preparedPlayback?.song?.id != nextVideoId) cancelPreparedPlayback()
         if (_currentSong.value?.id != nextVideoId) {
             resourceReloadFallback = null
@@ -1113,14 +1143,14 @@ class MusicPlayer internal constructor(
         }
         pendingEofPlaybackInstanceId = null
         isQueueTransitionPending = true
-        pause()
+        pauseImmediate()
     }
 
     internal fun cancelQueueTransition() {
         isQueueTransitionPending = false
     }
 
-    fun resume() {
+    private fun resumeImmediate() {
         playbackCommandEvents.update { it + 1 }
         pauseOnMute.cancelResume()
         if (isQueueTransitionPending) return
@@ -1144,6 +1174,35 @@ class MusicPlayer internal constructor(
         updateNowPlayingInfo()
     }
 
+    fun resume() {
+        if (isQueueTransitionPending) return
+        if (_currentPlaybackResource.value == null || _loadError.value != null) {
+            transportFader.cancel()
+            resumeImmediate()
+            return
+        }
+        val song = _currentSong.value
+        val canFade =
+            crossfadeStartMs == null &&
+                sleepTimerGain > 0.05f &&
+                !isResourceReloadSeekPending &&
+                audioProcessingReady
+        transportFader.resume(
+            songId = song?.id,
+            currentSongId = { _currentSong.value?.id },
+            isAlreadyPlaying = wantsPlayback && _isPlaying.value,
+            canFade = canFade,
+            resumeImmediate = { resumeImmediate() },
+            onIntentChanged = { intent ->
+                if (intent != null) {
+                    wantsPlayback = intent
+                    _isPlaying.value = intent
+                    updateNowPlayingInfo()
+                }
+            },
+        )
+    }
+
     internal fun outputVolumeChanged() {
         if (Settings.shared.pauseOnMute && (_isPlaying.value || pauseOnMute.isPausedByMute.value)) {
             pauseOnMute.onVolumeChanged(
@@ -1157,6 +1216,7 @@ class MusicPlayer internal constructor(
     }
 
     fun stop() {
+        transportFader.cancel()
         pendingEofPlaybackInstanceId = null
         didEmitEof = false
         pauseOnMute.cancelResume()
@@ -1190,6 +1250,11 @@ class MusicPlayer internal constructor(
     }
 
     fun seekTo(position: Long) {
+        transportFader.cancel()
+        seekToImmediate(position)
+    }
+
+    private fun seekToImmediate(position: Long) {
         playbackCommandEvents.update { it + 1 }
         _currentPosition.value = currentPositionMs()
         sampleChanges.trySend(Unit)
@@ -1261,6 +1326,7 @@ class MusicPlayer internal constructor(
                 sleepTimerGain,
                 outgoingGain,
                 if (audioTapInstalled) currentNormalizationGain.coerceAtMost(1f) else currentNormalizationGain,
+                transportFadeGain,
             )
         val incomingNormalizationGain =
             if (preparedPlayback?.audioTapInstalled ==
@@ -1276,6 +1342,7 @@ class MusicPlayer internal constructor(
                 sleepTimerGain,
                 incomingGain,
                 incomingNormalizationGain,
+                transportFadeGain,
             )
     }
 

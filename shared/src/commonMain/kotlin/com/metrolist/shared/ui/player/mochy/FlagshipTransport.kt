@@ -283,15 +283,12 @@ private fun FlagshipSkip(
                 .drawBehind { drawSkipGlyph(shapes, cycle.phase(), unit.toPx(), contentColor, backwards) },
         )
         if (badge > 0.01f) {
+            val formattedSpeed = formatPlaybackSpeed(lastHeldSpeed).trimEnd('0').trimEnd('.')
             val badgeText =
                 when (lastHeldSpeed) {
                     0.5f -> stringResource(Res.string.mochy_hold_slow)
                     2f -> stringResource(Res.string.mochy_hold_fast)
-                    else ->
-                        stringResource(
-                            Res.string.playback_speed_value,
-                            formatPlaybackSpeed(lastHeldSpeed).trimEnd('0').trimEnd('.'),
-                        )
+                    else -> stringResource(Res.string.playback_speed_value, formattedSpeed)
                 }
             val badgeTextColor = if (contentColor.luminance() >= 0.5f) Color.Black else Color.White
             Text(
