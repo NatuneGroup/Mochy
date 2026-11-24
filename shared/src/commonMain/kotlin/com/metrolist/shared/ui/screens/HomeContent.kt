@@ -97,7 +97,9 @@ import com.metrolist.shared.model.PodcastItem
 import com.metrolist.shared.model.SongItem
 import com.metrolist.shared.model.YTItem
 import com.metrolist.shared.model.canonicalHomeItemId
+import com.metrolist.shared.model.isPodcast
 import com.metrolist.shared.model.isVideoShelf
+import com.metrolist.shared.model.isVideoSong
 import com.metrolist.shared.settings.LibraryFilterType
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.settings.displayName
@@ -113,7 +115,9 @@ import com.metrolist.shared.ui.components.YTListItem
 import com.metrolist.shared.ui.components.carouselArtworkShape
 import com.metrolist.shared.ui.components.rememberItemPlayback
 import com.metrolist.shared.ui.mochy.MochyHeroCarousel
+import com.metrolist.shared.ui.mochy.MochyHomeCoverShelf
 import com.metrolist.shared.ui.mochy.MochyHomeTopGlow
+import com.metrolist.shared.ui.mochy.MochyHomeTrackShelf
 import com.metrolist.shared.ui.mochy.mochyHeroItems
 import com.metrolist.shared.ui.navigation.LocalContentObscured
 import com.metrolist.shared.ui.navigation.LocalRootContentActive
@@ -336,6 +340,7 @@ fun HomeContent(
                 isLandscape = isLandscape,
                 speedDialSurpriseAtEndOfFirstPage = speedDialSurpriseAtEndOfFirstPage,
                 isWide = isWide,
+                useMochyMobileShelves = !desktopHome && !isTv,
             )
 
             if (uiState.isContentLoading || uiState.isLoadingMore) {
@@ -489,6 +494,7 @@ fun LazyListScope.renderHomeShelves(
     speedDialSurpriseAtEndOfFirstPage: Boolean = false,
     isWide: Boolean = false,
     onPlaySongs: ((List<SongItem>) -> Unit)? = null,
+    useMochyMobileShelves: Boolean = false,
 ) {
     shelves.forEach { shelf ->
         shelf.chipTitle?.let { title ->
@@ -519,7 +525,8 @@ fun LazyListScope.renderHomeShelves(
                 }
             }
         }
-        if (shelf.style == HomeShelfStyle.SONG_LIST && !shelf.items.isVideoShelf()) {
+        val usesMochyTrackRows = useMochyMobileShelves && shelf.usesMochyTrackRows()
+        if (shelf.style == HomeShelfStyle.SONG_LIST && !usesMochyTrackRows && !shelf.items.isVideoShelf()) {
             item(key = shelf.key, contentType = "home_list_header") {
                 Box(
                     Modifier.fillMaxWidth().animateItem(
@@ -615,6 +622,7 @@ fun LazyListScope.renderHomeShelves(
                             isLandscape = isLandscape,
                             speedDialSurpriseAtEndOfFirstPage = speedDialSurpriseAtEndOfFirstPage,
                             isWide = isWide,
+                            useMochyMobileShelves = useMochyMobileShelves,
                         )
                     }
                 }
@@ -622,6 +630,14 @@ fun LazyListScope.renderHomeShelves(
         }
     }
 }
+
+private fun HomeShelf.usesMochyTrackRows(): Boolean =
+    (style == HomeShelfStyle.SONG_GRID || style == HomeShelfStyle.SONG_LIST || key == "forgotten_favorites" || key == "recently_played") &&
+        items.isNotEmpty() && items.all { it is SongItem && !it.isPodcast && !it.isVideoSong }
+
+private fun HomeShelf.usesMochyCoverCards(): Boolean =
+    (style == HomeShelfStyle.CAROUSEL || style == HomeShelfStyle.ALBUM_CAROUSEL || style == HomeShelfStyle.SIMILAR_TO) &&
+        items.isNotEmpty() && items.all { it is SongItem || it is AlbumItem || it is ArtistItem || it is PlaylistItem }
 
 @Composable
 internal fun DefaultHomeShelf(
@@ -648,6 +664,7 @@ internal fun DefaultHomeShelf(
     speedDialSurpriseAtEndOfFirstPage: Boolean = false,
     isWide: Boolean = false,
     onPlaySongs: ((List<SongItem>) -> Unit)? = null,
+    useMochyMobileShelves: Boolean = false,
 ) {
     val isVideoShelf = shelf.style != HomeShelfStyle.SPEED_DIAL && !shelf.compactRows && shelf.items.isVideoShelf()
     Column(Modifier.fillMaxWidth()) {
@@ -680,6 +697,30 @@ internal fun DefaultHomeShelf(
                     state = state,
                 )
             }
+            return@Column
+        }
+        if (useMochyMobileShelves && shelf.usesMochyTrackRows()) {
+            MochyHomeTrackShelf(
+                sectionKey = shelf.key,
+                tracks = shelf.items.filterIsInstance<SongItem>(),
+                onItemClick = onItemClick,
+                onItemMenu = onItemLongClick,
+                isItemEnabled = isItemEnabled,
+                currentSongId = currentSongId,
+                isPlaying = isPlaying,
+            )
+            return@Column
+        }
+        if (useMochyMobileShelves && shelf.usesMochyCoverCards()) {
+            MochyHomeCoverShelf(
+                sectionKey = shelf.key,
+                items = shelf.items,
+                onItemClick = onItemClick,
+                onItemMenu = onItemLongClick,
+                isItemEnabled = isItemEnabled,
+                currentSongId = currentSongId,
+                isPlaying = isPlaying,
+            )
             return@Column
         }
         when (shelf.style) {

@@ -145,12 +145,12 @@ fun Modifier.revealOnAppear(
     delayMillis: Int = 0,
     cascade: Boolean = false,
 ): Modifier {
-    val alreadySeen = remember(key) { seenState.hasSeen(key) }
+    if (!enabled) return this
+    val alreadySeen = remember(key, seenState) { seenState.hasSeen(key) }
     if (alreadySeen) return this
 
     val progress = remember(key) { Animatable(0f) }
-    LaunchedEffect(key, enabled) {
-        if (!enabled) return@LaunchedEffect
+    LaunchedEffect(key, seenState) {
         seenState.markSeen(key)
         val wait = delayMillis + if (cascade) seenState.nextBurstDelay() else 0
         progress.animateTo(1f, tween(REVEAL_FADE_IN_MS, delayMillis = wait, easing = RevealEasing))
