@@ -93,8 +93,7 @@ class MochyModuleRegistry(
         rebuildModules()
     }
 
-    fun isEnabled(id: String): Boolean =
-        synchronized(lock) { state.enabled[id] ?: (id == YouTubeBuiltInModule.ID) }
+    fun isEnabled(id: String): Boolean = synchronized(lock) { state.enabled[id] ?: (id == YouTubeBuiltInModule.ID) }
 
     fun setEnabled(
         id: String,

@@ -61,15 +61,25 @@ data class WebModuleManifest(
         val kind: FieldKind
             get() =
                 when (type?.trim()?.lowercase()) {
-                    "select", "list", "choice" -> FieldKind.Select
-                    "toggle", "switch", "bool", "boolean" -> FieldKind.Toggle
-                    "text", "string", "input", "slider", "range", "number" -> FieldKind.Text
-                    else ->
+                    "select", "list", "choice" -> {
+                        FieldKind.Select
+                    }
+
+                    "toggle", "switch", "bool", "boolean" -> {
+                        FieldKind.Toggle
+                    }
+
+                    "text", "string", "input", "slider", "range", "number" -> {
+                        FieldKind.Text
+                    }
+
+                    else -> {
                         when {
                             options.isNotEmpty() -> FieldKind.Select
                             defaultValue?.lowercase() in setOf("true", "false") -> FieldKind.Toggle
                             else -> FieldKind.Text
                         }
+                    }
                 }
 
         fun toField(): ModuleField =
@@ -95,8 +105,11 @@ data class WebModuleManifest(
 
         fun lookAt(value: String?): Map<String, String> =
             when (kind) {
-                FieldKind.Toggle -> if (value?.lowercase() == "true") look.asTextMap() else emptyMap()
-                FieldKind.Select ->
+                FieldKind.Toggle -> {
+                    if (value?.lowercase() == "true") look.asTextMap() else emptyMap()
+                }
+
+                FieldKind.Select -> {
                     options
                         .firstOrNull { optionValue(it) == value }
                         ?.let { opt ->
@@ -104,7 +117,11 @@ data class WebModuleManifest(
                                 ?.mapNotNull { (k, v) -> (v as? JsonPrimitive)?.contentOrNull?.let { k to it } }
                                 ?.toMap()
                         }.orEmpty()
-                FieldKind.Text -> emptyMap()
+                }
+
+                FieldKind.Text -> {
+                    emptyMap()
+                }
             }
 
         val changesLook: Boolean
@@ -112,8 +129,7 @@ data class WebModuleManifest(
                 look.isNotEmpty() ||
                     options.any { option -> (option as? JsonObject)?.let { it["look"] is JsonObject } == true }
 
-        private fun optionValue(option: JsonElement): String? =
-            (option as? JsonObject)?.get("value").queryValue() ?: option.queryValue()
+        private fun optionValue(option: JsonElement): String? = (option as? JsonObject)?.get("value").queryValue() ?: option.queryValue()
     }
 
     val resourceNames: Set<String>
@@ -418,13 +434,20 @@ class WebModule(
         val root = runCatching { json.parseToJsonElement(text) }.getOrNull() ?: return emptyList()
         val array =
             when (root) {
-                is JsonArray -> root
-                is JsonObject ->
+                is JsonArray -> {
+                    root
+                }
+
+                is JsonObject -> {
                     (root["tracks"] as? JsonArray)
                         ?: (root["results"] as? JsonArray)
                         ?: (root["items"] as? JsonArray)
                         ?: (root["data"] as? JsonArray)
-                else -> null
+                }
+
+                else -> {
+                    null
+                }
             } ?: return emptyList()
         return array.mapNotNull { element ->
             val obj = element as? JsonObject ?: return@mapNotNull null
@@ -544,8 +567,7 @@ private fun JsonElement?.queryValue(): String? {
     return primitive.content.takeIf { it.isNotBlank() }
 }
 
-private fun JsonObject.textField(key: String): String? =
-    (this[key] as? JsonPrimitive)?.contentOrNull?.takeIf { it.isNotBlank() }
+private fun JsonObject.textField(key: String): String? = (this[key] as? JsonPrimitive)?.contentOrNull?.takeIf { it.isNotBlank() }
 
 private fun Map<String, JsonPrimitive>.asTextMap(): Map<String, String> =
     mapNotNull { (key, value) -> value.contentOrNull?.let { key to it } }.toMap()

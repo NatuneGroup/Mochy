@@ -811,7 +811,7 @@ class TidalInstanceModule :
             (bts?.get("urls") as? JsonArray)
                 ?.firstNotNullOfOrNull { (it as? JsonPrimitive)?.contentOrNull?.takeIf { u -> u.startsWith("http") } }
                 ?: return ResolveResult.Unavailable("BTS manifest has no stream URL")
-        val codec = bts?.str("codecs")?.uppercase() ?: "FLAC"
+        val codec = bts.str("codecs")?.uppercase() ?: "FLAC"
         report(DiagnosticStep("Stream", true, "$quality ($codec)"))
         return ResolveResult.Found(
             SourceStream(
