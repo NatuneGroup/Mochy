@@ -23,8 +23,9 @@ Read first: [mochy-port.md](mochy-port.md), [../CLAUDE.md](../CLAUDE.md) and
 - Last full run on `0bdd6d9a` passed: Android / APK, Desktop / Linux x64,
   iOS / Validate iOS, Select checks and repository checks, and disclosure.
 - Android artifact from that run: `Mochy.apk`, 16,809,276 bytes (16.8 MB),
-  `com.natune.mochy`, version 14.0.1, v1 + v2 + v3 signatures, 3 dex files,
-  18 native library entries. The previous debug APK was 48 MB with 23 dex files.
+  `com.natune.mochy`, version 14.0.1, v2 and v3 APK signatures (v1 is not used at
+  minSdk 24), 3 dex files, 18 native library entries. The previous debug APK was
+  48 MB with 23 dex files.
 - No GitHub Actions secrets are configured in `NatuneGroup/Mochy`
   (`total_count: 0`). CI therefore builds release with the published test key added
   in this handoff commit.
