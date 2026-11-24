@@ -1173,7 +1173,7 @@ fun PlayerScreen(
                                         )
                                     }
                                     if (usesMochyFlagship && !useLandscapeLayout) {
-                                        val topLuminance = gradientColorStops.firstOrNull()?.luminance() ?: 0f
+                                        val topLuminance = gradientColorStops.firstOrNull()?.second?.luminance() ?: 0f
                                         val flagshipGlare by animateFloatAsState(
                                             targetValue = ((topLuminance - 0.55f) / 0.45f).coerceIn(0f, 1f),
                                             animationSpec = tween(durationMillis = 400),
