@@ -4,13 +4,13 @@ Choose your platform: [Android](android.md), [iOS and iPadOS](ios.md), [Windows]
 
 ## Get the package
 
-Use [Metrolist releases](https://github.com/MetrolistGroup/Metrolist/releases) for downloads. The table describes workflow outputs, not a guarantee that every package is published.
+Use [Mochy releases](https://github.com/NatuneGroup/Mochy/releases) for downloads. The table describes workflow outputs, not a guarantee that every package is published. Desktop and iOS asset names still carry the Metrolist prefix until those platforms are rebranded.
 
 The [release workflow](../../.github/workflows/release.yml) defines these packages. `VERSION` below means the version in the download's filename.
 
 | Platform | Release asset |
 | --- | --- |
-| Android | `Metrolist.apk` |
+| Android | `Mochy.apk` |
 | iOS | `Metrolist.ipa` |
 | Windows x64 | `Metrolist-Desktop-windows.zip`, `metrolist-installer-windows-x64-VERSION.exe` |
 | Windows ARM64 | `metrolist-desktop-windows-arm64-VERSION.zip` |

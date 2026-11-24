@@ -85,9 +85,9 @@ class ReleaseWorkflowsTest(unittest.TestCase):
     def test_stable_release_requires_and_checksums_ipa(self):
         script = step_script('release.yml', 'Validate and checksum release assets')
         assets = [
-            'Metrolist.apk',
-            'Metrolist-izzy.apk',
-            'Metrolist-KMP-mapping.txt',
+            'Mochy.apk',
+            'Mochy-izzy.apk',
+            'Mochy-KMP-mapping.txt',
             'metrolist-desktop-native-windows-x64-14.0.0.zip',
             'Metrolist-Desktop-Windows-arm64.zip',
             'metrolist-installer-windows-x64-14.0.0.exe',
@@ -112,7 +112,7 @@ class ReleaseWorkflowsTest(unittest.TestCase):
                 if include_ipa:
                     sums = (output / 'SHA256SUMS').read_text()
                     self.assertIn('Metrolist.ipa', sums)
-                    self.assertIn('Metrolist-with-Google-Cast.apk', sums)
+                    self.assertIn('Mochy-with-Google-Cast.apk', sums)
                     self.assertIn('metrolist-altstore.json', sums)
                 else:
                     self.assertIn('Missing release asset: release-assets/Metrolist.ipa', result.stderr)

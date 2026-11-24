@@ -302,17 +302,17 @@ jobs:
           mv \
             release-assets/Metrolist-Desktop-Windows-arm64.zip \
             "release-assets/metrolist-desktop-windows-arm64-${APP_VERSION}.zip"
-          # Legacy v13 GMS builds only update from this asset name; the app has one variant.
-          cp release-assets/Metrolist.apk release-assets/Metrolist-with-Google-Cast.apk
+          # One APK serves both names; keep the Cast alias for existing download links.
+          cp release-assets/Mochy.apk release-assets/Mochy-with-Google-Cast.apk
           if [[ -f release-assets/Metrolist.ipa ]]; then
             python3 scripts/generate_altstore_source.py \
               "$GITHUB_REPOSITORY" "$APP_VERSION" release-assets/Metrolist.ipa release-assets/metrolist-altstore.json
           fi
           expected=(
-            "release-assets/Metrolist.apk"
-            "release-assets/Metrolist-with-Google-Cast.apk"
-            "release-assets/Metrolist-izzy.apk"
-            "release-assets/Metrolist-KMP-mapping.txt"
+            "release-assets/Mochy.apk"
+            "release-assets/Mochy-with-Google-Cast.apk"
+            "release-assets/Mochy-izzy.apk"
+            "release-assets/Mochy-KMP-mapping.txt"
             "release-assets/Metrolist.ipa"
             "release-assets/metrolist-altstore.json"
             "release-assets/Metrolist-Desktop-windows.zip"

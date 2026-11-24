@@ -2,9 +2,9 @@
 
 ## Requirements and download
 
-Use Android 7 or later, API 24. Download the universal APK through [the project channels](README.md#get-the-package). The release app ID is `com.metrolist.music`, so it updates the original 13.x app in place; debug uses `com.metrolist.music.debug`.
+Use Android 7 or later, API 24. Download the universal APK through [the project channels](README.md#get-the-package). The release app ID is `com.natune.mochy`, so it installs alongside Metrolist and older debug builds; debug uses `com.natune.mochy.debug`. Data from another package is not migrated automatically.
 
-Metrolist is also listed on [Obtainium](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/MetrolistGroup/Metrolist/), [IzzyOnDroid](https://apt.izzysoft.de/fdroid/index/apk/com.metrolist.music) and [OpenAPK](https://www.openapk.net/metrolist/com.metrolist.music/). The [nightly prerelease](https://github.com/MetrolistGroup/Metrolist/releases/tag/nightly) ships `Metrolist.apk` built from `main` and may be unstable.
+[Mochy releases](https://github.com/NatuneGroup/Mochy/releases) include the stable and [nightly](https://github.com/NatuneGroup/Mochy/releases/tag/nightly) downloads. The nightly ships `Mochy.apk` built from `main` and may be unstable. Release builds are signed with the project key; CI builds without release secrets use the published test key described in `androidApp/keystore/README.md`.
 
 ## Install and verify
 
@@ -24,7 +24,7 @@ If the app is missing, report the phone/OS, Android Auto and app versions, packa
 
 [Export a backup](README.md#before-updating-or-uninstalling). Install an APK with the same app ID and signing key over the existing app. Debug and release builds do not update each other.
 
-The in-app updater, which the IzzyOnDroid build leaves out, installs through the Android package installer by default. In Settings > Updates, **Install updates with** can switch to root or [Shizuku](https://shizuku.rikka.app/). Both stream the verified APK into `pm install -i com.metrolist.music`, so no prompt appears, and choosing either runs `pm set-installer` to record Metrolist as its own installer. On Android 12 and newer the package installer also updates Metrolist without a prompt once it may install apps, using `UPDATE_PACKAGES_WITHOUT_USER_ACTION`, unless another app has claimed update ownership on Android 14 and newer. **Install updates automatically** downloads each update found by the startup or hourly check and installs it once playback is paused or stopped. After a failed automatic install it waits for the next launch. It needs one of those prompt-free paths. Installing closes Metrolist, which does not reopen by itself.
+The in-app updater, which the IzzyOnDroid build leaves out, installs through the Android package installer by default. In Settings > Updates, **Install updates with** can switch to root or [Shizuku](https://shizuku.rikka.app/). Both stream the verified APK into `pm install -i com.natune.mochy`, so no prompt appears, and choosing either runs `pm set-installer` to record Mochy as its own installer. On Android 12 and newer the package installer also updates Mochy without a prompt once it may install apps, using `UPDATE_PACKAGES_WITHOUT_USER_ACTION`, unless another app has claimed update ownership on Android 14 and newer. **Install updates automatically** downloads each update found by the startup or hourly check and installs it once playback is paused or stopped. After a failed automatic install it waits for the next launch. It needs one of those prompt-free paths. Installing closes Mochy, which does not reopen by itself.
 
 Uninstalling removes private settings, library and downloads. Exported shared-storage files can remain. Preserve those files and backups before deleting data.
 

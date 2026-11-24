@@ -85,8 +85,8 @@ class NightlyWorkflowTest(unittest.TestCase):
             with self.subTest(invalid=invalid), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 for name, content in {
-                    'android/Metrolist.apk': b'signed apk',
-                    'android/Metrolist-KMP-mapping.txt': b'mapping',
+                    'android/Mochy.apk': b'signed apk',
+                    'android/Mochy-KMP-mapping.txt': b'mapping',
                     'linux/native.AppImage': b'linux',
                     'windows/native.zip': b'windows',
                 }.items():
@@ -98,7 +98,7 @@ class NightlyWorkflowTest(unittest.TestCase):
                 elif invalid == 'extra':
                     (root / 'artifacts/windows/extra.zip').write_bytes(b'extra')
                 elif invalid == 'empty':
-                    (root / 'artifacts/android/Metrolist.apk').write_bytes(b'')
+                    (root / 'artifacts/android/Mochy.apk').write_bytes(b'')
                 result = self.run_step('Prepare nightly assets', root)
                 if invalid:
                     self.assertNotEqual(0, result.returncode)
@@ -106,7 +106,7 @@ class NightlyWorkflowTest(unittest.TestCase):
                 else:
                     self.assertEqual(0, result.returncode, result.stderr)
                     self.assertEqual({
-                        'Metrolist.apk': b'signed apk',
+                        'Mochy.apk': b'signed apk',
                         'Metrolist-Desktop-linux-x64.AppImage': b'linux',
                         'Metrolist-Desktop-windows.zip': b'windows',
                     }, {p.name: p.read_bytes() for p in (root / 'nightly-assets').iterdir()})
@@ -205,7 +205,7 @@ class NightlyWorkflowTest(unittest.TestCase):
                 self.git(root, 'config', 'user.email', 'nightly@example.invalid')
                 self.git(root, 'config', 'user.name', 'Nightly test')
                 self.git(root, 'commit', '-q', '--allow-empty', '-m', 'source')
-                assets = ['Metrolist.apk',
+                assets = ['Mochy.apk',
                           'Metrolist-Desktop-linux-x64.AppImage',
                           'Metrolist-Desktop-windows.zip']
                 (root / 'nightly-assets').mkdir()

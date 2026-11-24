@@ -25,6 +25,7 @@ Read these when working on the corresponding feature. They are not prerequisites
 | Shared rooms, codecs and invitation links | [Listen Together](listen-together.md) |
 | Playback failures and automatic error skipping | [Playback errors](playback.md) |
 | Audio processing and equalizer profiles | [Audio processing](audio-processing.md) |
+| Mochy fork UI, waves and Android release | [Mochy port](mochy-port.md), [handoff](handoff.md) |
 | iOS Opus playback | [iOS Opus](ios-opus.md) |
 
 ## Release and CI

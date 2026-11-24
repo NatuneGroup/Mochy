@@ -131,7 +131,7 @@ class StableReleaseNotesTest(unittest.TestCase):
                 root = Path(directory)
                 self.fixture(root)
                 (root / 'release-assets').mkdir()
-                (root / 'release-assets/Metrolist.apk').write_bytes(b'apk')
+                (root / 'release-assets/Mochy.apk').write_bytes(b'apk')
                 gh = root / 'gh'
                 gh.write_text(textwrap.dedent('''\
                     #!/bin/bash
@@ -140,7 +140,7 @@ class StableReleaseNotesTest(unittest.TestCase):
                       if [[ " $* " == *' --json isDraft '* ]]; then
                         if [[ "$STATE" == draft ]]; then echo true; else echo false; fi
                       elif [[ " $* " == *' --json assets '* ]]; then
-                        if [[ "$STATE" != published-missing-asset ]]; then echo Metrolist.apk; fi
+                        if [[ "$STATE" != published-missing-asset ]]; then echo Mochy.apk; fi
                       else
                         [[ "$STATE" != missing ]]
                       fi

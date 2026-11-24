@@ -288,6 +288,12 @@ android {
             keyAliasName.isNotBlank() &&
             keyPasswordVal.isNotBlank()
 
+    // CI builds without release secrets fall back to this published, non-secret key so
+    // consecutive builds keep the same signature and update in place. Production releases
+    // use the KEYSTORE_* secrets above; see keystore/README.md.
+    val testKeystore = layout.projectDirectory.file("keystore/mochy-test.p12").asFile
+    val hasTestKeystore = testKeystore.isFile
+
     signingConfigs {
         getByName("debug") {
             enableV1Signing = true
@@ -300,6 +306,17 @@ android {
                 this.storePassword = storePassword
                 keyAlias = keyAliasName
                 keyPassword = keyPasswordVal
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
+            }
+        }
+        if (hasTestKeystore) {
+            create("test") {
+                storeFile = testKeystore
+                storePassword = "mochytest"
+                keyAlias = "mochy-test"
+                keyPassword = "mochytest"
                 enableV1Signing = true
                 enableV2Signing = true
                 enableV3Signing = true
@@ -318,7 +335,12 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            signingConfig = if (hasReleaseSigning) signingConfigs["release"] else signingConfigs["debug"]
+            signingConfig =
+                when {
+                    hasReleaseSigning -> signingConfigs["release"]
+                    hasTestKeystore -> signingConfigs["test"]
+                    else -> signingConfigs["debug"]
+                }
         }
         create("benchmark") {
             initWith(getByName("release"))
