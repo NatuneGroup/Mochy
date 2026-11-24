@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,11 +32,17 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import com.metrolist.shared.generated.resources.Res
+import com.metrolist.shared.generated.resources.mochy_home_chevron
 import com.metrolist.shared.generated.resources.see_all
 import com.metrolist.shared.ui.components.images.AsyncImage
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.mochy.RoundedHighlight
+import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import com.metrolist.shared.ui.utils.artistArtworkShape
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -84,7 +91,23 @@ fun SectionTitle(
     onPlayAllClick: (() -> Unit)? = null,
     onShuffleClick: (() -> Unit)? = null,
     isWide: Boolean = false,
+    useMochyHomeStyle: Boolean = false,
 ) {
+    if (useMochyHomeStyle) {
+        MochyHomeSectionTitle(
+            title = title,
+            label = label,
+            thumbnailUrl = thumbnailUrl,
+            artworkShape = if (isArtistEndpoint) artistArtworkShape(artworkSeed) else RoundedCornerShape(4.dp),
+            onClick = onClick,
+            onPlayAllClick = onPlayAllClick,
+            onShuffleClick = onShuffleClick,
+            playAllLabel = playAllLabel,
+            shuffleLabel = shuffleLabel,
+            modifier = modifier,
+        )
+        return
+    }
     val titleStyle = if (isWide) MaterialTheme.typography.headlineMediumEmphasized else MaterialTheme.typography.headlineSmallEmphasized
     val rowHeight = if (isWide || label != null) 60.dp else 50.dp
 
@@ -174,6 +197,101 @@ fun SectionTitle(
                 onClick = onPlayAllClick,
                 isWide = isWide,
             )
+        }
+    }
+}
+
+// Ported from Mochy Music by realidkroo.
+@Composable
+private fun MochyHomeSectionTitle(
+    title: String,
+    label: String?,
+    thumbnailUrl: String?,
+    artworkShape: Shape,
+    onClick: (() -> Unit)?,
+    onPlayAllClick: (() -> Unit)?,
+    onShuffleClick: (() -> Unit)?,
+    playAllLabel: String?,
+    shuffleLabel: String?,
+    modifier: Modifier,
+) {
+    val textColor = MaterialTheme.colorScheme.onSurface
+    val inter = mochyInterFontFamily()
+    val highlight = remember(textColor) { RoundedHighlight(cornerRadius = 100.dp, color = textColor.copy(alpha = 0.12f)) }
+    val browseLabel = stringResource(Res.string.see_all)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(start = 12.dp, end = 12.dp, bottom = 6.dp)
+                .then(
+                    if (onClick != null) {
+                        Modifier.clickable(
+                            interactionSource = null,
+                            indication = highlight,
+                            role = Role.Button,
+                            onClickLabel = browseLabel,
+                            onClick = onClick,
+                        )
+                    } else {
+                        Modifier
+                    },
+                ).padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 4.dp),
+    ) {
+        if (thumbnailUrl != null) {
+            AsyncImage(
+                url = thumbnailUrl,
+                contentDescription = null,
+                modifier = Modifier.size(40.dp).clip(artworkShape),
+                contentScale = ContentScale.Crop,
+            )
+            Spacer(Modifier.width(10.dp))
+        }
+        Column(Modifier.weight(1f, fill = onClick == null && (onShuffleClick != null || onPlayAllClick != null))) {
+            if (label != null) {
+                Text(
+                    text = label,
+                    fontFamily = inter,
+                    fontSize = 12.sp,
+                    lineHeight = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = (-0.02).em,
+                    color = textColor.copy(alpha = 0.45f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Text(
+                text = title,
+                fontFamily = inter,
+                fontSize = 16.sp,
+                lineHeight = 19.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = (-0.06).em,
+                color = textColor.copy(alpha = 0.69f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        when {
+            onClick != null -> {
+                Spacer(Modifier.width(6.dp))
+                Icon(
+                    painterResource(Res.drawable.mochy_home_chevron),
+                    contentDescription = null,
+                    tint = textColor.copy(alpha = 0.55f),
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+
+            onShuffleClick != null -> {
+                SectionActionButton(MetrolistIcons.Rounded.Shuffle, shuffleLabel, onShuffleClick)
+            }
+
+            onPlayAllClick != null -> {
+                SectionActionButton(MetrolistIcons.Default.PlayArrow, playAllLabel, onPlayAllClick)
+            }
         }
     }
 }

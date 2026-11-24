@@ -226,6 +226,10 @@
     <string name="loudness_value">%1$s dB</string>
     <!-- Translators: Label for volume in the multiple app screens. -->
     <string name="volume">Volume</string>
+    <!-- Translators: The playback output is the device's built-in speaker. -->
+    <string name="mochy_output_speaker">Internal speaker</string>
+    <!-- Translators: Accessibility action label for choosing where music plays. -->
+    <string name="mochy_output_change">Change where the music plays</string>
     <!-- Translators: Label for file size in the Home and browse screens and song details. -->
     <string name="file_size">File size</string>
     <!-- Translators: Label for unknown in the multiple app screens. -->

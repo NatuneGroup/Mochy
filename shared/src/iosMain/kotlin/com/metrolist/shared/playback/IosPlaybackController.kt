@@ -93,6 +93,7 @@ import platform.UIKit.UIApplicationWillTerminateNotification
 import platform.UIKit.UIBackgroundTaskIdentifier
 import platform.UIKit.UIBackgroundTaskInvalid
 import platform.UIKit.UIDevice
+import kotlin.math.roundToInt
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TimeMark
@@ -1249,6 +1250,8 @@ internal class IosPlaybackController(
             requestPlayback(it, queue, prevIndex, startPlaying = startPlaying)
         }
     }
+
+    override fun setPlaybackVolume(volume: Float) = player.setVolume((volume.coerceIn(0f, 1f) * 100f).roundToInt())
 
     override fun setPlaybackSpeed(speed: Float) {
         if (inListenTogether) return

@@ -2754,12 +2754,21 @@ class ExoPlaybackPlayer(
                     recoveryPlaybackInstanceId == null && currentResource?.hasSameSabrAudio(preparedResource) == true
                 }
             val mediaSource =
-                buildSource(
-                    resource = preparedResource,
-                    onAudioSourceOpened = { source -> nextAudioSource = source },
-                    onVideoSourceOpened = { source -> nextVideoSource = source },
-                    deferAudioStart = cachedAudioSource != null,
-                )
+                try {
+                    buildSource(
+                        resource = preparedResource,
+                        onAudioSourceOpened = { source -> nextAudioSource = source },
+                        onVideoSourceOpened = { source -> nextVideoSource = source },
+                        deferAudioStart = cachedAudioSource != null,
+                    )
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    nextAudioSource?.closePlaybackSource()
+                    nextVideoSource?.closePlaybackSource()
+                    onPrepareFailure(error)
+                    return@withContext false
+                }
             nextAudioSource?.updatePlaybackPosition(initialTargetPosition)
             nextVideoSource?.updatePlaybackPosition(initialTargetPosition)
             try {

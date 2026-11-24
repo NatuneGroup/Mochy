@@ -63,6 +63,7 @@ import com.metrolist.shared.generated.resources.unknown
 import com.metrolist.shared.listentogether.ListenTogetherManager
 import com.metrolist.shared.listentogether.ListenTogetherRoomRole
 import com.metrolist.shared.model.SongItem
+import com.metrolist.shared.playback.PlayerSession
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.settings.displayName
 import com.metrolist.shared.state.SongLikeState
@@ -72,6 +73,7 @@ import com.metrolist.shared.ui.components.PopupContent
 import com.metrolist.shared.ui.components.lyrics.LyricsShareDialog
 import com.metrolist.shared.ui.player.PlayerArtworkCrossfade
 import com.metrolist.shared.ui.player.PlayerPlatform
+import com.metrolist.shared.ui.player.mochy.FlagshipVolume
 import com.metrolist.shared.viewmodels.PlayerViewModel
 import com.metrolist.shared.youtube.playback.PlaybackResource
 import kotlinx.coroutines.launch
@@ -151,6 +153,18 @@ class AndroidPlayerPlatform(
             )
         }
     }
+
+    @Composable
+    override fun rememberFlagshipVolume(
+        session: PlayerSession?,
+        listening: Boolean,
+        useDeviceVolume: Boolean,
+    ): FlagshipVolume? =
+        if (useDeviceVolume) {
+            rememberAndroidFlagshipVolume(listening)
+        } else {
+            super.rememberFlagshipVolume(session, listening, false)
+        }
 
     @Composable
     override fun rememberCastDialogLauncher(onShowCastDialog: () -> Unit): () -> Unit {

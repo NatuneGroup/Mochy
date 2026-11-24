@@ -10,7 +10,10 @@ import androidx.compose.ui.unit.Dp
 import com.metrolist.shared.api.artwork.CanvasContentSource
 import com.metrolist.shared.api.artwork.YouTubeCanvasClip
 import com.metrolist.shared.model.SongItem
+import com.metrolist.shared.playback.PlayerSession
 import com.metrolist.shared.ui.components.PlayerMenuAction
+import com.metrolist.shared.ui.player.mochy.FlagshipVolume
+import com.metrolist.shared.ui.player.mochy.rememberSessionFlagshipVolume
 import com.metrolist.shared.viewmodels.PlayerViewModel
 import com.metrolist.shared.youtube.playback.PlaybackResource
 
@@ -44,6 +47,13 @@ interface PlayerPlatform {
 
     @Composable
     fun artworkCrossfade(currentSongId: String?): PlayerArtworkCrossfade
+
+    @Composable
+    fun rememberFlagshipVolume(
+        session: PlayerSession?,
+        listening: Boolean,
+        useDeviceVolume: Boolean,
+    ): FlagshipVolume? = rememberSessionFlagshipVolume(session, listening)
 
     @Composable
     fun rememberCastDialogLauncher(onShowCastDialog: () -> Unit): () -> Unit

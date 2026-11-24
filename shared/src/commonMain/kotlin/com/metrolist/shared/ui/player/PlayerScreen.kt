@@ -234,6 +234,9 @@ import com.metrolist.shared.ui.navigation.NavigationBackHandler
 import com.metrolist.shared.ui.navigation.blockInput
 import com.metrolist.shared.ui.player.mochy.BedsideClock
 import com.metrolist.shared.ui.player.mochy.FlagshipActions
+import com.metrolist.shared.ui.player.mochy.FlagshipBarBottomGap
+import com.metrolist.shared.ui.player.mochy.FlagshipBarHeight
+import com.metrolist.shared.ui.player.mochy.FlagshipBottomControls
 import com.metrolist.shared.ui.player.mochy.FlagshipControlsShade
 import com.metrolist.shared.ui.player.mochy.FlagshipHandle
 import com.metrolist.shared.ui.player.mochy.FlagshipTransport
@@ -915,7 +918,9 @@ fun PlayerScreen(
                     if (displayCutoutTopPadding > 0.dp) displayCutoutTopPadding + 4.dp else 0.dp,
                     if (isImmersive) 16.dp else 0.dp,
                 )
-            val queuePeekHeight = if (useLandscapeLayout) 0.dp else QueuePeekHeight + 16.dp + navigationBarBottomPadding
+            val portraitControlsHeight =
+                if (usesMochyFlagship) FlagshipBarHeight + FlagshipBarBottomGap else QueuePeekHeight + 16.dp
+            val queuePeekHeight = if (useLandscapeLayout) 0.dp else portraitControlsHeight + navigationBarBottomPadding
             val queueSheetState =
                 rememberBottomSheetState(
                     dismissedBound = 0.dp,
@@ -2382,7 +2387,7 @@ fun PlayerScreen(
                                     enter = canvasControlsEnter,
                                     exit = canvasControlsExit,
                                 ) {
-                                    Spacer(modifier = Modifier.height(QueuePeekHeight + 32.dp))
+                                    Spacer(modifier = Modifier.height(portraitControlsHeight + 16.dp))
                                 }
                                 playerControlsTransition.AnimatedVisibility(
                                     visible = { (expanded, minimalUi) ->
@@ -2437,7 +2442,37 @@ fun PlayerScreen(
                                     }
                                 },
                                 collapsedContent = {
-                                    if (playerType == PlayerType.CLASSIC) {
+                                    if (usesMochyFlagship) {
+                                        FlagshipBottomControls(
+                                            volume =
+                                                platform.rememberFlagshipVolume(
+                                                    session = playerConnection,
+                                                    listening = contentActive,
+                                                    useDeviceVolume = !castState.isConnected,
+                                                ),
+                                            lyricsVisible = uiState.isLyricsVisible,
+                                            queueVisible = queueOpen,
+                                            outputName = castState.device?.name?.takeIf { castState.isConnected },
+                                            contentColor = textBackgroundColor,
+                                            onOutput = {
+                                                hapticManager.perform(HapticEvent.PRESS)
+                                                if (platform.supportsCasting && Settings.shared.castEnabled) {
+                                                    openCastDialog()
+                                                } else {
+                                                    showDeviceConnectSheet = true
+                                                }
+                                            },
+                                            onLyrics = {
+                                                hapticManager.toggle(!uiState.isLyricsVisible)
+                                                viewModel.setLyricsVisible(!uiState.isLyricsVisible)
+                                            },
+                                            onQueue = {
+                                                hapticManager.perform(HapticEvent.PRESS)
+                                                openQueueSheet()
+                                            },
+                                            modifier = Modifier.padding(bottom = navigationBarBottomPadding + FlagshipBarBottomGap),
+                                        )
+                                    } else if (playerType == PlayerType.CLASSIC) {
                                         VintageClassicBottomBar(
                                             queueText = stringResource(Res.string.queue),
                                             sleepTimerText = stringResource(Res.string.sleep_timer),

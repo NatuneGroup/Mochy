@@ -148,6 +148,8 @@ interface PlaybackController {
 
     fun skipToPrevious()
 
+    fun setPlaybackVolume(volume: Float) = Unit
+
     fun setPlaybackSpeed(speed: Float)
 
     fun beginTemporaryPlaybackSpeed(multiplier: Float): (() -> Unit)? = null

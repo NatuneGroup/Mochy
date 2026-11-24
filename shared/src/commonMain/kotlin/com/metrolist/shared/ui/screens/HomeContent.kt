@@ -749,6 +749,7 @@ private fun HomeShelfHeader(
     isWide: Boolean,
     onPlaySongs: ((List<SongItem>) -> Unit)?,
 ) {
+    val useMochyHomeStyle = !isWide && !LocalIsTv.current
     val songs = shelf.items.filterIsInstance<SongItem>().filter(isItemEnabled)
     val isLibraryAlbums = shelf.headerAction == HomeShelfHeaderAction.LIBRARY && shelf.browseId?.startsWith("FEmusic_library") == true
     SectionTitle(
@@ -757,7 +758,7 @@ private fun HomeShelfHeader(
         thumbnailUrl = shelf.thumbnail,
         isArtistEndpoint = shelf.headerArtistId != null,
         artworkSeed = shelf.headerArtistId.orEmpty(),
-        modifier = Modifier.padding(horizontal = if (isWide) 24.dp else 16.dp),
+        modifier = if (useMochyHomeStyle) Modifier else Modifier.padding(horizontal = if (isWide) 24.dp else 16.dp),
         onClick =
             if (shelf.items.isNotEmpty() || shelf.headerAction == HomeShelfHeaderAction.BROWSE || isLibraryAlbums) {
                 when (shelf.headerNavigationAction(onLocalShelfClick != null)) {
@@ -793,8 +794,9 @@ private fun HomeShelfHeader(
                 { shuffle(songs) }
             },
         isWide = isWide,
+        useMochyHomeStyle = useMochyHomeStyle,
     )
-    Spacer(Modifier.height(10.dp))
+    if (!useMochyHomeStyle) Spacer(Modifier.height(10.dp))
 }
 
 @Composable

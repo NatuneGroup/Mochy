@@ -2935,13 +2935,13 @@ object PlayerState {
         song: SongItem,
         resource: PlaybackResource,
         isCurrent: () -> Boolean,
-        prepare: (PlaybackResource) -> Boolean,
+        prepare: suspend (PlaybackResource) -> Boolean,
     ): PlaybackResource? {
         if (!isCurrent()) return null
         if (prepare(resource)) return resource
         if (resource.moduleStream == null || !isCurrent()) return null
         val fallback = fetchPlaybackResource(song, showError = true, allowMochyModules = false) ?: return null
-        return fallback.takeIf { isCurrent() && prepare(it) }
+        return if (isCurrent() && prepare(fallback)) fallback else null
     }
 
     private suspend fun resolvePlaybackResource(

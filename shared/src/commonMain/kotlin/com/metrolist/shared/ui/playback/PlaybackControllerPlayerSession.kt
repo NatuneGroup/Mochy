@@ -66,7 +66,7 @@ class PlaybackControllerPlayerSession(
     override val isPlaying = derive { it.isPlaying }
     override val isReconnecting = derive { it.isReconnecting }
     override val isPlaybackLoading = derive { it.isLoading }
-    override val volume: StateFlow<Float> = MutableStateFlow(1f).asStateFlow()
+    override val volume: StateFlow<Float> = controller.playbackVolume ?: MutableStateFlow(1f).asStateFlow()
     override val playbackSpeedFlow = derive { it.playbackSpeed }
     override val currentPosition = derive { it.positionMs }
     override val bufferedPosition = derive { it.bufferedPositionMs }
@@ -136,7 +136,7 @@ class PlaybackControllerPlayerSession(
         source: PlaybackSeekSource,
     ) = controller.seekTo(position, source)
 
-    override fun setVolume(volume: Float) = Unit
+    override fun setVolume(volume: Float) = controller.setPlaybackVolume(volume)
 
     override fun setPlaybackSpeed(speed: Float) = controller.setPlaybackSpeed(speed)
 
