@@ -5736,4 +5736,52 @@
     <string name="mochy_profile_settings_overview">Local display name, member card finish, and welcome card</string>
     <!-- Translators: Subtle status note shown briefly above the song title after liking a track. -->
     <string name="mochy_like_added">Added to Liked Songs</string>
+    <!-- Translators: Settings screen title for Mochy's module and provider manager. -->
+    <string name="mochy_modules_title">Modules</string>
+    <!-- Translators: Settings screen overview subtitle for Mochy's module manager. -->
+    <string name="mochy_modules_overview">Audio providers, ArchivePool, web modules, and look packs</string>
+    <!-- Translators: Tab label showing installed modules. -->
+    <string name="mochy_modules_tab_installed">Installed</string>
+    <!-- Translators: Tab label showing the remote Mochy module catalog store. -->
+    <string name="mochy_modules_tab_store">Catalog</string>
+    <!-- Translators: Button to add a custom Mochy web module by entering its manifest URL. -->
+    <string name="mochy_modules_add_url">Add from URL</string>
+    <!-- Translators: Dialog title for adding a custom Mochy web module URL. -->
+    <string name="mochy_modules_add_dialog_title">Add web module</string>
+    <!-- Translators: Input placeholder for pasting a Mochy module manifest URL. -->
+    <string name="mochy_modules_url_placeholder">https://example.com/manifest.json</string>
+    <!-- Translators: Label for the URL text input field when adding a web module. -->
+    <string name="mochy_modules_url_label">Module or manifest URL</string>
+    <!-- Translators: Button label to install a module from the catalog or URL dialog. -->
+    <string name="mochy_modules_install">Install</string>
+    <!-- Translators: Badge shown on a catalog module that is already installed. -->
+    <string name="mochy_modules_installed_badge">Installed</string>
+    <!-- Translators: Button label to remove an installed web module. -->
+    <string name="mochy_modules_remove">Remove</string>
+    <!-- Translators: Button label to run live diagnostics against a module. -->
+    <string name="mochy_modules_test">Test module</string>
+    <!-- Translators: Button label while a module diagnostic test is in progress. -->
+    <string name="mochy_modules_testing">Testing…</string>
+    <!-- Translators: Feature chip label for an audio source module. -->
+    <string name="mochy_module_feature_audio">Audio</string>
+    <!-- Translators: Feature chip label for a lyrics module. -->
+    <string name="mochy_module_feature_lyrics">Lyrics</string>
+    <!-- Translators: Feature chip label for a look or skin module. -->
+    <string name="mochy_module_feature_look">Look</string>
+    <!-- Translators: Feature chip label for a metadata module. -->
+    <string name="mochy_module_feature_metadata">Metadata</string>
+    <!-- Translators: Origin badge for built-in modules bundled with Mochy. -->
+    <string name="mochy_module_origin_builtin">Built-in</string>
+    <!-- Translators: Origin badge for web modules installed from a URL. -->
+    <string name="mochy_module_origin_web">Web module</string>
+    <!-- Translators: Empty state text when the remote module catalog has no entries. -->
+    <string name="mochy_modules_catalog_empty">No catalog modules available right now.</string>
+    <!-- Translators: Button to refresh the remote Mochy module catalog. -->
+    <string name="mochy_modules_refresh">Refresh</string>
+    <!-- Translators: Heading above a module's configurable settings and fields. -->
+    <string name="mochy_module_configuration">Configuration</string>
+    <!-- Translators: Heading above a module's live diagnostic output. -->
+    <string name="mochy_module_diagnostics">Diagnostics</string>
+    <!-- Translators: Status label for a module that still needs credentials or configuration before use. -->
+    <string name="mochy_module_not_configured">Not configured</string>
 </resources>

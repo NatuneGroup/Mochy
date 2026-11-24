@@ -69,21 +69,21 @@ private val LikeRed = Color(0xFFFF2D55)
 private val LikePink = Color(0xFFFF8FAB)
 
 private val HeartWidth = 104.dp
-private const val HeartAspect = 76f / 88f
-private const val HeartDrawOversize = 1.4f
+private const val HEART_ASPECT = 76f / 88f
+private const val HEART_DRAW_OVERSIZE = 1.4f
 private val ButtonGlyphWidth = 18.dp
 private val ParticleWidth = 14.dp
-private const val ParticleCount = 8
+private const val PARTICLE_COUNT = 8
 
-private const val TravelMs = 460
-private const val FloatMs = 640
-private const val HomeMs = 540
+private const val TRAVEL_MS = 460
+private const val FLOAT_MS = 640
+private const val HOME_MS = 540
 
 private val TravelEasing = CubicBezierEasing(0.3f, 1.22f, 0.5f, 1f)
 private val PopEasing = CubicBezierEasing(0.34f, 1.56f, 0.64f, 1f)
 private val HomeEasing = CubicBezierEasing(0.5f, -0.18f, 0.7f, 1f)
 
-private const val MaxFlights = 4
+private const val MAX_FLIGHTS = 4
 
 /**
  * Drives Mochy's like burst animation: a heart leaves the like button (or a double-tap point),
@@ -147,7 +147,7 @@ class LikeBurstState {
         origin: Offset,
         fromButton: Boolean,
     ) {
-        if (flights.size >= MaxFlights) flights.removeAt(0)
+        if (flights.size >= MAX_FLIGHTS) flights.removeAt(0)
         flights += Flight(nextId++, origin, fromButton, Random.nextInt())
     }
 }
@@ -243,8 +243,8 @@ private fun HeartFlight(
     val particles =
         remember {
             val palette = listOf(LikeRed, LikePink, Color.White)
-            List(ParticleCount) { i ->
-                val angle = i * 2f * PI.toFloat() / ParticleCount + (random.nextFloat() - 0.5f) * 0.5f
+            List(PARTICLE_COUNT) { i ->
+                val angle = i * 2f * PI.toFloat() / PARTICLE_COUNT + (random.nextFloat() - 0.5f) * 0.5f
                 LikeParticle(
                     dx = cos(angle),
                     dy = sin(angle),
@@ -262,8 +262,8 @@ private fun HeartFlight(
                 haptic.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
             }
 
-            val pop = launch { scale.animateTo(1f, tween(TravelMs, easing = PopEasing)) }
-            travel.animateTo(1f, tween(TravelMs, easing = TravelEasing))
+            val pop = launch { scale.animateTo(1f, tween(TRAVEL_MS, easing = PopEasing)) }
+            travel.animateTo(1f, tween(TRAVEL_MS, easing = TravelEasing))
             pop.join()
 
             haptic.performHapticFeedback(HapticFeedbackType.Confirm)
@@ -276,9 +276,9 @@ private fun HeartFlight(
                 delay(160)
                 redness.animateTo(0f, tween(520))
             }
-            floatProgress.animateTo(1f, tween(FloatMs, easing = LinearEasing))
+            floatProgress.animateTo(1f, tween(FLOAT_MS, easing = LinearEasing))
 
-            home.animateTo(1f, tween(HomeMs, easing = HomeEasing))
+            home.animateTo(1f, tween(HOME_MS, easing = HomeEasing))
             haptic.performHapticFeedback(HapticFeedbackType.SegmentTick)
             bounceScope.launch {
                 state.landing.snapTo(1f)
@@ -366,12 +366,12 @@ private fun HeartFlight(
                 )
             }
 
-            val drawW = heartW * HeartDrawOversize
-            val drawH = drawW * HeartAspect
+            val drawW = heartW * HEART_DRAW_OVERSIZE
+            val drawH = drawW * HEART_ASPECT
             withTransform({
                 translate(pos.x, pos.y)
                 rotate(rotation, pivot = Offset.Zero)
-                scale(sx / HeartDrawOversize, sy / HeartDrawOversize, pivot = Offset.Zero)
+                scale(sx / HEART_DRAW_OVERSIZE, sy / HEART_DRAW_OVERSIZE, pivot = Offset.Zero)
             }) {
                 translate(-drawW / 2f, -drawH / 2f) {
                     with(heart) { draw(Size(drawW, drawH), alpha = alpha, colorFilter = ColorFilter.tint(color)) }
@@ -400,7 +400,7 @@ private fun DrawScope.drawLikeBurstRing(
     )
 
     val w = ParticleWidth.toPx()
-    val h = w * HeartAspect
+    val h = w * HEART_ASPECT
     val start = heartW * 0.32f
     for (p in particles) {
         val distance = start + p.reach.toPx() * out

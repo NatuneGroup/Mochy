@@ -174,6 +174,13 @@ fun rememberMetrolistSettingsRegistry(
         SettingsTone.BLUE,
     )
     customPage(
+        SettingsPageId.MOCHY_MODULES,
+        stringResource(Res.string.mochy_modules_title),
+        stringResource(Res.string.mochy_modules_overview),
+        MetrolistIcons.Outlined.Extension,
+        SettingsTone.CYAN,
+    )
+    customPage(
         SettingsPageId.ANDROID_AUTO,
         stringResource(Res.string.android_auto_title),
         stringResource(Res.string.settings_android_auto_overview),
@@ -240,6 +247,7 @@ fun rememberMetrolistSettingsRegistry(
     builder.rootGroup(
         stringResource(Res.string.settings_interface),
         SettingsPageId.MOCHY_PROFILE,
+        SettingsPageId.MOCHY_MODULES,
         SettingsPageId.APPEARANCE,
         SettingsPageId.CONTENT,
     )

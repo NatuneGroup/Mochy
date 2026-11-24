@@ -65,6 +65,7 @@ enum class SettingsPageId {
     LISTEN_TOGETHER,
     EQUALIZER,
     MOCHY_PROFILE,
+    MOCHY_MODULES,
 }
 
 enum class SettingsChangeEffect {

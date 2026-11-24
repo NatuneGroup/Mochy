@@ -111,9 +111,9 @@ import kotlin.math.sin
 import kotlin.random.Random
 
 /** Width-to-height ratio of Mochy's profile ID card (332 x 176). */
-const val IdCardAspect = 1.89f
+const val ID_CARD_ASPECT = 1.89f
 
-private const val MarqueePeriodNanos = 5_200_000_000f
+private const val MARQUEE_PERIOD_NANOS = 5_200_000_000f
 
 /** Ensures a persistent 4-digit local member number exists in [Settings.shared]. */
 fun ensureMochyCardNumber(): String {
@@ -168,7 +168,7 @@ fun ProfileIdCard(
         modifier =
             modifier
                 .fillMaxWidth()
-                .aspectRatio(IdCardAspect)
+                .aspectRatio(ID_CARD_ASPECT)
                 .then(if (anchors != null) Modifier.onPlaced { anchors.root = it } else Modifier)
                 .clip(shape)
                 .then(if (silver) Modifier.silverSurface(sheen) else Modifier.background(Color(0xFF2F2F2F)))
@@ -226,8 +226,10 @@ fun ProfileIdCard(
                                 modifier = Modifier.size(unit * 34f),
                             )
                         } else {
+                            val firstChar = name.firstOrNull()
+                            val initial = firstChar?.uppercaseChar()?.toString().orEmpty()
                             Text(
-                                text = name.firstOrNull()?.uppercaseChar()?.toString().orEmpty(),
+                                text = initial,
                                 color = Color.White.copy(alpha = 0.9f),
                                 fontSize = (unit.value * 36f).sp,
                                 fontWeight = FontWeight.Bold,
@@ -565,7 +567,7 @@ fun MochyHelloCardCelebration(
             modifier =
                 Modifier
                     .align(Alignment.TopCenter)
-                    .padding(top = (maxHeight * cardCenterFromTop - (cardWidth / IdCardAspect) / 2).coerceAtLeast(0.dp))
+                    .padding(top = (maxHeight * cardCenterFromTop - (cardWidth / ID_CARD_ASPECT) / 2).coerceAtLeast(0.dp))
                     .width(cardWidth)
                     .graphicsLayer {
                         val enter = easeOutBack((time / 0.75f).coerceIn(0f, 1f))
@@ -675,13 +677,14 @@ internal fun MarqueeStrip(
                 last = 0L
             }
             withInfiniteAnimationFrameNanos { now ->
-                if (last != 0L) progress = (progress + (now - last) / MarqueePeriodNanos) % 1f
+                if (last != 0L) progress = (progress + (now - last) / MARQUEE_PERIOD_NANOS) % 1f
                 last = now
             }
         }
     }
     Canvas(modifier = modifier.background(background)) {
-        val step = layout.size.width.toFloat().coerceAtLeast(1f)
+        val rawWidth = layout.size.width.toFloat()
+        val step = rawWidth.coerceAtLeast(1f)
         rotate(90f, pivot = Offset.Zero) {
             translate(left = 0f, top = -size.width / 2f - layout.size.height / 2f) {
                 var x = -step + progress * step

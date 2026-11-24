@@ -138,6 +138,7 @@ import com.metrolist.shared.constants.LyricsShareImageStyleKey
 import com.metrolist.shared.constants.LyricsShowOriginalLyricsKey
 import com.metrolist.shared.constants.MatugenThemeKey
 import com.metrolist.shared.constants.MinimumSongDurationSecondsKey
+import com.metrolist.shared.constants.MochyModulesStateJsonKey
 import com.metrolist.shared.constants.MochyProfileCardNumberKey
 import com.metrolist.shared.constants.MochyProfileCardSilverKey
 import com.metrolist.shared.constants.MochyProfilePhotoUriKey
@@ -322,6 +323,7 @@ class Settings(
     var mochyProfilePhotoUri by preference(MochyProfilePhotoUriKey, "")
     var mochyProfileCardNumber by preference(MochyProfileCardNumberKey, "")
     var mochyProfileCardSilver by preference(MochyProfileCardSilverKey, false)
+    var mochyModulesStateJson by preference(MochyModulesStateJsonKey, "")
     var spotifySession by preference("")
 
     private var storedAppLanguage by preference(AppLanguageKey, "SYSTEM")

@@ -43,15 +43,15 @@ import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
 private val RevealEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
-private const val BonesFadeOutMs = 280
-private const val RevealGapMs = 120
-private const val RevealFadeInMs = 520
+private const val BONES_FADE_OUT_MS = 280
+private const val REVEAL_GAP_MS = 120
+private const val REVEAL_FADE_IN_MS = 520
 private val RevealSlideDistance = 20.dp
-private const val BonesWaveMs = 2000
+private const val BONES_WAVE_MS = 2000
 
-private const val BurstWindowMs = 120L
-private const val BurstStepMs = 60
-private const val BurstMaxSteps = 6
+private const val BURST_WINDOW_MS = 120L
+private const val BURST_STEP_MS = 60
+private const val BURST_MAX_STEPS = 6
 
 /** Base color of a loading bone before the shimmer wave modulates it. */
 val BoneColor = Color(0xFFD9D9D9).copy(alpha = 0.22f)
@@ -77,11 +77,11 @@ class RevealSeenState(
 
     internal fun nextBurstDelay(): Int {
         val started = burstStartedAt
-        if (started == null || started.elapsedNow().inWholeMilliseconds > BurstWindowMs) {
+        if (started == null || started.elapsedNow().inWholeMilliseconds > BURST_WINDOW_MS) {
             burstStartedAt = TimeSource.Monotonic.markNow()
             burstCount = 0
         }
-        return min(burstCount++, BurstMaxSteps) * BurstStepMs
+        return min(burstCount++, BURST_MAX_STEPS) * BURST_STEP_MS
     }
 
     companion object {
@@ -94,8 +94,7 @@ class RevealSeenState(
 }
 
 @Composable
-fun rememberRevealSeenState(): RevealSeenState =
-    rememberSaveable(saver = RevealSeenState.Saver) { RevealSeenState() }
+fun rememberRevealSeenState(): RevealSeenState = rememberSaveable(saver = RevealSeenState.Saver) { RevealSeenState() }
 
 /**
  * Shows loading bones while [data] is null, then fades out the bones, pauses briefly, and
@@ -115,15 +114,15 @@ fun <T : Any> RevealWhenLoaded(
         contentKey = { it != null },
         transitionSpec = {
             if (targetState != null) {
-                val delay = BonesFadeOutMs + RevealGapMs
+                val delay = BONES_FADE_OUT_MS + REVEAL_GAP_MS
                 (
-                    fadeIn(tween(RevealFadeInMs, delayMillis = delay, easing = RevealEasing)) +
-                        slideInVertically(tween(RevealFadeInMs, delayMillis = delay, easing = RevealEasing)) { slidePx }
-                ).togetherWith(fadeOut(tween(BonesFadeOutMs)))
+                    fadeIn(tween(REVEAL_FADE_IN_MS, delayMillis = delay, easing = RevealEasing)) +
+                        slideInVertically(tween(REVEAL_FADE_IN_MS, delayMillis = delay, easing = RevealEasing)) { slidePx }
+                ).togetherWith(fadeOut(tween(BONES_FADE_OUT_MS)))
                     .using(SizeTransform(clip = false))
             } else {
-                fadeIn(tween(BonesFadeOutMs))
-                    .togetherWith(fadeOut(tween(BonesFadeOutMs)))
+                fadeIn(tween(BONES_FADE_OUT_MS))
+                    .togetherWith(fadeOut(tween(BONES_FADE_OUT_MS)))
                     .using(SizeTransform(clip = false))
             }
         },
@@ -154,7 +153,7 @@ fun Modifier.revealOnAppear(
         if (!enabled) return@LaunchedEffect
         seenState.markSeen(key)
         val wait = delayMillis + if (cascade) seenState.nextBurstDelay() else 0
-        progress.animateTo(1f, tween(RevealFadeInMs, delayMillis = wait, easing = RevealEasing))
+        progress.animateTo(1f, tween(REVEAL_FADE_IN_MS, delayMillis = wait, easing = RevealEasing))
     }
 
     val slidePx = with(LocalDensity.current) { RevealSlideDistance.toPx() }
@@ -179,7 +178,7 @@ fun BonesHost(
         wave.animateFloat(
             initialValue = 0f,
             targetValue = 1f,
-            animationSpec = infiniteRepeatable(tween(BonesWaveMs, easing = LinearEasing)),
+            animationSpec = infiniteRepeatable(tween(BONES_WAVE_MS, easing = LinearEasing)),
             label = "bonesPhase",
         )
 

@@ -28,6 +28,7 @@ val MochyUsernameKey = "mochyUsername"
 val MochyProfilePhotoUriKey = "mochyProfilePhotoUri"
 val MochyProfileCardNumberKey = "mochyProfileCardNumber"
 val MochyProfileCardSilverKey = "mochyProfileCardSilver"
+val MochyModulesStateJsonKey = "mochyModulesStateJson"
 
 val CastEnabledKey = "castEnabled"
 val CastVolumeStepKey = "castVolumeStep"
