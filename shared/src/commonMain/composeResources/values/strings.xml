@@ -39,6 +39,16 @@
     <string name="history">Listening history</string>
 
     <string name="recently_played">Recently played</string>
+    <!-- Translators: Reason shown above an artist's recommendation in the Mochy Home carousel. -->
+    <string name="mochy_hero_because_you_listen">Because you listen to</string>
+    <!-- Translators: Reason shown above a recommended song on Mochy Home. -->
+    <string name="mochy_hero_you_may_also_like">You may also like</string>
+    <!-- Translators: Reason shown for a previously liked song returning to Mochy Home. -->
+    <string name="mochy_hero_back_in_rotation">Back in rotation</string>
+    <!-- Translators: Label above the title of a featured playlist in the Mochy Home carousel. -->
+    <string name="mochy_hero_playlist">Playlist pick</string>
+    <!-- Translators: Button that opens an album, artist or playlist from the Mochy Home carousel. -->
+    <string name="mochy_hero_view">View</string>
     <!-- Translators: Label for mood and genres in the Home and browse screens. -->
     <string name="mood_and_genres">Moods and genres</string>
     <!-- Translators: Label for footer greeting in the Home. -->

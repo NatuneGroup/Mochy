@@ -268,6 +268,7 @@ fun HomeScreen(
             onShuffleSongs = { songs -> playerConnection?.shuffleQueue(songs, queueTitle = sharedText.shuffle) },
             onPlaySongs = { songs -> playerConnection?.playQueue(songs, queueTitle = sharedText.quickPicks) },
             onTogglePlayPause = { playerConnection?.togglePlayPause() },
+            heroCurrentSong = currentSong.value,
             onLibraryClick = onNavigateToLibrary,
             onLocalShelfClick = onNavigateToHomeSection,
             onArtistClick = { artistId -> onNavigateToArtist(artistId) },

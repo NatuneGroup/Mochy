@@ -1089,6 +1089,7 @@ fun MobileApp(
                                                     songs.firstOrNull()?.let { playbackController.play(it, songs) }
                                                 },
                                                 onTogglePlayPause = playbackController::togglePlayPause,
+                                                heroCurrentSong = playerState.currentSong,
                                                 onLibraryClick = { filter ->
                                                     filter?.let { Settings.shared.libraryFilter = it }
                                                     selectTab(MobileRoute.Library)

@@ -128,6 +128,7 @@ fun HomeScreen() {
             onShuffleSongs = { songs -> PlayerState.shuffleQueue(songs) },
             onPlaySongs = { songs -> songs.firstOrNull()?.let { PlayerState.playTrack(it, songs) } },
             onTogglePlayPause = PlayerState::togglePlay,
+            desktopHome = true,
             onSpeedDialItemSecondaryClick = { item ->
                 if (item !is BrowseItem) {
                     selectedMenuItem = item

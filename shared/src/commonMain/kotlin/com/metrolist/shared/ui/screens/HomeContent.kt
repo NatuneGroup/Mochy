@@ -64,6 +64,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
@@ -113,6 +114,9 @@ import com.metrolist.shared.ui.components.carouselArtworkShape
 import com.metrolist.shared.ui.components.rememberItemPlayback
 import com.metrolist.shared.ui.mochy.MochyHeroCarousel
 import com.metrolist.shared.ui.mochy.MochyHomeTopGlow
+import com.metrolist.shared.ui.mochy.mochyHeroItems
+import com.metrolist.shared.ui.navigation.LocalContentObscured
+import com.metrolist.shared.ui.navigation.LocalRootContentActive
 import com.metrolist.shared.ui.utils.DragScrollableColumn
 import com.metrolist.shared.ui.utils.carouselScroll
 import com.metrolist.shared.ui.utils.desktopArrowScroll
@@ -217,6 +221,8 @@ fun HomeContent(
     shelfCache: HomeShelfCache? = null,
     onPlaySongs: ((List<SongItem>) -> Unit)? = null,
     onTogglePlayPause: (() -> Unit)? = null,
+    heroCurrentSong: SongItem? = null,
+    desktopHome: Boolean = false,
 ) {
     val activeSongId =
         remember(currentSongId) {
@@ -225,21 +231,34 @@ fun HomeContent(
     val localShelfCache = remember { HomeShelfCache() }
     val paginationScrollConnection = rememberHomePagination(uiState, listState, onLoadMore)
     val isTv = LocalIsTv.current
-    val heroSongs =
-        remember(uiState.quickPicks, uiState.trending) {
-            (uiState.quickPicks + uiState.trending)
-                .filter { !it.isLocal && !it.isUnavailable && !it.thumbnail.isNullOrBlank() }
-                .distinctBy(::canonicalHomeItemId)
-                .take(8)
+    val contentObscured = LocalContentObscured.current
+    val rootActive = LocalRootContentActive.current
+    val heroItems =
+        if (!isTv && uiState.selectedChip == null && !uiState.showLoadingPlaceholder) {
+            mochyHeroItems(uiState, heroCurrentSong, includePersonalHistory = !desktopHome, isItemEnabled = isItemEnabled)
+        } else {
+            emptyList()
         }
+    val windowSize = LocalWindowInfo.current.containerSize
+    val windowHeight = with(LocalDensity.current) { windowSize.height.toDp() }
+    val wideMobileHero = with(LocalDensity.current) { windowSize.width.toDp() >= 600.dp }
+    val landscapeWindow = windowSize.width > windowSize.height
     val glowFadePx = with(LocalDensity.current) { 280.dp.toPx() }
     BoxWithConstraints(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         val isWide = maxWidth > 840.dp
+        val fullBleedHero = !desktopHome && (!wideMobileHero || landscapeWindow)
+        val heroHeight =
+            if (!desktopHome && windowHeight > 0.dp) {
+                val heightFraction = if (wideMobileHero && landscapeWindow) 0.86f else 0.6f
+                windowHeight * heightFraction
+            } else {
+                null
+            }
         val effectiveShelves =
             shelves ?: (shelfCache ?: localShelfCache).build(uiState, text, maxWidth)
         val topGlowCovers =
-            remember(heroSongs, effectiveShelves) {
-                val fromHero = heroSongs.mapNotNull { it.thumbnail }
+            remember(heroItems, effectiveShelves) {
+                val fromHero = heroItems.mapNotNull { it.item.thumbnail }
                 val source =
                     if (fromHero.size >= 2) {
                         fromHero
@@ -272,28 +291,24 @@ fun HomeContent(
         ) {
             header?.invoke(this)
 
-            if (
-                !isTv &&
-                !uiState.isContentLoading &&
-                !uiState.showLoadingPlaceholder &&
-                uiState.selectedChip == null &&
-                heroSongs.isNotEmpty()
-            ) {
-                val enabledHeroSongs = heroSongs.filter(isItemEnabled)
-                if (enabledHeroSongs.isNotEmpty()) {
-                    item(key = "mochy_hero_carousel") {
-                        MochyHeroCarousel(
-                            songs = enabledHeroSongs,
-                            currentSongId = currentSongId,
-                            isPlaying = isPlaying,
-                            isWide = isWide,
-                            isScrolledAway = {
-                                listState.firstVisibleItemIndex > 1 || listState.firstVisibleItemScrollOffset > glowFadePx
-                            },
-                            onPlaySong = { song -> onItemClick(song) },
-                            onTogglePlayPause = onTogglePlayPause,
-                        )
-                    }
+            if (heroItems.isNotEmpty()) {
+                item(key = "mochy_hero_carousel") {
+                    MochyHeroCarousel(
+                        items = heroItems,
+                        currentSongId = currentSongId,
+                        isPlaying = isPlaying,
+                        isWide = if (desktopHome) isWide else wideMobileHero,
+                        mobileHeroHeight = heroHeight,
+                        fullBleed = fullBleedHero,
+                        isScrolledAway = {
+                            val layout = listState.layoutInfo
+                            val hero = layout.visibleItemsInfo.firstOrNull { it.key == "mochy_hero_carousel" }
+                            hero == null || layout.viewportStartOffset - hero.offset > hero.size * 0.08f
+                        },
+                        active = rootActive && !contentObscured,
+                        onOpenItem = onItemClick,
+                        onTogglePlayPause = onTogglePlayPause,
+                    )
                 }
             }
 

@@ -60,8 +60,10 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -69,56 +71,66 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.metrolist.shared.generated.resources.Res
+import com.metrolist.shared.generated.resources.mochy_hero_view
 import com.metrolist.shared.generated.resources.next
 import com.metrolist.shared.generated.resources.now_playing
 import com.metrolist.shared.generated.resources.pause
 import com.metrolist.shared.generated.resources.play
 import com.metrolist.shared.generated.resources.previous
-import com.metrolist.shared.generated.resources.quick_picks
 import com.metrolist.shared.model.SongItem
+import com.metrolist.shared.model.YTItem
 import com.metrolist.shared.settings.displayName
 import com.metrolist.shared.ui.components.images.AsyncImage
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.player.mochy.AnimatedPlayGlyph
+import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
-private const val HERO_ADVANCE_MILLIS = 6_500L
-private const val HERO_SLIDE_MILLIS = 920
-private const val HERO_DIM = 0.25f
-private val HeroSlideEasing = CubicBezierEasing(0.32f, 0.0f, 0.22f, 1.0f)
-private val HeroPillFill = Color.White.copy(alpha = 0.72f)
-private val HeroPillContent = Color.Black.copy(alpha = 0.88f)
-private val HeroLabelColor = Color.White.copy(alpha = 0.76f)
+private const val HERO_ADVANCE_MILLIS = 5_500L
+private const val HERO_SLIDE_MILLIS = 1_150
+private const val HERO_DIM = 0.36f
+private val HeroSlideEasing = CubicBezierEasing(0.32f, 0f, 0.15f, 1f)
+private val HeroPillFill = Color.White.copy(alpha = 0.64f)
+private val HeroPillContent = Color(0xFF2F2F2F)
+private val HeroLabelColor = Color.White.copy(alpha = 0.69f)
 private val PeekPageGap = 16.dp
 
-private object DesktopPeekPageSize : PageSize {
+private class HeroPeekPageSize(
+    private val share: Float,
+) : PageSize {
     override fun Density.calculateMainAxisPageSize(
         availableSpace: Int,
         pageSpacing: Int,
-    ): Int = ((availableSpace - pageSpacing) * 0.76f).roundToInt().coerceAtLeast(1)
+    ): Int = ((availableSpace - pageSpacing) * share).roundToInt().coerceAtLeast(1)
 }
+
+private val DesktopPeekPageSize = HeroPeekPageSize(0.76f)
+private val TabletPeekPageSize = HeroPeekPageSize(0.8f)
 
 @Composable
 internal fun MochyHeroCarousel(
-    songs: List<SongItem>,
+    items: List<MochyHeroItem>,
     currentSongId: State<String?>,
     isPlaying: State<Boolean>,
     isWide: Boolean,
+    mobileHeroHeight: Dp?,
+    fullBleed: Boolean,
     isScrolledAway: () -> Boolean,
-    onPlaySong: (SongItem) -> Unit,
+    active: Boolean,
+    onOpenItem: (YTItem) -> Unit,
     onTogglePlayPause: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
-    if (songs.isEmpty()) return
+    if (items.isEmpty()) return
 
-    val items = remember(songs) { songs.take(8) }
     val isSingle = items.size == 1
     val loopCount = if (isSingle) 1 else Int.MAX_VALUE
     val initialPage = if (isSingle) 0 else (Int.MAX_VALUE / 2).let { it - it.mod(items.size) }
@@ -144,11 +156,11 @@ internal fun MochyHeroCarousel(
     )
 
     if (!isSingle) {
-        LaunchedEffect(pagerState, items.size, isDragged, isHovered) {
-            if (isDragged || isHovered) return@LaunchedEffect
+        LaunchedEffect(pagerState, items.size, isDragged, isHovered, active) {
+            if (!active || isDragged || isHovered) return@LaunchedEffect
             while (true) {
                 delay(HERO_ADVANCE_MILLIS)
-                if (isScrolledAway()) continue
+                if (isScrolledAway() || pagerState.isScrollInProgress) continue
                 pagerState.animateScrollToPage(
                     page = pagerState.currentPage + 1,
                     animationSpec = tween(HERO_SLIDE_MILLIS, easing = HeroSlideEasing),
@@ -157,9 +169,18 @@ internal fun MochyHeroCarousel(
         }
     }
 
-    val peek = isWide && !isSingle
-    val cardHeight = if (isWide) 268.dp else 284.dp
-    val horizontalInset = if (isWide) 24.dp else 16.dp
+    val peek = isWide && !isSingle && !fullBleed
+    val cardHeight = mobileHeroHeight ?: if (isWide) 268.dp else 284.dp
+    val pageSize = if (mobileHeroHeight == null) DesktopPeekPageSize else TabletPeekPageSize
+    val pageSpacing = if (mobileHeroHeight == null) PeekPageGap else 14.dp
+    val horizontalInset =
+        if (fullBleed) {
+            0.dp
+        } else if (isWide) {
+            24.dp
+        } else {
+            16.dp
+        }
     val surfaceFallback = MaterialTheme.colorScheme.surfaceContainerHigh
 
     Box(
@@ -181,24 +202,34 @@ internal fun MochyHeroCarousel(
             HorizontalPager(
                 state = pagerState,
                 userScrollEnabled = !isSingle,
-                pageSize = if (peek) DesktopPeekPageSize else PageSize.Fill,
-                pageSpacing = if (peek) PeekPageGap else 0.dp,
+                pageSize = if (peek) pageSize else PageSize.Fill,
+                pageSpacing = if (peek) pageSpacing else 0.dp,
                 contentPadding = PaddingValues(0.dp),
                 modifier = Modifier.fillMaxSize(),
             ) { page ->
                 val itemIndex = page.mod(items.size)
-                val song = items[itemIndex]
-                val isThisPlaying = isPlaying.value && currentSongId.value == song.id
-                val pageShape = RoundedCornerShape(24.dp)
+                val card = items[itemIndex]
+                val isCurrentSong = card.item is SongItem && currentSongId.value == card.item.id
+                val isThisPlaying = isCurrentSong && isPlaying.value
+                val pageShape = RoundedCornerShape(if (fullBleed) 0.dp else 24.dp)
                 val isCurrentPage = pagerState.currentPage == page
+                val open = {
+                    if (isCurrentSong && onTogglePlayPause != null) {
+                        onTogglePlayPause()
+                    } else {
+                        onOpenItem(card.item)
+                    }
+                }
 
                 MochyHeroCard(
-                    song = song,
+                    card = card,
                     isThisPlaying = isThisPlaying,
                     pageOffset = { pagerState.offsetOf(page) },
                     wipeCurve = { wipeCurve },
                     peek = peek,
                     compact = maxWidth < 480.dp,
+                    fullBleed = fullBleed,
+                    fullBleedLandscape = fullBleed && isWide,
                     surfaceFallback = surfaceFallback,
                     shape = pageShape,
                     onCardClick = {
@@ -209,23 +240,15 @@ internal fun MochyHeroCarousel(
                                     animationSpec = tween(HERO_SLIDE_MILLIS, easing = HeroSlideEasing),
                                 )
                             }
-                        } else if (isThisPlaying && onTogglePlayPause != null) {
-                            onTogglePlayPause()
                         } else {
-                            onPlaySong(song)
+                            open()
                         }
                     },
-                    onPillClick = {
-                        if (isThisPlaying && onTogglePlayPause != null) {
-                            onTogglePlayPause()
-                        } else {
-                            onPlaySong(song)
-                        }
-                    },
+                    onPillClick = open,
                 )
             }
 
-            if (!isSingle && isWide) {
+            if (peek && mobileHeroHeight == null) {
                 AnimatedVisibility(
                     visible = isHovered,
                     enter = fadeIn(tween(180)),
@@ -264,7 +287,7 @@ internal fun MochyHeroCarousel(
                 }
             }
 
-            if (!isSingle) {
+            if (!isSingle && mobileHeroHeight == null) {
                 HeroPageIndicators(
                     count = items.size,
                     activeIndex = activeIndex,
@@ -296,29 +319,60 @@ private fun PagerState.offsetOf(page: Int): Float = (page - currentPage) - curre
 
 @Composable
 private fun MochyHeroCard(
-    song: SongItem,
+    card: MochyHeroItem,
     isThisPlaying: Boolean,
     pageOffset: () -> Float,
     wipeCurve: () -> Float,
     peek: Boolean,
     compact: Boolean,
+    fullBleed: Boolean,
+    fullBleedLandscape: Boolean,
     surfaceFallback: Color,
-    shape: RoundedCornerShape,
+    shape: Shape,
     onCardClick: () -> Unit,
     onPillClick: () -> Unit,
 ) {
-    val artists = remember(song.artists) { song.artists.joinToString { it.displayName } }
-    val titleText = if (artists.isNotBlank()) "${song.title} - $artists" else song.title
-    val labelText = stringResource(if (isThisPlaying) Res.string.now_playing else Res.string.quick_picks)
+    val item = card.item
+    val artists = (item as? SongItem)?.artists?.joinToString { it.displayName }.orEmpty()
+    val titleText = if (artists.isNotBlank()) "${item.title} - $artists" else item.title
+    val reason = stringResource(if (isThisPlaying) Res.string.now_playing else card.reason)
+    val artistSeed = card.artistSeed.takeUnless { isThisPlaying }
+    val inter = mochyInterFontFamily()
+    val pill =
+        when {
+            item !is SongItem -> HeroPillKind.VIEW
+            isThisPlaying -> HeroPillKind.PAUSE
+            else -> HeroPillKind.PLAY
+        }
+
+    val textInset =
+        if (fullBleed) {
+            36.dp
+        } else if (compact) {
+            20.dp
+        } else {
+            28.dp
+        }
+    val textBottom =
+        when {
+            fullBleedLandscape -> 46.dp
+            fullBleed -> 64.dp
+            compact -> 20.dp
+            else -> 24.dp
+        }
 
     Box(
         modifier =
             Modifier
                 .fillMaxSize()
-                .press3D(maxTilt = if (peek) 3.5f else 5f, pressedScale = 0.985f)
-                .clip(shape)
-                .background(surfaceFallback)
-                .clickable(onClick = onCardClick),
+                .then(
+                    if (fullBleed) {
+                        Modifier
+                    } else {
+                        Modifier.press3D(maxTilt = if (peek) 3.5f else 5f, pressedScale = 0.985f).clickable(onClick = onCardClick)
+                    },
+                ).clip(shape)
+                .background(surfaceFallback),
     ) {
         MochyPageWipe(
             pageOffset = pageOffset,
@@ -326,12 +380,12 @@ private fun MochyHeroCard(
             peek = peek,
         ) {
             AsyncImage(
-                url = song.thumbnail,
-                contentDescription = song.title,
+                url = item.thumbnail,
+                contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize().pageMediaDrift(pageOffset, peek),
             )
-            HeroScrims()
+            HeroScrims(fullBleed)
             Box(
                 modifier =
                     Modifier
@@ -342,32 +396,53 @@ private fun MochyHeroCard(
                     modifier =
                         Modifier
                             .align(Alignment.BottomStart)
-                            .fillMaxWidth(if (compact) 0.92f else 0.72f)
-                            .padding(
-                                start = if (compact) 20.dp else 28.dp,
-                                end = if (compact) 20.dp else 28.dp,
-                                bottom = if (compact) 20.dp else 24.dp,
-                            ),
+                            .fillMaxWidth(
+                                if (fullBleed) {
+                                    1f
+                                } else if (compact) {
+                                    0.92f
+                                } else {
+                                    0.72f
+                                },
+                            ).padding(start = textInset, end = textInset, bottom = textBottom),
                 ) {
                     AnimatedContent(
-                        targetState = labelText,
+                        targetState = reason to artistSeed,
                         transitionSpec = { heroLabelSwap() },
                         label = "mochyHeroLabel",
-                    ) { label ->
-                        Text(
-                            text = label,
-                            style =
-                                MaterialTheme.typography.titleSmall.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 15.sp,
-                                    letterSpacing = (-0.04).em,
-                                ),
-                            color = HeroLabelColor,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                    ) { (text, artist) ->
+                        val labelStyle =
+                            MaterialTheme.typography.titleSmall.copy(
+                                fontFamily = inter,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                lineHeight = 19.sp,
+                                letterSpacing = (-0.06).em,
+                            )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(text, style = labelStyle, color = HeroLabelColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            if (artist != null) {
+                                artist.thumbnail?.let { cover ->
+                                    Spacer(Modifier.width(6.dp))
+                                    AsyncImage(
+                                        url = cover,
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.size(18.dp).clip(CircleShape),
+                                    )
+                                }
+                                Spacer(Modifier.width(6.dp))
+                                Text(
+                                    text = artist.title,
+                                    style = labelStyle,
+                                    color = Color.White.copy(alpha = 0.88f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f, fill = false),
+                                )
+                            }
+                        }
                     }
-                    Spacer(Modifier.height(2.dp))
                     AnimatedContent(
                         targetState = titleText,
                         transitionSpec = { heroLabelSwap() },
@@ -377,19 +452,20 @@ private fun MochyHeroCard(
                             text = text,
                             style =
                                 MaterialTheme.typography.headlineSmall.copy(
+                                    fontFamily = inter,
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = if (compact) 22.sp else 26.sp,
-                                    lineHeight = if (compact) 26.sp else 30.sp,
-                                    letterSpacing = (-0.05).em,
+                                    fontSize = 24.sp,
+                                    lineHeight = 28.sp,
+                                    letterSpacing = (-0.06).em,
                                 ),
                             color = Color.White,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(11.dp))
                     MochyHeroPill(
-                        isPlaying = isThisPlaying,
+                        kind = pill,
                         onClick = onPillClick,
                     )
                 }
@@ -399,35 +475,67 @@ private fun MochyHeroCard(
 }
 
 @Composable
-private fun HeroScrims() {
+private fun HeroScrims(fullBleed: Boolean) {
+    val brush =
+        if (fullBleed) {
+            Brush.verticalGradient(
+                0f to heroScrimBlack(0.86f),
+                0.22f to heroScrimBlack(0.59f),
+                0.463f to heroScrimBlack(0f),
+                0.533f to heroScrimBlack(0f),
+                0.742f to heroScrimBlack(0.59f),
+                0.989f to Color.Black,
+                1f to Color.Black,
+            )
+        } else {
+            Brush.verticalGradient(
+                0f to heroScrimBlack(0.10f),
+                0.42f to heroScrimBlack(0.08f),
+                0.72f to heroScrimBlack(0.56f),
+                1f to heroScrimBlack(0.84f),
+            )
+        }
+    val feedBackground = MaterialTheme.colorScheme.background
     Box(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        0f to heroScrimBlack(0.10f),
-                        0.42f to heroScrimBlack(0.08f),
-                        0.72f to heroScrimBlack(0.56f),
-                        1f to heroScrimBlack(0.84f),
-                    ),
-                ),
+        Modifier.fillMaxSize().background(brush).then(
+            if (fullBleed) {
+                Modifier.drawWithCache {
+                    val edge =
+                        Brush.verticalGradient(
+                            0f to feedBackground.copy(alpha = 0f),
+                            1f to feedBackground,
+                            startY = (size.height - 32.dp.toPx()).coerceAtLeast(0f),
+                            endY = size.height,
+                        )
+                    onDrawBehind { drawRect(edge) }
+                }
+            } else {
+                Modifier
+            },
+        ),
     )
 }
 
 private fun heroScrimBlack(gradient: Float): Color = Color.Black.copy(alpha = 1f - (1f - HERO_DIM) * (1f - gradient))
 
+private enum class HeroPillKind {
+    PLAY,
+    PAUSE,
+    VIEW,
+}
+
 @Composable
 private fun MochyHeroPill(
-    isPlaying: Boolean,
+    kind: HeroPillKind,
     onClick: () -> Unit,
 ) {
     val interaction = remember { MutableInteractionSource() }
+    val inter = mochyInterFontFamily()
     Box(
         modifier =
             Modifier
                 .pressBounce(interaction)
-                .height(34.dp)
+                .height(33.dp)
                 .clip(RoundedCornerShape(50))
                 .background(HeroPillFill)
                 .clickable(
@@ -438,34 +546,43 @@ private fun MochyHeroPill(
                 ),
     ) {
         AnimatedContent(
-            targetState = isPlaying,
+            targetState = kind,
             transitionSpec = { heroGlyphSwap() },
             label = "mochyHeroPill",
-        ) { playing ->
-            val actionLabel = stringResource(if (playing) Res.string.pause else Res.string.play)
+        ) { action ->
+            val opensPage = action == HeroPillKind.VIEW
+            val label =
+                when (action) {
+                    HeroPillKind.PLAY -> Res.string.play
+                    HeroPillKind.PAUSE -> Res.string.pause
+                    HeroPillKind.VIEW -> Res.string.mochy_hero_view
+                }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier =
-                    Modifier
-                        .height(34.dp)
-                        .padding(start = 18.dp, end = 17.dp),
+                modifier = Modifier.height(33.dp).padding(start = if (opensPage) 17.dp else 21.dp, end = 17.dp),
             ) {
-                AnimatedPlayGlyph(
-                    playing = playing,
-                    color = HeroPillContent,
-                    height = 14.dp,
-                )
-                Spacer(Modifier.width(9.dp))
+                if (!opensPage) {
+                    AnimatedPlayGlyph(playing = action == HeroPillKind.PAUSE, color = HeroPillContent, height = 15.dp)
+                    Spacer(Modifier.width(9.dp))
+                }
                 Text(
-                    text = actionLabel,
-                    style =
-                        MaterialTheme.typography.labelLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
-                            letterSpacing = (-0.04).em,
-                        ),
+                    text = stringResource(label),
+                    fontFamily = inter,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    lineHeight = 19.sp,
+                    letterSpacing = (-0.06).em,
                     color = HeroPillContent,
                 )
+                if (opensPage) {
+                    Spacer(Modifier.width(5.dp))
+                    Icon(
+                        MetrolistIcons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        tint = HeroPillContent,
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
             }
         }
     }
