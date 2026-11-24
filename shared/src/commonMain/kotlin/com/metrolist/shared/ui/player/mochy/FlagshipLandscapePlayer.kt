@@ -48,7 +48,6 @@ import androidx.compose.ui.unit.sp
 import com.metrolist.shared.cast.CastState
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.album_art
-import com.metrolist.shared.model.SongItem
 import com.metrolist.shared.ui.components.BlurredArtworkBackground
 import com.metrolist.shared.ui.components.CrossfadeArtwork
 import com.metrolist.shared.ui.components.lyrics.LyricsOffsetEditor
@@ -96,7 +95,7 @@ internal fun FlagshipLandscapePlayer(
     viewModel: PlayerViewModel,
     queueSession: QueueSession,
     artworkOverlay: @Composable (Modifier) -> Unit,
-    currentSong: SongItem?,
+    currentSong: PlayerViewModel.SongUiModel?,
     crossfadeNextArtworkUrl: String?,
     artworkCrossfadeProgress: () -> Float,
     isPlaying: Boolean,
@@ -116,7 +115,7 @@ internal fun FlagshipLandscapePlayer(
     artworkSwipeEnabled: Boolean,
     artworkSwipeSensitivity: Float,
     showVideoSurface: Boolean,
-    onToggleFullscreen: () -> Unit,
+    onToggleFullscreen: (() -> Unit)?,
     onArtworkDoubleTap: ((Offset) -> Unit)?,
     onSongInfo: () -> Unit,
     onToggleLike: () -> Unit,

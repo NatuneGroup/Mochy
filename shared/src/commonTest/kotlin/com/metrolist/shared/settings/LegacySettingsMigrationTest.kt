@@ -763,7 +763,9 @@ class LegacySettingsMigrationTest {
 
         settings.importBackupSettings(backup)
         assertTrue(registry.isEnabled(ArchivePoolModule.ID))
-        assertTrue(registry.entries.value.first { it.id == ArchivePoolModule.ID }.enabled)
+        val restoredEntry =
+            registry.entries.value.first { it.id == ArchivePoolModule.ID }
+        assertTrue(restoredEntry.enabled)
 
         // A later edit on another module must preserve the restored ArchivePool toggle.
         registry.setEnabled(MonochromeModule.ID, true)
