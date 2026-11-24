@@ -1,5 +1,6 @@
 /*
  * Metrolist Project (C) 2026
+ * Forked from Mochy Music by realidkroo (https://github.com/realidkroo/mochy-music)
  * Licensed under GPL-3.0 | See git history for contributors
  */
 

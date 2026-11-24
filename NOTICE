@@ -1,0 +1,12 @@
+Mochy (Multiplatform)
+Licensed under the GNU General Public License v3.0 (GPL-3.0).
+
+This project combines and credits the following open-source works:
+
+- Mochy Music by realidkroo (https://github.com/realidkroo/mochy-music)
+  Original Mochy interface, player modes, modules, bedside clock, audio lab, and creative tools.
+- Metrolist by MetrolistGroup (https://github.com/MetrolistGroup/Metrolist)
+  Multiplatform YouTube Music client base for Android, Desktop, and iOS.
+- ViviMusic (upstream of Mochy Music) and InnerTune (upstream of Metrolist).
+
+All original licenses, copyright headers, and contributor attributions are preserved under GPL-3.0.

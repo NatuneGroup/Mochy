@@ -1,3 +1,5 @@
+// Built on top of Mochy Music by realidkroo (https://github.com/realidkroo/mochy-music)
+// and the Metrolist multiplatform base (https://github.com/MetrolistGroup/Metrolist). GPL-3.0.
 @file:Suppress("UnstableApiUsage")
 
 import com.android.build.api.instrumentation.AsmClassVisitorFactory
@@ -261,7 +263,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.metrolist.music"
+        applicationId = "com.natune.mochy"
         minSdk = 24
         targetSdk = 37
         versionCode = 155
@@ -286,15 +288,23 @@ android {
             keyAliasName.isNotBlank() &&
             keyPasswordVal.isNotBlank()
 
-    if (hasReleaseSigning) {
-        signingConfigs {
-            create("release")
+    signingConfigs {
+        getByName("debug") {
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
         }
-        val releaseConfig = signingConfigs["release"]
-        releaseConfig.storeFile = File(keystorePath)
-        releaseConfig.storePassword = storePassword
-        releaseConfig.keyAlias = keyAliasName
-        releaseConfig.keyPassword = keyPasswordVal
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = File(keystorePath)
+                this.storePassword = storePassword
+                keyAlias = keyAliasName
+                keyPassword = keyPasswordVal
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
+            }
+        }
     }
 
     buildTypes {
@@ -303,12 +313,12 @@ android {
             isShrinkResources = true
             ndk.debugSymbolLevel = "FULL"
             optimization.keepRules { ignoreFrom("com.materialkolor:material-kolor-android:5.0.1") }
-            manifestPlaceholders["appLabel"] = "Metrolist"
+            manifestPlaceholders["appLabel"] = "Mochy"
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            signingConfig = if (hasReleaseSigning) signingConfigs["release"] else null
+            signingConfig = if (hasReleaseSigning) signingConfigs["release"] else signingConfigs["debug"]
         }
         create("benchmark") {
             initWith(getByName("release"))
@@ -326,7 +336,7 @@ android {
         }
         debug {
             applicationIdSuffix = ".debug"
-            manifestPlaceholders["appLabel"] = "Metrolist KMP Debug"
+            manifestPlaceholders["appLabel"] = "Mochy Debug"
         }
     }
 

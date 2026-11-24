@@ -21,9 +21,9 @@ jobs:
     permissions:
       contents: read
     with:
-      variant: ${{ inputs.variant || 'debug' }}
+      variant: ${{ inputs.variant || 'release' }}
       upload-artifact: ${{ github.event_name == 'workflow_dispatch' }}
-      require-signing: ${{ inputs.variant == 'release' }}
+      require-signing: false
       cache-read-only: ${{ github.event_name == 'pull_request' }}
     secrets:
       KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH || secrets.KEYSTORE }}
