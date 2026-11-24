@@ -129,7 +129,11 @@ internal fun mochyHeroItems(
         }
 
         fun reasonFor(item: YTItem): StringResource =
-            if (item is PlaylistItem) Res.string.mochy_hero_playlist else Res.string.quick_picks
+            if (item is PlaylistItem) {
+                Res.string.mochy_hero_playlist
+            } else {
+                Res.string.quick_picks
+            }
 
         val onlineFallbackPool =
             buildList {
