@@ -140,6 +140,8 @@ class PlaybackControllerPlayerSession(
 
     override fun setPlaybackSpeed(speed: Float) = controller.setPlaybackSpeed(speed)
 
+    override fun beginTemporaryPlaybackSpeed(multiplier: Float): (() -> Unit)? = controller.beginTemporaryPlaybackSpeed(multiplier)
+
     override fun skipToNext() = controller.skipToNext()
 
     override fun skipToPrevious() = controller.skipToPrevious()

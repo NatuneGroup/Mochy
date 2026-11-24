@@ -39,6 +39,8 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
@@ -58,8 +60,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.WideNavigationRail
 import androidx.compose.material3.WideNavigationRailDefaults
-import androidx.compose.material3.WideNavigationRailItem
-import androidx.compose.material3.WideNavigationRailItemDefaults
 import androidx.compose.material3.WideNavigationRailValue
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteColors
@@ -80,11 +80,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -614,31 +616,32 @@ private fun <T> DesktopWideNavigationRail(
                                             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp),
                                         )
                                     } else {
-                                        WideNavigationRailItem(
-                                            selected = selected,
-                                            onClick = { onSelect(item.key) },
-                                            icon = icon,
-                                            label = {
-                                                Text(
-                                                    text = item.label,
-                                                    textAlign = TextAlign.Center,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis,
-                                                )
-                                            },
-                                            railExpanded = false,
-                                            iconPosition = NavigationItemIconPosition.Top,
-                                            colors =
-                                                WideNavigationRailItemDefaults.colors(
-                                                    selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                                    selectedTextColorTopIconPosition = MaterialTheme.colorScheme.onSurface,
-                                                    selectedTextColorStartIconPosition = MaterialTheme.colorScheme.onSecondaryContainer,
-                                                    selectedIndicatorColor = MaterialTheme.colorScheme.secondaryContainer,
-                                                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                ),
-                                            modifier = Modifier.heightIn(min = 64.dp).padding(vertical = 4.dp),
-                                        )
+                                        val colors = MaterialTheme.colorScheme
+                                        val foreground = if (selected) colors.onPrimaryContainer else colors.onSurfaceVariant
+                                        Column(
+                                            modifier =
+                                                Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                                                    .heightIn(min = 60.dp)
+                                                    .clip(RoundedCornerShape(16.dp))
+                                                    .background(
+                                                        if (selected) colors.primaryContainer else Color.Transparent,
+                                                    ).selectable(selected = selected, role = Role.Tab, onClick = { onSelect(item.key) })
+                                                    .padding(horizontal = 4.dp, vertical = 8.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
+                                        ) {
+                                            CompositionLocalProvider(LocalContentColor provides foreground, content = icon)
+                                            Text(
+                                                text = item.label,
+                                                color = foreground,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                textAlign = TextAlign.Center,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                        }
                                     }
                                 }
                             }

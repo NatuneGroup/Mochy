@@ -148,6 +148,7 @@ import com.metrolist.shared.ui.menu.rememberCursorContextMenuState
 import com.metrolist.shared.ui.navigation.blockInput
 import com.metrolist.shared.ui.navigation.navigationPopupSource
 import com.metrolist.shared.ui.playback.retainPlaybackKeyFocus
+import com.metrolist.shared.ui.player.mochy.AnimatedPlayGlyph
 import com.metrolist.shared.ui.theme.uiEnhanced
 import com.metrolist.shared.utils.ShareUrls
 import com.metrolist.shared.utils.formatDuration
@@ -553,6 +554,8 @@ fun StandardBottomPlayer(
     val deviceConnectState by DesktopDeviceConnect.manager.remote.state
         .collectAsState()
     val isListenTogetherGuest = ListenTogetherState.isListenTogetherGuest()
+    val playPauseDescription =
+        stringResource(if (PlayerState.isPlaying) Res.string.pause else Res.string.play)
     val playerMenu = rememberCursorContextMenuState()
     var showSleepDialog by remember { mutableStateOf(false) }
     var showDetailsDialog by remember { mutableStateOf(false) }
@@ -566,6 +569,8 @@ fun StandardBottomPlayer(
         modifier =
             Modifier
                 .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .clip(RoundedCornerShape(20.dp))
                 .cursorContextMenu(playerMenu)
                 .background(colorScheme.surfaceContainer),
     ) {
@@ -753,18 +758,14 @@ fun StandardBottomPlayer(
                                             color = colorScheme.onPrimaryContainer,
                                         )
                                     } else {
-                                        Icon(
-                                            if (PlayerState.isPlaying) {
-                                                MetrolistIcons.Rounded.Pause
-                                            } else {
-                                                MetrolistIcons.Rounded.PlayArrow
-                                            },
-                                            contentDescription =
-                                                stringResource(
-                                                    if (PlayerState.isPlaying) Res.string.pause else Res.string.play,
-                                                ),
-                                            tint = colorScheme.onPrimaryContainer,
-                                            modifier = Modifier.size(20.dp),
+                                        AnimatedPlayGlyph(
+                                            playing = PlayerState.isPlaying,
+                                            color = colorScheme.onPrimaryContainer,
+                                            height = 18.dp,
+                                            modifier =
+                                                Modifier.semantics {
+                                                    contentDescription = playPauseDescription
+                                                },
                                         )
                                     }
                                 }

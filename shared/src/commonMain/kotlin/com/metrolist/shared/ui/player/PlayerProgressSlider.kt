@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -38,6 +39,8 @@ import com.metrolist.shared.generated.resources.live
 import com.metrolist.shared.generated.resources.playback_position_time
 import com.metrolist.shared.playback.PendingSeekPosition
 import com.metrolist.shared.playback.interpolatePlaybackPosition
+import com.metrolist.shared.settings.Settings
+import com.metrolist.shared.settings.SliderStyle
 import com.metrolist.shared.ui.components.LiveBadge
 import com.metrolist.shared.ui.components.sliders.PlaybackProgressSlider
 import com.metrolist.shared.ui.components.sliders.collectPlaybackDisplayState
@@ -45,12 +48,14 @@ import com.metrolist.shared.ui.components.sliders.progressAtPixel
 import com.metrolist.shared.ui.components.sliders.rememberPendingSeekPosition
 import com.metrolist.shared.ui.haptics.HapticEvent
 import com.metrolist.shared.ui.haptics.rememberMetrolistHaptics
+import com.metrolist.shared.ui.player.mochy.FlagshipSeekTrack
 import com.metrolist.shared.utils.Logger
 import com.metrolist.shared.utils.formatDuration
 import com.metrolist.shared.viewmodels.PlayerViewModel
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 internal fun PlayerProgressSlider(
     viewModel: PlayerViewModel,
     duration: Long,
@@ -63,8 +68,10 @@ internal fun PlayerProgressSlider(
     progressColor: Color? = null,
     timerTextStyle: TextStyle = MaterialTheme.typography.labelMedium,
     isLive: Boolean = false,
+    mochyTrack: Boolean = false,
 ) {
     val active = LocalPlayerContentActive.current
+    val useFlagshipTrack = mochyTrack && !isLive && Settings.shared.sliderStyle == SliderStyle.DEFAULT
     val positionActive = LocalPlayerPositionActive.current
     var trackWidthPx by remember { mutableIntStateOf(0) }
     val progressWidthPx = trackWidthPx
@@ -195,6 +202,20 @@ internal fun PlayerProgressSlider(
             isPlaying = isPlaying && !isPlaybackLoading,
             bufferedFraction = if (isLive) 1f else bufferedProgress,
             animate = active,
+            trackOverride =
+                if (useFlagshipTrack) {
+                    { state, interaction ->
+                        FlagshipSeekTrack(
+                            fraction = { state.value },
+                            interaction = interaction,
+                            loading = isPlaybackLoading,
+                            active = active,
+                            contentColor = textBackgroundColor,
+                        )
+                    }
+                } else {
+                    null
+                },
             colors =
                 if (isLive) {
                     val activeColor = progressColor ?: MaterialTheme.colorScheme.primary
@@ -223,6 +244,7 @@ internal fun PlayerProgressSlider(
     }
 
     if (showTimers) {
+        val timerColor = textBackgroundColor.copy(alpha = if (useFlagshipTrack) 0.85f else 0.75f)
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -233,18 +255,18 @@ internal fun PlayerProgressSlider(
                 Text(
                     text = elapsedText,
                     style = timerTextStyle,
-                    color = textBackgroundColor.copy(alpha = 0.75f),
+                    color = timerColor,
                 )
             } else {
                 Text(
                     text = elapsedText,
                     style = timerTextStyle,
-                    color = textBackgroundColor.copy(alpha = 0.75f),
+                    color = timerColor,
                 )
                 Text(
                     text = durationText,
                     style = timerTextStyle,
-                    color = textBackgroundColor.copy(alpha = 0.75f),
+                    color = timerColor,
                 )
             }
         }

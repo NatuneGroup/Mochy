@@ -129,7 +129,7 @@ private fun JsonObject.prismSong(): ForeignSong {
     return ForeignSong(
         id = id,
         title = getValue("title").jsonPrimitive.content,
-        artists = get("artists")?.let { prismArtists(it.toString()) }.orEmpty(),
+        artists = get("artists")?.let { parseForeignArtists(it.toString()) }.orEmpty(),
         albumId = album?.text("id"),
         albumName = album?.text("title"),
         durationSeconds = (get("durationSec") as? JsonPrimitive)?.intOrNull?.takeIf { it > 0 },

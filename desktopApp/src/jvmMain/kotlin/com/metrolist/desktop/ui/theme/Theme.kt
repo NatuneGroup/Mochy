@@ -27,14 +27,11 @@ import kotlinx.coroutines.withContext
 import com.metrolist.shared.ui.theme.MetrolistTheme as SharedMetrolistTheme
 
 @Composable
-private fun appFontFamily(
-    systemFamily: FontFamily,
-    languageTag: String,
-): FontFamily {
+private fun appFontFamilyOverride(languageTag: String): FontFamily? {
     val option = Settings.shared.appFont
     val revision = DesktopFontManager.revision
-    val family by produceState(systemFamily, option, revision, systemFamily to languageTag) {
-        value = systemFamily
+    val family by produceState<FontFamily?>(null, option, revision, languageTag) {
+        value = null
         if (option != FontOption.SYSTEM) {
             value =
                 withContext(Dispatchers.IO) {
@@ -42,7 +39,6 @@ private fun appFontFamily(
                     DesktopFontManager
                         .loadFontFamily(option)
                         ?.takeIf { DesktopFontManager.supportsLanguage(option, languageTag) }
-                        ?: systemFamily
                 }
         }
     }
@@ -52,27 +48,8 @@ private fun appFontFamily(
 @Composable
 fun AppTypography(): Typography {
     val localeList = currentAppLocaleList()
-    val sharedTypography = MetrolistTypography(localeList)
-    val systemFamily = sharedTypography.bodyLarge.fontFamily ?: FontFamily.Default
-    val family = appFontFamily(systemFamily, localeList[0].toLanguageTag())
-    return Typography(
-        fontFamily = family,
-        displayLarge = sharedTypography.displayLarge.copy(fontFamily = family),
-        displayMedium = sharedTypography.displayMedium.copy(fontFamily = family),
-        displaySmall = sharedTypography.displaySmall.copy(fontFamily = family),
-        headlineLarge = sharedTypography.headlineLarge.copy(fontFamily = family),
-        headlineMedium = sharedTypography.headlineMedium.copy(fontFamily = family),
-        headlineSmall = sharedTypography.headlineSmall.copy(fontFamily = family),
-        titleLarge = sharedTypography.titleLarge.copy(fontFamily = family),
-        titleMedium = sharedTypography.titleMedium.copy(fontFamily = family),
-        titleSmall = sharedTypography.titleSmall.copy(fontFamily = family),
-        bodyLarge = sharedTypography.bodyLarge.copy(fontFamily = family),
-        bodyMedium = sharedTypography.bodyMedium.copy(fontFamily = family),
-        bodySmall = sharedTypography.bodySmall.copy(fontFamily = family),
-        labelLarge = sharedTypography.labelLarge.copy(fontFamily = family),
-        labelMedium = sharedTypography.labelMedium.copy(fontFamily = family),
-        labelSmall = sharedTypography.labelSmall.copy(fontFamily = family),
-    )
+    val override = appFontFamilyOverride(localeList[0].toLanguageTag())
+    return MetrolistTypography(localeList = localeList, fontFamilyOverride = override)
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)

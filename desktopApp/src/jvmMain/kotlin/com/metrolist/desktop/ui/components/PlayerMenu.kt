@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import com.metrolist.desktop.state.app.AppState
+import com.metrolist.desktop.state.app.UiState
 import com.metrolist.desktop.state.content.ArtistState
 import com.metrolist.desktop.state.content.PlaylistAlbumState
 import com.metrolist.desktop.state.playback.ListenTogetherState
@@ -73,6 +74,7 @@ import com.metrolist.shared.generated.resources.lyrics_romanization_show_origina
 import com.metrolist.shared.generated.resources.lyrics_romanization_show_original_description
 import com.metrolist.shared.generated.resources.lyrics_show_translations
 import com.metrolist.shared.generated.resources.manual_translate_this_track
+import com.metrolist.shared.generated.resources.mochy_bedside_clock
 import com.metrolist.shared.generated.resources.no_provider_results_found
 import com.metrolist.shared.generated.resources.no_track_playing
 import com.metrolist.shared.generated.resources.playback_speed
@@ -660,6 +662,13 @@ fun PlayerMenuPanel(
                 listOfNotNull(
                     equalizerMenuAction(onOpen = { showEqualizer = true }),
                     tempoPitchMenuAction(varispeed) { showTempoPitch = true },
+                    PlayerMenuAction(
+                        MetrolistIcons.Outlined.Bedtime,
+                        stringResource(Res.string.mochy_bedside_clock),
+                    ) {
+                        onDismiss()
+                        UiState.showBedsideClock = true
+                    },
                     onShowDetailsDialog?.let { action ->
                         PlayerMenuAction(
                             MetrolistIcons.Outlined.Info,

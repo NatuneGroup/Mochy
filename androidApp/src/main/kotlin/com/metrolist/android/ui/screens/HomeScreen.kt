@@ -267,6 +267,7 @@ fun HomeScreen(
             onItemLongClick = { selectedMenuItem = it },
             onShuffleSongs = { songs -> playerConnection?.shuffleQueue(songs, queueTitle = sharedText.shuffle) },
             onPlaySongs = { songs -> playerConnection?.playQueue(songs, queueTitle = sharedText.quickPicks) },
+            onTogglePlayPause = { playerConnection?.togglePlayPause() },
             onLibraryClick = onNavigateToLibrary,
             onLocalShelfClick = onNavigateToHomeSection,
             onArtistClick = { artistId -> onNavigateToArtist(artistId) },

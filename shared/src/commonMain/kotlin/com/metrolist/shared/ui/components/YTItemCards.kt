@@ -112,10 +112,12 @@ import com.metrolist.shared.settings.ArtistNameAliases
 import com.metrolist.shared.settings.displayName
 import com.metrolist.shared.settings.displayTitle
 import com.metrolist.shared.state.SongMetadataState
+import com.metrolist.shared.ui.LocalIsTv
 import com.metrolist.shared.ui.components.images.AsyncImage
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.menu.artworkMenuActions
 import com.metrolist.shared.ui.menu.onSecondaryClick
+import com.metrolist.shared.ui.mochy.press3D
 import com.metrolist.shared.ui.navigation.AlbumArtworkSource
 import com.metrolist.shared.ui.navigation.navigationPageSource
 import com.metrolist.shared.ui.navigation.navigationPopupSource
@@ -506,6 +508,7 @@ fun YTGridItem(
     Column(
         modifier =
             modifier
+                .press3D(maxTilt = 6f, pressedScale = 0.97f, enabled = itemEnabled && !LocalIsTv.current)
                 .alpha(if (itemEnabled) 1f else 0.38f)
                 .clip(gridCellShape())
                 .focusOutline(gridCellShape())

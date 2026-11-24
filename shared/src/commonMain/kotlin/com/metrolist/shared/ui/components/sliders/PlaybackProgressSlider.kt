@@ -25,6 +25,7 @@ import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.SliderState
 import androidx.compose.material3.WavyProgressIndicatorDefaults
 import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
@@ -65,6 +66,7 @@ fun PlaybackProgressSlider(
     bufferedFraction: Float = 0f,
     animate: Boolean = true,
     trackThicknessDp: Float = Settings.shared.sliderTrackThicknessDp,
+    trackOverride: (@Composable (SliderState, MutableInteractionSource) -> Unit)? = null,
     valueProvider: () -> Float = { value },
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -90,6 +92,20 @@ fun PlaybackProgressSlider(
     val focused by interactionSource.collectIsFocusedAsState()
     val isTv = LocalIsTv.current
     val focusColor = MaterialTheme.colorScheme.primary
+    if (trackOverride != null) {
+        Slider(
+            state = sliderState,
+            modifier = modifier.retainPlaybackKeyFocus().fillMaxWidth().height(28.dp),
+            enabled = enabled,
+            onValueChange = onValueChange,
+            onValueChangeFinished = onValueChangeFinished,
+            colors = colors,
+            interactionSource = interactionSource,
+            thumb = { Spacer(Modifier.size(0.dp)) },
+            track = { state -> trackOverride(state, interactionSource) },
+        )
+        return
+    }
     if (style == SliderStyle.DEFAULT) {
         if (!showThumb) {
             Slider(

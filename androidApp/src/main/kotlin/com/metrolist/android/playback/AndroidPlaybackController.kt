@@ -103,6 +103,8 @@ class AndroidPlaybackController(
 
     override fun setPlaybackSpeed(speed: Float) = connection.setPlaybackSpeed(speed)
 
+    override fun beginTemporaryPlaybackSpeed(multiplier: Float): (() -> Unit)? = connection.beginTemporaryPlaybackSpeed(multiplier)
+
     override fun setPlaybackPitch(pitch: Float) = connection.setPlaybackPitch(pitch)
 
     override fun startRadio(song: SongItem) = connection.startRadio(song)

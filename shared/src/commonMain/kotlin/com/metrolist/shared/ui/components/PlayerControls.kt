@@ -93,6 +93,9 @@ import com.metrolist.shared.ui.haptics.HapticEvent
 import com.metrolist.shared.ui.haptics.rememberMetrolistHaptics
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.navigation.navigationPopupSource
+import com.metrolist.shared.ui.player.mochy.AnimatedPlayGlyph
+import com.metrolist.shared.ui.player.mochy.AnimatedSkipGlyph
+import com.metrolist.shared.ui.player.mochy.SkipCycleState
 import com.metrolist.shared.ui.tv.tvFocusHighlight
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -150,6 +153,9 @@ fun PlayerPrimaryControls(
     showLoadingIndicator: Boolean = true,
 ) {
     val haptics = rememberMetrolistHaptics()
+    val animationScope = rememberCoroutineScope()
+    val previousGlyph = remember { SkipCycleState() }
+    val nextGlyph = remember { SkipCycleState() }
     val prevInteractionSource = remember { MutableInteractionSource() }
     val nextInteractionSource = remember { MutableInteractionSource() }
     val playPauseInteractionSource = remember { MutableInteractionSource() }
@@ -232,7 +238,10 @@ fun PlayerPrimaryControls(
         horizontalArrangement = Arrangement.Center,
     ) {
         FilledTonalButton(
-            onClick = { onSkipPrevious?.invoke() },
+            onClick = {
+                animationScope.launch { previousGlyph.step() }
+                onSkipPrevious?.invoke()
+            },
             enabled = onSkipPrevious != null,
             shapes = ButtonDefaults.shapes(shape = sideShape),
             interactionSource = prevInteractionSource,
@@ -250,7 +259,13 @@ fun PlayerPrimaryControls(
                     .tvFocusHighlight(sideShape, scale = 1f)
                     .playerControlBlend(),
         ) {
-            Icon(MetrolistIcons.Rounded.SkipPrevious, previousText, modifier = Modifier.size(iconSize))
+            AnimatedSkipGlyph(
+                cycle = previousGlyph,
+                backwards = true,
+                color = LocalContentColor.current,
+                width = iconSize,
+                modifier = Modifier.semantics { contentDescription = previousText },
+            )
         }
 
         Spacer(Modifier.width(if (isCompact) 6.dp else 8.dp))
@@ -297,25 +312,16 @@ fun PlayerPrimaryControls(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(
-                        if (isPlaying) MetrolistIcons.Rounded.Pause else MetrolistIcons.Rounded.PlayArrow,
-                        if (showLabels) {
-                            null
-                        } else if (isPlaying) {
-                            pauseText
-                        } else {
-                            playText
-                        },
+                    AnimatedPlayGlyph(
+                        playing = isPlaying,
+                        color = LocalContentColor.current,
+                        height = if (isCompact) 18.dp else 26.dp,
                         modifier =
-                            Modifier.size(
-                                if (isCompact) {
-                                    20.dp
-                                } else if (showLabels) {
-                                    28.dp
-                                } else {
-                                    IconButtonDefaults.largeIconSize
-                                },
-                            ),
+                            if (showLabels) {
+                                Modifier
+                            } else {
+                                Modifier.semantics { contentDescription = if (isPlaying) pauseText else playText }
+                            },
                     )
                     if (showLabels) {
                         val playPauseText = if (isPlaying) pauseText else playText
@@ -363,7 +369,10 @@ fun PlayerPrimaryControls(
         Spacer(Modifier.width(if (isCompact) 6.dp else 8.dp))
 
         FilledTonalButton(
-            onClick = { onSkipNext?.invoke() },
+            onClick = {
+                animationScope.launch { nextGlyph.step() }
+                onSkipNext?.invoke()
+            },
             enabled = onSkipNext != null,
             shapes = ButtonDefaults.shapes(shape = sideShape),
             interactionSource = nextInteractionSource,
@@ -381,7 +390,13 @@ fun PlayerPrimaryControls(
                     .tvFocusHighlight(sideShape, scale = 1f)
                     .playerControlBlend(),
         ) {
-            Icon(MetrolistIcons.Rounded.SkipNext, nextText, modifier = Modifier.size(iconSize))
+            AnimatedSkipGlyph(
+                cycle = nextGlyph,
+                backwards = false,
+                color = LocalContentColor.current,
+                width = iconSize,
+                modifier = Modifier.semantics { contentDescription = nextText },
+            )
         }
     }
 }

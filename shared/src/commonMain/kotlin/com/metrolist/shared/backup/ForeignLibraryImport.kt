@@ -49,6 +49,8 @@ enum class ForeignLibraryFamily {
     SIMPMUSIC,
 
     PRISM,
+
+    MOCHY,
 }
 
 data class ForeignArtist(
@@ -74,6 +76,9 @@ data class ForeignSong(
     val isUploaded: Boolean = false,
     val isEpisode: Boolean = false,
     val isLive: Boolean = false,
+    val customTitle: String? = null,
+    val customArtist: String? = null,
+    val lyricsOffsetMs: Int? = null,
 )
 
 data class ForeignPlaylist(
@@ -137,6 +142,11 @@ fun SQLiteConnection.detectForeignLibraryFamily(): ForeignLibraryFamily? {
     ) = tables[table.lowercase()]?.containsAll(columns.map(String::lowercase)) == true
     return when {
         has("song", "id", "title", "liked") && has("playlist", "id", "name") &&
+            has("playlist_song_map", "playlistId", "songId", "position") &&
+            has("song_edit", "songId", "title", "artists") &&
+            has("speed_dial_item", "id", "type", "createDate") -> ForeignLibraryFamily.MOCHY
+
+        has("song", "id", "title", "liked") && has("playlist", "id", "name") &&
             has("playlist_song_map", "playlistId", "songId", "position") -> ForeignLibraryFamily.INNERTUNE
 
         has("song", "id", "title", "likedAt", "totalPlayTimeMs") && has("playlist", "id", "name") &&
@@ -160,15 +170,42 @@ fun SQLiteConnection.readForeignLibrary(): ForeignLibrary {
     val family = detectForeignLibraryFamily() ?: throw UnsupportedForeignLibraryException()
     val tables = foreignTableColumns()
     return when (family) {
-        ForeignLibraryFamily.INNERTUNE -> readInnerTune(tables)
+        ForeignLibraryFamily.INNERTUNE,
+        ForeignLibraryFamily.MOCHY,
+        -> readInnerTune(tables, family)
+
         ForeignLibraryFamily.VIMUSIC -> readViMusic(ViMusicNames.VIMUSIC, tables)
+
         ForeignLibraryFamily.KREATE -> readViMusic(ViMusicNames.KREATE, tables)
+
         ForeignLibraryFamily.SIMPMUSIC -> readSimpMusic(tables)
+
         ForeignLibraryFamily.PRISM -> readPrism()
     }
 }
 
-private fun SQLiteConnection.readInnerTune(tables: Map<String, Set<String>>): ForeignLibrary {
+private fun SQLiteConnection.readInnerTune(
+    tables: Map<String, Set<String>>,
+    family: ForeignLibraryFamily,
+): ForeignLibrary {
+    val isMochy = family == ForeignLibraryFamily.MOCHY
+    val songEdits =
+        if (isMochy) {
+            rows("SELECT songId, title, artists FROM song_edit") { row ->
+                row.text("songId").orEmpty() to
+                    Pair(
+                        row.text("title")?.takeIf(String::isNotBlank),
+                        row.text("artists")?.let { text ->
+                            runCatching { parseForeignArtists(text) }
+                                .getOrNull()
+                                ?.joinToString { it.name }
+                                ?.takeIf(String::isNotBlank)
+                        },
+                    )
+            }.toMap()
+        } else {
+            emptyMap()
+        }
     val artists = mutableMapOf<String, MutableList<ForeignArtist>>()
     if ("song_artist_map" in tables && "artist" in tables) {
         rows(
@@ -196,6 +233,11 @@ private fun SQLiteConnection.readInnerTune(tables: Map<String, Set<String>>): Fo
                 inLibraryAt = row.long("inLibrary"),
                 totalPlayTimeMs = row.long("totalPlayTime") ?: 0,
                 isLocal = row.long("isLocal") == 1L,
+                isVideo = isMochy && row.long("isVideo") == 1L,
+                isUploaded = isMochy && row.long("isUploaded") == 1L,
+                customTitle = songEdits[id]?.first,
+                customArtist = songEdits[id]?.second,
+                lyricsOffsetMs = if (isMochy) row.text("lyricsOffset")?.toIntOrNull()?.takeUnless { it == 0 } else null,
             )
         }.filterNotNull()
     val members = mutableMapOf<String, MutableList<String>>()
@@ -209,6 +251,10 @@ private fun SQLiteConnection.readInnerTune(tables: Map<String, Set<String>>): Fo
                 browseId = row.text("browseId")?.takeIf { row.long("isLocal") != 1L },
                 songIds = members[row.text("id")].orEmpty(),
                 isEditable = row.long("isEditable") == 1L,
+                description = row.text("description").takeIf { isMochy },
+                createdAt = row.long("createdAt").takeIf { isMochy },
+                updatedAt = row.long("lastUpdateTime").takeIf { isMochy },
+                thumbnailUrl = row.text("thumbnailUrl")?.takeIf { isMochy && it.startsWith("https://") },
             )
         }
     val plays =
@@ -220,7 +266,7 @@ private fun SQLiteConnection.readInnerTune(tables: Map<String, Set<String>>): Fo
             emptyList()
         }
     return ForeignLibrary(
-        family = ForeignLibraryFamily.INNERTUNE,
+        family = family,
         songs = songs,
         playlists = playlists,
         plays = plays,
@@ -490,7 +536,7 @@ private fun SQLiteConnection.readPrism(): ForeignLibrary {
     val songs =
         rows("SELECT * FROM songs") { row ->
             val id = row.text("id").orEmpty()
-            val artists = row.text("artistsJson")?.let { runCatching { prismArtists(it) }.getOrNull() }
+            val artists = row.text("artistsJson")?.let { runCatching { parseForeignArtists(it) }.getOrNull() }
             ForeignSong(
                 id = id,
                 title = row.text("title").orEmpty(),
@@ -519,7 +565,7 @@ private fun SQLiteConnection.readPrism(): ForeignLibrary {
     return ForeignLibrary(ForeignLibraryFamily.PRISM, songs, emptyList(), plays, emptyList(), emptyList())
 }
 
-internal fun prismArtists(json: String): List<ForeignArtist> =
+internal fun parseForeignArtists(json: String): List<ForeignArtist> =
     Json.parseToJsonElement(json).jsonArray.mapNotNull { element ->
         val artist = element as? JsonObject ?: return@mapNotNull null
         val name = (artist["name"] as? JsonPrimitive)?.contentOrNull?.takeIf(String::isNotBlank) ?: return@mapNotNull null
@@ -553,7 +599,13 @@ suspend fun MusicDatabase.importForeignLibrary(
     val sourceSongs = library.songs.filter { !it.isLocal && !it.isLive && isYouTubeVideoId(it.id) }.associateBy(ForeignSong::id)
     val wanted =
         buildSet {
-            library.songs.forEach { if (it.liked || it.inLibraryAt != null || it.totalPlayTimeMs > 0) add(it.id) }
+            library.songs.forEach { song ->
+                if (song.liked || song.inLibraryAt != null || song.totalPlayTimeMs > 0 ||
+                    song.customTitle != null || song.customArtist != null || song.lyricsOffsetMs != null
+                ) {
+                    add(song.id)
+                }
+            }
             library.playlists.forEach { addAll(it.songIds) }
             library.plays.forEach { add(it.songId) }
         }
@@ -574,8 +626,13 @@ suspend fun MusicDatabase.importForeignLibrary(
                     likedDate = stored.likedDate ?: likedAt.takeIf { source.liked }?.timestamp(),
                     inLibrary = stored.inLibrary ?: (source.inLibraryAt ?: likedAt.takeIf { source.liked })?.timestamp(),
                     totalPlayTime = maxOf(stored.totalPlayTime, source.totalPlayTimeMs),
+                    customTitle = stored.customTitle ?: source.customTitle,
+                    customArtist = stored.customArtist ?: source.customArtist,
                 )
             if (merged != stored) dao.update(merged)
+            if (source.lyricsOffsetMs != null && stored.lyricsOffset == 0 && dao.lyricsOffset(id) == null) {
+                dao.setLyricsOffset(id, source.lyricsOffsetMs)
+            }
             if (source.liked && !stored.liked) newLikes += likedAt to checkNotNull(dao.getSongById(id)).toSongItem()
         }
         library.plays.forEach { play ->

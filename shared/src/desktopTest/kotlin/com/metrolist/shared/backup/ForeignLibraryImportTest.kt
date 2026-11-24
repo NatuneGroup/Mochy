@@ -132,6 +132,52 @@ class ForeignLibraryImportTest {
     }
 
     @Test
+    fun mochyBackupKeepsDuplicatePlaylistEntriesAndMergesSongEdits() =
+        runBlocking {
+            val source =
+                sourceDatabase(
+                    "mochy.db",
+                    INNERTUNE_DDL +
+                        listOf(
+                            "ALTER TABLE song ADD COLUMN lyricsOffset INTEGER DEFAULT 0",
+                            "ALTER TABLE playlist ADD COLUMN description TEXT",
+                            "CREATE TABLE song_edit (songId TEXT PRIMARY KEY, title TEXT, artists TEXT)",
+                            "CREATE TABLE speed_dial_item (id TEXT PRIMARY KEY, type TEXT, createDate INTEGER)",
+                            "INSERT INTO song VALUES ('aaaaaaaaaaa','Original A',200,NULL,NULL,NULL,1,5000,1700000000000,350)",
+                            "INSERT INTO song VALUES ('bbbbbbbbbbb','Original B',180,NULL,NULL,NULL,0,0,NULL,-700)",
+                            """INSERT INTO song_edit VALUES ('aaaaaaaaaaa','Edited A','[{"id":"UCartist","name":"Edited artist"}]')""",
+                            "INSERT INTO song_edit VALUES ('bbbbbbbbbbb','Edited B','malformed JSON')",
+                            "INSERT INTO playlist VALUES ('p1','Mochy mix',NULL,'From Mochy')",
+                            "INSERT INTO playlist_song_map (playlistId,songId,position) VALUES ('p1','aaaaaaaaaaa',0)",
+                            "INSERT INTO playlist_song_map (playlistId,songId,position) VALUES ('p1','bbbbbbbbbbb',1)",
+                            "INSERT INTO playlist_song_map (playlistId,songId,position) VALUES ('p1','aaaaaaaaaaa',2)",
+                            "INSERT INTO event (songId,timestamp,playTime) VALUES ('aaaaaaaaaaa',1700000100000,90000)",
+                        ),
+                )
+            val library = read(source)
+            assertEquals(ForeignLibraryFamily.MOCHY, library.family)
+            withDestination { database ->
+                val dao = database.dao()
+                dao.upsert(SongEntity(id = "bbbbbbbbbbb", title = "Original B", customTitle = "Keep my edit"))
+                dao.setLyricsOffset("bbbbbbbbbbb", 250)
+
+                repeat(2) { database.importForeignLibrary(library) {} }
+
+                val imported = assertNotNull(dao.getSongById("aaaaaaaaaaa")).song
+                assertEquals("Original A", imported.title)
+                assertEquals("Edited A", imported.customTitle)
+                assertEquals("Edited artist", imported.customArtist)
+                assertEquals(350, dao.lyricsOffset("aaaaaaaaaaa"))
+                assertEquals("Keep my edit", dao.getSongById("bbbbbbbbbbb")?.song?.customTitle)
+                assertEquals(250, dao.lyricsOffset("bbbbbbbbbbb"))
+                assertEquals(1, dao.eventCount().first())
+                val playlist = assertNotNull(dao.findEditableLocalPlaylistByName("Mochy mix"))
+                assertEquals("From Mochy", playlist.description)
+                assertEquals(listOf("aaaaaaaaaaa", "bbbbbbbbbbb", "aaaaaaaaaaa"), playlistSongIds(database, playlist.id))
+            }
+        }
+
+    @Test
     fun viMusicFamilyMapsLikesDislikesDurationsArtistsAndHistory() {
         val source =
             sourceDatabase(

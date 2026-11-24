@@ -1257,6 +1257,25 @@ internal class IosPlaybackController(
         if (Settings.shared.varispeed) setPlaybackPitch(normalized)
     }
 
+    override fun beginTemporaryPlaybackSpeed(multiplier: Float): (() -> Unit)? {
+        if (inListenTogether) return null
+        val previous = player.playbackSpeed.value
+        val held = normalizePlaybackTempo(previous * multiplier) ?: return null
+        if (held == previous) return null
+        val previousPitch = player.playbackPitch.value
+        val adjustPitch = Settings.shared.varispeed
+        player.setPlaybackSpeed(held)
+        if (adjustPitch) player.setPlaybackPitch(held)
+        return {
+            if (player.playbackSpeed.value == held) {
+                player.setPlaybackSpeed(previous)
+                if (adjustPitch && player.playbackPitch.value == held) {
+                    player.setPlaybackPitch(previousPitch)
+                }
+            }
+        }
+    }
+
     override fun setPlaybackPitch(pitch: Float) {
         val normalized = normalizePlaybackTempo(pitch) ?: return
         Settings.shared.playbackPitch = normalized

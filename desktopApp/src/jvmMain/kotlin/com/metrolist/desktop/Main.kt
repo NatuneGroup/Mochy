@@ -232,6 +232,7 @@ import com.metrolist.shared.ui.navigation.Navigator
 import com.metrolist.shared.ui.navigation.Screen
 import com.metrolist.shared.ui.navigation.rememberNavigationState
 import com.metrolist.shared.ui.playback.LocalPlaybackController
+import com.metrolist.shared.ui.player.mochy.BedsideClock
 import com.metrolist.shared.ui.screens.SupportPrompt
 import com.metrolist.shared.ui.settings.SettingsPageId
 import com.metrolist.shared.ui.utils.LocalMouseScrollFactors
@@ -643,6 +644,16 @@ private fun DesktopWindowScope.AppContent(
             }
             PopupVisibility(visible = UiState.showSettings) {
                 SettingsOverlay(colorScheme)
+            }
+            if (UiState.showBedsideClock) {
+                val track = PlayerState.currentTrack
+                BedsideClock(
+                    title = track?.title,
+                    artist = track?.artists?.joinToString { it.displayName },
+                    isPlaying = PlayerState.isPlaying,
+                    onTogglePlay = { PlayerState.togglePlay() }.takeUnless { PlayerState.isListenTogetherGuest() },
+                    onDismiss = { UiState.showBedsideClock = false },
+                )
             }
             YouTubeSyncSnackbar(AppState.snackbarHostState)
             val snackbarScheme = rememberUpdatedState(colorScheme)

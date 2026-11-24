@@ -92,6 +92,7 @@ import com.metrolist.shared.ui.components.rememberTrackMarquee
 import com.metrolist.shared.ui.haptics.HapticEvent
 import com.metrolist.shared.ui.haptics.rememberMetrolistHaptics
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.player.mochy.AnimatedPlayGlyph
 import com.metrolist.shared.ui.theme.rememberReducedMotion
 import com.metrolist.shared.ui.tv.tvFocusHighlight
 import kotlinx.coroutines.launch
@@ -340,6 +341,7 @@ fun ExpressiveMiniPlayer(
                                         tint = scheme.onPrimary,
                                         enabled = playbackEnabled,
                                         onClick = onTogglePlay,
+                                        playing = isPlaying.takeIf { playbackActionIcon == null },
                                     )
                                 }
 
@@ -427,6 +429,7 @@ private fun ExpressiveMiniButton(
     tint: Color,
     enabled: Boolean,
     onClick: () -> Unit,
+    playing: Boolean? = null,
 ) {
     Box(
         modifier =
@@ -438,11 +441,21 @@ private fun ExpressiveMiniButton(
                 .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = description,
-            tint = if (enabled) tint else tint.copy(alpha = 0.38f),
-            modifier = Modifier.size(22.dp),
-        )
+        val iconColor = if (enabled) tint else tint.copy(alpha = 0.38f)
+        if (playing == null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = description,
+                tint = iconColor,
+                modifier = Modifier.size(22.dp),
+            )
+        } else {
+            AnimatedPlayGlyph(
+                playing = playing,
+                color = iconColor,
+                height = 18.dp,
+                modifier = Modifier.semantics { contentDescription = description },
+            )
+        }
     }
 }

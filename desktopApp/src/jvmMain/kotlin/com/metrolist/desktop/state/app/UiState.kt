@@ -39,6 +39,7 @@ object UiState {
     var wasMaximizedBeforeFullscreen by mutableStateOf(false)
 
     var showSettings by mutableStateOf(false)
+    var showBedsideClock by mutableStateOf(false)
     var selectedSettingsPage by mutableStateOf<SettingsPageId?>(null)
     var openDevtoolsSettingsRequested by mutableStateOf(false)
     var openPlaylistImportRequested by mutableStateOf(false)

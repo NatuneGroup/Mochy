@@ -111,6 +111,8 @@ import com.metrolist.shared.ui.components.YTGridItem
 import com.metrolist.shared.ui.components.YTListItem
 import com.metrolist.shared.ui.components.carouselArtworkShape
 import com.metrolist.shared.ui.components.rememberItemPlayback
+import com.metrolist.shared.ui.mochy.MochyHeroCarousel
+import com.metrolist.shared.ui.mochy.MochyHomeTopGlow
 import com.metrolist.shared.ui.utils.DragScrollableColumn
 import com.metrolist.shared.ui.utils.carouselScroll
 import com.metrolist.shared.ui.utils.desktopArrowScroll
@@ -214,6 +216,7 @@ fun HomeContent(
     header: (LazyListScope.() -> Unit)? = null,
     shelfCache: HomeShelfCache? = null,
     onPlaySongs: ((List<SongItem>) -> Unit)? = null,
+    onTogglePlayPause: (() -> Unit)? = null,
 ) {
     val activeSongId =
         remember(currentSongId) {
@@ -221,10 +224,45 @@ fun HomeContent(
         }
     val localShelfCache = remember { HomeShelfCache() }
     val paginationScrollConnection = rememberHomePagination(uiState, listState, onLoadMore)
+    val isTv = LocalIsTv.current
+    val heroSongs =
+        remember(uiState.quickPicks, uiState.trending) {
+            (uiState.quickPicks + uiState.trending)
+                .filter { !it.isLocal && !it.isUnavailable && !it.thumbnail.isNullOrBlank() }
+                .distinctBy(::canonicalHomeItemId)
+                .take(8)
+        }
+    val glowFadePx = with(LocalDensity.current) { 280.dp.toPx() }
     BoxWithConstraints(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         val isWide = maxWidth > 840.dp
         val effectiveShelves =
             shelves ?: (shelfCache ?: localShelfCache).build(uiState, text, maxWidth)
+        val topGlowCovers =
+            remember(heroSongs, effectiveShelves) {
+                val fromHero = heroSongs.mapNotNull { it.thumbnail }
+                val source =
+                    if (fromHero.size >= 2) {
+                        fromHero
+                    } else {
+                        fromHero + effectiveShelves.flatMap { it.items }.mapNotNull { it.thumbnail }
+                    }
+                source.distinct().take(2)
+            }
+
+        if (!isTv && topGlowCovers.isNotEmpty()) {
+            MochyHomeTopGlow(
+                coverUrls = topGlowCovers,
+                depth = if (isWide) 320.dp else 260.dp,
+                visibility = {
+                    if (listState.firstVisibleItemIndex > 0) {
+                        0f
+                    } else {
+                        (1f - listState.firstVisibleItemScrollOffset / glowFadePx).coerceIn(0f, 1f)
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(if (isWide) 320.dp else 260.dp),
+            )
+        }
 
         DragScrollableColumn(
             state = listState,
@@ -233,6 +271,31 @@ fun HomeContent(
             verticalArrangement = Arrangement.spacedBy(if (isWide) 16.dp else 8.dp),
         ) {
             header?.invoke(this)
+
+            if (
+                !isTv &&
+                !uiState.isContentLoading &&
+                !uiState.showLoadingPlaceholder &&
+                uiState.selectedChip == null &&
+                heroSongs.isNotEmpty()
+            ) {
+                val enabledHeroSongs = heroSongs.filter(isItemEnabled)
+                if (enabledHeroSongs.isNotEmpty()) {
+                    item(key = "mochy_hero_carousel") {
+                        MochyHeroCarousel(
+                            songs = enabledHeroSongs,
+                            currentSongId = currentSongId,
+                            isPlaying = isPlaying,
+                            isWide = isWide,
+                            isScrolledAway = {
+                                listState.firstVisibleItemIndex > 1 || listState.firstVisibleItemScrollOffset > glowFadePx
+                            },
+                            onPlaySong = { song -> onItemClick(song) },
+                            onTogglePlayPause = onTogglePlayPause,
+                        )
+                    }
+                }
+            }
 
             renderHomeShelves(
                 shelves = effectiveShelves,

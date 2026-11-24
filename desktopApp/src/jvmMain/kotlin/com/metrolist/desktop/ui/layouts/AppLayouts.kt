@@ -540,8 +540,8 @@ private fun ColumnScope.MainLayoutContent(
                 modifier =
                     Modifier
                         .fillMaxSize()
-                        .background(colorScheme.surfaceContainer)
-                        .padding(8.dp),
+                        .background(colorScheme.background)
+                        .padding(start = 8.dp, top = 8.dp, end = 12.dp, bottom = 4.dp),
             ) {
                 StandardContentSurface(
                     route = route,
@@ -667,7 +667,7 @@ private fun StandardContentSurface(
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         color = colorScheme.surface,
     ) {
         Box(modifier = Modifier.fillMaxSize()) {

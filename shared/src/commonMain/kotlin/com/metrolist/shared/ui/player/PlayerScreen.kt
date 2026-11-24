@@ -162,6 +162,7 @@ import com.metrolist.shared.generated.resources.expand
 import com.metrolist.shared.generated.resources.lyrics
 import com.metrolist.shared.generated.resources.menu_seek_backward
 import com.metrolist.shared.generated.resources.menu_seek_forward
+import com.metrolist.shared.generated.resources.mochy_bedside_clock
 import com.metrolist.shared.generated.resources.more_lyrics_options
 import com.metrolist.shared.generated.resources.more_options
 import com.metrolist.shared.generated.resources.next
@@ -228,6 +229,12 @@ import com.metrolist.shared.ui.haptics.rememberMetrolistHaptics
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.navigation.NavigationBackHandler
 import com.metrolist.shared.ui.navigation.blockInput
+import com.metrolist.shared.ui.player.mochy.BedsideClock
+import com.metrolist.shared.ui.player.mochy.FlagshipActions
+import com.metrolist.shared.ui.player.mochy.FlagshipControlsShade
+import com.metrolist.shared.ui.player.mochy.FlagshipHandle
+import com.metrolist.shared.ui.player.mochy.FlagshipTransport
+import com.metrolist.shared.ui.player.mochy.flagshipFontFamily
 import com.metrolist.shared.ui.theme.ComponentShapes
 import com.metrolist.shared.ui.utils.supportsNativeBlur
 import com.metrolist.shared.utils.Logger
@@ -584,6 +591,7 @@ fun PlayerScreen(
             )
 
     var showPlayerMenu by remember { mutableStateOf(false) }
+    var showBedsideClock by remember { mutableStateOf(false) }
     var showSongDetails by remember { mutableStateOf(false) }
     var showSleepTimerDialog by remember { mutableStateOf(false) }
     var showLyricsMenu by remember { mutableStateOf(false) }
@@ -642,7 +650,10 @@ fun PlayerScreen(
                     (bottomSheetState.isExpanded && (isImmersive || uiState.isLyricsExpanded))
             )
 
-    val playerType = Settings.shared.playerType
+    val playerType =
+        Settings.shared.playerType.let { if (isTv && it == PlayerType.MOCHY) PlayerType.MODERN else it }
+    val usesMochyFlagship = playerType == PlayerType.MOCHY
+    val flagshipFont = if (usesMochyFlagship) flagshipFontFamily() else null
     val usesFullscreenThumbnail = playerThumbnailStyle == PlayerThumbnailStyle.FULLSCREEN
     val prefersTallCover = usesFullscreenThumbnail && !isLandscape
     val playbackNetwork by PlaybackNetworkStateStore.state.collectAsState()
@@ -1161,6 +1172,25 @@ fun PlayerScreen(
                                                 },
                                         )
                                     }
+                                    if (usesMochyFlagship && !useLandscapeLayout) {
+                                        val topLuminance = gradientColorStops.firstOrNull()?.luminance() ?: 0f
+                                        val flagshipGlare by animateFloatAsState(
+                                            targetValue = ((topLuminance - 0.55f) / 0.45f).coerceIn(0f, 1f),
+                                            animationSpec = tween(durationMillis = 400),
+                                            label = "flagshipGlare",
+                                        )
+                                        val shadeFade by animateFloatAsState(
+                                            targetValue = if (canvasMinimalUi) 0f else 1f,
+                                            animationSpec = tween(durationMillis = 220),
+                                            label = "flagshipShadeFade",
+                                        )
+                                        FlagshipControlsShade(
+                                            progressProvider = { bottomSheetState.progress },
+                                            maxHeight = maxHeight,
+                                            fadeProvider = { shadeFade },
+                                            glareProvider = { flagshipGlare },
+                                        )
+                                    }
                                 } else if (
                                     playerBackground != PlayerBackgroundStyle.BLURRED_ARTWORK &&
                                     usesFullscreenThumbnail && showVideoSurface && currentSong?.displayThumbnail != null
@@ -1400,9 +1430,17 @@ fun PlayerScreen(
                                         ).windowInsetsPadding(WindowInsets.safeDrawing)
                                         .windowInsetsPadding(
                                             WindowInsets.mandatorySystemGestures.only(WindowInsetsSides.Bottom),
-                                        ).padding(horizontal = 24.dp)
-                                        .padding(top = 16.dp),
+                                        ).padding(horizontal = if (usesMochyFlagship) 32.dp else 24.dp)
+                                        .padding(top = if (usesMochyFlagship) 0.dp else 16.dp),
                             ) {
+                                if (usesMochyFlagship && !canvasMinimalUi) {
+                                    FlagshipHandle(
+                                        color = textBackgroundColor,
+                                        closing = bottomSheetState.targetAnchor != EXPANDED_ANCHOR,
+                                        onCollapse = onClose,
+                                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                                    )
+                                }
                                 AnimatedContent(
                                     targetState = uiState.isLyricsVisible,
                                     transitionSpec = {
@@ -1677,28 +1715,30 @@ fun PlayerScreen(
                                                         }
                                                     }
 
-                                                    FilledIconButton(
-                                                        onClick = {
-                                                            hapticManager.perform(HapticEvent.PRESS)
-                                                            onClose()
-                                                        },
-                                                        shapes = IconButtonDefaults.shapes(shape = CircleShape),
-                                                        colors =
-                                                            IconButtonDefaults.filledIconButtonColors(
-                                                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                            ),
-                                                        modifier =
-                                                            Modifier
-                                                                .align(Alignment.CenterStart)
-                                                                .size(36.dp)
-                                                                .playerControlBlend(),
-                                                    ) {
-                                                        Icon(
-                                                            imageVector = MetrolistIcons.Outlined.KeyboardArrowDown,
-                                                            contentDescription = stringResource(Res.string.collapse),
-                                                            modifier = Modifier.size(24.dp),
-                                                        )
+                                                    if (!usesMochyFlagship) {
+                                                        FilledIconButton(
+                                                            onClick = {
+                                                                hapticManager.perform(HapticEvent.PRESS)
+                                                                onClose()
+                                                            },
+                                                            shapes = IconButtonDefaults.shapes(shape = CircleShape),
+                                                            colors =
+                                                                IconButtonDefaults.filledIconButtonColors(
+                                                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                                                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                                ),
+                                                            modifier =
+                                                                Modifier
+                                                                    .align(Alignment.CenterStart)
+                                                                    .size(36.dp)
+                                                                    .playerControlBlend(),
+                                                        ) {
+                                                            Icon(
+                                                                imageVector = MetrolistIcons.Outlined.KeyboardArrowDown,
+                                                                contentDescription = stringResource(Res.string.collapse),
+                                                                modifier = Modifier.size(24.dp),
+                                                            )
+                                                        }
                                                     }
 
                                                     Row(
@@ -1985,11 +2025,13 @@ fun PlayerScreen(
                                                     Text(
                                                         text = displayedSong?.title ?: stringResource(Res.string.unknown),
                                                         style =
-                                                            if (usesCanvasThumbnail) {
-                                                                MaterialTheme.typography.titleMedium
-                                                            } else {
-                                                                MaterialTheme.typography.titleLarge
-                                                            },
+                                                            (
+                                                                if (usesCanvasThumbnail) {
+                                                                    MaterialTheme.typography.titleMedium
+                                                                } else {
+                                                                    MaterialTheme.typography.titleLarge
+                                                                }
+                                                            ).let { if (flagshipFont == null) it else it.copy(fontFamily = flagshipFont) },
                                                         fontWeight = FontWeight.Bold,
                                                         color = textBackgroundColor,
                                                         maxLines = 1,
@@ -1997,8 +2039,16 @@ fun PlayerScreen(
                                                         overflow = TextOverflow.Ellipsis,
                                                         modifier =
                                                             Modifier
-                                                                .clickable(enabled = displayedSong?.albumId != null) {
-                                                                    displayedSong?.albumId?.let(onNavigateToAlbum)
+                                                                .clickable(
+                                                                    enabled =
+                                                                        displayedSong != null &&
+                                                                            (usesMochyFlagship || displayedSong.albumId != null),
+                                                                ) {
+                                                                    if (usesMochyFlagship) {
+                                                                        showSongDetails = true
+                                                                    } else {
+                                                                        displayedSong?.albumId?.let(onNavigateToAlbum)
+                                                                    }
                                                                 }.then(
                                                                     displayedSong?.let { song ->
                                                                         rememberTrackMarquee(
@@ -2014,11 +2064,13 @@ fun PlayerScreen(
                                                         onNavigateToArtist = onNavigateToArtist,
                                                         iterations = if (LocalPlayerContentActive.current) 1 else 0,
                                                         style =
-                                                            if (usesCanvasThumbnail) {
-                                                                MaterialTheme.typography.bodyMedium
-                                                            } else {
-                                                                MaterialTheme.typography.titleMedium
-                                                            },
+                                                            (
+                                                                if (usesCanvasThumbnail) {
+                                                                    MaterialTheme.typography.bodyMedium
+                                                                } else {
+                                                                    MaterialTheme.typography.titleMedium
+                                                                }
+                                                            ).let { if (flagshipFont == null) it else it.copy(fontFamily = flagshipFont) },
                                                         color =
                                                             textBackgroundColor.copy(
                                                                 alpha =
@@ -2095,6 +2147,20 @@ fun PlayerScreen(
                                                 buttonColor = textBackgroundColor,
                                                 onButtonColor = vintageOnButtonColor(textBackgroundColor),
                                             )
+                                        } else if (usesMochyFlagship && !uiState.isLyricsVisible) {
+                                            FlagshipActions(
+                                                liked = isLiked,
+                                                menuOpen = showPlayerMenu,
+                                                onLike = {
+                                                    hapticManager.toggle(!isLiked)
+                                                    toggleDisplayedLike()
+                                                },
+                                                onMenu = {
+                                                    hapticManager.perform(HapticEvent.PRESS)
+                                                    showPlayerMenu = !showPlayerMenu
+                                                },
+                                                contentColor = textBackgroundColor,
+                                            )
                                         } else {
                                             PlayerActionRow(
                                                 isLyricsVisible = uiState.isLyricsVisible,
@@ -2146,6 +2212,11 @@ fun PlayerScreen(
                                             songId = currentSong?.id,
                                             progressColor = textBackgroundColor.takeIf { playerType == PlayerType.CLASSIC },
                                             isLive = uiState.isLive || playbackResource?.isLive == true,
+                                            mochyTrack = usesMochyFlagship,
+                                            timerTextStyle =
+                                                MaterialTheme.typography.labelMedium.let {
+                                                    if (flagshipFont == null) it else it.copy(fontFamily = flagshipFont)
+                                                },
                                         )
                                     }
                                 }
@@ -2160,7 +2231,7 @@ fun PlayerScreen(
                                 ) {
                                     Column {
                                         if (!isListenTogetherGuest) {
-                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Spacer(modifier = Modifier.height(if (usesMochyFlagship) 24.dp else 8.dp))
 
                                             when (playerType) {
                                                 PlayerType.CLASSIC -> {
@@ -2243,6 +2314,18 @@ fun PlayerScreen(
                                                         },
                                                         sideButtonColor = textBackgroundColor,
                                                         modifier = Modifier.fillMaxWidth(),
+                                                    )
+                                                }
+
+                                                PlayerType.MOCHY -> {
+                                                    FlagshipTransport(
+                                                        playing = isPlaying,
+                                                        loading = isPlaybackLoading,
+                                                        onPlayPause = viewModel::togglePlayPause,
+                                                        onPrevious = viewModel::previous,
+                                                        onNext = viewModel::next,
+                                                        compact = compactPortraitHeight,
+                                                        contentColor = textBackgroundColor,
                                                     )
                                                 }
 
@@ -2550,7 +2633,27 @@ fun PlayerScreen(
                                 showPlayerMenu = false
                                 showSongDetails = true
                             },
-                            extraActions = landscapeMenuActions,
+                            extraActions =
+                                landscapeMenuActions +
+                                    PlayerMenuAction(
+                                        icon = MetrolistIcons.Outlined.Bedtime,
+                                        title = stringResource(Res.string.mochy_bedside_clock),
+                                        onClick = {
+                                            showPlayerMenu = false
+                                            showBedsideClock = true
+                                        },
+                                    ),
+                        )
+                    }
+
+                    if (showBedsideClock) {
+                        val bedsideSong = uiState.currentSong
+                        BedsideClock(
+                            title = bedsideSong?.title,
+                            artist = bedsideSong?.artists?.joinToString { it.name },
+                            isPlaying = isPlaying,
+                            onTogglePlay = viewModel::togglePlayPause.takeUnless { isListenTogetherGuest },
+                            onDismiss = { showBedsideClock = false },
                         )
                     }
 

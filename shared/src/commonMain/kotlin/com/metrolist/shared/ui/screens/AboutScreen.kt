@@ -82,6 +82,7 @@ import com.metrolist.shared.generated.resources.build_type_debug
 import com.metrolist.shared.generated.resources.build_type_release
 import com.metrolist.shared.generated.resources.devmode_already_active
 import com.metrolist.shared.generated.resources.devtools_enabled
+import com.metrolist.shared.generated.resources.mochy_source_credit
 import com.metrolist.shared.generated.resources.play
 import com.metrolist.shared.generated.resources.stands_with_palestine
 import com.metrolist.shared.settings.Settings
@@ -208,6 +209,16 @@ fun AboutScreen(
                 isDebug = isDebug,
                 colorScheme = colorScheme,
                 onLogoClick = ::handleLogoClick,
+            )
+
+            Text(
+                text = stringResource(Res.string.mochy_source_credit),
+                modifier =
+                    Modifier.clickable {
+                        uriHandler.openUri("https://github.com/realidkroo/mochy-music")
+                    },
+                style = MaterialTheme.typography.bodyMedium,
+                color = colorScheme.onSurfaceVariant,
             )
 
             CommunitySection(

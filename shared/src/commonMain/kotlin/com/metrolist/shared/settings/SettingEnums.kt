@@ -164,6 +164,7 @@ enum class PlayerType {
     MODERN,
     VINTAGE,
     CLASSIC,
+    MOCHY,
 }
 
 enum class MiniPlayerType {

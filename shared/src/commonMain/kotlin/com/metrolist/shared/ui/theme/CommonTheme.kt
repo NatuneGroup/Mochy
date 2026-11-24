@@ -37,7 +37,7 @@ import com.metrolist.shared.utils.artworkColors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-val DefaultThemeColor = Color(0xFF6750A4)
+val DefaultThemeColor = Color(0xFF8E8E8E)
 
 // Official material-color-utilities Score fallback (Google Blue), used when the artwork has no usable colour.
 val ArtworkFallbackSeedColor = Color(0xFF4285F4)
@@ -132,6 +132,9 @@ fun themeColorScheme(
 ): ColorScheme {
     val seed = if (seedColor.isOpaqueAndFinite()) seedColor else seedColor.copy(alpha = 1f).takeIf { it.isOpaqueAndFinite() }
     val contrast = contrastLevel.takeIf { it.isFinite() }?.coerceIn(0.0, 1.0) ?: 0.0
+    if ((seed == null || seed == DefaultThemeColor) && paletteStyle == ThemePaletteStyle.TONAL_SPOT && contrast == 0.0) {
+        return mochyColorScheme(isDark)
+    }
     val scheme = generatedColorScheme(seed ?: DefaultThemeColor, isDark, paletteStyle, contrast)
     if (seed == DefaultThemeColor || scheme.isLegible(isDark)) return scheme
     Logger.w("Theme", "Generated $paletteStyle palette is illegible; using the default seed")

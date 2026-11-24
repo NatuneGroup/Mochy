@@ -62,6 +62,9 @@ interface PlayerSession {
 
     fun setPlaybackSpeed(speed: Float)
 
+    /** Applies a local speed change for a held control and returns its release action. */
+    fun beginTemporaryPlaybackSpeed(multiplier: Float): (() -> Unit)? = null
+
     fun skipToNext()
 
     fun skipToPrevious()

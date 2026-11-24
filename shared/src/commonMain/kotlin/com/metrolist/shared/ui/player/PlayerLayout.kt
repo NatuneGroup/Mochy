@@ -168,6 +168,7 @@ import com.metrolist.shared.ui.haptics.HapticEvent
 import com.metrolist.shared.ui.haptics.rememberMetrolistHaptics
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.navigation.navigationPopupSource
+import com.metrolist.shared.ui.player.mochy.FlagshipTransport
 import com.metrolist.shared.ui.theme.ComponentShapes
 import com.metrolist.shared.ui.tv.tvFocusHighlight
 import com.metrolist.shared.ui.utils.verticalScrollWithDrag
@@ -525,6 +526,7 @@ internal fun TabletPlayerContent(
                                     progressColor = textBackgroundColor.takeIf { playerType == PlayerType.CLASSIC },
                                     timerTextStyle = MaterialTheme.typography.labelLarge,
                                     isLive = uiState.isLive,
+                                    mochyTrack = playerType == PlayerType.MOCHY,
                                 )
 
                                 Spacer(modifier = Modifier.height(if (compactHeight) 4.dp else 8.dp))
@@ -558,6 +560,16 @@ internal fun TabletPlayerContent(
                                             },
                                             sideButtonColor = textBackgroundColor,
                                             modifier = Modifier.fillMaxWidth(),
+                                        )
+                                    } else if (playerType == PlayerType.MOCHY) {
+                                        FlagshipTransport(
+                                            playing = isPlaying,
+                                            loading = isPlaybackLoading,
+                                            onPlayPause = viewModel::togglePlayPause,
+                                            onPrevious = viewModel::previous,
+                                            onNext = viewModel::next,
+                                            compact = compactHeight || compactWidth,
+                                            contentColor = textBackgroundColor,
                                         )
                                     } else {
                                         PlayerPrimaryControls(
@@ -1447,6 +1459,7 @@ internal fun LandscapePlayerContent(
                                 progressColor = controlsColor.takeIf { isClassic },
                                 timerTextStyle = MaterialTheme.typography.labelLarge,
                                 isLive = uiState.isLive,
+                                mochyTrack = playerType == PlayerType.MOCHY,
                             )
 
                             if (centerControls) {
@@ -1541,6 +1554,17 @@ internal fun LandscapePlayerContent(
                                                 },
                                                 sideButtonColor = controlsColor,
                                                 modifier = Modifier.fillMaxWidth(),
+                                            )
+                                        }
+
+                                        playerType == PlayerType.MOCHY -> {
+                                            FlagshipTransport(
+                                                playing = isPlaying,
+                                                loading = isPlaybackLoading,
+                                                onPlayPause = viewModel::togglePlayPause,
+                                                onPrevious = viewModel::previous,
+                                                onNext = viewModel::next,
+                                                compact = compactHeight,
                                             )
                                         }
 

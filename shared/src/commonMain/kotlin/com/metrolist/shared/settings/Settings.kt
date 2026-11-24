@@ -212,6 +212,8 @@ import com.metrolist.shared.model.PlaylistPickerSort
 import com.metrolist.shared.model.PlaylistSongSort
 import com.metrolist.shared.model.SortDirection
 import com.metrolist.shared.playback.SleepTimerDefaults
+import com.metrolist.shared.ui.utils.supportsNativeBlur
+import com.metrolist.shared.utils.isDesktop
 import com.metrolist.shared.youtube.playback.PlaybackNetworkState
 import com.metrolist.shared.youtube.playback.PlaybackNetworkStateStore
 import com.russhwolf.settings.get
@@ -335,10 +337,10 @@ class Settings(
     var knownUploadIdsJson by preference(KnownUploadIdsJsonKey, "")
     var hasNewUploads by preference(HasNewUploadsKey, false)
 
-    var materialYouEnabled by preference(true)
+    var materialYouEnabled by preference(false)
     var uiEnhancements by preference(true)
     var dynamicTheme by preference(true)
-    var themeMode by preference(ThemeMode.AUTO)
+    var themeMode by preference(ThemeMode.DARK)
     var autoPureBlack by preference(AutoPureBlackKey, false)
     var selectedThemeColor by preference(0L)
     var themePaletteStyle by preference(ThemePaletteStyle.TONAL_SPOT)
@@ -375,7 +377,9 @@ class Settings(
 
     var miniplayerFocusMode by preference(false)
     var miniPlayerBackgroundStyle by preference("DEFAULT")
-    var playerThumbnailStyle by preference(PlayerThumbnailStyle.COMPACT)
+    var playerThumbnailStyle by preference(
+        if (!isDesktop && supportsNativeBlur()) PlayerThumbnailStyle.FULLSCREEN else PlayerThumbnailStyle.COMPACT,
+    )
     var castEnabled by preference(CastEnabledKey, true)
     var castVolumeStep by preference(CastVolumeStepKey, 5)
     var showPlayerCastButton by preference(ShowPlayerCastButtonKey, true)
@@ -413,7 +417,7 @@ class Settings(
     var equalizerActiveProfileId by preference(EqualizerActiveProfileIdKey, "")
     var equalizerEnabled by preference(EqualizerEnabledKey, false)
     var audioBoostDb by preference(AudioBoostDbKey, 0f)
-    var playerType by preference(PlayerType.MODERN)
+    var playerType by preference(PlayerType.MOCHY)
     var miniPlayerType by preference(MiniPlayerType.EXPRESSIVE)
     var useRoundedRectPlayButton by preference(false)
     var cropAlbumArt by preference(true)

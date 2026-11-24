@@ -150,6 +150,8 @@ interface PlaybackController {
 
     fun setPlaybackSpeed(speed: Float)
 
+    fun beginTemporaryPlaybackSpeed(multiplier: Float): (() -> Unit)? = null
+
     fun setPlaybackPitch(pitch: Float) = Unit
 
     fun startRadio(song: SongItem)

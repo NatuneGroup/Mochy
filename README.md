@@ -11,6 +11,8 @@
   </div>
 </div>
 
+This fork uses [Metrolist](https://github.com/MetrolistGroup/Metrolist) as its multiplatform base and adapts the interface from [Mochy Music by realidkroo](https://github.com/realidkroo/mochy-music).
+
 <br>
 
 <div style="display: flex; gap: 0.5rem; align-items: center;">
@@ -277,3 +279,32 @@ Metrolist uses these projects and services.
 **This project stands with Palestine 🇵🇸**
 
 </div>
+
+
+## Mochy Music credits
+
+<!-- mochy-credit:start · f208ad37 -->
+## Forking Mochy
+
+Forks are welcome, that's what open source is for! Just two asks:
+
+- **Keep the credit.** If you rename it, please keep credits of this app, the other project that helped mochy possible.
+- **Keep it free.** Mochy is not monetized and never will be. Please don't put features behind a paywall. A donation page is fine.
+
+<!-- mochy-credit:end -->
+
+---
+
+## These incredible project helped mochy a lot! check them out too :3
+
+- **ViviMusic** by [vivizzz007Z](https://github.com/vivizzz007Z) )[Their repo](https://github.com/vivizzz007/vivi-music)) -- For the base app. This app is a fork from this project.
+- **Metrolist** by [Mostafa Alagamy](https://github.com/mostafaalagamy) ([Repository](https://github.com/mostafaalagamy/Metrolist)) -- For the base framework.
+- **SimpMusic** by [maxrave-dev](https://github.com/maxrave-dev) ([Repository](https://github.com/maxrave-dev/SimpMusic)) -- For the lyrics API provider.
+- **Archivetune** by [Rukamori](https://github.com/rukamori) ([Repository](https://github.com/rukamori/ArchiveTune)) -- For design and architectural inspiration.
+- **RiMusic / InnerTube** by [fast4x](https://github.com/fast4x) ([Repository](https://github.com/fast4x/RiMusic)) -- For YouTube Music InnerTube API service wrapper.
+- **LRCLib** by [tranxuanthang](https://github.com/tranxuanthang) ([Repository](https://github.com/tranxuanthang/lrclib) / [Website](https://lrclib.net/)) -- For synchronized LRC lyrics provider integration.
+- **Monochrome Music** by [monochrome-music](https://github.com/monochrome-music) ([Repository](https://github.com/monochrome-music/monochrome) / ([Website](https://monochrome.st)) -- Flac streams, visit their web, very cool one.
+- **Auto Eq** ([Web](https://autoeq.app)) -- The equalizer database
+- **lrc.red** ([Web](https://lrc.red)) -- Word-timed lyrics for millions of songs, free for everyone
+- **InnertubeX** by [nyxiereal](https://github.com/nyxiereal) [Their repo](https://github.com/metrolistGroup/innertubex) For The Youtube stream extration lib
+- **libopus** by [Xiph.Org](https://opus-codec.org) ([Repository](https://github.com/xiph/opus)) and the **Media3 Opus decoder** by the Android Open Source Project -- In-process Opus decoding.

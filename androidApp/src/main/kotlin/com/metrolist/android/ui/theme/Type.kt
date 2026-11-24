@@ -29,26 +29,7 @@ fun getAppTypography(): Typography {
     val font by produceState<FontFamily>(FontFamily.Default, appFont, customFontFile, activeFontId) {
         value = withContext(Dispatchers.IO) { resolveFontFamily(context, appFont, customFontFile, activeFontId) }
     }
-    val typography = MetrolistTypography()
-
-    return Typography(
-        fontFamily = font,
-        displayLarge = typography.displayLarge.copy(fontFamily = font),
-        displayMedium = typography.displayMedium.copy(fontFamily = font),
-        displaySmall = typography.displaySmall.copy(fontFamily = font),
-        headlineLarge = typography.headlineLarge.copy(fontFamily = font),
-        headlineMedium = typography.headlineMedium.copy(fontFamily = font),
-        headlineSmall = typography.headlineSmall.copy(fontFamily = font),
-        titleLarge = typography.titleLarge.copy(fontFamily = font),
-        titleMedium = typography.titleMedium.copy(fontFamily = font),
-        titleSmall = typography.titleSmall.copy(fontFamily = font),
-        bodyLarge = typography.bodyLarge.copy(fontFamily = font),
-        bodyMedium = typography.bodyMedium.copy(fontFamily = font),
-        bodySmall = typography.bodySmall.copy(fontFamily = font),
-        labelLarge = typography.labelLarge.copy(fontFamily = font),
-        labelMedium = typography.labelMedium.copy(fontFamily = font),
-        labelSmall = typography.labelSmall.copy(fontFamily = font),
-    )
+    return MetrolistTypography(fontFamilyOverride = font.takeIf { it != FontFamily.Default })
 }
 
 private fun resolveFontFamily(

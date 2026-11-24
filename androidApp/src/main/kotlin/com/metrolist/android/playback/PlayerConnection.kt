@@ -1206,6 +1206,25 @@ class PlayerConnection(
         musicService?.player?.setPlaybackSpeed(normalizedSpeed)
     }
 
+    override fun beginTemporaryPlaybackSpeed(multiplier: Float): (() -> Unit)? {
+        if (
+            _castState.value.isConnected ||
+            AndroidDeviceConnect.manager.remote.isActive ||
+            AndroidListenTogetherManager.currentManager?.hasActiveOrPendingRoom == true
+        ) {
+            return null
+        }
+
+        val player = musicService?.player ?: return null
+        val previous = player.playbackSpeed.value
+        val held = normalizePlaybackTempo(previous * multiplier) ?: return null
+        if (held == previous) return null
+        player.setPlaybackSpeed(held)
+        return {
+            if (player.playbackSpeed.value == held) player.setPlaybackSpeed(previous)
+        }
+    }
+
     fun setRepeatMode(mode: Int) {
         if (deferUntilConnected { setRepeatMode(mode) }) return
         if (AndroidDeviceConnect.intercept(

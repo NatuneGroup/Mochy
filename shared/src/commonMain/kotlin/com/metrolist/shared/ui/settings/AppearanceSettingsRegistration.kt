@@ -591,13 +591,15 @@ internal fun SettingsUiRegistryBuilder.registerAppearanceSettings(host: SharedSe
                     SettingsChoice(PlayerType.MODERN.name, stringResource(Res.string.player_type_modern)),
                     SettingsChoice(PlayerType.VINTAGE.name, stringResource(Res.string.player_type_vintage)),
                     SettingsChoice(PlayerType.CLASSIC.name, stringResource(Res.string.player_type_classic)),
+                    SettingsChoice(PlayerType.MOCHY.name, stringResource(Res.string.player_type_mochy)),
                 )
             }
         val selectedPlayerType =
-            if (host.platform == SettingsPlatform.DESKTOP && settings.playerType == PlayerType.CLASSIC) {
-                PlayerType.VINTAGE
-            } else {
-                settings.playerType
+            when {
+                host.platform != SettingsPlatform.DESKTOP -> settings.playerType
+                settings.playerType == PlayerType.CLASSIC -> PlayerType.VINTAGE
+                settings.playerType == PlayerType.MOCHY -> PlayerType.MODERN
+                else -> settings.playerType
             }
         val playerBackgroundChoices =
             buildList {
