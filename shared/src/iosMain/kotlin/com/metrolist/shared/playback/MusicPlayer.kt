@@ -1118,7 +1118,7 @@ class MusicPlayer internal constructor(
         transportFader.pause(
             songId = song?.id,
             currentSongId = { _currentSong.value?.id },
-            isLive = song?.isLive == true || _currentPlaybackResource.value?.isLive == true,
+            isLive = _currentPlaybackResource.value?.isLive == true,
             isPlaying = wantsPlayback || _isPlaying.value,
             canFade = canFade,
             currentPositionMs = { currentPositionMs() },

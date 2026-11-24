@@ -34,9 +34,12 @@ import androidx.compose.ui.unit.dp
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.app_name
 import com.metrolist.shared.generated.resources.back
+import com.metrolist.shared.generated.resources.continue_action
 import com.metrolist.shared.generated.resources.finish
 import com.metrolist.shared.generated.resources.log_in
 import com.metrolist.shared.generated.resources.logo
+import com.metrolist.shared.generated.resources.mochy_onboarding_profile_description
+import com.metrolist.shared.generated.resources.mochy_onboarding_profile_title
 import com.metrolist.shared.generated.resources.no
 import com.metrolist.shared.generated.resources.onboarding_begin_setup
 import com.metrolist.shared.generated.resources.onboarding_crash_reports_description
@@ -53,6 +56,7 @@ import com.metrolist.shared.generated.resources.restore_from_backup
 import com.metrolist.shared.generated.resources.side_menu_welcome
 import com.metrolist.shared.generated.resources.yes
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.mochy.MochyProfileEditorContent
 import com.metrolist.shared.utils.isCrashReportingAvailable
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -62,6 +66,7 @@ internal fun IosOnboarding(onComplete: (sendCrashReports: Boolean, login: Boolea
     val pages =
         buildList {
             add(OnboardingPage.WELCOME)
+            add(OnboardingPage.PROFILE)
             if (isCrashReportingAvailable()) add(OnboardingPage.CRASH_REPORTS)
             add(OnboardingPage.FINISH)
         }
@@ -78,6 +83,7 @@ internal fun IosOnboarding(onComplete: (sendCrashReports: Boolean, login: Boolea
                         stringResource(
                             when (page) {
                                 OnboardingPage.WELCOME -> Res.string.side_menu_welcome
+                                OnboardingPage.PROFILE -> Res.string.mochy_onboarding_profile_title
                                 OnboardingPage.CRASH_REPORTS -> Res.string.onboarding_crash_reports_title
                                 else -> Res.string.onboarding_finish_title
                             },
@@ -86,6 +92,7 @@ internal fun IosOnboarding(onComplete: (sendCrashReports: Boolean, login: Boolea
                         stringResource(
                             when (page) {
                                 OnboardingPage.WELCOME -> Res.string.onboarding_welcome_privacy_description
+                                OnboardingPage.PROFILE -> Res.string.mochy_onboarding_profile_description
                                 OnboardingPage.CRASH_REPORTS -> Res.string.onboarding_crash_reports_description
                                 else -> Res.string.onboarding_finish_description
                             },
@@ -93,6 +100,7 @@ internal fun IosOnboarding(onComplete: (sendCrashReports: Boolean, login: Boolea
                     icon =
                         when (page) {
                             OnboardingPage.WELCOME -> MetrolistIcons.Outlined.MusicNote
+                            OnboardingPage.PROFILE -> MetrolistIcons.Outlined.Person
                             OnboardingPage.CRASH_REPORTS -> MetrolistIcons.Outlined.Security
                             else -> MetrolistIcons.Filled.Check
                         },
@@ -102,6 +110,7 @@ internal fun IosOnboarding(onComplete: (sendCrashReports: Boolean, login: Boolea
                         stringResource(
                             when (page) {
                                 OnboardingPage.WELCOME -> Res.string.onboarding_begin_setup
+                                OnboardingPage.PROFILE -> Res.string.continue_action
                                 OnboardingPage.CRASH_REPORTS -> Res.string.yes
                                 else -> Res.string.finish
                             },
@@ -112,7 +121,9 @@ internal fun IosOnboarding(onComplete: (sendCrashReports: Boolean, login: Boolea
                     backLabel = stringResource(Res.string.back),
                     onPrimary = {
                         when (page) {
-                            OnboardingPage.WELCOME -> {
+                            OnboardingPage.WELCOME,
+                            OnboardingPage.PROFILE,
+                            -> {
                                 pageIndex++
                             }
 
@@ -147,6 +158,10 @@ internal fun IosOnboarding(onComplete: (sendCrashReports: Boolean, login: Boolea
             },
             featureContent = { featurePage ->
                 when (featurePage) {
+                    OnboardingPage.PROFILE -> {
+                        MochyProfileEditorContent(modifier = Modifier.padding(top = 24.dp))
+                    }
+
                     OnboardingPage.FINISH -> {
                         Column(
                             Modifier.fillMaxWidth().padding(top = 24.dp),

@@ -34,6 +34,9 @@ import com.metrolist.shared.generated.resources.mochy_heart
 import com.metrolist.shared.generated.resources.mochy_heart_outline
 import com.metrolist.shared.generated.resources.more_options
 import com.metrolist.shared.generated.resources.unlike
+import com.metrolist.shared.ui.mochy.LikeBurstState
+import com.metrolist.shared.ui.mochy.LikeSlot
+import com.metrolist.shared.ui.mochy.likeButtonTarget
 import com.metrolist.shared.ui.navigation.navigationPopupSource
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -46,6 +49,7 @@ internal fun FlagshipActions(
     onLike: () -> Unit,
     onMenu: () -> Unit,
     contentColor: Color = Color.White,
+    likeBurstState: LikeBurstState? = null,
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
         FlagshipActionButton(
@@ -54,6 +58,7 @@ internal fun FlagshipActions(
             tint = contentColor.copy(alpha = if (liked) 1f else 0.85f),
             background = contentColor.copy(alpha = if (liked) 0.30f else 0.15f),
             onClick = onLike,
+            modifier = Modifier.likeButtonTarget(likeBurstState, LikeSlot.PLAYER),
         )
         val rotation by animateFloatAsState(
             if (menuOpen) 180f else 0f,

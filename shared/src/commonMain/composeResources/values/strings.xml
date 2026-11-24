@@ -5692,4 +5692,48 @@
     <string name="mochy_transport_fade_duration">Fade duration</string>
     <!-- Translators: Formatted duration in seconds for the play and pause fade slider, e.g. 2.0 s. -->
     <string name="mochy_transport_fade_seconds_value">%1$s s</string>
+    <!-- Translators: Header label on the Mochy local profile ID card showing the user number. %1$s is a 4-digit member number. -->
+    <string name="mochy_card_profile_usr">PROFILE USR %1$s</string>
+    <!-- Translators: Label above the username on the silver Mochy profile ID card. -->
+    <string name="mochy_card_id_of">ID CARD OF</string>
+    <!-- Translators: Vertical scrolling marquee text along the edge of the Mochy profile ID card. %1$s is the user's chosen name. -->
+    <string name="mochy_card_of_name">MOCHY · %1$s</string>
+    <!-- Translators: Default placeholder name shown on the Mochy profile ID card before the user enters a name. -->
+    <string name="mochy_card_default_name">Listener</string>
+    <!-- Translators: Tagline displayed below the username on the local Mochy profile ID card. -->
+    <string name="mochy_card_local_member">LOCAL PROFILE</string>
+    <!-- Translators: Accessibility description for the user avatar on the Mochy profile ID card. -->
+    <string name="mochy_profile_picture">Profile picture</string>
+    <!-- Translators: Accessibility description for adding a profile picture on the Mochy profile ID card. -->
+    <string name="mochy_add_profile_picture">Add profile picture</string>
+    <!-- Translators: Large greeting headline shown during the Mochy silver ID card reveal celebration. -->
+    <string name="mochy_hello">Hello.</string>
+    <!-- Translators: Subtitle shown below the greeting during the Mochy silver ID card reveal celebration. -->
+    <string name="mochy_welcome_to_mochy">Welcome to Mochy</string>
+    <!-- Translators: Short celebration message shown when onboarding finishes. -->
+    <string name="mochy_all_good">You are all set</string>
+    <!-- Translators: Onboarding step title for creating a local offline Mochy profile. -->
+    <string name="mochy_onboarding_profile_title">Your Mochy card</string>
+    <!-- Translators: Onboarding step description explaining that the Mochy profile stays local on device. -->
+    <string name="mochy_onboarding_profile_description">Pick a name for your personal ID card. It stays on this device and never requires an account.</string>
+    <!-- Translators: Input field label for entering a local username on the Mochy profile card. -->
+    <string name="mochy_username_label">Display name</string>
+    <!-- Translators: Placeholder hint inside the local username input field. -->
+    <string name="mochy_username_placeholder">Enter a name</string>
+    <!-- Translators: Label for choosing the dark finish of the Mochy profile ID card. -->
+    <string name="mochy_card_finish_dark">Obsidian</string>
+    <!-- Translators: Label for choosing the brushed silver finish of the Mochy profile ID card. -->
+    <string name="mochy_card_finish_silver">Brushed Silver</string>
+    <!-- Translators: Helper hint telling the user they can drag the ID card to tilt it in 3D. -->
+    <string name="mochy_card_drag_hint">Drag the card to tilt and catch the sheen</string>
+    <!-- Translators: Button label to launch the animated silver card celebration preview. -->
+    <string name="mochy_card_celebrate_action">Preview welcome card</string>
+    <!-- Translators: Button label to close the animated silver card celebration overlay. -->
+    <string name="mochy_card_celebrate_close">Tap to continue</string>
+    <!-- Translators: Settings screen title for the local Mochy profile ID card. -->
+    <string name="mochy_profile_settings_title">Mochy profile</string>
+    <!-- Translators: Settings screen overview subtitle for the local Mochy profile ID card. -->
+    <string name="mochy_profile_settings_overview">Local display name, member card finish, and welcome card</string>
+    <!-- Translators: Subtle status note shown briefly above the song title after liking a track. -->
+    <string name="mochy_like_added">Added to Liked Songs</string>
 </resources>

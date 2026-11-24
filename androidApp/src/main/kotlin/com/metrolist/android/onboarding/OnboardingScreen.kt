@@ -29,6 +29,8 @@ import com.metrolist.shared.generated.resources.brand_google
 import com.metrolist.shared.generated.resources.brand_lastfm
 import com.metrolist.shared.generated.resources.continue_action
 import com.metrolist.shared.generated.resources.finish
+import com.metrolist.shared.generated.resources.mochy_onboarding_profile_description
+import com.metrolist.shared.generated.resources.mochy_onboarding_profile_title
 import com.metrolist.shared.generated.resources.no
 import com.metrolist.shared.generated.resources.onboarding_begin_setup
 import com.metrolist.shared.generated.resources.onboarding_continue_without_migration
@@ -86,6 +88,7 @@ internal fun OnboardingScreen(
         remember(hasLegacyInstallation, libraryStartedFresh) {
             buildList {
                 add(OnboardingPage.WELCOME)
+                add(OnboardingPage.PROFILE)
                 if (hasLegacyInstallation && !libraryStartedFresh) add(OnboardingPage.MIGRATION)
                 if (hasLegacyInstallation && !libraryStartedFresh) add(OnboardingPage.MIGRATION_COMPLETE)
                 if (isCrashReportingAvailable()) add(OnboardingPage.CRASH_REPORTS)
@@ -173,6 +176,7 @@ internal fun OnboardingScreen(
             icon =
                 when (page) {
                     OnboardingPage.WELCOME -> MetrolistIcons.Outlined.MusicNote
+                    OnboardingPage.PROFILE -> MetrolistIcons.Outlined.Person
                     OnboardingPage.MIGRATION -> MetrolistIcons.Outlined.LibraryMusic
                     OnboardingPage.MIGRATION_COMPLETE -> MetrolistIcons.Filled.Check
                     OnboardingPage.CRASH_REPORTS -> MetrolistIcons.Outlined.Security
@@ -187,6 +191,10 @@ internal fun OnboardingScreen(
                 when (page) {
                     OnboardingPage.WELCOME -> {
                         stringResource(Res.string.onboarding_begin_setup)
+                    }
+
+                    OnboardingPage.PROFILE -> {
+                        stringResource(Res.string.continue_action)
                     }
 
                     OnboardingPage.MIGRATION -> {
@@ -215,7 +223,9 @@ internal fun OnboardingScreen(
                 },
             secondaryLabel =
                 when (page) {
-                    OnboardingPage.WELCOME -> {
+                    OnboardingPage.WELCOME,
+                    OnboardingPage.PROFILE,
+                    -> {
                         null
                     }
 
@@ -248,7 +258,9 @@ internal fun OnboardingScreen(
             backLabel = stringResource(Res.string.back),
             onPrimary = {
                 when (page) {
-                    OnboardingPage.WELCOME -> {
+                    OnboardingPage.WELCOME,
+                    OnboardingPage.PROFILE,
+                    -> {
                         nextPage()
                     }
 
@@ -285,7 +297,9 @@ internal fun OnboardingScreen(
             },
             onSecondary =
                 when (page) {
-                    OnboardingPage.WELCOME -> {
+                    OnboardingPage.WELCOME,
+                    OnboardingPage.PROFILE,
+                    -> {
                         null
                     }
 
@@ -386,6 +400,7 @@ private fun OnboardingPage.title(): String =
     stringResource(
         when (this) {
             OnboardingPage.WELCOME -> Res.string.side_menu_welcome
+            OnboardingPage.PROFILE -> Res.string.mochy_onboarding_profile_title
             OnboardingPage.MIGRATION -> Res.string.onboarding_migration_title
             OnboardingPage.MIGRATION_COMPLETE -> Res.string.onboarding_migration_complete_title
             OnboardingPage.CRASH_REPORTS -> Res.string.onboarding_crash_reports_title
@@ -401,6 +416,7 @@ private fun OnboardingPage.description(): String =
     stringResource(
         when (this) {
             OnboardingPage.WELCOME -> Res.string.onboarding_welcome_description
+            OnboardingPage.PROFILE -> Res.string.mochy_onboarding_profile_description
             OnboardingPage.MIGRATION -> Res.string.onboarding_migration_description
             OnboardingPage.MIGRATION_COMPLETE -> Res.string.onboarding_migration_complete_description
             OnboardingPage.CRASH_REPORTS -> Res.string.onboarding_crash_reports_description

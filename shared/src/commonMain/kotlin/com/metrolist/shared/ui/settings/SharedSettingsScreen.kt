@@ -117,6 +117,7 @@ import com.metrolist.shared.ui.haptics.rememberMetrolistHaptics
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.menu.ExpressiveSelectionMenu
 import com.metrolist.shared.ui.menu.trackPressPosition
+import com.metrolist.shared.ui.mochy.MochyProfileSettingsScreen
 import com.metrolist.shared.ui.navigation.PredictiveNavigationContent
 import com.metrolist.shared.ui.navigation.rememberNavigationMotion
 import com.metrolist.shared.ui.utils.DragScrollableColumn
@@ -136,13 +137,15 @@ fun SharedSettingsScreen(
 ) {
     val settingsHost =
         host.copy(
-            availablePages = host.availablePages + SettingsPageId.EQUALIZER,
+            availablePages = host.availablePages + SettingsPageId.EQUALIZER + SettingsPageId.MOCHY_PROFILE,
             pageContent = { page, onBack, onNavigate ->
                 if (page == SettingsPageId.EQUALIZER) {
                     MetroEqScreen(
                         rememberProfilePicker = host.rememberMetroEqProfilePicker,
                         isAudioProcessingAvailable = host.isAudioProcessingAvailable,
                     )
+                } else if (page == SettingsPageId.MOCHY_PROFILE) {
+                    MochyProfileSettingsScreen()
                 } else if (page == SettingsPageId.LYRICS_AI_SETUP) {
                     AiTranslationSetup(host.hostChoices[SettingsHostChoice.LYRICS_TARGET_LANGUAGE].orEmpty(), onBack)
                 } else {

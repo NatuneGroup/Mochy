@@ -227,6 +227,9 @@ import com.metrolist.shared.ui.components.vintageOnButtonColor
 import com.metrolist.shared.ui.haptics.HapticEvent
 import com.metrolist.shared.ui.haptics.rememberMetrolistHaptics
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.mochy.LikeBurstOverlay
+import com.metrolist.shared.ui.mochy.LikeBurstState
+import com.metrolist.shared.ui.mochy.LikeSlot
 import com.metrolist.shared.ui.navigation.NavigationBackHandler
 import com.metrolist.shared.ui.navigation.blockInput
 import com.metrolist.shared.ui.player.mochy.BedsideClock
@@ -592,6 +595,7 @@ fun PlayerScreen(
 
     var showPlayerMenu by remember { mutableStateOf(false) }
     var showBedsideClock by remember { mutableStateOf(false) }
+    val likeBurstState = remember { LikeBurstState() }
     var showSongDetails by remember { mutableStateOf(false) }
     var showSleepTimerDialog by remember { mutableStateOf(false) }
     var showLyricsMenu by remember { mutableStateOf(false) }
@@ -2153,13 +2157,18 @@ fun PlayerScreen(
                                                 menuOpen = showPlayerMenu,
                                                 onLike = {
                                                     hapticManager.toggle(!isLiked)
-                                                    toggleDisplayedLike()
+                                                    likeBurstState.likeFromButton(
+                                                        slot = LikeSlot.PLAYER,
+                                                        liked = isLiked,
+                                                        toggleLike = toggleDisplayedLike,
+                                                    )
                                                 },
                                                 onMenu = {
                                                     hapticManager.perform(HapticEvent.PRESS)
                                                     showPlayerMenu = !showPlayerMenu
                                                 },
                                                 contentColor = textBackgroundColor,
+                                                likeBurstState = likeBurstState,
                                             )
                                         } else {
                                             PlayerActionRow(
@@ -2655,6 +2664,10 @@ fun PlayerScreen(
                             onTogglePlay = viewModel::togglePlayPause.takeUnless { isListenTogetherGuest },
                             onDismiss = { showBedsideClock = false },
                         )
+                    }
+
+                    if (usesMochyFlagship) {
+                        LikeBurstOverlay(state = likeBurstState)
                     }
 
                     PopupVisibility(visible = showSongDetails) {

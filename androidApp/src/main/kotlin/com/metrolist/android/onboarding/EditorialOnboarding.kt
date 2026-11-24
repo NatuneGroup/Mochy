@@ -55,6 +55,7 @@ import com.metrolist.shared.state.GlobalYouTubeRepository
 import com.metrolist.shared.ui.LocalIsTv
 import com.metrolist.shared.ui.components.ContainedLoadingIndicator
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.mochy.MochyProfileEditorContent
 import com.metrolist.shared.ui.onboarding.OnboardingPage
 import com.metrolist.shared.ui.onboarding.OnboardingPageContent
 import org.jetbrains.compose.resources.stringResource
@@ -122,6 +123,10 @@ private fun EditorialFeature(
         OnboardingPage.MIGRATION_COMPLETE,
         -> {
             MigratedAccountsCard(accounts, migrated = page == OnboardingPage.MIGRATION_COMPLETE)
+        }
+
+        OnboardingPage.PROFILE -> {
+            MochyProfileEditorContent(modifier = Modifier.padding(top = 24.dp))
         }
 
         OnboardingPage.FINISH -> {

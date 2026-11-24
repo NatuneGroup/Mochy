@@ -96,6 +96,7 @@ import org.jetbrains.compose.resources.stringResource
 
 enum class OnboardingPage {
     WELCOME,
+    PROFILE,
     MIGRATION,
     MIGRATION_COMPLETE,
     CRASH_REPORTS,

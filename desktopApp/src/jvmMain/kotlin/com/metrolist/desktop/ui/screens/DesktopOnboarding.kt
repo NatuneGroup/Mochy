@@ -60,6 +60,8 @@ import com.metrolist.shared.generated.resources.continue_action
 import com.metrolist.shared.generated.resources.finish
 import com.metrolist.shared.generated.resources.log_in
 import com.metrolist.shared.generated.resources.logo
+import com.metrolist.shared.generated.resources.mochy_onboarding_profile_description
+import com.metrolist.shared.generated.resources.mochy_onboarding_profile_title
 import com.metrolist.shared.generated.resources.no
 import com.metrolist.shared.generated.resources.onboarding_backup_picker_error
 import com.metrolist.shared.generated.resources.onboarding_backup_picker_title
@@ -87,6 +89,7 @@ import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.components.ContainedLoadingIndicator
 import com.metrolist.shared.ui.components.GroupedListItem
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.mochy.MochyProfileEditorContent
 import com.metrolist.shared.ui.onboarding.OnboardingPage
 import com.metrolist.shared.ui.onboarding.OnboardingPageContent
 import com.metrolist.shared.ui.onboarding.OnboardingPreferences
@@ -111,6 +114,7 @@ fun DesktopOnboarding(onComplete: (sendCrashReports: Boolean, openLogin: Boolean
         remember {
             buildList {
                 add(OnboardingPage.WELCOME)
+                add(OnboardingPage.PROFILE)
                 if (isCrashReportingAvailable()) add(OnboardingPage.CRASH_REPORTS)
                 add(OnboardingPage.LANGUAGE_LYRICS)
                 add(OnboardingPage.PLAYBACK)
@@ -176,6 +180,7 @@ fun DesktopOnboarding(onComplete: (sendCrashReports: Boolean, openLogin: Boolean
             title =
                 when (page) {
                     OnboardingPage.WELCOME -> stringResource(Res.string.side_menu_welcome)
+                    OnboardingPage.PROFILE -> stringResource(Res.string.mochy_onboarding_profile_title)
                     OnboardingPage.CRASH_REPORTS -> stringResource(Res.string.onboarding_crash_reports_title)
                     OnboardingPage.LANGUAGE_LYRICS -> stringResource(Res.string.settings_localization)
                     OnboardingPage.PLAYBACK -> stringResource(Res.string.settings_playback)
@@ -186,6 +191,10 @@ fun DesktopOnboarding(onComplete: (sendCrashReports: Boolean, openLogin: Boolean
                 when (page) {
                     OnboardingPage.WELCOME -> {
                         stringResource(Res.string.onboarding_welcome_privacy_description)
+                    }
+
+                    OnboardingPage.PROFILE -> {
+                        stringResource(Res.string.mochy_onboarding_profile_description)
                     }
 
                     OnboardingPage.CRASH_REPORTS -> {
@@ -203,23 +212,31 @@ fun DesktopOnboarding(onComplete: (sendCrashReports: Boolean, openLogin: Boolean
                     OnboardingPage.FINISH -> {
                         stringResource(Res.string.onboarding_finish_description)
                     }
+
+                    else -> {
+                        error("Unsupported desktop onboarding page")
+                    }
                 },
             icon =
                 when (page) {
                     OnboardingPage.WELCOME -> MetrolistIcons.Outlined.MusicNote
+                    OnboardingPage.PROFILE -> MetrolistIcons.Outlined.Person
                     OnboardingPage.CRASH_REPORTS -> MetrolistIcons.Outlined.Security
                     OnboardingPage.LANGUAGE_LYRICS -> MetrolistIcons.Outlined.Language
                     OnboardingPage.PLAYBACK -> MetrolistIcons.Outlined.PlayArrow
                     OnboardingPage.FINISH -> MetrolistIcons.Filled.Check
+                    else -> error("Unsupported desktop onboarding page")
                 },
             step = index + 1,
             stepCount = pages.size,
             primaryLabel =
                 when (page) {
                     OnboardingPage.WELCOME -> stringResource(Res.string.onboarding_begin_setup)
+                    OnboardingPage.PROFILE -> stringResource(Res.string.continue_action)
                     OnboardingPage.CRASH_REPORTS -> stringResource(Res.string.yes)
                     OnboardingPage.LANGUAGE_LYRICS, OnboardingPage.PLAYBACK -> stringResource(Res.string.continue_action)
                     OnboardingPage.FINISH -> stringResource(Res.string.finish)
+                    else -> error("Unsupported desktop onboarding page")
                 },
             secondaryLabel = if (page == OnboardingPage.CRASH_REPORTS) stringResource(Res.string.no) else null,
             isWorking = isWorking,
@@ -253,6 +270,9 @@ fun DesktopOnboarding(onComplete: (sendCrashReports: Boolean, openLogin: Boolean
     val previousContent = if (pageIndex > 0) pageContent(pageIndex - 1) else null
 
     DesktopOnboardingCard(content, previousContent) { targetPage ->
+        if (targetPage == OnboardingPage.PROFILE) {
+            MochyProfileEditorContent(modifier = Modifier.padding(top = 24.dp))
+        }
         if (targetPage == OnboardingPage.LANGUAGE_LYRICS || targetPage == OnboardingPage.PLAYBACK) {
             OnboardingPreferences(
                 page = targetPage,

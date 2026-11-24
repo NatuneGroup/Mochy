@@ -64,6 +64,7 @@ enum class SettingsPageId {
     DEVICE_CONNECT,
     LISTEN_TOGETHER,
     EQUALIZER,
+    MOCHY_PROFILE,
 }
 
 enum class SettingsChangeEffect {
