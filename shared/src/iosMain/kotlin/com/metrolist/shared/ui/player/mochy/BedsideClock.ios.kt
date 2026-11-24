@@ -14,6 +14,13 @@ import platform.Foundation.dateWithTimeIntervalSince1970
 internal actual fun bedsideClockText(epochMillis: Long): BedsideClockText {
     val timeFormatter = remember { NSDateFormatter().apply { timeStyle = NSDateFormatterShortStyle } }
     val dateFormatter = remember { NSDateFormatter().apply { dateStyle = NSDateFormatterFullStyle } }
+    val periodFormatter = remember { NSDateFormatter().apply { dateFormat = "a" } }
     val date = NSDate.dateWithTimeIntervalSince1970(epochMillis / 1_000.0)
-    return BedsideClockText(time = timeFormatter.stringFromDate(date), date = dateFormatter.stringFromDate(date))
+    val is24Hour = !timeFormatter.dateFormat.contains('a')
+    return BedsideClockText(
+        time = timeFormatter.stringFromDate(date),
+        date = dateFormatter.stringFromDate(date),
+        is24Hour = is24Hour,
+        period = if (is24Hour) null else periodFormatter.stringFromDate(date),
+    )
 }

@@ -29,6 +29,8 @@ val MochyProfilePhotoUriKey = "mochyProfilePhotoUri"
 val MochyProfileCardNumberKey = "mochyProfileCardNumber"
 val MochyProfileCardSilverKey = "mochyProfileCardSilver"
 val MochyModulesStateJsonKey = "mochyModulesStateJson"
+val BedsideClockFaceKey = "bedsideClockFace"
+val BedsideNightTintKey = "bedsideNightTint"
 
 val CastEnabledKey = "castEnabled"
 val CastVolumeStepKey = "castVolumeStep"

@@ -653,6 +653,9 @@ private fun DesktopWindowScope.AppContent(
                     isPlaying = PlayerState.isPlaying,
                     onTogglePlay = { PlayerState.togglePlay() }.takeUnless { PlayerState.isListenTogetherGuest() },
                     onDismiss = { UiState.showBedsideClock = false },
+                    artworkUrl = track?.thumbnail,
+                    onPrevious = { PlayerState.skipPrevious() }.takeUnless { PlayerState.isListenTogetherGuest() },
+                    onNext = { PlayerState.skipNext() }.takeUnless { PlayerState.isListenTogetherGuest() },
                 )
             }
             YouTubeSyncSnackbar(AppState.snackbarHostState)

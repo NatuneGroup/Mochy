@@ -5692,6 +5692,16 @@
     <string name="mochy_source_credit">Interface based on Mochy Music by realidkroo</string>
     <!-- Translators: A dim clock and now-playing display opened from the player menu. -->
     <string name="mochy_bedside_clock">Bedside clock</string>
+    <!-- Translators: Clock face option in the Mochy bedside clock showing large horizontal digits. -->
+    <string name="mochy_bedside_face_big">Big</string>
+    <!-- Translators: Clock face option in the Mochy bedside clock stacking hours above minutes. -->
+    <string name="mochy_bedside_face_stacked">Stacked</string>
+    <!-- Translators: Clock face option in the Mochy bedside clock showing a minimalist analog dial. -->
+    <string name="mochy_bedside_face_analog">Analog</string>
+    <!-- Translators: Accessibility label for toggling warm night tint dimming in the bedside clock. -->
+    <string name="mochy_bedside_night_tint">Night tint</string>
+    <!-- Translators: Accessibility label for switching to the now playing page inside the bedside clock. -->
+    <string name="mochy_bedside_now_playing">Now playing</string>
     <!-- Translators: The original Mochy Flagship player appearance. -->
     <string name="player_type_mochy">Mochy Flagship</string>
     <!-- Translators: While holding Previous, playback is at half the selected speed. -->

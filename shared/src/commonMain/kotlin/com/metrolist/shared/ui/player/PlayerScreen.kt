@@ -2795,6 +2795,9 @@ fun PlayerScreen(
                             isPlaying = isPlaying,
                             onTogglePlay = viewModel::togglePlayPause.takeUnless { isListenTogetherGuest },
                             onDismiss = { showBedsideClock = false },
+                            artworkUrl = bedsideSong?.displayThumbnail,
+                            onPrevious = viewModel::previous.takeUnless { isListenTogetherGuest },
+                            onNext = viewModel::next.takeUnless { isListenTogetherGuest },
                         )
                     }
 

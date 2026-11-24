@@ -42,6 +42,8 @@ import com.metrolist.shared.constants.AutoBackupFrequencyKey
 import com.metrolist.shared.constants.AutoBackupLastSuccessEpochKey
 import com.metrolist.shared.constants.AutoInstallUpdatesKey
 import com.metrolist.shared.constants.AutoPureBlackKey
+import com.metrolist.shared.constants.BedsideClockFaceKey
+import com.metrolist.shared.constants.BedsideNightTintKey
 import com.metrolist.shared.constants.BlockAiSlopArtistsKey
 import com.metrolist.shared.constants.BlockedArtistsUndoHintShownKey
 import com.metrolist.shared.constants.BlockedSongsUndoHintShownKey
@@ -337,6 +339,8 @@ class Settings(
     var mochyProfileCardNumber by preference(MochyProfileCardNumberKey, "")
     var mochyProfileCardSilver by preference(MochyProfileCardSilverKey, false)
     var mochyModulesStateJson by preference(MochyModulesStateJsonKey, "")
+    var bedsideClockFace by preference(BedsideClockFaceKey, "BIG")
+    var bedsideNightTint by preference(BedsideNightTintKey, true)
     var spotifySession by preference("")
 
     private var storedAppLanguage by preference(AppLanguageKey, "SYSTEM")
