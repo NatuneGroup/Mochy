@@ -239,8 +239,9 @@ private fun Modifier.navPillDrag(
                 val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
 
                 fun tabAt(x: Float): Float {
-                    if (tabBounds.size == tabCount && tabBounds.all { it != null }) {
-                        val centers = tabBounds.map { (left, right) -> (left + right) / 2f }
+                    val measured = tabBounds.filterNotNull()
+                    if (measured.size == tabCount) {
+                        val centers = measured.map { (left, right) -> (left + right) / 2f }
                         if (centers.size == 1) return 0f
                         if (x <= centers.first()) return 0f
                         if (x >= centers.last()) return (centers.lastIndex).toFloat()
@@ -308,10 +309,11 @@ private fun Modifier.chromeOutline(
         drawRoundRect(
             color = color,
             topLeft = Offset(half, half),
-            size = Size(
-                (size.width - CHROME_OUTLINE_WIDTH_PX).coerceAtLeast(0f),
-                (size.height - CHROME_OUTLINE_WIDTH_PX).coerceAtLeast(0f),
-            ),
+            size =
+                Size(
+                    (size.width - CHROME_OUTLINE_WIDTH_PX).coerceAtLeast(0f),
+                    (size.height - CHROME_OUTLINE_WIDTH_PX).coerceAtLeast(0f),
+                ),
             cornerRadius = CornerRadius((radius - half).coerceAtLeast(0f)),
             style = Stroke(CHROME_OUTLINE_WIDTH_PX),
         )

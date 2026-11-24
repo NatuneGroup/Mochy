@@ -598,7 +598,8 @@ fun LibraryContent(
                                         Modifier.draggableHandle(
                                             enabled = reorderEnabled,
                                             onDragStarted = { haptics.perform(HapticEvent.DRAG_START) },
-                                            dragGestureDetector = if (isDesktop) DragGestureDetector.Press else DragGestureDetector.LongPress,
+                                            dragGestureDetector =
+                                                if (isDesktop) DragGestureDetector.Press else DragGestureDetector.LongPress,
                                         )
                                     itemContainer(
                                         HiddenLibraryItem.from(item),

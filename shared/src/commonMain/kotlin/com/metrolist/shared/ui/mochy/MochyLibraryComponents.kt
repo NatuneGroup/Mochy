@@ -69,12 +69,7 @@ private const val HANGUL_MEDIAL_COUNT = 21
 private const val HANGUL_FINAL_COUNT = 28
 
 private val HangulInitialBuckets =
-    arrayOf(
-        "ㄱ", "ㄱ", "ㄴ", "ㄷ", "ㄷ",
-        "ㄹ", "ㅁ", "ㅂ", "ㅂ", "ㅅ",
-        "ㅅ", "ㅇ", "ㅈ", "ㅈ", "ㅊ",
-        "ㅋ", "ㅌ", "ㅍ", "ㅎ",
-    )
+    arrayOf("ㄱ", "ㄱ", "ㄴ", "ㄷ", "ㄷ", "ㄹ", "ㅁ", "ㅂ", "ㅂ", "ㅅ", "ㅅ", "ㅇ", "ㅈ", "ㅈ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ")
 
 internal data class LibraryIndexEntry(
     val bucket: String,
@@ -148,9 +143,7 @@ internal fun buildLibraryIndex(
 }
 
 @Composable
-internal fun MochyLibrarySectionDivider(
-    modifier: Modifier = Modifier,
-) {
+internal fun MochyLibrarySectionDivider(modifier: Modifier = Modifier) {
     HorizontalDivider(
         modifier = modifier.fillMaxWidth().padding(vertical = 4.dp),
         thickness = 1.dp,
