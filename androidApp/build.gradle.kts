@@ -314,7 +314,7 @@ android {
         if (hasTestKeystore) {
             create("test") {
                 storeFile = testKeystore
-                storePassword = "mochytest"
+                this.storePassword = "mochytest"
                 keyAlias = "mochy-test"
                 keyPassword = "mochytest"
                 enableV1Signing = true
