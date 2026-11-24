@@ -105,6 +105,7 @@ import com.metrolist.shared.model.isPodcast
 import com.metrolist.shared.model.isVideoSong
 import com.metrolist.shared.model.playlistOccurrenceIdentity
 import com.metrolist.shared.model.previewThumbnailUrl
+import com.metrolist.shared.modules.resolveMochyAudio
 import com.metrolist.shared.playback.MusicQueueEntry
 import com.metrolist.shared.playback.PauseOnMuteController
 import com.metrolist.shared.playback.PlaybackErrorContext
@@ -2106,6 +2107,13 @@ class MusicService :
                     if (!canCommitSelection()) return@withQueueLoading false
 
                     val currentFailure = prepareFailure ?: IllegalStateException("Prepared stream could not start")
+                    if (resource.moduleStream != null) {
+                        val original = fetchPlaybackResource(playbackSong, wantVideo = false, allowMochyModules = false)
+                        playbackFailure = original.failure ?: currentFailure
+                        errorReason = original.errorReason
+                        resource = original.resource ?: break
+                        continue
+                    }
                     val fallback = fallbackToOriginalAudioSelection(sourceSong, playbackSong, targetPosition, cachedAudio)
                     if (fallback != null) {
                         playbackSong = fallback.song
@@ -3004,6 +3012,7 @@ class MusicService :
     private suspend fun fetchPlaybackResource(
         song: SongItem,
         wantVideo: Boolean = song.isVideoSong,
+        allowMochyModules: Boolean = true,
     ): PlaybackFetchResult =
         withContext(Dispatchers.IO) {
             val connected = PlaybackNetworkStateStore.current.connected
@@ -3013,6 +3022,12 @@ class MusicService :
                 ?.let { return@withContext PlaybackFetchResult(resource = it) }
             if (!connected && !song.isLocal && !song.id.startsWith("local_")) return@withContext PlaybackFetchResult()
             val hints = song.toAndroidContentHints(wantVideo = wantVideo)
+            if (allowMochyModules && !wantVideo && hints.playbackClientOverrideId == null &&
+                !castManager.state.value.isConnected && !AndroidDeviceConnect.manager.remote.isActive &&
+                AndroidListenTogetherManager.currentManager?.hasActiveOrPendingRoom != true
+            ) {
+                resolveMochyAudio(song)?.let { return@withContext PlaybackFetchResult(resource = it) }
+            }
             Timber.tag(MUSIC_VIDEO_TAG).d(
                 "resource resolve start videoId=%s wantVideo=%s songIsVideo=%s quality=%s maxVideoHeight=%s",
                 song.id,

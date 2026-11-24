@@ -699,7 +699,9 @@ class FFmpegFrameGrabber : FrameGrabber {
             }
             val diagnosticFilename =
                 filename?.let {
-                    if (it.startsWith("http://", ignoreCase = true) || it.startsWith("https://", ignoreCase = true)) {
+                    if (it.startsWith("http://", ignoreCase = true) || it.startsWith("https://", ignoreCase = true) ||
+                        it.startsWith("data:")
+                    ) {
                         "<remote media>"
                     } else {
                         it

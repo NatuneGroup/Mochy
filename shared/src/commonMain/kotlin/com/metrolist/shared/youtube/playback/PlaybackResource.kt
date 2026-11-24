@@ -7,6 +7,7 @@ import com.metrolist.shared.api.musicvideo.CounterpartPositionMap
 import com.metrolist.shared.model.MUSIC_VIDEO_TYPE_LIVE
 import com.metrolist.shared.model.SongItem
 import com.metrolist.shared.model.isLive
+import com.metrolist.shared.modules.SourceStream
 import kotlin.time.Instant
 
 data class PlaybackResource(
@@ -48,6 +49,7 @@ data class PlaybackResource(
     val sabrTokenSupplier: (suspend () -> ByteArray?)? = null,
     val onSabrAttestationPending: (() -> Unit)? = null,
     val isLive: Boolean = false,
+    val moduleStream: SourceStream? = null,
 ) {
     val networkUrl: String?
         get() =

@@ -500,9 +500,8 @@ class MusicPlayer(
         song: SongItem,
         resource: PlaybackResource,
         startPaused: Boolean = false,
-    ) {
-        play(song, resource, expectedPendingTransitionId = null, startPaused = startPaused)
-    }
+        shouldCommit: () -> Boolean = { true },
+    ): Boolean = play(song, resource, expectedPendingTransitionId = null, startPaused = startPaused, shouldCommit = shouldCommit)
 
     fun playPending(
         song: SongItem,
@@ -1941,7 +1940,7 @@ class MusicPlayer(
             prepareStream(input, resource.maximumSabrInputSize(), startPaused)
         } ?: resource.httpRangeInputStream()?.let { input ->
             prepareStream(input, resource.maximumDirectInputSize(), startPaused)
-        } ?: prepareFile(resource.url, resource.headers, startPaused)
+        } ?: prepareFile(resource.url, resource.headers, startPaused, resource.moduleStream)
 
     private fun PlaybackResource.httpRangeInputStream(): HttpRangeInputStream? {
         if (!url.startsWith("http://", ignoreCase = true) && !url.startsWith("https://", ignoreCase = true)) return null

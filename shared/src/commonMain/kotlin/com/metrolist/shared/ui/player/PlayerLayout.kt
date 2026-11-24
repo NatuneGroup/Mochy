@@ -170,6 +170,7 @@ import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.navigation.navigationPopupSource
 import com.metrolist.shared.ui.player.mochy.FlagshipTransport
 import com.metrolist.shared.ui.theme.ComponentShapes
+import com.metrolist.shared.ui.theme.rememberMochyLook
 import com.metrolist.shared.ui.tv.tvFocusHighlight
 import com.metrolist.shared.ui.utils.verticalScrollWithDrag
 import com.metrolist.shared.utils.Logger
@@ -217,7 +218,7 @@ internal fun TabletPlayerContent(
     onArtworkSeek: (Long) -> Unit,
     seekFeedback: SeekFeedback?,
     seekFeedbackVisible: Boolean,
-    playerType: PlayerType = Settings.shared.playerType,
+    playerType: PlayerType = rememberMochyLook().playerType,
     playPauseFocusRequester: FocusRequester? = null,
     showVideoSurface: Boolean = false,
     onOpenCast: () -> Unit,
@@ -874,7 +875,7 @@ internal fun LandscapePlayerContent(
     onArtworkSeek: (Long) -> Unit,
     seekFeedback: SeekFeedback?,
     seekFeedbackVisible: Boolean,
-    playerType: PlayerType = Settings.shared.playerType,
+    playerType: PlayerType = rememberMochyLook().playerType,
     playPauseFocusRequester: FocusRequester? = null,
     showVideoSurface: Boolean = false,
     castState: CastState = CastState(),

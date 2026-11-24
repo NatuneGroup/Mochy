@@ -49,6 +49,7 @@ import com.metrolist.shared.model.isVideoSong
 import com.metrolist.shared.model.lyricsProviderLabel
 import com.metrolist.shared.model.previewAspectRatio
 import com.metrolist.shared.model.previewThumbnailUrl
+import com.metrolist.shared.modules.mochyDisplayMetadata
 import com.metrolist.shared.playback.PlaybackSeekSource
 import com.metrolist.shared.playback.PlayerSession
 import com.metrolist.shared.playback.QueueRemoval
@@ -223,8 +224,12 @@ class PlayerViewModel(
             gradientColorsCache.clear()
             canvasPreloader.clear()
         }
-        combine(playerConnection.currentSong, SongMetadataState.revision) { song, _ ->
-            song?.let(SongMetadataState::apply)
+        combine(
+            playerConnection.currentSong,
+            SongMetadataState.revision,
+            playerConnection.currentSong.mochyDisplayMetadata(),
+        ) { song, _, moduleMetadata ->
+            song?.let(SongMetadataState::apply)?.let { moduleMetadata?.apply(it) ?: it }
         }.onEach { song ->
             val isNewSong = song?.id != lastProcessedSongId
             if (isNewSong) {

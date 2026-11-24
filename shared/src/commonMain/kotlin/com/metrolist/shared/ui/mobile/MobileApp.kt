@@ -270,6 +270,7 @@ import com.metrolist.shared.ui.settings.rememberIosLogExportAction
 import com.metrolist.shared.ui.theme.MdSpacing
 import com.metrolist.shared.ui.theme.MetrolistTheme
 import com.metrolist.shared.ui.theme.rememberArtworkSeedColor
+import com.metrolist.shared.ui.theme.rememberMochyLook
 import com.metrolist.shared.ui.theme.resolveThemeSeedColor
 import com.metrolist.shared.ui.utils.rememberFileSizeFormatter
 import com.metrolist.shared.ui.utils.setText
@@ -745,7 +746,7 @@ fun MobileApp(
         currentAdaptiveLayout(AdaptiveFormFactor.TOUCH, forceBottomNavBar = Settings.shared.forceBottomNavBar).let { layout ->
             if (!layout.navigationSuiteType.isNavigationBar) return@let layout
             val navType =
-                if (Settings.shared.slimNavBar) {
+                if (rememberMochyLook().slimNavBar) {
                     NavigationSuiteType.ShortNavigationBarCompact
                 } else {
                     NavigationSuiteType.NavigationBar
@@ -782,10 +783,10 @@ fun MobileApp(
 
     var miniPlayerBounds by remember { mutableStateOf<Rect?>(null) }
     var floatingNavBarHeight by remember { mutableStateOf(0.dp) }
-    val useFloatingNavBar = Settings.shared.floatingNavBar && adaptiveLayout.navigationSuiteType.isNavigationBar
+    val useFloatingNavBar = rememberMochyLook().floatingNavBar && adaptiveLayout.navigationSuiteType.isNavigationBar
     val floatingContentInset = if (useFloatingNavBar && routeStack.isEmpty()) floatingNavBarHeight else 0.dp
     val miniPlayerHeight =
-        when (Settings.shared.miniPlayerType) {
+        when (rememberMochyLook().miniPlayerType) {
             MiniPlayerType.MODERN -> modernMiniPlayerHeight(LocalDensity.current)
             MiniPlayerType.EXPRESSIVE -> ExpressiveMiniPlayerHeight
             else -> MiniPlayerHeight
@@ -967,7 +968,7 @@ fun MobileApp(
                         if (playbackState.currentSong == null || currentRoute == MobileRoute.Wrapped) {
                             Spacer(Modifier.fillMaxWidth().height(floatingContentInset))
                         } else {
-                            val isModernMiniPlayer = Settings.shared.miniPlayerType == MiniPlayerType.MODERN
+                            val isModernMiniPlayer = rememberMochyLook().miniPlayerType == MiniPlayerType.MODERN
                             Box(
                                 Modifier
                                     .fillMaxWidth()
@@ -986,7 +987,7 @@ fun MobileApp(
                     },
                 ) { padding ->
                     val playerContentPadding =
-                        if (Settings.shared.miniPlayerType == MiniPlayerType.EXPRESSIVE && playbackState.currentSong != null) {
+                        if (rememberMochyLook().miniPlayerType == MiniPlayerType.EXPRESSIVE && playbackState.currentSong != null) {
                             minOf(miniPlayerHeight + floatingContentInset, padding.calculateBottomPadding())
                         } else {
                             minOf(floatingContentInset, padding.calculateBottomPadding())

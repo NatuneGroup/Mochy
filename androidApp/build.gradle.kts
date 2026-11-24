@@ -462,6 +462,7 @@ dependencies {
     implementation(libs.media3.exoplayer)
     implementation(project(":opusDecoder"))
     implementation(libs.media3.inspector)
+    implementation(libs.media3.exoplayer.dash)
     implementation(libs.media3.exoplayer.hls)
     implementation(libs.media3.session)
     implementation(libs.media3.datasource)

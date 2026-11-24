@@ -39,6 +39,8 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.exoplayer.audio.AudioSink
 import androidx.media3.exoplayer.audio.AudioSink.AudioTrackConfig
+import androidx.media3.exoplayer.dash.DashMediaSource
+import androidx.media3.exoplayer.dash.manifest.DashManifestParser
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.LoadEventInfo
 import androidx.media3.exoplayer.source.MediaLoadData
@@ -3926,6 +3928,21 @@ private fun buildAudioMediaSource(
         } else {
             buildDirectDataSourceFactory(context, resource, false, onResponseStatus, onAudioSourceOpened)
         }
+    resource.moduleStream?.inlineManifest?.let { manifest ->
+        val uri = Uri.parse(resource.url)
+        val parsed = manifest.byteInputStream().use { DashManifestParser().parse(uri, it) }
+        val item =
+            MediaItem
+                .Builder()
+                .setUri(uri)
+                .setMimeType(resource.mimeType)
+                .setTag(resource)
+                .build()
+        return DashMediaSource
+            .Factory(factory)
+            .setLoadErrorHandlingPolicy(PlaybackLoadErrorHandlingPolicy(keepBufferDuringNetworkRecovery = true))
+            .createMediaSource(parsed, item)
+    }
     return buildStreamingMediaSource(
         factory,
         if (resource.isSabr) "metrolist://sabr/${resource.videoId}" else resource.url,
@@ -4093,13 +4110,12 @@ private fun buildDirectDataSourceFactory(
             ).also(onSourceOpened)
         return DataSource.Factory { SeekableMediaDataSource(source) }
     }
-    return DefaultDataSource.Factory(
-        context,
+    val httpFactory =
         StatusReportingHttpDataSourceFactory(
             DefaultHttpDataSource.Factory().setDefaultRequestProperties(resource.headers),
             onResponseStatus,
-        ),
-    )
+        )
+    return if (resource.moduleStream != null) httpFactory else DefaultDataSource.Factory(context, httpFactory)
 }
 
 internal fun buildMediaSource(

@@ -162,6 +162,7 @@ import com.metrolist.shared.ui.haptics.MetrolistHaptics
 import com.metrolist.shared.ui.haptics.rememberMetrolistHaptics
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.player.shouldShowMusicVideoSurface
+import com.metrolist.shared.ui.theme.rememberMochyLook
 import com.metrolist.shared.ui.tv.tvFocusHighlight
 import com.metrolist.shared.ui.utils.nativeBlurCompat
 import com.metrolist.shared.ui.utils.supportsNativeBlur
@@ -206,8 +207,8 @@ fun MiniPlayer(
     val isLive = currentSong?.isLive == true || playbackResource?.isLive == true
     val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     val miniPlayerActive = bottomSheetState?.isCollapsed != false && lifecycleState == Lifecycle.State.RESUMED
-    val isExpressiveMiniPlayer = Settings.shared.miniPlayerType == MiniPlayerType.EXPRESSIVE && !useDesktopLayout
-    val isModern = Settings.shared.miniPlayerType == MiniPlayerType.MODERN && !useDesktopLayout
+    val isExpressiveMiniPlayer = rememberMochyLook().miniPlayerType == MiniPlayerType.EXPRESSIVE && !useDesktopLayout
+    val isModern = rememberMochyLook().miniPlayerType == MiniPlayerType.MODERN && !useDesktopLayout
     val expressiveProgressEnabled = isExpressiveMiniPlayer && Settings.shared.showExpressiveMiniPlayerProgress
     val progressActive = miniPlayerActive && (!isExpressiveMiniPlayer || expressiveProgressEnabled) && !useDesktopLayout && !isLive
     var progressWidthPx by remember { mutableIntStateOf(0) }
@@ -666,7 +667,7 @@ internal fun MiniPlayerCard(
     val isFocused by interactionSource.collectIsFocusedAsState()
     val isPressed by interactionSource.collectIsPressedAsState()
 
-    val miniPlayerType = Settings.shared.miniPlayerType
+    val miniPlayerType = rememberMochyLook().miniPlayerType
     val isModern = miniPlayerType == MiniPlayerType.MODERN && !useDesktopLayout
 
     val animatedScale =

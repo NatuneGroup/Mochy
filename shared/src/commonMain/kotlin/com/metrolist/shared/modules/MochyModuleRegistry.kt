@@ -15,9 +15,13 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -204,21 +208,59 @@ class MochyModuleRegistry(
      * Resolves an audio stream from enabled non-YouTube [SourceModule]s in priority order.
      * Returns null when no active external source module matches so playback falls back to YouTube.
      */
-    suspend fun resolveAudioStream(track: TrackQuery): SourceStream? {
-        val activeSources =
-            _entries.value.filter { entry ->
-                entry.id != YouTubeBuiltInModule.ID &&
-                    entry.active &&
-                    entry.module is SourceModule &&
-                    entry.adds(ModuleFeature.AudioSource)
+    suspend fun resolveAudioStream(
+        track: TrackQuery,
+        accepts: (SourceStream) -> Boolean = { true },
+    ): SourceStream? =
+        firstModuleResult(track, activeEntries(ModuleFeature.AudioSource)) { entry, query ->
+            if (entry.id == YouTubeBuiltInModule.ID) {
+                null
+            } else {
+                val result = (entry.module as? SourceModule)?.resolve(query, entry.picks)
+                (result as? ResolveResult.Found)?.stream?.takeIf(accepts)
             }
-        for (entry in activeSources) {
-            val source = entry.module as SourceModule
-            val result = runCatching { source.resolve(track, entry.picks) }.getOrNull()
-            if (result is ResolveResult.Found) return result.stream
         }
-        return null
-    }
+
+    internal fun activeEntries(feature: ModuleFeature): List<ModuleEntry> = entries.value.filter { it.active && it.adds(feature) }
+
+    internal suspend fun fetchModuleLyrics(
+        track: TrackQuery,
+        accepts: (String) -> Boolean,
+    ): Pair<String, String>? =
+        firstModuleResult(track, activeEntries(ModuleFeature.Lyrics)) { entry, query ->
+            (entry.module as? LyricsModule)?.fetchLyrics(query)?.takeIf(accepts)?.let { entry.id to it }
+        }
+
+    internal suspend fun fetchModuleMetadata(
+        track: TrackQuery,
+        modules: List<ModuleEntry>,
+    ): TrackMetadata? =
+        firstModuleResult(track, modules) { entry, query ->
+            (entry.module as? MetadataModule)?.fetchMetadata(query)?.takeIf { metadata ->
+                listOf(metadata.title, metadata.artist, metadata.album, metadata.artworkUrl, metadata.isrc).any { !it.isNullOrBlank() }
+            }
+        }
+
+    private suspend fun <T> firstModuleResult(
+        track: TrackQuery,
+        modules: List<ModuleEntry>,
+        fetch: suspend (ModuleEntry, TrackQuery) -> T?,
+    ): T? =
+        withTimeoutOrNull(MODULE_LOOKUP_TIMEOUT_MS) {
+            for (entry in modules) {
+                val result =
+                    try {
+                        withTimeoutOrNull(MODULE_ATTEMPT_TIMEOUT_MS) { fetch(entry, track) }
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
+                    } catch (_: Exception) {
+                        null
+                    }
+                currentCoroutineContext().ensureActive()
+                if (result != null && entries.value.any { it == entry }) return@withTimeoutOrNull result
+            }
+            null
+        }
 
     fun refresh() {
         val builtEntries =
@@ -362,6 +404,9 @@ class MochyModuleRegistry(
     }
 
     companion object {
+        private const val MODULE_LOOKUP_TIMEOUT_MS = 6_000L
+        private const val MODULE_ATTEMPT_TIMEOUT_MS = 3_000L
+
         val shared: MochyModuleRegistry by lazy { MochyModuleRegistry() }
 
         val DEFAULT_TEST_TRACK =

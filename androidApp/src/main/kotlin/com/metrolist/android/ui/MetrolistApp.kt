@@ -367,6 +367,7 @@ import com.metrolist.shared.ui.screens.SupportPrompt
 import com.metrolist.shared.ui.screens.pageKey
 import com.metrolist.shared.ui.screens.toHomeSection
 import com.metrolist.shared.ui.settings.SettingsPageId
+import com.metrolist.shared.ui.theme.rememberMochyLook
 import com.metrolist.shared.ui.theme.resolveThemeSeedColor
 import com.metrolist.shared.ui.tv.tvFocusHighlight
 import com.metrolist.shared.ui.utils.LocalMouseScrollFactors
@@ -806,7 +807,7 @@ fun MetrolistApp(
             ).withPointerInput(useDesktopLayout)
         val useDesktopUi = adaptiveLayout.formFactor == AdaptiveFormFactor.DESKTOP
         val useDesktopMiniPlayer =
-            shouldUseDesktopMiniPlayer(useDesktopUi, LocalConfiguration.current.smallestScreenWidthDp, Settings.shared.miniPlayerType)
+            shouldUseDesktopMiniPlayer(useDesktopUi, LocalConfiguration.current.smallestScreenWidthDp, rememberMochyLook().miniPlayerType)
         val captionHeight = WindowInsets.captionBar.getTop(LocalDensity.current)
         val statusBarHeight = WindowInsets.statusBars.getTop(LocalDensity.current)
         val hasDesktopCaption = shouldUseDesktopCaption(Build.VERSION.SDK_INT, captionHeight, useDesktopLayout, statusBarHeight)
@@ -821,7 +822,7 @@ fun MetrolistApp(
                     NavigationSuiteType.WideNavigationRailCollapsed
                 }
 
-                adaptiveLayout.navigationSuiteType.isNavigationBar && !Settings.shared.slimNavBar -> {
+                adaptiveLayout.navigationSuiteType.isNavigationBar && !rememberMochyLook().slimNavBar -> {
                     NavigationSuiteType.NavigationBar
                 }
 
@@ -832,7 +833,7 @@ fun MetrolistApp(
         val useNavigationRail = !navigationSuiteType.isNavigationBar
         // Hiding navigation must not move the retained lookahead tree between scaffolds.
         val useFloatingNavBar =
-            Settings.shared.floatingNavBar && !useDesktopUi && !usesDirectionalNavigation &&
+            rememberMochyLook().floatingNavBar && !useDesktopUi && !usesDirectionalNavigation &&
                 navigationSuiteType.isNavigationBar
         val isImeVisible = WindowInsets.ime.asPaddingValues().calculateBottomPadding() > 0.dp
         val shouldHideMiniPlayerForIme = isLandscape && isImeVisible
@@ -888,8 +889,8 @@ fun MetrolistApp(
                 label = "navigationVisibility",
             )
         val hasBottomNavigation = navigationSuiteType.isNavigationBar
-        val isExpressiveMiniPlayer = Settings.shared.miniPlayerType == MiniPlayerType.EXPRESSIVE && !useDesktopMiniPlayer
-        val isModernMiniPlayer = Settings.shared.miniPlayerType == MiniPlayerType.MODERN && !useDesktopMiniPlayer
+        val isExpressiveMiniPlayer = rememberMochyLook().miniPlayerType == MiniPlayerType.EXPRESSIVE && !useDesktopMiniPlayer
+        val isModernMiniPlayer = rememberMochyLook().miniPlayerType == MiniPlayerType.MODERN && !useDesktopMiniPlayer
         val miniPlayerBottomSpacing =
             when {
                 isExpressiveMiniPlayer -> ModernMiniPlayerBottomSpacing

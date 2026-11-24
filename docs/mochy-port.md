@@ -27,6 +27,14 @@ The full mobile interface still needs the original Home, navigation, library and
 | Library transfer | Import from another app recognizes Mochy backups and merges likes, playlists, play history, playlist descriptions, edited song titles and artist text, and lyric offsets. | Mochy-specific settings, account sessions, local files, downloads, pins, artwork files, lyric text and other fields outside the shared import model. |
 | Audio and integrations | Keep the base player's queue, video and EQ and the base account, import and scrobbling flows. | Match Mochy Audio Lab, smart CrossMix and stage DSP, video and canvas behavior, lyric providers, sharing and third-party integrations against the existing implementations. |
 
+## Mochy modules
+
+Enabled sources can supply audio for ordinary music tracks. Downloads, local files, video, podcasts, uploads, live streams, Cast, and synchronized playback use their existing paths. If a module cannot resolve or prepare a track, the player falls back to its standard source. Android and desktop accept progressive, HLS and DASH sources. iOS accepts progressive and HLS and skips DASH. Desktop inline DASH manifests need absolute segment URLs or an absolute base URL.
+
+A web module's `look` can set `player` to `flagship`, `modern`, `vintage` or `classic`; `mini` to `expressive`, `modern` or `vintage`; `bar` to `standard`, `compact` or `floating`; and `font` to `inter` or `system`. These overrides apply where the host has the corresponding layout. Disabling the module restores the saved preferences. These keys select existing layouts and fonts. Mochy's custom skin layouts and packaged assets still need their own renderer.
+
+Enabled lyrics modules can supply missing lyrics or improve timing after the built-in providers run. Enabled metadata modules can supply title, artwork and unlinked artist or album information for the current track. The metadata applies to the player display and preserves local edits, linked artists and albums, and library data.
+
 ## Verification before publishing
 
 Use GitHub Actions for Android, desktop and iOS compilation and the shared desktop test suite. Check the player on a phone and in a narrow and wide desktop window. Resize while queue or lyrics is open, switch theme, toggle playback from the dock and clock, and verify keyboard and screen-reader access. Compare Android to the Mochy source screenshots. The coverage for backup import includes a fixture with duplicate playlist entries, song edits, two imports of the same file and edits already present in the destination.

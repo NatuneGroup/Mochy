@@ -149,6 +149,7 @@ import com.metrolist.shared.ui.navigation.blockInput
 import com.metrolist.shared.ui.navigation.navigationPopupSource
 import com.metrolist.shared.ui.playback.retainPlaybackKeyFocus
 import com.metrolist.shared.ui.player.mochy.AnimatedPlayGlyph
+import com.metrolist.shared.ui.theme.rememberMochyLook
 import com.metrolist.shared.ui.theme.uiEnhanced
 import com.metrolist.shared.utils.ShareUrls
 import com.metrolist.shared.utils.formatDuration
@@ -235,7 +236,7 @@ fun LyricsDrawer(
 }
 
 private fun openCurrentTrackCollection() {
-    val song = PlayerState.currentTrack ?: return
+    val song = PlayerState.displayedTrack ?: return
     PlaylistAlbumState.openSongAlbum(song)
 }
 
@@ -585,7 +586,7 @@ fun StandardBottomPlayer(
                 )
             }
 
-            val artists = PlayerState.currentTrack?.artists ?: emptyList()
+            val artists = PlayerState.displayedTrack?.artists ?: emptyList()
             val isLiked = PlayerState.currentTrack?.let { PlayerState.isLiked(it.id) } == true
 
             val isCompact = width < 600.dp
@@ -664,7 +665,7 @@ fun StandardBottomPlayer(
                                     10_000L,
                                 )
                             Text(
-                                PlayerState.currentTrack?.title ?: stringResource(Res.string.not_playing),
+                                PlayerState.displayedTrack?.title ?: stringResource(Res.string.not_playing),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 maxLines = 1,
@@ -899,7 +900,7 @@ fun StandardBottomPlayer(
                                         10_000L,
                                     )
                                 Text(
-                                    PlayerState.currentTrack?.title ?: stringResource(Res.string.not_playing),
+                                    PlayerState.displayedTrack?.title ?: stringResource(Res.string.not_playing),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     maxLines = 1,
@@ -1004,9 +1005,8 @@ fun StandardBottomPlayer(
                             horizontalArrangement = if (swapControls) Arrangement.Start else Arrangement.Center,
                         ) {
                             if (!isListenTogetherGuest) {
-                                if (Settings.shared.playerType == PlayerType.VINTAGE ||
-                                    Settings.shared.playerType == PlayerType.CLASSIC
-                                ) {
+                                val playerType = rememberMochyLook().playerType
+                                if (playerType == PlayerType.VINTAGE || playerType == PlayerType.CLASSIC) {
                                     VintagePlayerControls(
                                         text =
                                             VintagePlayerControlsText(
@@ -1164,7 +1164,7 @@ fun StandardBottomPlayer(
 }
 
 internal fun shouldShowVideoButton(): Boolean {
-    val track = PlayerState.currentTrack
+    val track = PlayerState.displayedTrack
     if (PlayerState.isListenTogetherGuest()) return false
     if (Settings.shared.hideVideoSongs || !Settings.shared.musicVideoPlaybackEnabled) return false
     if (track == null) return false

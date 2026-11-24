@@ -118,6 +118,7 @@ import com.metrolist.shared.ui.components.sliders.rememberPendingSeekPosition
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.menu.CursorDropdownMenu
 import com.metrolist.shared.ui.menu.rememberCursorContextMenuState
+import com.metrolist.shared.ui.theme.rememberMochyLook
 import com.metrolist.shared.ui.theme.uiEnhanced
 import com.metrolist.shared.utils.OsUtil
 import com.metrolist.shared.utils.ShareUrls
@@ -800,9 +801,8 @@ private fun FullscreenVideoControls(
                         contentAlignment = if (swapControls) Alignment.CenterStart else Alignment.Center,
                     ) {
                         if (!isListenTogetherGuest) {
-                            if (Settings.shared.playerType == PlayerType.VINTAGE ||
-                                Settings.shared.playerType == PlayerType.CLASSIC
-                            ) {
+                            val playerType = rememberMochyLook().playerType
+                            if (playerType == PlayerType.VINTAGE || playerType == PlayerType.CLASSIC) {
                                 VintagePlayerControls(
                                     text =
                                         VintagePlayerControlsText(

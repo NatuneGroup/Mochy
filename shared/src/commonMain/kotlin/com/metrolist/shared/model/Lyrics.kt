@@ -1,5 +1,6 @@
 package com.metrolist.shared.model
 
+import com.metrolist.shared.modules.mochyLyricsProviderLabel
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -127,7 +128,7 @@ fun lyricsProviderLabel(
             ?.let { "$provider/$it" }
             ?: provider
     } else {
-        provider
+        provider?.let { mochyLyricsProviderLabel(it) ?: it }
     }
 
 fun lyricsProviderUrl(

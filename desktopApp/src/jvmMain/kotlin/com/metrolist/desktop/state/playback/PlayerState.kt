@@ -71,6 +71,9 @@ import com.metrolist.shared.model.isVideoSong
 import com.metrolist.shared.model.moveSelection
 import com.metrolist.shared.model.previewThumbnailUrl
 import com.metrolist.shared.model.varyRadioRecommendations
+import com.metrolist.shared.modules.MochyDisplayMetadata
+import com.metrolist.shared.modules.mochyDisplayMetadata
+import com.metrolist.shared.modules.resolveMochyAudio
 import com.metrolist.shared.playback.DESKTOP_PRELOAD_MIN_POSITION_MS
 import com.metrolist.shared.playback.MusicPlayer
 import com.metrolist.shared.playback.MusicQueue
@@ -756,10 +759,13 @@ object PlayerState {
     private val localQueueRemovalPlaybackIntents = mutableListOf<Pair<WeakReference<QueueRemoval>, Boolean>>()
     var currentTrack: SongItem? by mutableStateOf(null)
         private set
+    private var moduleMetadata: MochyDisplayMetadata? by mutableStateOf(null)
+    val displayedTrack: SongItem?
+        get() = currentTrack?.let { moduleMetadata?.apply(it) ?: it }
     private val artwork = DesktopAnimatedArtwork(scope)
     val animatedCoverSongId: String? get() = artwork.animatedCoverSongId
     val animatedCoverUrl: String? get() = artwork.animatedCoverUrl
-    val currentArtworkUrl: String? get() = currentTrack?.previewThumbnailUrl
+    val currentArtworkUrl: String? get() = displayedTrack?.previewThumbnailUrl
     internal var artworkPreview by mutableStateOf(PlayerArtworkPreview())
         private set
     var isPlaying by mutableStateOf(false)
@@ -1292,6 +1298,12 @@ object PlayerState {
 
     init {
         scope.launch { playbackUiVisible.collect(player::setProgressUiVisible) }
+        scope.launch {
+            player.currentSong.mochyDisplayMetadata().collect { metadata ->
+                moduleMetadata = metadata
+                artworkPreview = artworkPreview.forTrack(currentTrack?.id, currentArtworkUrl)
+            }
+        }
         scope.launch {
             observeSponsorBlockSkipping(
                 currentSong = player.currentSong,
@@ -2840,6 +2852,7 @@ object PlayerState {
         song: SongItem,
         showError: Boolean = false,
         onFailure: (Throwable) -> Unit = {},
+        allowMochyModules: Boolean = true,
     ): PlaybackResource? =
         selectDesktopPlaybackResource(
             song = song,
@@ -2862,7 +2875,15 @@ object PlayerState {
                 }
             },
             fetchByHints = { hints, reportError ->
-                fetchPlaybackResource(song.id, hints, reportError, song, onFailure = onFailure)
+                val moduleResource =
+                    if (allowMochyModules && !hints.wantVideo && forcedPlaybackClientId() == null &&
+                        !keepsCanonicalMedia() && !castManager.state.value.isConnected
+                    ) {
+                        resolveMochyAudio(song)
+                    } else {
+                        null
+                    }
+                moduleResource ?: fetchPlaybackResource(song.id, hints, reportError, song, onFailure = onFailure)
             },
         )
 
@@ -2908,6 +2929,19 @@ object PlayerState {
         return result.resource
             ?.takeUnless { keepsCanonicalMedia() && (it.musicVideoId ?: it.videoId) != videoId }
             ?.copy(videoId = videoId)
+    }
+
+    private suspend fun prepareWithMochyFallback(
+        song: SongItem,
+        resource: PlaybackResource,
+        isCurrent: () -> Boolean,
+        prepare: (PlaybackResource) -> Boolean,
+    ): PlaybackResource? {
+        if (!isCurrent()) return null
+        if (prepare(resource)) return resource
+        if (resource.moduleStream == null || !isCurrent()) return null
+        val fallback = fetchPlaybackResource(song, showError = true, allowMochyModules = false) ?: return null
+        return fallback.takeIf { isCurrent() && prepare(it) }
     }
 
     private suspend fun resolvePlaybackResource(
@@ -3110,17 +3144,18 @@ object PlayerState {
                             }
                         }
                         if (!isCurrentPlaybackTransition(generation) || !isAllowedByReplacement()) return@launch
-                        val played =
+                        val canPrepare = { isCurrentPlaybackTransition(generation) && isAllowedByReplacement() }
+                        val playedResource =
                             withContext(Dispatchers.IO) {
-                                player.playPending(liveTrack, resource, pendingTransitionId, preparePaused) {
-                                    isCurrentPlaybackTransition(generation) && isAllowedByReplacement()
+                                prepareWithMochyFallback(liveTrack, resource, canPrepare) {
+                                    player.playPending(liveTrack, it, pendingTransitionId, preparePaused, canPrepare)
                                 }
                             }
-                        if (played && isCurrentPlaybackTransition(generation) && isAllowedByReplacement()) {
-                            onTrackPlaybackStarted(liveTrack, resource, generation)
+                        if (playedResource != null && canPrepare()) {
+                            onTrackPlaybackStarted(liveTrack, playedResource, generation)
                             Logger.i("PlayerState", "Started playback")
                         }
-                        if (!played && isCurrentPlaybackTransition(generation)) video.setResolving(false)
+                        if (playedResource == null && isCurrentPlaybackTransition(generation)) video.setResolving(false)
                     } else if (isCurrentPlaybackTransition(generation)) {
                         video.setResolving(false)
                     }
@@ -3250,11 +3285,12 @@ object PlayerState {
                 attachBackgroundVideoResource(playableTrack, generation)
                 Logger.i("PlayerState", "Started cached playback (suspend)")
             } else {
-                val resource = fetchPlaybackResource(playableTrack, showError = true)
-                if (resource != null && isCurrent()) {
-                    val liveTrack = playableTrack.matchingLiveState(resource)
+                val resolved = fetchPlaybackResource(playableTrack, showError = true)
+                if (resolved != null && isCurrent()) {
+                    val liveTrack = playableTrack.matchingLiveState(resolved)
                     if (liveTrack !== playableTrack) (stagedQueue ?: queue).replaceCurrent(liveTrack)
-                    if (!prepareTrack(liveTrack, resource)) {
+                    val resource = prepareWithMochyFallback(liveTrack, resolved, ::isCurrent) { prepareTrack(liveTrack, it) }
+                    if (resource == null) {
                         withContext(Dispatchers.Main) {
                             if (isCurrent()) video.setResolving(false)
                         }
@@ -3353,13 +3389,17 @@ object PlayerState {
         if (!isCurrentPlaybackTransition(generation)) return
         pendingResumePosition = song.id to (position ?: 0L)
         if (playCastTrack(song, generation, startPlaying, position ?: 0L, resource)) return
-        withContext(Dispatchers.IO) {
-            player.play(
-                song,
-                resource,
-                startPaused = !playbackTransitions.playbackIntent(desiredPlayback.value) || position != null,
-            )
-        }
+        val playedResource =
+            withContext(Dispatchers.IO) {
+                prepareWithMochyFallback(song, resource, { isCurrentPlaybackTransition(generation) }) {
+                    player.play(
+                        song,
+                        it,
+                        startPaused = !playbackTransitions.playbackIntent(desiredPlayback.value) || position != null,
+                        shouldCommit = { isCurrentPlaybackTransition(generation) },
+                    )
+                }
+            } ?: return
         if (!isCurrentPlaybackTransition(generation)) return
         if (completeDesktopPlaybackResume(
                 positionMs = pendingResumePosition?.second,
@@ -3375,7 +3415,7 @@ object PlayerState {
         if (previousSongId == song.id && externalReportingEnabled) {
             scrobbleManager.onPlayerStateChanged(startPlaying, song, newPlayback = true)
         }
-        onTrackPlaybackStarted(song, resource, generation)
+        onTrackPlaybackStarted(song, playedResource, generation)
     }
 
     private fun attachBackgroundVideoResource(
@@ -3458,10 +3498,18 @@ object PlayerState {
                     if (playCastTrack(replaySong, generation, startPlaying)) return@launch
                     val resource = withContext(Dispatchers.IO) { fetchSelectedPlaybackResource(replaySong, generation) }
                     if (resource != null && isCurrentPlaybackTransition(generation)) {
-                        withContext(Dispatchers.IO) {
-                            player.play(replaySong, resource, startPaused = !playbackTransitions.playbackIntent(desiredPlayback.value))
-                        }
-                        onTrackPlaybackStarted(replaySong, resource, generation)
+                        val playedResource =
+                            withContext(Dispatchers.IO) {
+                                prepareWithMochyFallback(replaySong, resource, { isCurrentPlaybackTransition(generation) }) {
+                                    player.play(
+                                        replaySong,
+                                        it,
+                                        startPaused = !playbackTransitions.playbackIntent(desiredPlayback.value),
+                                        shouldCommit = { isCurrentPlaybackTransition(generation) },
+                                    )
+                                }
+                            } ?: return@launch
+                        onTrackPlaybackStarted(replaySong, playedResource, generation)
                         finalizeHistory(nextSong = replaySong)
                         scrobbleManager.onPlaybackInstanceStart(replaySong)
                         return@launch

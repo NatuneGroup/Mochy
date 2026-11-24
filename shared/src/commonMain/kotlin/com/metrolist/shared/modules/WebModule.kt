@@ -160,7 +160,20 @@ data class WebModuleManifest(
 
     val hasMetadata: Boolean get() = "metadata" in resourceNames
 
-    val lookValues: Map<String, String> get() = look.asTextMap()
+    val lookValues: Map<String, String>
+        get() =
+            buildMap {
+                listOf("player" to player, "bar" to bar, "mini" to mini, "font" to font).forEach { (key, value) ->
+                    val style =
+                        when (value) {
+                            is JsonPrimitive -> value.contentOrNull
+                            is JsonObject -> value.textField("style")
+                            else -> null
+                        }
+                    style?.let { put(key, it) }
+                }
+                putAll(look.asTextMap())
+            }
 
     companion object {
         private val json =
@@ -403,12 +416,16 @@ class WebModule(
         val url =
             buildUrl(
                 "$base/lyrics",
-                mapOf("title" to track.title, "artist" to track.artists.firstOrNull().orEmpty()) + fieldValues,
+                fieldValues + track.lookupParameters(),
             )
         val resp = runCatching { host.http(HttpRequest(url, headers = defaultHeaders)) }.getOrNull() ?: return null
         if (!resp.ok) return null
-        val obj = runCatching { json.parseToJsonElement(resp.text) as? JsonObject }.getOrNull()
-        return obj?.textField("syncedLyrics") ?: obj?.textField("lyrics") ?: resp.text.takeIf { it.isNotBlank() }
+        val parsed = runCatching { json.parseToJsonElement(resp.text) }.getOrNull()
+        return when (parsed) {
+            is JsonObject -> parsed.textField("syncedLyrics") ?: parsed.textField("lyrics")
+            null -> resp.text.takeIf(String::isNotBlank)
+            else -> null
+        }
     }
 
     override suspend fun fetchMetadata(track: TrackQuery): TrackMetadata? {
@@ -416,7 +433,7 @@ class WebModule(
         val url =
             buildUrl(
                 "$base/metadata",
-                mapOf("title" to track.title, "artist" to track.artists.firstOrNull().orEmpty()) + fieldValues,
+                fieldValues + track.lookupParameters(),
             )
         val resp = runCatching { host.http(HttpRequest(url, headers = defaultHeaders)) }.getOrNull() ?: return null
         if (!resp.ok) return null
@@ -429,6 +446,15 @@ class WebModule(
             isrc = obj.textField("isrc"),
         )
     }
+
+    private fun TrackQuery.lookupParameters(): Map<String, String> =
+        buildMap {
+            put("title", title)
+            artists.firstOrNull()?.let { put("artist", it) }
+            album?.let { put("album", it) }
+            durationMs?.let { put("durationMs", it.toString()) }
+            isrc?.let { put("isrc", it) }
+        }
 
     private fun parseSearchTracks(text: String): List<Pair<CatalogTrack, String?>> {
         val root = runCatching { json.parseToJsonElement(text) }.getOrNull() ?: return emptyList()

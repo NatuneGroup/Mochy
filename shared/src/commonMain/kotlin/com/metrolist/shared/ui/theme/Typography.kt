@@ -57,9 +57,13 @@ fun MetrolistTypography(
     fontFamilyOverride: FontFamily? = null,
 ): Typography {
     val systemFont = localeAwareSystemFontFamily(localeList[0].toLanguageTag())
-    val useMochyInter = fontFamilyOverride == null && systemFont == FontFamily.Default
+    val moduleFont = rememberMochyLook().font
+    val useMochyInter =
+        moduleFont == "inter" || (moduleFont != "system" && fontFamilyOverride == null && systemFont == FontFamily.Default)
     val font =
         when {
+            moduleFont == "system" -> systemFont
+            moduleFont == "inter" -> mochyInterFontFamily()
             fontFamilyOverride != null -> fontFamilyOverride
             useMochyInter -> mochyInterFontFamily()
             else -> systemFont

@@ -24,6 +24,7 @@ import com.metrolist.shared.model.canSwitchToMusicVideo
 import com.metrolist.shared.model.isPodcast
 import com.metrolist.shared.model.isVideoSong
 import com.metrolist.shared.model.selectRadioQueueChip
+import com.metrolist.shared.modules.resolveMochyAudio
 import com.metrolist.shared.playback.QUEUE_SOURCE_AUTO_MIX
 import com.metrolist.shared.scrobble.ScrobbleManager
 import com.metrolist.shared.settings.Settings
@@ -1906,7 +1907,7 @@ internal class IosPlaybackController(
                                 "Cached audio invalidation failed id=${song.id} type=${error::class.simpleName}",
                             )
                         }
-                    } else {
+                    } else if (failedResource?.moduleStream == null) {
                         failedResource
                             ?.takeUnless {
                                 it === failedCaptureResource && player.audioCaptureFailure?.shouldExcludeProfile != true
@@ -1929,7 +1930,13 @@ internal class IosPlaybackController(
                                 )
                             }
                     }
-                    var resource = resolveAudioResource(song, skipCachedAudio = failedCachedVideoId == song.id, refresh = refreshExpiredUrl)
+                    var resource =
+                        resolveAudioResource(
+                            song,
+                            skipCachedAudio = failedCachedVideoId == song.id,
+                            refresh = refreshExpiredUrl,
+                            allowMochyModules = failedResource?.moduleStream == null,
+                        )
                     currentCoroutineContext().ensureActive()
                     if (generation != requestGeneration) return@launch
                     if (song.isPodcast && song.duration == null && pendingPlayback.value?.startPositionMs == resumePosition &&
@@ -1948,6 +1955,13 @@ internal class IosPlaybackController(
                     }
                     var pending = pendingPlayback.value?.takeIf { it.generation == generation } ?: return@launch
                     player.play(song, resource, startPlaying = pending.startPlaying, startPositionMs = pending.startPositionMs)
+                    if (player.loadError.value != null && resource.moduleStream != null) {
+                        resource = resolveAudioResource(song, allowMochyModules = false)
+                        currentCoroutineContext().ensureActive()
+                        if (generation != requestGeneration) return@launch
+                        pending = pendingPlayback.value?.takeIf { it.generation == generation } ?: return@launch
+                        player.play(song, resource, startPlaying = pending.startPlaying, startPositionMs = pending.startPositionMs)
+                    }
                     while (player.loadError.value != null) {
                         val failure = player.audioCaptureFailure?.takeIf { it.resource === resource } ?: break
                         if (!audioRecovery.retry(failure)) break
@@ -2045,6 +2059,7 @@ internal class IosPlaybackController(
         song: SongItem,
         skipCachedAudio: Boolean = false,
         refresh: Boolean = false,
+        allowMochyModules: Boolean = true,
     ): PlaybackResource {
         val excludedProfiles = audioRecovery.excludedProfiles(song.id)
         if (!skipCachedAudio && !refresh && excludedProfiles.isEmpty()) {
@@ -2056,6 +2071,11 @@ internal class IosPlaybackController(
                 logIosPlaybackError("Cached audio lookup failed for ${song.id}", error)
                 Logger.w("IosPlaybackController", "Cached audio lookup failed id=${song.id} type=${error::class.simpleName}")
             }
+        }
+        if (allowMochyModules && !skipCachedAudio && !refresh && excludedProfiles.isEmpty() && !wrappedSharedPlayback.value &&
+            Settings.shared.devtoolsPlaybackClient.equals("AUTO", ignoreCase = true)
+        ) {
+            resolveMochyAudio(song, supportsDash = false)?.let { return it }
         }
         val quality = iosPlaybackAudioQuality(Settings.shared.audioQuality)
         return resolveIosAudioResource(

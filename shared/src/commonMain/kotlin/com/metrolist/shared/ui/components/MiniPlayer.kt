@@ -101,6 +101,7 @@ import com.metrolist.shared.ui.haptics.rememberMetrolistHaptics
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.theme.getGradientColors
 import com.metrolist.shared.ui.theme.rememberArtworkSeedColor
+import com.metrolist.shared.ui.theme.rememberMochyLook
 import com.metrolist.shared.ui.utils.artworkBlur
 import com.metrolist.shared.ui.utils.supportsNativeBlur
 import kotlinx.coroutines.Job
@@ -137,7 +138,7 @@ fun MiniPlayer(
     val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     val active = isActive && lifecycleState == Lifecycle.State.RESUMED
     val marqueeModifier = rememberTrackMarquee(song.id, active, 3_000L)
-    if (Settings.shared.miniPlayerType == MiniPlayerType.EXPRESSIVE) {
+    if (rememberMochyLook().miniPlayerType == MiniPlayerType.EXPRESSIVE) {
         val pixelSensitivity = (173f - Settings.shared.swipeSensitivity.coerceIn(0f, 100f)) / 100f
         ExpressiveMiniPlayer(
             song = song,
@@ -167,7 +168,7 @@ fun MiniPlayer(
         )
         return
     }
-    val isModern = Settings.shared.miniPlayerType == MiniPlayerType.MODERN
+    val isModern = rememberMochyLook().miniPlayerType == MiniPlayerType.MODERN
     val isVideoSong = song.isVideoSong
     val cornerRadius = if (isModern) modernMiniPlayerHeight(LocalDensity.current) / 2 else 16.dp
 

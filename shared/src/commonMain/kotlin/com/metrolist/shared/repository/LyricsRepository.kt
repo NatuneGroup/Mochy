@@ -31,6 +31,11 @@ import com.metrolist.shared.model.MlxDocument
 import com.metrolist.shared.model.MlxSong
 import com.metrolist.shared.model.WordTimestamp
 import com.metrolist.shared.model.lyricsProviderLabel
+import com.metrolist.shared.modules.MochyModuleRegistry
+import com.metrolist.shared.modules.ModuleFeature
+import com.metrolist.shared.modules.TrackQuery
+import com.metrolist.shared.modules.mochyLyricsModuleId
+import com.metrolist.shared.modules.mochyLyricsProvider
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.state.GlobalYouTube
 import com.metrolist.shared.utils.systemCountryCode
@@ -88,8 +93,15 @@ private fun configuredLyricsProviders(): List<LyricsProvider> =
 private fun providerPriority(
     provider: String,
     providers: List<LyricsProvider>,
-): Int =
-    providers
+): Int {
+    mochyLyricsModuleId(provider)?.let { id ->
+        return if (MochyModuleRegistry.shared.activeEntries(ModuleFeature.Lyrics).any { it.id == id }) {
+            providers.size
+        } else {
+            Int.MAX_VALUE
+        }
+    }
+    return providers
         .indexOf(
             if (provider == "YouTube Subtitle") {
                 LyricsProvider.YOUTUBESUBTITLE
@@ -97,6 +109,7 @@ private fun providerPriority(
                 LyricsProvider.parseTokenFromSettings(provider.substringBefore('/'))
             },
         ).takeIf { it >= 0 } ?: Int.MAX_VALUE
+}
 
 internal fun prefersLyrics(
     candidate: LyricsWithProviderModel,
@@ -465,6 +478,22 @@ class LyricsRepository(
             }
         }
 
+        if (lookupKey.moduleIds.isNotEmpty() && (finalResult == null || bestTimingKind < preferredTiming)) {
+            val track = TrackQuery(title, listOf(artist).filter(String::isNotBlank), album, duration)
+            val moduleResult =
+                MochyModuleRegistry.shared.fetchModuleLyrics(track) { raw ->
+                    val lines = LyricsUtils.parseLyrics(raw)
+                    usableProviderLyrics(lines) && (finalResult == null || lyricsTimingKind(lines) > bestTimingKind)
+                }
+            if (moduleResult != null) {
+                val (id, raw) = moduleResult
+                acceptFetch(ProviderLyricsFetch(lyrics = listOf(LyricsWithProviderModel(raw, mochyLyricsProvider(id)))), providers.size)
+            } else {
+                // Module failures and misses share a nullable result. Either can change before the next lookup.
+                hadProviderFailure = true
+            }
+        }
+
         val selectedResult = finalResult
         if (skipCache && selectedResult == null && !cachedLyrics?.lyrics.isNullOrBlank()) return null
         if (databaseDao != null && selectedResult?.isComplete != false && (selectedResult != null || !hadProviderFailure)) {
@@ -679,7 +708,23 @@ class LyricsRepository(
                 .let {
                     if (preferVideoProviders) (LyricsProvider.afterUserLyricsFallbacks + it).distinct() else it
                 }
-        return LyricsLookupKey(videoId, title, artist, duration, album, providers, isVideoContext, Settings.shared.preferWordSyncedLyrics)
+        val moduleIds =
+            if (isVideoContext) {
+                emptyList()
+            } else {
+                MochyModuleRegistry.shared.activeEntries(ModuleFeature.Lyrics).map { it.id }
+            }
+        return LyricsLookupKey(
+            videoId,
+            title,
+            artist,
+            duration,
+            album,
+            providers,
+            isVideoContext,
+            Settings.shared.preferWordSyncedLyrics,
+            moduleIds,
+        )
     }
 
     @Serializable
@@ -692,6 +737,7 @@ class LyricsRepository(
         val providers: List<LyricsProvider>,
         val isVideoContext: Boolean,
         val preferWordSynced: Boolean = false,
+        val moduleIds: List<String> = emptyList(),
     )
 
     suspend fun selectProviderResult(

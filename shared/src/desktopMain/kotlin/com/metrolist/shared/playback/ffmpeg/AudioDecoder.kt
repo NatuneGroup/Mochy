@@ -1,5 +1,7 @@
 package com.metrolist.shared.playback.ffmpeg
 
+import com.metrolist.shared.modules.SourceStream
+import com.metrolist.shared.modules.StreamFormat
 import org.bytedeco.ffmpeg.global.avutil.AV_PIX_FMT_RGBA
 import org.bytedeco.ffmpeg.global.avutil.AV_SAMPLE_FMT_S16
 import java.io.InputStream
@@ -7,6 +9,7 @@ import java.nio.Buffer
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.ShortBuffer
+import java.util.Base64
 
 class AudioDecoder private constructor(
     val frameGrabber: FFmpegFrameGrabber,
@@ -23,9 +26,18 @@ class AudioDecoder private constructor(
     constructor(
         path: String,
         headers: Map<String, String> = emptyMap(),
+        moduleStream: SourceStream? = null,
     ) : this(
-        FFmpegFrameGrabber(path).apply {
-            if (path.startsWith("http://") || path.startsWith("https://")) {
+        FFmpegFrameGrabber(moduleStream?.inlineManifest?.let(::inlineDashUrl) ?: path).apply {
+            if (moduleStream != null) {
+                options["protocol_whitelist"] = "data,http,https,tcp,tls,crypto"
+                when (moduleStream.format) {
+                    StreamFormat.Progressive -> Unit
+                    StreamFormat.Hls -> format = "hls"
+                    StreamFormat.Dash -> format = "dash"
+                }
+            }
+            if (path.startsWith("http://", ignoreCase = true) || path.startsWith("https://", ignoreCase = true)) {
                 options["reconnect"] = "1"
                 options["reconnect_streamed"] = "1"
                 options["reconnect_delay_max"] = "5"
@@ -164,3 +176,6 @@ internal fun copyPcmSamples(buffer: Buffer?): ByteArray? =
             null
         }
     }
+
+private fun inlineDashUrl(manifest: String): String =
+    "data:application/dash+xml;base64," + Base64.getEncoder().encodeToString(manifest.encodeToByteArray())

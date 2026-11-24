@@ -94,6 +94,7 @@ import com.metrolist.shared.ui.menu.cursorContextMenu
 import com.metrolist.shared.ui.menu.rememberCursorContextMenuState
 import com.metrolist.shared.ui.navigation.navigationPopupSource
 import com.metrolist.shared.ui.player.PlayerArtistLine
+import com.metrolist.shared.ui.theme.rememberMochyLook
 import com.metrolist.shared.ui.utils.verticalScrollWithDrag
 import com.metrolist.shared.utils.ShareUrls
 import com.metrolist.shared.utils.formatDuration
@@ -303,9 +304,8 @@ fun PlayerCoreContent(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center,
                 ) {
-                    if (Settings.shared.playerType == PlayerType.VINTAGE ||
-                        Settings.shared.playerType == PlayerType.CLASSIC
-                    ) {
+                    val playerType = rememberMochyLook().playerType
+                    if (playerType == PlayerType.VINTAGE || playerType == PlayerType.CLASSIC) {
                         VintagePlayerControls(
                             text =
                                 VintagePlayerControlsText(

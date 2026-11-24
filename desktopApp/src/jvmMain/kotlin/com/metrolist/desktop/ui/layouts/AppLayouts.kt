@@ -116,6 +116,7 @@ import com.metrolist.shared.ui.navigation.currentAdaptiveLayout
 import com.metrolist.shared.ui.navigation.isNavigationBar
 import com.metrolist.shared.ui.navigation.navigationId
 import com.metrolist.shared.ui.navigation.screenForNavigationId
+import com.metrolist.shared.ui.theme.rememberMochyLook
 import org.jetbrains.compose.resources.stringResource
 import java.awt.Cursor
 
@@ -380,7 +381,15 @@ private fun DesktopWindowScope.AdaptiveDesktopLayout(
     val routeNavigationId = route.navigationId
     val currentNavIndex = currentSelectedNavIndex(visibleItems, routeNavigationId ?: selectedNavId)
     val currentTitle by LayoutUtils.rememberCurrentTitle(route, visibleItems, currentNavIndex)
-    val adaptiveLayout = currentAdaptiveLayout(AdaptiveFormFactor.DESKTOP, Settings.shared.forceBottomNavBar)
+    val look = rememberMochyLook()
+    val adaptiveLayout =
+        currentAdaptiveLayout(AdaptiveFormFactor.DESKTOP, Settings.shared.forceBottomNavBar).let { layout ->
+            if (layout.navigationSuiteType.isNavigationBar && look.slimNavBar) {
+                layout.copy(navigationSuiteType = NavigationSuiteType.ShortNavigationBarCompact)
+            } else {
+                layout
+            }
+        }
 
     LaunchedEffect(route) {
         routeNavigationId?.let { selectedNavId = it }

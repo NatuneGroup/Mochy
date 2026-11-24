@@ -239,6 +239,7 @@ import com.metrolist.shared.ui.player.mochy.FlagshipHandle
 import com.metrolist.shared.ui.player.mochy.FlagshipTransport
 import com.metrolist.shared.ui.player.mochy.flagshipFontFamily
 import com.metrolist.shared.ui.theme.ComponentShapes
+import com.metrolist.shared.ui.theme.rememberMochyLook
 import com.metrolist.shared.ui.utils.supportsNativeBlur
 import com.metrolist.shared.utils.Logger
 import com.metrolist.shared.viewmodels.PlayerViewModel
@@ -655,7 +656,7 @@ fun PlayerScreen(
             )
 
     val playerType =
-        Settings.shared.playerType.let { if (isTv && it == PlayerType.MOCHY) PlayerType.MODERN else it }
+        rememberMochyLook().playerType.let { if (isTv && it == PlayerType.MOCHY) PlayerType.MODERN else it }
     val usesMochyFlagship = playerType == PlayerType.MOCHY
     val flagshipFont = if (usesMochyFlagship) flagshipFontFamily() else null
     val usesFullscreenThumbnail = playerThumbnailStyle == PlayerThumbnailStyle.FULLSCREEN

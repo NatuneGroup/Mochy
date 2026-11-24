@@ -1,5 +1,6 @@
 package com.metrolist.shared.playback.ffmpeg
 
+import com.metrolist.shared.modules.SourceStream
 import com.metrolist.shared.playback.SeekableMediaSource
 import com.metrolist.shared.playback.instantSilenceSeekTarget
 import java.io.InputStream
@@ -153,7 +154,8 @@ class AudioPlayer(
         path: String,
         headers: Map<String, String> = emptyMap(),
         startPaused: Boolean = true,
-    ): Boolean = prepareDecoder(startPaused, null) { AudioDecoder(path, headers) }
+        moduleStream: SourceStream? = null,
+    ): Boolean = prepareDecoder(startPaused, null) { AudioDecoder(path, headers, moduleStream) }
 
     internal fun loadStream(
         inputStream: InputStream,
