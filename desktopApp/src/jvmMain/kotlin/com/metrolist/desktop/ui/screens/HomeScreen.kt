@@ -86,11 +86,9 @@ fun HomeScreen() {
     var selectedMenuItem by remember { mutableStateOf<YTItem?>(null) }
     var showSurpriseMenu by remember { mutableStateOf(false) }
     val hasNoHomeContent = uiState.hasNoHomeContent()
-    val offlineHeroFallbackItems by produceState<List<YTItem>>(emptyList(), hasNoHomeContent) {
-        if (!hasNoHomeContent) {
-            value = emptyList()
-            return@produceState
-        }
+    // Local songs feed only the hero, and only when no online hero candidate exists (see mochyHeroItems),
+    // so collect them regardless of whether cached online sections are present.
+    val offlineHeroFallbackItems by produceState<List<YTItem>>(emptyList()) {
         val database = GlobalContext.get().get<MusicDatabase>()
         database.dao().allSongs().collect { songs ->
             value =
