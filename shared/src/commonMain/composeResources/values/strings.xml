@@ -1665,6 +1665,16 @@
     <!-- Translators: Supporting text for the player Canvas switch in the settings. -->
     <!-- Translators: Option or section label for player thumbnail style in the settings. -->
     <string name="player_thumbnail_style">Thumbnail</string>
+    <!-- Translators: Option or section label for the Mochy Flagship cover style in the settings. -->
+    <string name="player_cover_style">Cover style</string>
+    <!-- Translators: Description of the Mochy Flagship cover style setting. -->
+    <string name="player_cover_style_description">How the artwork is framed on the Mochy Flagship player</string>
+    <!-- Translators: Cover style choice: the artwork in a square card. This is the default look. -->
+    <string name="player_cover_style_squared">Square</string>
+    <!-- Translators: Cover style choice: the artwork bleeds to both screen edges and fades into the controls. -->
+    <string name="player_cover_style_edge_to_edge">Full bleed</string>
+    <!-- Translators: Cover style choice: the artwork shown as a spinning record. -->
+    <string name="player_cover_style_disc">Disc</string>
     <!-- Translators: Option or section label for player background style in the settings. -->
     <string name="player_background_style">Background</string>
     <!-- Translators: Option or section label for themed in the settings. -->
