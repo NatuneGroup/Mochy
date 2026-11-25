@@ -140,8 +140,9 @@ jobs:
             fi
           fi
           if [[ "$BUILD_VARIANT" == "release" && "$REQUIRE_SIGNING" == "true" ]]; then
-            test -n "$LYPRIO_BASE_URL" || { echo "LYPRIO_BASE_URL is required for signed release builds" >&2; exit 1; }
-            test -n "$LYPRIO_HMAC_KEY" || { echo "LYPRIO_HMAC_KEY is required for signed release builds" >&2; exit 1; }
+            if [[ -z "$LYPRIO_BASE_URL" || -z "$LYPRIO_HMAC_KEY" ]]; then
+              echo "::warning::LYPRIO_BASE_URL or LYPRIO_HMAC_KEY is not set; this build has no Lyprio lyrics"
+            fi
           fi
 
           echo "version=$version" >> "$GITHUB_OUTPUT"
