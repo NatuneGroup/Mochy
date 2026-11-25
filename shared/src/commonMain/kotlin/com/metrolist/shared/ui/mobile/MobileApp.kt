@@ -315,6 +315,7 @@ fun MobileApp(
     playerServices: PlayerPlatformServices,
     lyricsShareAction: @Composable (PlayerViewModel) -> ((String) -> Unit)?,
     onExportStatistics: suspend (ImageBitmap) -> Boolean,
+    songCardExport: (suspend (ImageBitmap) -> Boolean)?,
     onPickPlaylistCover: suspend () -> ByteArray?,
     onSavePlaylistCover: suspend (PlaylistItem, ByteArray?) -> Result<Unit>,
     touchExplorationEnabled: Boolean,
@@ -2057,6 +2058,7 @@ fun MobileApp(
                             listenTogetherManager,
                             touchExplorationEnabled,
                             lyricsShareAction,
+                            songCardExport,
                         ) {
                             MobilePlayerPlatform(
                                 database,
@@ -2066,6 +2068,7 @@ fun MobileApp(
                                 listenTogetherManager,
                                 touchExplorationEnabled,
                                 lyricsShareAction,
+                                songCardExport,
                             )
                         }
                     val playerUiState by playerViewModel.uiState.collectAsState()
