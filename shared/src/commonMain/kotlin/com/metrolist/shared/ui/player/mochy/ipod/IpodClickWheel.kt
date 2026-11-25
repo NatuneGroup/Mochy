@@ -27,6 +27,7 @@ import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -35,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.em
 import com.metrolist.shared.generated.resources.Res
+import com.metrolist.shared.generated.resources.ipod_click_wheel
 import com.metrolist.shared.generated.resources.menu
 import com.metrolist.shared.generated.resources.next
 import com.metrolist.shared.generated.resources.play_pause
@@ -87,6 +89,7 @@ internal fun IpodClickWheel(
     val nextLabel = stringResource(Res.string.next)
     val menuLabel = stringResource(Res.string.menu)
     val selectLabel = stringResource(Res.string.select)
+    val wheelLabel = stringResource(Res.string.ipod_click_wheel)
     val light: (RingZone?) -> Unit = { zone ->
         glowZone = zone
         scope.launch { glow.snapTo(1f) }
@@ -98,6 +101,8 @@ internal fun IpodClickWheel(
             modifier
                 .graphicsLayer()
                 .semantics {
+                    if (!enabled) return@semantics
+                    contentDescription = wheelLabel
                     customActions =
                         listOf(
                             CustomAccessibilityAction(playPauseLabel) {
