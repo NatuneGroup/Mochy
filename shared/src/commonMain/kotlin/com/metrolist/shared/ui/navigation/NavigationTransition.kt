@@ -11,6 +11,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,6 +35,8 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.unit.Dp
+
+private const val MOCHY_FADE_MILLIS = 200
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 val LocalNavSharedTransitionScope = staticCompositionLocalOf<SharedTransitionScope?> { null }
@@ -65,7 +70,12 @@ class NavigationMotion internal constructor(
         isPop: Boolean = false,
         origin: TransformOrigin = TransformOrigin.Center,
     ): ContentTransform =
-        if (enabled) {
+        if (enabled && pattern == NavigationPattern.Default) {
+            // Mochy's page move: a short slide, an eighth of the width, under a 200 ms fade; back slides the other way
+            val direction = if (isPop) -1 else 1
+            (slideInHorizontally { direction * it / 8 } + fadeIn(tween(MOCHY_FADE_MILLIS)))
+                .togetherWith(slideOutHorizontally { -direction * it / 8 } + fadeOut(tween(MOCHY_FADE_MILLIS)))
+        } else if (enabled) {
             val spatial =
                 if (pattern ==
                     NavigationPattern.Expressive
