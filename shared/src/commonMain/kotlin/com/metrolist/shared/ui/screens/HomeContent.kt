@@ -322,7 +322,7 @@ fun HomeContent(
             // with Mochy's bar the hero sits at the very top, under the status bar, and the header follows it
             if (mochyTopBar == null) {
                 header?.invoke(this)
-            } else if (heroItems.isEmpty()) {
+            } else if (heroItems.isEmpty() && !uiState.showLoadingPlaceholder) {
                 item(key = "mochy_top_room") { Spacer(Modifier.height(mochyTopRoom)) }
             }
 

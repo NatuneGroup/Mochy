@@ -7,6 +7,7 @@
 
 package com.metrolist.android.ui.screens
 
+import com.metrolist.shared.ui.mochy.MochyHomeBones
 import android.content.res.Configuration
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -331,7 +332,7 @@ fun HomeScreen(
                 when {
                     uiState.showLoadingPlaceholder -> {
                         item(key = "home_loading") {
-                            HomeLoadingPlaceholder(isLandscape = isLandscape)
+                            if (mochyTop) MochyHomeBones() else HomeLoadingPlaceholder(isLandscape = isLandscape)
                         }
                     }
 
