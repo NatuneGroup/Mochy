@@ -86,8 +86,7 @@ Waves 1 to 4 have landed (see Completed work). Still open:
 - **Stage follow-ups.** The Stage room (native `stageEngine` module, `libmochystage.so`, KEMAR HRTF asset) runs on Android in stereo PCM16 with the headphone model. Not yet ported: the room and scene drawing, editing objects one by one, speaker-output detection and surround downmix. Desktop and iOS show the card disabled.
 - **Flagship landscape extras.** The layout already matches the reference: cover on the left, with the info, lyrics and queue panel on the right. Still missing are the reference's cover looks (full-bleed, disc, record, TV), which need a cover-style setting first, plus the lyrics band, frost, reflection and auto-hiding control deck.
 - **Share Studio extras.** Video/karaoke export (`share/song/export/**`, Android GL) is not
-  ported. The lyrics share card keeps the Metrolist look. The desktop player has its own UI
-  and no song card entry; `desktopApp/.../utils/ImageSharing.kt` `saveImage` is ready to reuse.
+  ported. The lyrics share card keeps the Metrolist look.
 - **Audio Lab module switch.** `MochyModuleRegistry` has no effect-module kind, so disabling a
   module cannot reset the effects.
 - **Device checks.** Nothing here was tested on a device: Audio Lab sound and toggling
