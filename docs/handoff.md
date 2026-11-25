@@ -22,7 +22,7 @@ Read first: [mochy-port.md](mochy-port.md), [../CLAUDE.md](../CLAUDE.md) and
 Snapshot updated 2026-11-25.
 
 - PR #1 is open and not a draft. `AI usage:` is disclosed in the PR body.
-- Last full CI on `674080bf` passed: Select checks and repository checks, Android / APK,
+- Last full CI on `3d2a162e` passed: Select checks and repository checks, Android / APK,
   Desktop / Linux x64 and iOS / Validate iOS.
 - The signed release from `eb2e7514` (`build-android.yml`, `variant=release`, run
   45550453298) produced `Mochy.apk` at 16,935,941 bytes. It has v2 and v3 signatures,
@@ -61,6 +61,9 @@ Snapshot updated 2026-11-25.
 | Wave 3: Audio Lab | `a4bf6592`…`605985b4` | Spatial (crossfeed/virtual speakers), Freeverb-style reverb with presets, and 8D. Shared DSP cores are in `shared/.../audiolab/dsp` and run on Android (Media3 wrappers), desktop (`AudioRenderer`) and iOS (audio tap; HLS bypasses it). The settings page is reached from Playback. See [audiolab.md](audiolab.md). |
 | Wave 4: share and profile | `906f387a`, `ff0cb673`, `03394cca`, `14011c10` | ID card back face with tap flip. The song share card (cover/wide) is in the player menu on Android and iOS. Recap is the existing Wrapped feature, so it was not duplicated. |
 | Audio Lab Stage | `a83da2e0`…`674080bf` | Native `stageEngine` module, built like `opusDecoder` and ordered after it so the two NDK installs don't run at once. Stage settings, presets and card are included. |
+| Wiring and share | `c733578f`…`b50a283c` | ID card back stats come from listening history. iOS share files are named `mochy-statistics-` and `mochy-song-`. The desktop player menu has a song card option. The lyrics card cover uses the reference rounding. |
+| Flagship cover looks | `7b37ed23`…`9ac6a6b3` | `PlayerCoverStyle` (Square, Full bleed, Disc) applies to portrait, landscape and desktop fullscreen. Landscape hides the seek bar and transport after 3.5 s on the lyrics page. |
+| Desktop Mochy UI | `556e0d28`…`3d2a162e` | Sidebar with the Mochy pill, hover and font. The bottom bar uses the Flagship transport and seek track. The wide fullscreen player uses the Flagship layout. Home hero cards tilt on hover. |
 | CI formatting | `edaaf448` | `[ktlint-format]` workflow (see Current state). |
 
 ### Android release details
@@ -80,6 +83,10 @@ Snapshot updated 2026-11-25.
   secrets when `require-signing` is true.
 
 ## Remaining work
+
+- **Release channels (branch `ci/natune-release-flow`, not pushed).** Nightlies come from `dev` and stable releases from `main`, numbered by `.github/scripts/next-version.py` (Natune's model). The in-app "Nightly builds" switch already exists on Android and desktop. Ten `.github/tests` checks compare against the old Metrolist workflow text, and they have to be removed or rewritten before this lands; that needs the operator's OK.
+- **Desktop polish.** The fullscreen Flagship has no like, share or cast buttons. The bottom-bar transport has no hover state. Shelf cards keep the default press feedback.
+- **Lyrics share card.** Only the cover rounding matches the reference. Its "Cinematic" layout (`ShareCanvas.kt`) is not ported.
 
 Waves 1 to 4 have landed (see Completed work). Still open:
 
