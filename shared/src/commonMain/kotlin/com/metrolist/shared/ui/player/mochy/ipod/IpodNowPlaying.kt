@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -74,6 +75,8 @@ internal fun IpodNowPlaying(
     val session = LocalPlayerSession.current
     val playbackState by LocalPlaybackController.current.state.collectAsState()
     val song = session?.currentSong?.collectAsState()?.value ?: playbackState.currentSong
+    val queueIndex = session?.currentMediaItemIndex?.collectAsState()?.value ?: playbackState.currentQueueIndex
+    LaunchedEffect(song?.id, queueIndex) { state.scrubMs = -1L }
     val duration = session?.duration?.collectAsState()?.value?.takeIf { it > 0L } ?: playbackState.durationMs.coerceAtLeast(1L)
     val positionFlow = session?.currentPosition ?: remember { MutableStateFlow(0L) }
 

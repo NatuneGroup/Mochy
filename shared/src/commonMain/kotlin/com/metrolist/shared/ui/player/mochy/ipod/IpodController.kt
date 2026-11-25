@@ -31,6 +31,7 @@ internal class IpodController(
     private val shuffleQueueTitle: String,
 ) : IpodWheelActions {
     private var seekJob: Job? = null
+    private var scrubItem: QueueItemKey? = null
     private var opening = false
 
     private val page: IpodPage get() = nav.top.page
@@ -266,8 +267,9 @@ internal class IpodController(
             activeSession?.duration?.value?.takeIf { it > 0L }
                 ?: playbackController.state.value.durationMs.takeIf { it > 0L }
                 ?: return false
+        val item = currentItem()
         val from =
-            if (nowPlaying.scrubMs >= 0L) {
+            if (nowPlaying.scrubMs >= 0L && scrubItem == item) {
                 nowPlaying.scrubMs
             } else {
                 activeSession?.currentPositionMs() ?: playbackController.currentPositionMs()
@@ -276,21 +278,43 @@ internal class IpodController(
         val target = (from + steps * step).coerceIn(0L, duration)
         touch()
         if (target == from) return false
+        scrubItem = item
         nowPlaying.scrubMs = target
         seekJob?.cancel()
         seekJob =
             scope.launch {
                 delay(SCRUB_SETTLE_MS)
-                if (activeSession != null) activeSession.seekTo(target) else playbackController.seekTo(target)
-                nowPlaying.scrubMs = -1L
+                if (currentItem() == item) {
+                    if (activeSession != null) activeSession.seekTo(target) else playbackController.seekTo(target)
+                }
+                clearScrub()
             }
         return true
+    }
+
+    private fun clearScrub() {
+        scrubItem = null
+        nowPlaying.scrubMs = -1L
+    }
+
+    private fun currentItem(): QueueItemKey {
+        val activeSession = session
+        if (activeSession != null) {
+            return QueueItemKey(activeSession.currentSong.value?.id, activeSession.currentMediaItemIndex.value)
+        }
+        val state = playbackController.state.value
+        return QueueItemKey(state.currentSong?.id, state.currentQueueIndex)
     }
 
     private fun touch() {
         nowPlaying.touchedAt = MetrolistClock.nowMs()
     }
 }
+
+private data class QueueItemKey(
+    val songId: String?,
+    val queueIndex: Int,
+)
 
 private const val VOLUME_STEP = 1f / 16f
 private const val SCRUB_SETTLE_MS = 300L
