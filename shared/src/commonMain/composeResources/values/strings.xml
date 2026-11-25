@@ -6029,4 +6029,66 @@
     <string name="audio_lab_hz">%1$d Hz</string>
     <!-- Translators: Frequency in hertz with two decimals, shown next to the 8D rotation slider. %1$.2f is the number. -->
     <string name="audio_lab_hz_decimal">%1$s Hz</string>
+    <!-- Translators: Small line above the app name on the first onboarding page. -->
+    <string name="welcome_to">Welcome to</string>
+    <!-- Translators: Closing line at the bottom of the first onboarding page. -->
+    <string name="welcome_lets_listen">Let’s start listening!</string>
+    <!-- Translators: Hint under the closing line of the first onboarding page. -->
+    <string name="welcome_tap_anywhere">Tap anywhere to continue</string>
+    <!-- Translators: Onboarding page title asking about bringing music over. -->
+    <string name="onb_import_title">Importing music</string>
+    <!-- Translators: Onboarding question under the import title. -->
+    <string name="onb_import_ask_subtitle">Do you want to bring your music over, sign in to YouTube Music or restore a backup?</string>
+    <!-- Translators: Onboarding button accepting the import question. -->
+    <string name="onb_yes">Yes!</string>
+    <!-- Translators: Onboarding button skipping the import question. -->
+    <string name="onb_skip">Skip</string>
+    <!-- Translators: Onboarding subtitle above the import choices, written casually in lowercase. -->
+    <string name="onb_import_mode_subtitle">what do you want?</string>
+    <!-- Translators: Casual onboarding button that returns to the previous page. -->
+    <string name="onb_go_back">hell nah, go back</string>
+    <!-- Translators: Onboarding choice that moves the library over from the previously installed app. -->
+    <string name="onb_import_previous_title">Import previous data</string>
+    <!-- Translators: Description of the choice that moves the library over from the previously installed app. -->
+    <string name="onb_import_previous_desc">your library, history and settings from the app you had installed before</string>
+    <!-- Translators: Onboarding choice that signs in to YouTube Music after setup. -->
+    <string name="onb_sign_in_title">Sign in to YouTube Music</string>
+    <!-- Translators: Description of the YouTube Music sign-in choice in onboarding. -->
+    <string name="onb_sign_in_desc">your playlists, likes and recommendations, synced with your account</string>
+    <!-- Translators: Onboarding choice that restores a backup file after setup. -->
+    <string name="onb_import_backup_title">Import from backup</string>
+    <!-- Translators: Description of the backup restore choice in onboarding. -->
+    <string name="onb_import_backup_desc">if you by any chance have a Mochy backup</string>
+    <!-- Translators: Onboarding title while the previous app’s data is being moved over. -->
+    <string name="onb_bringing_over">Bringing your music over</string>
+    <!-- Translators: Onboarding page title for creating the local profile. -->
+    <string name="onb_profile_title">Let’s create your profile!</string>
+    <!-- Translators: Privacy note under the onboarding profile form. -->
+    <string name="onb_never_store">Mochy will never store your data online!</string>
+    <!-- Translators: Onboarding prompt above the username field, written casually in lowercase. -->
+    <string name="onb_username_prompt">what’s your username?</string>
+    <!-- Translators: Placeholder inside the onboarding username field. -->
+    <string name="onb_username_hint">username</string>
+    <!-- Translators: Onboarding prompt above the profile card, which can be tapped to pick a picture. -->
+    <string name="onb_set_photo">Set a profile picture here!</string>
+    <!-- Translators: Title of the last onboarding settings page. -->
+    <string name="onb_last_one">Last one</string>
+    <!-- Translators: Subtitle of the last onboarding settings page. -->
+    <string name="onb_last_one_subtitle">Disable anything that you don’t like</string>
+    <!-- Translators: Casual lowercase button that moves to the next onboarding page. -->
+    <string name="onb_next_lower">next</string>
+    <!-- Translators: Onboarding switch title for crossfading between songs. -->
+    <string name="onb_auto_crossfade_title">Auto Crossfade</string>
+    <!-- Translators: Onboarding description of the crossfade switch. -->
+    <string name="onb_crossfade_desc">Fades each song into the next one, so playback never stops between tracks</string>
+    <!-- Translators: Onboarding switch title for sending crash reports. -->
+    <string name="onb_crash_reports_title">Send crash reports</string>
+    <!-- Translators: Onboarding description of the crash reports switch. -->
+    <string name="onb_crash_reports_desc">Optional diagnostics that help find and fix problems. You can change this anytime in Settings.</string>
+    <!-- Translators: Big greeting shown when the profile card is created in onboarding. -->
+    <string name="onb_hello">Hello!</string>
+    <!-- Translators: Line under the onboarding greeting, written casually in lowercase. -->
+    <string name="onb_welcome_to_mochy">welcome to mochy!</string>
+    <!-- Translators: Line shown on the final onboarding page. -->
+    <string name="onb_all_good">You’re good to go</string>
 </resources>
