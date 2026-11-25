@@ -37,7 +37,7 @@ def main():
     xcconfig = xcconfig_path.read_text()
     inherited_settings = {
         "PRODUCT_NAME": "Metrolist",
-        "PRODUCT_BUNDLE_IDENTIFIER": "com.metrolist.MetrolistApp",
+        "PRODUCT_BUNDLE_IDENTIFIER": "com.natune.mochy",
         "CODE_SIGN_ENTITLEMENTS": "Configuration/iosApp.entitlements",
         "SWIFT_VERSION": "5.9",
         "IPHONEOS_DEPLOYMENT_TARGET": "15.0",

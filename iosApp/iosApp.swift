@@ -58,7 +58,7 @@ struct MetrolistApp: App {
 }
 
 private final class AutomaticBackupAppDelegate: NSObject, UIApplicationDelegate {
-    private static let taskIdentifier = "com.metrolist.automatic-backup"
+    private static let taskIdentifier = "com.natune.mochy.automatic-backup"
     private let settingsChanged = Notification.Name("com.metrolist.automaticBackupSettingsChanged")
 
     func application(

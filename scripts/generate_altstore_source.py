@@ -10,7 +10,7 @@ import datetime
 import json
 from pathlib import Path
 
-BUNDLE_ID = "com.metrolist.MetrolistApp"
+BUNDLE_ID = "com.natune.mochy"
 MIN_OS_VERSION = "15.0"
 
 
