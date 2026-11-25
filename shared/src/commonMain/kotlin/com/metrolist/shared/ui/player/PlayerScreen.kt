@@ -189,6 +189,7 @@ import com.metrolist.shared.generated.resources.video
 import com.metrolist.shared.playback.LocalPlayerSession
 import com.metrolist.shared.playback.SleepTimerState
 import com.metrolist.shared.settings.PlayerBackgroundStyle
+import com.metrolist.shared.settings.PlayerCoverStyle
 import com.metrolist.shared.settings.PlayerThumbnailStyle
 import com.metrolist.shared.settings.PlayerType
 import com.metrolist.shared.settings.Settings
@@ -235,6 +236,8 @@ import com.metrolist.shared.ui.mochy.LikeSlot
 import com.metrolist.shared.ui.navigation.NavigationBackHandler
 import com.metrolist.shared.ui.navigation.blockInput
 import com.metrolist.shared.ui.player.mochy.BedsideClock
+import com.metrolist.shared.ui.player.mochy.FLAGSHIP_DISC_CENTER
+import com.metrolist.shared.ui.player.mochy.FLAGSHIP_DISC_DIAMETER
 import com.metrolist.shared.ui.player.mochy.FlagshipActions
 import com.metrolist.shared.ui.player.mochy.FlagshipBarBottomGap
 import com.metrolist.shared.ui.player.mochy.FlagshipBarHeight
@@ -242,7 +245,10 @@ import com.metrolist.shared.ui.player.mochy.FlagshipBottomControls
 import com.metrolist.shared.ui.player.mochy.FlagshipControlsShade
 import com.metrolist.shared.ui.player.mochy.FlagshipHandle
 import com.metrolist.shared.ui.player.mochy.FlagshipLandscapePlayer
+import com.metrolist.shared.ui.player.mochy.FlagshipSidePadding
 import com.metrolist.shared.ui.player.mochy.FlagshipTransport
+import com.metrolist.shared.ui.player.mochy.coverBleed
+import com.metrolist.shared.ui.player.mochy.coverFadeToBottom
 import com.metrolist.shared.ui.player.mochy.flagshipFontFamily
 import com.metrolist.shared.ui.player.mochy.ipod.IpodPlayerStyle
 import com.metrolist.shared.ui.player.mochy.ipod.isIpodWholeDevice
@@ -250,6 +256,7 @@ import com.metrolist.shared.ui.player.mochy.ipod.rememberIpodLook
 import com.metrolist.shared.ui.player.mochy.turntable.TurntableControls
 import com.metrolist.shared.ui.player.mochy.turntable.TurntablePills
 import com.metrolist.shared.ui.player.mochy.turntable.TurntableStage
+import com.metrolist.shared.ui.player.mochy.turntable.VinylDisc
 import com.metrolist.shared.ui.share.SongShareCardDialog
 import com.metrolist.shared.ui.theme.ComponentShapes
 import com.metrolist.shared.ui.theme.rememberMochyLook
@@ -696,6 +703,7 @@ fun PlayerScreen(
     val usesMochyTurntable = playerType == PlayerType.TURNTABLE
     val usesIpodPlayer = playerType == PlayerType.IPOD
     val usesMochyChrome = usesMochyFlagship || usesMochyTurntable
+    val flagshipCoverStyle = if (usesMochyFlagship) Settings.shared.playerCoverStyle else PlayerCoverStyle.SQUARED
     val flagshipFont = if (usesMochyChrome) flagshipFontFamily() else null
     val usesFullscreenThumbnail = playerThumbnailStyle == PlayerThumbnailStyle.FULLSCREEN && !usesMochyTurntable && !usesIpodPlayer
     val prefersTallCover = usesFullscreenThumbnail && !isLandscape
@@ -1469,6 +1477,7 @@ fun PlayerScreen(
                                     onNavigateToAlbum = onNavigateToAlbum,
                                     onNavigateToListenTogether = onNavigateToListenTogether,
                                     turntableMode = usesMochyTurntable,
+                                    coverStyle = flagshipCoverStyle,
                                     canSeek = !isListenTogetherGuest,
                                     onSeek = viewModel::seekToPosition,
                                     positionProvider = { currentPosMs },
@@ -1597,7 +1606,7 @@ fun PlayerScreen(
                                         ).padding(
                                             horizontal =
                                                 when {
-                                                    usesMochyFlagship -> 32.dp
+                                                    usesMochyFlagship -> FlagshipSidePadding
                                                     isPortraitTurntableStage -> 0.dp
                                                     usesMochyTurntable -> 28.dp
                                                     else -> 24.dp
@@ -2132,19 +2141,40 @@ fun PlayerScreen(
                                                                                 animatedVisibilityScope = this@AnimatedContent,
                                                                                 boundsTransform = albumArtBoundsTransform,
                                                                                 clipInOverlayDuringTransition = OverlayClip(albumArtShape),
-                                                                            ).aspectRatio(1f)
-                                                                            .clip(albumArtShape),
+                                                                            ).then(
+                                                                                if (flagshipCoverStyle == PlayerCoverStyle.EDGE_TO_EDGE) {
+                                                                                    Modifier.coverBleed(FlagshipSidePadding).coverFadeToBottom()
+                                                                                } else {
+                                                                                    Modifier.aspectRatio(1f)
+                                                                                },
+                                                                            ).then(if (flagshipCoverStyle == PlayerCoverStyle.SQUARED) Modifier.clip(albumArtShape) else Modifier),
                                                                 ) {
-                                                                    CrossfadeArtwork(
-                                                                        animate = LocalPlayerContentActive.current,
-                                                                        currentUrl = currentSong.displayThumbnail,
-                                                                        nextUrl = crossfadeNextArtworkUrl,
-                                                                        progress = artworkCrossfadeProgress,
-                                                                        contentDescription = stringResource(Res.string.album_art),
-                                                                        modifier = Modifier.fillMaxSize(),
-                                                                        contentScale = ContentScale.Crop,
-                                                                    )
-                                                                    if (!uiState.isLyricsVisible) artworkOverlay(Modifier.fillMaxSize())
+                                                                    if (flagshipCoverStyle == PlayerCoverStyle.DISC) {
+                                                                        VinylDisc(
+                                                                            artworkUrl = currentSong.displayThumbnail,
+                                                                            nextArtworkUrl = crossfadeNextArtworkUrl,
+                                                                            crossfadeProgressProvider = artworkCrossfadeProgress,
+                                                                            isPlaying = isPlaying,
+                                                                            spinActive = LocalPlayerContentActive.current,
+                                                                            contentDescription = stringResource(Res.string.album_art),
+                                                                            artworkOverlay = artworkOverlay.takeUnless { uiState.isLyricsVisible },
+                                                                            discDiameter = FLAGSHIP_DISC_DIAMETER,
+                                                                            discCenterX = FLAGSHIP_DISC_CENTER,
+                                                                            discCenterYByWidth = FLAGSHIP_DISC_CENTER,
+                                                                            modifier = Modifier.fillMaxSize(),
+                                                                        )
+                                                                    } else {
+                                                                        CrossfadeArtwork(
+                                                                            animate = LocalPlayerContentActive.current,
+                                                                            currentUrl = currentSong.displayThumbnail,
+                                                                            nextUrl = crossfadeNextArtworkUrl,
+                                                                            progress = artworkCrossfadeProgress,
+                                                                            contentDescription = stringResource(Res.string.album_art),
+                                                                            modifier = Modifier.fillMaxSize(),
+                                                                            contentScale = ContentScale.Crop,
+                                                                        )
+                                                                        if (!uiState.isLyricsVisible) artworkOverlay(Modifier.fillMaxSize())
+                                                                    }
                                                                 }
                                                             }
                                                         }

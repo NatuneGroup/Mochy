@@ -49,6 +49,9 @@ internal fun VinylDisc(
     contentDescription: String?,
     modifier: Modifier = Modifier,
     artworkOverlay: (@Composable (Modifier) -> Unit)? = null,
+    discDiameter: Float = TURNTABLE_DISC_DIAMETER,
+    discCenterX: Float = TURNTABLE_DISC_CENTER_X,
+    discCenterYByWidth: Float = TURNTABLE_DISC_CENTER_Y_BY_WIDTH,
 ) {
     val reducedMotion = rememberReducedMotion()
     val angle = remember { mutableFloatStateOf(0f) }
@@ -75,9 +78,9 @@ internal fun VinylDisc(
     val density = LocalDensity.current
     BoxWithConstraints(modifier = modifier) {
         val boxSide = maxWidth.value
-        val discSide = boxSide * TURNTABLE_DISC_DIAMETER
-        val discLeft = maxWidth.value * TURNTABLE_DISC_CENTER_X - discSide / 2f
-        val discTop = maxWidth.value * TURNTABLE_DISC_CENTER_Y_BY_WIDTH - discSide / 2f
+        val discSide = boxSide * discDiameter
+        val discLeft = maxWidth.value * discCenterX - discSide / 2f
+        val discTop = maxWidth.value * discCenterYByWidth - discSide / 2f
         val discLeftPx = with(density) { discLeft.dp.toPx() }
         val discTopPx = with(density) { discTop.dp.toPx() }
 
