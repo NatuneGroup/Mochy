@@ -505,6 +505,7 @@ enum class LyricsProvider {
     PAXSENIX,
     GENIUS,
     BINILYRICS,
+    YOULYPLUS,
     YOUTUBESUBTITLE,
     YOUTUBE,
     ;
@@ -513,10 +514,10 @@ enum class LyricsProvider {
         val alwaysLastFallbacks: List<LyricsProvider> = listOf(YOUTUBESUBTITLE, YOUTUBE)
 
         // Newly added sources stay off until a user enables them, so existing enabled sets keep their meaning.
-        private val disabledByDefault: Set<LyricsProvider> = setOf(GENIUS, BINILYRICS)
+        private val disabledByDefault: Set<LyricsProvider> = setOf(GENIUS, BINILYRICS, YOULYPLUS)
 
         val userConfigurable: List<LyricsProvider> =
-            listOf(BETTERLYRICS, LRCRED, UNISON, LRCLIB, KUGOU, PAXSENIX, GENIUS, BINILYRICS)
+            listOf(BETTERLYRICS, LRCRED, UNISON, LRCLIB, KUGOU, PAXSENIX, GENIUS, BINILYRICS, YOULYPLUS)
 
         private val legacyDefaultUserOrders =
             listOf(
@@ -540,6 +541,7 @@ enum class LyricsProvider {
                 "Paxsenix" -> PAXSENIX
                 "Genius" -> GENIUS
                 "BiniLyrics" -> BINILYRICS
+                "YouLyPlus" -> YOULYPLUS
                 "SimpMusic" -> SIMPMUSIC
                 "YouTubeSubtitle" -> YOUTUBESUBTITLE
                 "YouTube Music", "YouTube" -> YOUTUBE
