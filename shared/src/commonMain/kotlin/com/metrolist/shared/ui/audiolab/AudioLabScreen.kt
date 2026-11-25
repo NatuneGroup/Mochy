@@ -58,8 +58,8 @@ import com.metrolist.shared.generated.resources.audio_lab_reverb_description
 import com.metrolist.shared.generated.resources.audio_lab_room_size
 import com.metrolist.shared.generated.resources.audio_lab_rotation_speed
 import com.metrolist.shared.generated.resources.audio_lab_wet
-import com.metrolist.shared.generated.resources.percent_symbol
 import com.metrolist.shared.generated.resources.audio_lab_width
+import com.metrolist.shared.generated.resources.percent_symbol
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.settings.SettingsMainSwitch
 import com.metrolist.shared.ui.settings.settingsRowContainerColor
