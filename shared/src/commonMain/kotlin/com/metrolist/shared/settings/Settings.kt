@@ -170,6 +170,7 @@ import com.metrolist.shared.constants.PlaybackPitchKey
 import com.metrolist.shared.constants.PlaybackSpeedKey
 import com.metrolist.shared.constants.PlayerConfigRemoteEtagKey
 import com.metrolist.shared.constants.PlayerConfigRemoteSourceUrlKey
+import com.metrolist.shared.constants.PlayerCoverStyleKey
 import com.metrolist.shared.constants.PlaylistCollectionSortingsKey
 import com.metrolist.shared.constants.PlaylistEditLockKey
 import com.metrolist.shared.constants.PlaylistPickerSortDirectionKey
@@ -509,6 +510,7 @@ class Settings(
     var stageRoomAmount by preference(StageRoomAmountKey, stageDefaults.roomAmount)
     var stageLevelDb by preference(StageLevelDbKey, stageDefaults.levelDb)
     var playerType by preference(PlayerType.MOCHY)
+    var playerCoverStyle by preference(PlayerCoverStyleKey, PlayerCoverStyle.SQUARED)
     var ipodTheme by preference(IpodTheme.SILVER)
     var ipodWheelColor by preference(IpodWheelColor.THEME)
     var ipodShadow by preference(true)

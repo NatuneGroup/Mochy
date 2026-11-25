@@ -27,6 +27,7 @@ import com.metrolist.shared.settings.LibraryGridColumnsRange
 import com.metrolist.shared.settings.MiniPlayerType
 import com.metrolist.shared.settings.MusicVideoQuality
 import com.metrolist.shared.settings.PlayerBackgroundStyle
+import com.metrolist.shared.settings.PlayerCoverStyle
 import com.metrolist.shared.settings.PlayerThumbnailStyle
 import com.metrolist.shared.settings.PlayerType
 import com.metrolist.shared.settings.Settings
@@ -625,6 +626,13 @@ internal fun SettingsUiRegistryBuilder.registerAppearanceSettings(host: SharedSe
                 SliderStyle.LINEAR_WAVY -> SliderStyle.WAVY
                 else -> settings.sliderStyle
             }
+        val coverStyleChoices =
+            listOf(
+                SettingsChoice(PlayerCoverStyle.SQUARED.name, stringResource(Res.string.player_cover_style_squared)),
+                SettingsChoice(PlayerCoverStyle.EDGE_TO_EDGE.name, stringResource(Res.string.player_cover_style_edge_to_edge)),
+                SettingsChoice(PlayerCoverStyle.DISC.name, stringResource(Res.string.player_cover_style_disc)),
+            )
+        val selectedCoverStyle = settings.playerCoverStyle
         val sliderChoices = sliderStyleChoices()
         page(
             id = SettingsPageId.PLAYER_STYLE,
@@ -674,6 +682,17 @@ internal fun SettingsUiRegistryBuilder.registerAppearanceSettings(host: SharedSe
                     choices = playerTypeChoices,
                     selectedChoiceId = selectedPlayerType.name,
                 ) { settings.playerType = PlayerType.valueOf(it) }
+                if (host.platform != SettingsPlatform.DESKTOP) {
+                    choice(
+                        id = "playerCoverStyle",
+                        title = stringResource(Res.string.player_cover_style),
+                        description = stringResource(Res.string.player_cover_style_description),
+                        valueLabel = coverStyleChoices.first { it.id == selectedCoverStyle.name }.label,
+                        choices = coverStyleChoices,
+                        selectedChoiceId = selectedCoverStyle.name,
+                        enabled = settings.playerType == PlayerType.MOCHY,
+                    ) { settings.playerCoverStyle = PlayerCoverStyle.valueOf(it) }
+                }
                 if (host.platform != SettingsPlatform.DESKTOP) {
                     switch(
                         id = "immersivePlayer",

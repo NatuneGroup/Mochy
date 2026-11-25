@@ -169,6 +169,13 @@ enum class PlayerType {
     IPOD,
 }
 
+// the flagship's cover: the square card, the artwork bled to both screen edges, or a spinning record
+enum class PlayerCoverStyle {
+    SQUARED,
+    EDGE_TO_EDGE,
+    DISC,
+}
+
 enum class IpodTheme {
     SILVER,
     BLACK,
