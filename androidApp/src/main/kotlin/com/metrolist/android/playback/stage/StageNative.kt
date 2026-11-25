@@ -10,7 +10,7 @@ import java.nio.ByteBuffer
  * playback thread. [ready] loads the library and the HRTF asset once; when either fails, Stage stays off.
  */
 internal object StageNative {
-    private const val HrtfAsset = "stage_hrtf.bin"
+    private const val HRTF_ASSET = "stage_hrtf.bin"
 
     private var loaded: Boolean? = null
 
@@ -20,7 +20,7 @@ internal object StageNative {
         val ok =
             runCatching {
                 System.loadLibrary("mochystage")
-                val bytes = context.applicationContext.assets.open(HrtfAsset).use { it.readBytes() }
+                val bytes = context.applicationContext.assets.open(HRTF_ASSET).use { it.readBytes() }
                 loadHrtf(bytes)
             }.getOrDefault(false)
         loaded = ok
