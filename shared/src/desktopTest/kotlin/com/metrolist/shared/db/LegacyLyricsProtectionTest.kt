@@ -92,7 +92,10 @@ class LegacyLyricsProtectionTest {
                                         requireNotNull(dao.cacheLyricsIfUnchanged(row.copy(translatedLyrics = "Saved translation"), row))
                                     assertTrue(translated.isLegacyProtected)
                                     assertEquals("Saved translation", translated.translatedLyrics)
-                                    assertEquals(translated, dao.cacheLyricsIfUnchanged(LyricsEntity(id, fetched, "BetterLyrics"), translated))
+                                    assertEquals(
+                                        translated,
+                                        dao.cacheLyricsIfUnchanged(LyricsEntity(id, fetched, "BetterLyrics"), translated),
+                                    )
                                     assertEquals(
                                         translated,
                                         dao.cacheLyricsIfUnchanged(LyricsEntity(id, "", LyricsEntity.LYRICS_NOT_FOUND), translated),
