@@ -208,16 +208,7 @@ private fun Modifier.navHighlight(
 ): Modifier =
     drawBehind {
         val rect = pill.rect(size, tabCount, tabBounds, this) ?: return@drawBehind
-        val lift = pill.lift.value
-        val grow = lift * 3.dp.toPx()
-        val liftedColor = color.copy(alpha = (color.alpha * (1f + 0.35f * lift)).coerceIn(0f, 1f))
-        drawRoundRect(
-            color = liftedColor,
-            topLeft = Offset(rect.left - grow, rect.top - grow),
-            size = Size(rect.width + grow * 2f, rect.height + grow * 2f),
-            cornerRadius = CornerRadius(rect.height / 2f + grow),
-            alpha = pill.shown.value,
-        )
+        drawMochyNavPill(rect = rect, color = color, alpha = pill.shown.value, lift = pill.lift.value)
     }
 
 @Composable
