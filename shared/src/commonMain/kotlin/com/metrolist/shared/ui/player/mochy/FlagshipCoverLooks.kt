@@ -15,8 +15,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 // the record sits inside its square so its edge never touches the card
-internal const val FLAGSHIP_DISC_DIAMETER = 0.94f
-internal const val FLAGSHIP_DISC_CENTER = 0.5f
+const val FLAGSHIP_DISC_DIAMETER = 0.94f
+const val FLAGSHIP_DISC_CENTER = 0.5f
 
 // the side padding of the flagship's portrait column, which the full-bleed cover reaches past
 internal val FlagshipSidePadding = 32.dp
@@ -32,7 +32,7 @@ internal fun Modifier.coverBleed(amount: Dp): Modifier =
     }
 
 // fades the bottom of the full-bleed artwork into the backdrop behind the controls
-internal fun Modifier.coverFadeToBottom(): Modifier =
+fun Modifier.coverFadeToBottom(): Modifier =
     Modifier
         .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
         .drawWithContent {
