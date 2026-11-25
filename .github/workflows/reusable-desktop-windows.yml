@@ -47,10 +47,6 @@ on:
         required: true
       LASTFM_SECRET:
         required: true
-      LYPRIO_BASE_URL:
-        required: true
-      LYPRIO_HMAC_KEY:
-        required: true
 
 jobs:
   package:
@@ -77,15 +73,11 @@ jobs:
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           UPLOAD_SENTRY: ${{ inputs.upload-sentry }}
-          LYPRIO_BASE_URL: ${{ secrets.LYPRIO_BASE_URL }}
-          LYPRIO_HMAC_KEY: ${{ secrets.LYPRIO_HMAC_KEY }}
         run: |
           set -euo pipefail
           if [[ "$UPLOAD_SENTRY" == "true" ]]; then
             test -n "$SENTRY_AUTH_TOKEN" || { echo "SENTRY_AUTH_TOKEN is required when Sentry upload is enabled" >&2; exit 1; }
           fi
-          test -n "$LYPRIO_BASE_URL" || { echo "LYPRIO_BASE_URL is required" >&2; exit 1; }
-          test -n "$LYPRIO_HMAC_KEY" || { echo "LYPRIO_HMAC_KEY is required" >&2; exit 1; }
 
       - name: Prepare CI Gradle
         uses: ./.github/actions/prepare-ci-gradle
@@ -161,8 +153,6 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
           LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
-          LYPRIO_BASE_URL: ${{ secrets.LYPRIO_BASE_URL }}
-          LYPRIO_HMAC_KEY: ${{ secrets.LYPRIO_HMAC_KEY }}
         run: |
           set -euo pipefail
           rm -rf dist

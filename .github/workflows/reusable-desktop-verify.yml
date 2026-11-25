@@ -30,10 +30,6 @@ on:
         required: false
       LASTFM_SECRET:
         required: false
-      LYPRIO_BASE_URL:
-        required: false
-      LYPRIO_HMAC_KEY:
-        required: false
 
 permissions:
   contents: read
@@ -114,8 +110,6 @@ jobs:
         env:
           LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
           LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
-          LYPRIO_BASE_URL: ${{ secrets.LYPRIO_BASE_URL }}
-          LYPRIO_HMAC_KEY: ${{ secrets.LYPRIO_HMAC_KEY }}
           JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
           # The local 4 GB heap is too small for in-process Kotlin compiling desktop and iOS sources together.
           GRADLE_OPTS: >-

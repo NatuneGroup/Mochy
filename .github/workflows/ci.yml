@@ -69,8 +69,6 @@ jobs:
       LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
       LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
       GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
-      LYPRIO_BASE_URL: ${{ secrets.LYPRIO_BASE_URL }}
-      LYPRIO_HMAC_KEY: ${{ secrets.LYPRIO_HMAC_KEY }}
 
   desktop:
     name: Desktop
@@ -85,8 +83,6 @@ jobs:
       GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
       LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
       LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
-      LYPRIO_BASE_URL: ${{ secrets.LYPRIO_BASE_URL }}
-      LYPRIO_HMAC_KEY: ${{ secrets.LYPRIO_HMAC_KEY }}
 
   ios:
     name: iOS
@@ -97,7 +93,5 @@ jobs:
       cache-read-only: ${{ github.event_name == 'pull_request' }}
     secrets:
       GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
-      LYPRIO_BASE_URL: ${{ secrets.LYPRIO_BASE_URL }}
-      LYPRIO_HMAC_KEY: ${{ secrets.LYPRIO_HMAC_KEY }}
       LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
       LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}

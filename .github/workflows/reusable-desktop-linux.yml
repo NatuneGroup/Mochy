@@ -47,10 +47,6 @@ on:
         required: true
       LASTFM_SECRET:
         required: true
-      LYPRIO_BASE_URL:
-        required: true
-      LYPRIO_HMAC_KEY:
-        required: true
 
 jobs:
   package:
@@ -100,8 +96,6 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
           LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
-          LYPRIO_BASE_URL: ${{ secrets.LYPRIO_BASE_URL }}
-          LYPRIO_HMAC_KEY: ${{ secrets.LYPRIO_HMAC_KEY }}
         run: ./scripts/build_appimage.sh -Pmetrolist.verifyPackaging=${{ inputs.run-verification }}
 
       - name: Upload desktop Sentry source context

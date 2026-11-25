@@ -18,7 +18,7 @@ def main():
             if "    uses: ./.github/workflows/reusable-ios-build.yml" not in job:
                 continue
             callers.append(workflow.name)
-            for secret in ("LASTFM_API_KEY", "LASTFM_SECRET", "LYPRIO_BASE_URL", "LYPRIO_HMAC_KEY"):
+            for secret in ("LASTFM_API_KEY", "LASTFM_SECRET"):
                 assert f"      {secret}: ${{{{ secrets.{secret} }}}}" in job, (workflow.name, secret)
             if workflow.name == "release.yml":
                 assert "      build-ipa: true" in job

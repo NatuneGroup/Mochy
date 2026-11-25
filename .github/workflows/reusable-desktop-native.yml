@@ -33,10 +33,6 @@ on:
         required: true
       LASTFM_SECRET:
         required: true
-      LYPRIO_BASE_URL:
-        required: true
-      LYPRIO_HMAC_KEY:
-        required: true
 
 permissions:
   contents: read
@@ -140,8 +136,6 @@ jobs:
         env:
           LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
           LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
-          LYPRIO_BASE_URL: ${{ secrets.LYPRIO_BASE_URL }}
-          LYPRIO_HMAC_KEY: ${{ secrets.LYPRIO_HMAC_KEY }}
         run: |
           ./gradlew -I scripts/desktop-native-image/prepare.init.gradle \
             -PnativeExperimentDir="$NATIVE_WORK" -Pmetrolist.sourceRevision="$GITHUB_SHA" -Pmetrolist.debug=false \

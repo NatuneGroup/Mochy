@@ -28,5 +28,3 @@ jobs:
     secrets:
       LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
       LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
-      LYPRIO_BASE_URL: ${{ secrets.LYPRIO_BASE_URL }}
-      LYPRIO_HMAC_KEY: ${{ secrets.LYPRIO_HMAC_KEY }}
