@@ -65,17 +65,19 @@ class ReverbCore : AudioLabCore {
         snapGains()
     }
 
+    override fun settleIfIdle(): Boolean {
+        if (channels != 0 && (settings.enabled || amount != 0f)) return false
+        if (!roomEmpty) clearRoom()
+        return true
+    }
+
     override fun process(
         interleaved: FloatArray,
         frames: Int,
     ): Boolean {
-        if (frames <= 0) return false
+        if (frames <= 0 || settleIfIdle()) return false
         val params = settings
         val target = if (params.enabled) 1f else 0f
-        if (channels == 0 || (target == 0f && amount == 0f)) {
-            if (!roomEmpty) clearRoom()
-            return false
-        }
         roomEmpty = false
 
         // room size and damping set the combs once per buffer, so they don't zipper

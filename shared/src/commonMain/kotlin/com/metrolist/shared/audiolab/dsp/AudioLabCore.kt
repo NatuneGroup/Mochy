@@ -12,6 +12,9 @@ interface AudioLabCore {
 
     fun reset()
 
+    /** True while the effect is off and faded out; clears any leftover tail so a later start is clean. */
+    fun settleIfIdle(): Boolean
+
     fun process(
         interleaved: FloatArray,
         frames: Int,

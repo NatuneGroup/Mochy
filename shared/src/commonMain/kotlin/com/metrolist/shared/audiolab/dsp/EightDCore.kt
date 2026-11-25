@@ -41,6 +41,8 @@ class EightDCore : AudioLabCore {
         smoothedDepth = settings.depth.coerceIn(0f, 1f)
     }
 
+    override fun settleIfIdle(): Boolean = sampleRate <= 0 || (!settings.enabled && smoothedEnabled == 0f)
+
     override fun process(
         interleaved: FloatArray,
         frames: Int,
@@ -48,7 +50,7 @@ class EightDCore : AudioLabCore {
         val params = settings
         val targetEnabled = if (params.enabled) 1f else 0f
         // off and faded out: leave the song alone instead of a sin and cos per sample
-        if (sampleRate <= 0 || frames <= 0 || (targetEnabled == 0f && smoothedEnabled == 0f)) return false
+        if (frames <= 0 || settleIfIdle()) return false
 
         val targetDepth = params.depth.coerceIn(0f, 1f)
         val speed = params.rotationSpeedHz.coerceIn(0.05f, 0.5f).toDouble()

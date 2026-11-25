@@ -56,17 +56,19 @@ class SpatialCore : AudioLabCore {
         snapGains()
     }
 
+    override fun settleIfIdle(): Boolean {
+        if (sampleRate != 0 && (settings.enabled || fade != 0f)) return false
+        if (!stateEmpty) clearState()
+        return true
+    }
+
     override fun process(
         interleaved: FloatArray,
         frames: Int,
     ): Boolean {
-        if (frames <= 0) return false
+        if (frames <= 0 || settleIfIdle()) return false
         val params = settings
         val target = if (params.enabled) 1f else 0f
-        if (sampleRate == 0 || (target == 0f && fade == 0f)) {
-            if (!stateEmpty) clearState()
-            return false
-        }
         stateEmpty = false
         val mode = params.mode
         if (mode == SpatialMode.Crossfeed) {

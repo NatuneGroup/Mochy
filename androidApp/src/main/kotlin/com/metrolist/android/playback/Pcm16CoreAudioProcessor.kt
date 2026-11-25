@@ -42,6 +42,12 @@ internal abstract class Pcm16CoreAudioProcessor<T : AudioLabCore>(
         val start = inputBuffer.position()
         val source = inputBuffer.order(ByteOrder.nativeOrder())
         val output = replaceOutputBuffer(bytes).order(ByteOrder.nativeOrder())
+        // off and faded out: copy the bytes instead of converting every sample
+        if (core.settleIfIdle()) {
+            output.put(source)
+            output.flip()
+            return
+        }
         val count = bytes / BYTES_PER_SAMPLE
         val frames = if (channels == 0) 0 else count / channels
         if (samples.size < count) samples = FloatArray(count)
