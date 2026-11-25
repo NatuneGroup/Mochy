@@ -116,6 +116,10 @@ interface PlayerPlatform {
     @Composable
     fun lyricsShareAction(viewModel: PlayerViewModel): ((String) -> Unit)? = null
 
+    // The platform's image share for a song card; null hides the menu action.
+    @Composable
+    fun rememberSongCardExport(): (suspend (ImageBitmap) -> Boolean)? = null
+
     @Composable
     fun LyricsMenu(
         viewModel: PlayerViewModel,
