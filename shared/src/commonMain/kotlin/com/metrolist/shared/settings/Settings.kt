@@ -14,6 +14,8 @@ import com.metrolist.shared.api.lyrics.AiProviderPresets
 import com.metrolist.shared.audiolab.EightDSettings
 import com.metrolist.shared.audiolab.ReverbPresets
 import com.metrolist.shared.audiolab.ReverbSettings
+import com.metrolist.shared.audiolab.SpatialMode
+import com.metrolist.shared.audiolab.SpatialSettings
 import com.metrolist.shared.backup.AutoBackupFrequency
 import com.metrolist.shared.constants.ActiveLyricsTextPositionKey
 import com.metrolist.shared.constants.AiSlopBlocklistCacheKey
@@ -211,6 +213,12 @@ import com.metrolist.shared.constants.SleepTimerDefaultMinutesKey
 import com.metrolist.shared.constants.SliderTrackThicknessDpKey
 import com.metrolist.shared.constants.SlimNavBarKey
 import com.metrolist.shared.constants.SongShareLinkKey
+import com.metrolist.shared.constants.SpatialAmountKey
+import com.metrolist.shared.constants.SpatialCutoffHzKey
+import com.metrolist.shared.constants.SpatialEnabledKey
+import com.metrolist.shared.constants.SpatialFeedDbKey
+import com.metrolist.shared.constants.SpatialModeKey
+import com.metrolist.shared.constants.SpatialSpeakerAngleKey
 import com.metrolist.shared.constants.SpeedDialArtworkRefreshTimesKey
 import com.metrolist.shared.constants.SpeedDialSurprisePinnedKey
 import com.metrolist.shared.constants.SponsorBlockEnabledKey
@@ -462,6 +470,13 @@ class Settings(
     var equalizerActiveProfileId by preference(EqualizerActiveProfileIdKey, "")
     var equalizerEnabled by preference(EqualizerEnabledKey, false)
     var audioBoostDb by preference(AudioBoostDbKey, 0f)
+    private val spatialDefaults = SpatialSettings()
+    var spatialEnabled by preference(SpatialEnabledKey, spatialDefaults.enabled)
+    var spatialMode by preference(SpatialModeKey, spatialDefaults.mode)
+    var spatialCutoffHz by preference(SpatialCutoffHzKey, spatialDefaults.cutoffHz)
+    var spatialFeedDb by preference(SpatialFeedDbKey, spatialDefaults.feedDb)
+    var spatialSpeakerAngle by preference(SpatialSpeakerAngleKey, spatialDefaults.speakerAngle)
+    var spatialAmount by preference(SpatialAmountKey, spatialDefaults.amount)
     private val reverbDefaults = ReverbSettings()
     var reverbEnabled by preference(ReverbEnabledKey, reverbDefaults.enabled)
     var reverbMix by preference(ReverbMixKey, reverbDefaults.mix)

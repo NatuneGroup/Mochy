@@ -5,6 +5,17 @@ import com.metrolist.shared.settings.Settings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 
+/** The saved spatial controls, as the Android player applies them. */
+fun Settings.spatialSettings(): SpatialSettings =
+    SpatialSettings(
+        enabled = spatialEnabled,
+        mode = spatialMode,
+        cutoffHz = spatialCutoffHz,
+        feedDb = spatialFeedDb,
+        speakerAngle = spatialSpeakerAngle,
+        amount = spatialAmount,
+    )
+
 /** The saved reverb controls, as the Android player applies them. */
 fun Settings.reverbSettings(): ReverbSettings =
     ReverbSettings(
@@ -26,6 +37,9 @@ fun Settings.eightDSettings(): EightDSettings =
         rotationSpeedHz = eightDRotationSpeedHz,
         depth = eightDDepth,
     )
+
+/** Emits the current spatial controls, then again after each change. */
+fun Settings.spatialSettingsFlow(): Flow<SpatialSettings> = snapshotFlow { spatialSettings() }.distinctUntilChanged()
 
 /** Emits the current reverb controls, then again after each change. */
 fun Settings.reverbSettingsFlow(): Flow<ReverbSettings> = snapshotFlow { reverbSettings() }.distinctUntilChanged()
