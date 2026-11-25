@@ -165,8 +165,8 @@ private fun FlagshipCover(modifier: Modifier) {
                     modifier =
                         Modifier
                             .size(side)
-                            .clip(coverShape)
-                            .shadow(24.dp, coverShape),
+                            .shadow(24.dp, coverShape)
+                            .clip(coverShape),
                     contentScale = ContentScale.Crop,
                 )
             }
