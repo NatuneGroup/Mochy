@@ -40,6 +40,7 @@ object UiState {
 
     var showSettings by mutableStateOf(false)
     var showBedsideClock by mutableStateOf(false)
+    var showSongShareCard by mutableStateOf(false)
     var selectedSettingsPage by mutableStateOf<SettingsPageId?>(null)
     var openDevtoolsSettingsRequested by mutableStateOf(false)
     var openPlaylistImportRequested by mutableStateOf(false)

@@ -83,6 +83,7 @@ import com.metrolist.shared.generated.resources.romanize_track
 import com.metrolist.shared.generated.resources.save
 import com.metrolist.shared.generated.resources.search
 import com.metrolist.shared.generated.resources.select_to_cancel
+import com.metrolist.shared.generated.resources.share_song_card
 import com.metrolist.shared.generated.resources.show_interval_indicator
 import com.metrolist.shared.generated.resources.show_lyrics
 import com.metrolist.shared.generated.resources.show_queue
@@ -668,6 +669,13 @@ fun PlayerMenuPanel(
                     ) {
                         onDismiss()
                         UiState.showBedsideClock = true
+                    },
+                    PlayerMenuAction(
+                        MetrolistIcons.Outlined.Share,
+                        stringResource(Res.string.share_song_card),
+                    ) {
+                        onDismiss()
+                        UiState.showSongShareCard = true
                     },
                     onShowDetailsDialog?.let { action ->
                         PlayerMenuAction(

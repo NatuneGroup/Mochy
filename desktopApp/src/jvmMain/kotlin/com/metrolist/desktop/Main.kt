@@ -154,6 +154,7 @@ import com.metrolist.desktop.utils.desktopRenderApiOverride
 import com.metrolist.desktop.utils.isDesktopPlatformSupported
 import com.metrolist.desktop.utils.isOmarchy
 import com.metrolist.desktop.utils.openStopOmarchy
+import com.metrolist.desktop.utils.saveImage
 import com.metrolist.desktop.web.DesktopWebViewError
 import com.metrolist.desktop.window.DesktopWindow
 import com.metrolist.desktop.window.DesktopWindowScope
@@ -192,6 +193,7 @@ import com.metrolist.shared.generated.resources.learn_more
 import com.metrolist.shared.generated.resources.liked_songs
 import com.metrolist.shared.generated.resources.ok
 import com.metrolist.shared.generated.resources.playback_error
+import com.metrolist.shared.generated.resources.share_song_card
 import com.metrolist.shared.generated.resources.technical_information
 import com.metrolist.shared.generated.resources.window_title_now_playing
 import com.metrolist.shared.generated.resources.youtube_session_expired_message
@@ -235,6 +237,7 @@ import com.metrolist.shared.ui.playback.LocalPlaybackController
 import com.metrolist.shared.ui.player.mochy.BedsideClock
 import com.metrolist.shared.ui.screens.SupportPrompt
 import com.metrolist.shared.ui.settings.SettingsPageId
+import com.metrolist.shared.ui.share.SongShareCardDialog
 import com.metrolist.shared.ui.utils.LocalMouseScrollFactors
 import com.metrolist.shared.ui.utils.desktopMouseScrollFactors
 import com.metrolist.shared.ui.utils.softwareRendering
@@ -657,6 +660,19 @@ private fun DesktopWindowScope.AppContent(
                     onPrevious = { PlayerState.skipPrevious() }.takeUnless { PlayerState.isListenTogetherGuest() },
                     onNext = { PlayerState.skipNext() }.takeUnless { PlayerState.isListenTogetherGuest() },
                 )
+            }
+            if (UiState.showSongShareCard) {
+                val track = PlayerState.currentTrack
+                if (track != null) {
+                    val exportTitle = stringResource(Res.string.share_song_card)
+                    SongShareCardDialog(
+                        title = track.title,
+                        artist = track.artists.joinToString { it.displayName },
+                        artworkUrl = track.thumbnail,
+                        onExport = { image -> saveImage(image, exportTitle, "mochy-song-card.png") },
+                        onDismiss = { UiState.showSongShareCard = false },
+                    )
+                }
             }
             YouTubeSyncSnackbar(AppState.snackbarHostState)
             val snackbarScheme = rememberUpdatedState(colorScheme)
