@@ -25,12 +25,18 @@ import androidx.compose.ui.unit.dp
 import com.metrolist.shared.audiolab.EightDSettings
 import com.metrolist.shared.audiolab.ReverbPresets
 import com.metrolist.shared.audiolab.ReverbSettings
+import com.metrolist.shared.audiolab.SpatialMode
+import com.metrolist.shared.audiolab.SpatialSettings
 import com.metrolist.shared.audiolab.eightDSettings
 import com.metrolist.shared.audiolab.reverbSettings
+import com.metrolist.shared.audiolab.spatialSettings
 import com.metrolist.shared.audiolab.withPreset
 import com.metrolist.shared.generated.resources.Res
+import com.metrolist.shared.generated.resources.audio_lab_amount
 import com.metrolist.shared.generated.resources.audio_lab_android_only
 import com.metrolist.shared.generated.resources.audio_lab_damping
+import com.metrolist.shared.generated.resources.audio_lab_db
+import com.metrolist.shared.generated.resources.audio_lab_degrees
 import com.metrolist.shared.generated.resources.audio_lab_depth
 import com.metrolist.shared.generated.resources.audio_lab_dry
 import com.metrolist.shared.generated.resources.audio_lab_eightd
@@ -57,6 +63,13 @@ import com.metrolist.shared.generated.resources.audio_lab_reverb
 import com.metrolist.shared.generated.resources.audio_lab_reverb_description
 import com.metrolist.shared.generated.resources.audio_lab_room_size
 import com.metrolist.shared.generated.resources.audio_lab_rotation_speed
+import com.metrolist.shared.generated.resources.audio_lab_spatial
+import com.metrolist.shared.generated.resources.audio_lab_spatial_angle
+import com.metrolist.shared.generated.resources.audio_lab_spatial_cutoff
+import com.metrolist.shared.generated.resources.audio_lab_spatial_description
+import com.metrolist.shared.generated.resources.audio_lab_spatial_feed
+import com.metrolist.shared.generated.resources.audio_lab_spatial_mode_crossfeed
+import com.metrolist.shared.generated.resources.audio_lab_spatial_mode_speakers
 import com.metrolist.shared.generated.resources.audio_lab_wet
 import com.metrolist.shared.generated.resources.audio_lab_width
 import com.metrolist.shared.generated.resources.percent_symbol
@@ -69,7 +82,7 @@ import kotlin.math.log10
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
-/** Audio Lab settings: the reverb and 8D cards. The controls stay disabled where the effects are not wired yet. */
+/** Audio Lab settings: the spatial, reverb and 8D cards. The controls stay disabled where the effects are not wired yet. */
 @Composable
 fun AudioLabScreen(
     available: Boolean,
@@ -90,8 +103,79 @@ fun AudioLabScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        SpatialCard(available)
         ReverbCard(available)
         EightDCard(available)
+    }
+}
+
+@Composable
+private fun SpatialCard(available: Boolean) {
+    val spatial = Settings.shared.spatialSettings()
+    val active = available && spatial.enabled
+    AudioLabCard {
+        SettingsMainSwitch(
+            title = stringResource(Res.string.audio_lab_spatial),
+            checked = spatial.enabled,
+            onCheckedChange = { saveSpatial(spatial.copy(enabled = it)) },
+            enabled = available,
+        )
+        Text(
+            text = stringResource(Res.string.audio_lab_spatial_description),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            FilterChip(
+                selected = spatial.mode == SpatialMode.Crossfeed,
+                onClick = { saveSpatial(spatial.copy(mode = SpatialMode.Crossfeed)) },
+                label = { Text(stringResource(Res.string.audio_lab_spatial_mode_crossfeed)) },
+                enabled = active,
+            )
+            FilterChip(
+                selected = spatial.mode == SpatialMode.Speakers,
+                onClick = { saveSpatial(spatial.copy(mode = SpatialMode.Speakers)) },
+                label = { Text(stringResource(Res.string.audio_lab_spatial_mode_speakers)) },
+                enabled = active,
+            )
+        }
+        if (spatial.mode == SpatialMode.Crossfeed) {
+            SliderRow(
+                stringResource(Res.string.audio_lab_spatial_cutoff),
+                hertz(spatial.cutoffHz),
+                spatial.cutoffHz,
+                300f..1500f,
+                active,
+            ) {
+                saveSpatial(spatial.copy(cutoffHz = it.roundToInt().toFloat()))
+            }
+            SliderRow(
+                stringResource(Res.string.audio_lab_spatial_feed),
+                decibels(spatial.feedDb),
+                spatial.feedDb,
+                1f..15f,
+                active,
+            ) {
+                saveSpatial(spatial.copy(feedDb = it))
+            }
+        } else {
+            SliderRow(
+                stringResource(Res.string.audio_lab_spatial_angle),
+                degrees(spatial.speakerAngle),
+                spatial.speakerAngle,
+                10f..90f,
+                active,
+            ) {
+                saveSpatial(spatial.copy(speakerAngle = it.roundToInt().toFloat()))
+            }
+        }
+        SliderRow(stringResource(Res.string.audio_lab_amount), percent(spatial.amount), spatial.amount, 0f..1f, active) {
+            saveSpatial(spatial.copy(amount = it))
+        }
     }
 }
 
@@ -198,7 +282,7 @@ private fun EightDCard(available: Boolean) {
         }
         SliderRow(
             stringResource(Res.string.audio_lab_rotation_speed),
-            stringResource(Res.string.audio_lab_hz_decimal, twoDecimals(eightD.rotationSpeedHz)),
+            stringResource(Res.string.audio_lab_hz_decimal, roundedText(eightD.rotationSpeedHz, 100f)),
             eightD.rotationSpeedHz,
             0.05f..0.5f,
             active,
@@ -226,6 +310,15 @@ private fun saveReverb(
     Settings.shared.reverbPreDelayMs = settings.preDelayMs
     Settings.shared.reverbLowCutHz = settings.lowCutHz
     Settings.shared.reverbPresetId = presetId
+}
+
+private fun saveSpatial(settings: SpatialSettings) {
+    Settings.shared.spatialEnabled = settings.enabled
+    Settings.shared.spatialMode = settings.mode
+    Settings.shared.spatialCutoffHz = settings.cutoffHz
+    Settings.shared.spatialFeedDb = settings.feedDb
+    Settings.shared.spatialSpeakerAngle = settings.speakerAngle
+    Settings.shared.spatialAmount = settings.amount
 }
 
 private fun saveEightD(settings: EightDSettings) {
@@ -309,8 +402,7 @@ private fun SliderRow(
 }
 
 @Composable
-private fun percent(value: Float): String =
-    stringResource(Res.string.audio_lab_percent, (value * 100f).roundToInt(), stringResource(Res.string.percent_symbol))
+private fun percent(value: Float): String = stringResource(Res.string.audio_lab_percent, (value * 100f).roundToInt(), stringResource(Res.string.percent_symbol))
 
 @Composable
 private fun milliseconds(value: Float): String = stringResource(Res.string.audio_lab_ms, value.roundToInt())
@@ -318,8 +410,14 @@ private fun milliseconds(value: Float): String = stringResource(Res.string.audio
 @Composable
 private fun hertz(value: Float): String = stringResource(Res.string.audio_lab_hz, value.roundToInt())
 
-// Compose resources have no %.2f placeholder, so the two decimals are formatted here.
-private fun twoDecimals(value: Float): String {
-    val hundredths = (value * 100f).roundToInt()
-    return "${hundredths / 100}.${(hundredths % 100).toString().padStart(2, '0')}"
-}
+@Composable
+private fun decibels(value: Float): String = stringResource(Res.string.audio_lab_db, roundedText(value, 10f))
+
+/** Rounds to the nearest 1/scale for display, without a printf format (Compose resources have none). */
+private fun roundedText(
+    value: Float,
+    scale: Float,
+): String = ((value * scale).roundToInt() / scale).toString()
+
+@Composable
+private fun degrees(value: Float): String = stringResource(Res.string.audio_lab_degrees, value.roundToInt())

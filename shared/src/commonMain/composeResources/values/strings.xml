@@ -5902,9 +5902,29 @@
     <!-- Translators: Title of the Audio Lab settings page. -->
     <string name="audio_lab">Audio Lab</string>
     <!-- Translators: Subtitle of the Audio Lab row in the sound settings. -->
-    <string name="settings_audio_lab_overview">Reverb and 8D sound effects</string>
+    <string name="settings_audio_lab_overview">Spatial, reverb and 8D sound effects</string>
     <!-- Translators: Note shown on the Audio Lab page when the effects are not available on this platform yet. -->
     <string name="audio_lab_android_only">Available on Android for now</string>
+    <!-- Translators: Name of the spatial audio effect card in Audio Lab. -->
+    <string name="audio_lab_spatial">Spatial</string>
+    <!-- Translators: Short explanation under the spatial switch. -->
+    <string name="audio_lab_spatial_description">Headphone crossfeed or virtual speakers. Turn it on, then pick a mode.</string>
+    <!-- Translators: Spatial mode: blends each ear's sound into the other ear, for headphones. -->
+    <string name="audio_lab_spatial_mode_crossfeed">Crossfeed</string>
+    <!-- Translators: Spatial mode: places the left and right channels as two speakers in front of the listener. -->
+    <string name="audio_lab_spatial_mode_speakers">Speakers</string>
+    <!-- Translators: Crossfeed slider: frequency at which the head starts to block the other ear's sound. -->
+    <string name="audio_lab_spatial_cutoff">Head shadow</string>
+    <!-- Translators: Crossfeed slider: how much quieter the other ear's sound is. %1$s is the number of decibels. -->
+    <string name="audio_lab_spatial_feed">Feed level</string>
+    <!-- Translators: Speakers slider: angle of each virtual speaker from straight ahead. %1$d is the number of degrees. -->
+    <string name="audio_lab_spatial_angle">Speaker angle</string>
+    <!-- Translators: Audio Lab slider: how strongly the effect is mixed in. -->
+    <string name="audio_lab_amount">Amount</string>
+    <!-- Translators: Decibel value shown next to an Audio Lab slider. %1$s is the number. -->
+    <string name="audio_lab_db">%1$s dB</string>
+    <!-- Translators: Angle in degrees shown next to an Audio Lab slider. %1$d is the number. -->
+    <string name="audio_lab_degrees">%1$d°</string>
     <!-- Translators: Name of the reverb effect card in Audio Lab. -->
     <string name="audio_lab_reverb">Reverb</string>
     <!-- Translators: Short explanation under the reverb switch. -->
@@ -5955,12 +5975,12 @@
     <string name="audio_lab_eightd_preset_balanced">Balanced</string>
     <!-- Translators: 8D preset name: fast and deep. -->
     <string name="audio_lab_eightd_preset_extreme">Extreme</string>
-    <!-- Translators: Percentage shown next to an Audio Lab slider. %1$d is the number and %2$s is the percent sign. -->
+    <!-- Translators: Percentage shown next to an Audio Lab slider. %1$d is the number. -->
     <string name="audio_lab_percent">%1$d%2$s</string>
     <!-- Translators: Milliseconds shown next to the pre-delay slider. %1$d is the number. -->
     <string name="audio_lab_ms">%1$d ms</string>
     <!-- Translators: Frequency in hertz shown next to the low cut slider. %1$d is the number. -->
     <string name="audio_lab_hz">%1$d Hz</string>
-    <!-- Translators: Frequency in hertz with two decimals, shown next to the 8D rotation slider. %1$s is the number. -->
+    <!-- Translators: Frequency in hertz with two decimals, shown next to the 8D rotation slider. %1$.2f is the number. -->
     <string name="audio_lab_hz_decimal">%1$s Hz</string>
 </resources>
