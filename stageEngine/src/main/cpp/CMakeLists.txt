@@ -1,4 +1,4 @@
-// Ported and adapted from Mochy Music by realidkroo. Licensed under GPL-3.0.
+# Ported and adapted from Mochy Music by realidkroo. Licensed under GPL-3.0.
 # the 3d room of Audio Lab Stage: one small library with no third-party code, built by the buildStageJni task
 cmake_minimum_required(VERSION 3.22.1)
 project(mochystage LANGUAGES CXX)
