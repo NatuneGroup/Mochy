@@ -22,7 +22,6 @@ import kotlin.math.tanh
  */
 @OptIn(UnstableApi::class)
 internal class ReverbAudioProcessor : BaseAudioProcessor() {
-
     @Volatile private var settings = ReverbSettings()
 
     private var sampleRate = 0
@@ -45,12 +44,10 @@ internal class ReverbAudioProcessor : BaseAudioProcessor() {
     private var mix = 0f
     private var roomEmpty = true
 
-    /** Read once per buffer. Media3 checks isActive only when the sink configures, so enabling takes effect on the next configure. */
+    // Read once per buffer; when off, audio passes through after a short fade, like the equalizer.
     fun update(newSettings: ReverbSettings) {
         settings = newSettings
     }
-
-    override fun isActive(): Boolean = settings.enabled && super.isActive()
 
     override fun onConfigure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
         if (inputAudioFormat.encoding != C.ENCODING_PCM_16BIT || inputAudioFormat.channelCount !in 1..2) {
@@ -80,26 +77,26 @@ internal class ReverbAudioProcessor : BaseAudioProcessor() {
             return
         }
         roomEmpty = false
-        val frames = bytes / (BytesPerSample * channels)
+        val frames = bytes / (BYTES_PER_SAMPLE * channels)
 
         // room size and damping set the combs once per buffer, so they don't zipper
-        val feedback = params.roomSize.coerceIn(0f, 1f) * ScaleRoom + OffsetRoom
-        val damp = params.damping.coerceIn(0f, 1f) * ScaleDamp
+        val feedback = params.roomSize.coerceIn(0f, 1f) * SCALE_ROOM + OFFSET_ROOM
+        val damp = params.damping.coerceIn(0f, 1f) * SCALE_DAMP
         for (c in combsL) c.set(feedback, damp)
         for (c in combsR) c.set(feedback, damp)
-        val delayFrames = (params.preDelayMs.coerceIn(0f, MaxPreDelayMs) / 1000f * sampleRate).roundToInt()
+        val delayFrames = (params.preDelayMs.coerceIn(0f, MAX_PRE_DELAY_MS) / 1000f * sampleRate).roundToInt()
             .coerceIn(0, preDelay.size - 1)
         val lowCut = exp(-2.0 * PI * params.lowCutHz.coerceIn(10f, 2000f) / sampleRate).toFloat()
 
         val width = params.width.coerceIn(0f, 1f)
-        val wetLevel = params.wet.coerceIn(0f, 1f) * ScaleWet
+        val wetLevel = params.wet.coerceIn(0f, 1f) * SCALE_WET
         val targetWet1 = wetLevel * (width / 2f + 0.5f)
         val targetWet2 = wetLevel * ((1f - width) / 2f)
         val targetDry = params.dry.coerceIn(0f, 1f)
         val targetMix = params.mix.coerceIn(0f, 1f)
 
         val step = 1f / frames
-        val toggleStep = 1f / (sampleRate * ToggleSeconds)
+        val toggleStep = 1f / (sampleRate * TOGGLE_SECONDS)
         val dWet1 = (targetWet1 - wet1) * step
         val dWet2 = (targetWet2 - wet2) * step
         val dDry = (targetDry - dryGain) * step
@@ -117,7 +114,7 @@ internal class ReverbAudioProcessor : BaseAudioProcessor() {
             mix += dMix
 
             // what goes into the room: mono, pre-delayed, low-cut
-            val send = (inL + inR) * FixedGain
+            val send = (inL + inR) * FIXED_GAIN
             preDelay[preDelayIndex] = send
             var read = preDelayIndex - delayFrames
             if (read < 0) read += preDelay.size
@@ -125,7 +122,7 @@ internal class ReverbAudioProcessor : BaseAudioProcessor() {
             val delayed = preDelay[read]
             lowCutState = lowCut * (lowCutState + delayed - lowCutInput)
             lowCutInput = delayed
-            val input = lowCutState + AntiDenormal
+            val input = lowCutState + ANTI_DENORMAL
 
             var accL = 0f
             var accR = 0f
@@ -177,7 +174,7 @@ internal class ReverbAudioProcessor : BaseAudioProcessor() {
         val params = settings
         amount = if (params.enabled) 1f else 0f
         val width = params.width.coerceIn(0f, 1f)
-        val wetLevel = params.wet.coerceIn(0f, 1f) * ScaleWet
+        val wetLevel = params.wet.coerceIn(0f, 1f) * SCALE_WET
         wet1 = wetLevel * (width / 2f + 0.5f)
         wet2 = wetLevel * ((1f - width) / 2f)
         dryGain = params.dry.coerceIn(0f, 1f)
@@ -197,11 +194,11 @@ internal class ReverbAudioProcessor : BaseAudioProcessor() {
 
     private fun build(rate: Int) {
         val k = rate / 44_100f
-        combsL = Array(CombTuning.size) { Comb((CombTuning[it] * k).roundToInt()) }
-        combsR = Array(CombTuning.size) { Comb(((CombTuning[it] + StereoSpread) * k).roundToInt()) }
-        allpassL = Array(AllpassTuning.size) { Allpass((AllpassTuning[it] * k).roundToInt()) }
-        allpassR = Array(AllpassTuning.size) { Allpass(((AllpassTuning[it] + StereoSpread) * k).roundToInt()) }
-        preDelay = FloatArray((rate * MaxPreDelayMs / 1000f).roundToInt() + 2)
+        combsL = Array(COMB_TUNING.size) { Comb((COMB_TUNING[it] * k).roundToInt()) }
+        combsR = Array(COMB_TUNING.size) { Comb(((COMB_TUNING[it] + STEREO_SPREAD) * k).roundToInt()) }
+        allpassL = Array(ALLPASS_TUNING.size) { Allpass((ALLPASS_TUNING[it] * k).roundToInt()) }
+        allpassR = Array(ALLPASS_TUNING.size) { Allpass(((ALLPASS_TUNING[it] + STEREO_SPREAD) * k).roundToInt()) }
+        preDelay = FloatArray((rate * MAX_PRE_DELAY_MS / 1000f).roundToInt() + 2)
         preDelayIndex = 0
         clearRoom()
     }
@@ -249,30 +246,30 @@ internal class ReverbAudioProcessor : BaseAudioProcessor() {
     }
 
     private companion object {
-        const val BytesPerSample = 2
+        const val BYTES_PER_SAMPLE = 2
 
         // jezar's freeverb tunings, in samples at 44.1 kHz
-        val CombTuning = intArrayOf(1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617)
-        val AllpassTuning = intArrayOf(556, 441, 341, 225)
-        const val StereoSpread = 23
-        const val FixedGain = 0.015f
-        const val ScaleWet = 3f
-        const val ScaleDamp = 0.4f
-        const val ScaleRoom = 0.28f
-        const val OffsetRoom = 0.7f
-        const val MaxPreDelayMs = 150f
-        const val ToggleSeconds = 0.15f
-        const val AntiDenormal = 1e-18f
-        const val Knee = 0.89f
+        val COMB_TUNING = intArrayOf(1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617)
+        val ALLPASS_TUNING = intArrayOf(556, 441, 341, 225)
+        const val STEREO_SPREAD = 23
+        const val FIXED_GAIN = 0.015f
+        const val SCALE_WET = 3f
+        const val SCALE_DAMP = 0.4f
+        const val SCALE_ROOM = 0.28f
+        const val OFFSET_ROOM = 0.7f
+        const val MAX_PRE_DELAY_MS = 150f
+        const val TOGGLE_SECONDS = 0.15f
+        const val ANTI_DENORMAL = 1e-18f
+        const val KNEE = 0.89f
 
         /** a soft knee above -1 dB instead of a hard clip: a full room adds level on loud songs */
         fun toPcm(sample: Float): Short {
             val a = abs(sample)
-            val shaped = if (a <= Knee) {
+            val shaped = if (a <= KNEE) {
                 sample
             } else {
-                val over = (a - Knee) / (1f - Knee)
-                (Knee + (1f - Knee) * tanh(over)) * if (sample < 0) -1f else 1f
+                val over = (a - KNEE) / (1f - KNEE)
+                (KNEE + (1f - KNEE) * tanh(over)) * if (sample < 0) -1f else 1f
             }
             val s = (shaped * 32767f).roundToInt()
             return s.coerceIn(-32768, 32767).toShort()
