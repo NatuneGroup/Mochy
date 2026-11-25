@@ -4,13 +4,6 @@
 
 package com.metrolist.shared.ui.onboarding.mochy
 
-import com.metrolist.shared.generated.resources.mochy_onb_bug_report
-import com.metrolist.shared.generated.resources.mochy_onb_tune
-import com.metrolist.shared.generated.resources.mochy_onb_person
-import com.metrolist.shared.generated.resources.mochy_onb_backup
-import com.metrolist.shared.generated.resources.mochy_onb_login
-import com.metrolist.shared.generated.resources.mochy_onb_restore
-import com.metrolist.shared.generated.resources.mochy_onb_download
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,11 +19,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import org.jetbrains.compose.resources.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.metrolist.shared.generated.resources.Res
+import com.metrolist.shared.generated.resources.mochy_onb_backup
+import com.metrolist.shared.generated.resources.mochy_onb_bug_report
+import com.metrolist.shared.generated.resources.mochy_onb_download
+import com.metrolist.shared.generated.resources.mochy_onb_login
+import com.metrolist.shared.generated.resources.mochy_onb_person
+import com.metrolist.shared.generated.resources.mochy_onb_restore
+import com.metrolist.shared.generated.resources.mochy_onb_tune
 import com.metrolist.shared.generated.resources.next
 import com.metrolist.shared.generated.resources.onb_auto_crossfade_title
 import com.metrolist.shared.generated.resources.onb_bringing_over
@@ -58,6 +57,7 @@ import com.metrolist.shared.generated.resources.onb_username_hint
 import com.metrolist.shared.generated.resources.onb_username_prompt
 import com.metrolist.shared.generated.resources.onb_yes
 import com.metrolist.shared.ui.mochy.ProfileIdCard
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 // ---- 1. import? ----

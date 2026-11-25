@@ -4,7 +4,6 @@
 
 package com.metrolist.shared.ui.onboarding.mochy
 
-import androidx.compose.ui.unit.em
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -52,6 +51,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 
@@ -99,18 +99,20 @@ internal fun OnboardingPage(
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val side = rememberSidePadding(maxWidth)
         Column(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .widthIn(max = Onb.MaxContentWidth)
-                .fillMaxSize(),
+            modifier =
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .widthIn(max = Onb.MaxContentWidth)
+                    .fillMaxSize(),
         ) {
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .then(if (scrollable) Modifier.verticalScroll(rememberScrollState()) else Modifier)
-                    .padding(horizontal = side)
-                    .padding(top = contentTop, bottom = 16.dp),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .then(if (scrollable) Modifier.verticalScroll(rememberScrollState()) else Modifier)
+                        .padding(horizontal = side)
+                        .padding(top = contentTop, bottom = 16.dp),
             ) {
                 badge()
                 Spacer(Modifier.height(22.dp))
@@ -137,11 +139,12 @@ internal fun OnboardingPage(
                 content()
             }
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .padding(horizontal = side)
-                    .padding(bottom = 18.dp, top = 6.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(horizontal = side)
+                        .padding(bottom = 18.dp, top = 6.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 content = footer,
             )
@@ -151,12 +154,16 @@ internal fun OnboardingPage(
 
 /** the light circle top-left of every page, holding the page's own glyph */
 @Composable
-internal fun PageBadge(icon: Painter, size: Dp = 40.dp) {
+internal fun PageBadge(
+    icon: Painter,
+    size: Dp = 40.dp,
+) {
     Box(
-        modifier = Modifier
-            .size(size)
-            .clip(CircleShape)
-            .background(Onb.Badge),
+        modifier =
+            Modifier
+                .size(size)
+                .clip(CircleShape)
+                .background(Onb.Badge),
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, contentDescription = null, tint = Color(0xFF1C1C1C), modifier = Modifier.size(size * 0.52f))
@@ -177,19 +184,19 @@ internal fun OnbButton(
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 50.dp)
-            .graphicsLayer {
-                val s = if (pressed && enabled) 0.97f else 1f
-                scaleX = s
-                scaleY = s
-                alpha = if (enabled) 1f else 0.45f
-            }
-            .clip(CircleShape)
-            .background(if (style == OnbButtonStyle.Primary) Onb.ButtonPrimary else Onb.ButtonSecondary)
-            .clickable(interactionSource = interaction, indication = null, enabled = enabled, onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 14.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .heightIn(min = 50.dp)
+                .graphicsLayer {
+                    val s = if (pressed && enabled) 0.97f else 1f
+                    scaleX = s
+                    scaleY = s
+                    alpha = if (enabled) 1f else 0.45f
+                }.clip(CircleShape)
+                .background(if (style == OnbButtonStyle.Primary) Onb.ButtonPrimary else Onb.ButtonSecondary)
+                .clickable(interactionSource = interaction, indication = null, enabled = enabled, onClick = onClick)
+                .padding(horizontal = 20.dp, vertical = 14.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -218,7 +225,14 @@ internal fun OnbTextField(
         value = value,
         onValueChange = onValueChange,
         singleLine = true,
-        textStyle = TextStyle(color = Color.White, fontFamily = mochyInterFontFamily(), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-0.03).em),
+        textStyle =
+            TextStyle(
+                color = Color.White,
+                fontFamily = mochyInterFontFamily(),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = (-0.03).em,
+            ),
         cursorBrush = SolidColor(Color.White),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = ImeAction.Done),
         keyboardActions = if (onDone != null) KeyboardActions(onDone = { onDone() }) else KeyboardActions.Default,
@@ -226,12 +240,13 @@ internal fun OnbTextField(
         decorationBox = { inner ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(CircleShape)
-                    .background(Onb.Field)
-                    .padding(start = 20.dp, end = if (trailing != null) 8.dp else 20.dp)
-                    .heightIn(min = 50.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(CircleShape)
+                        .background(Onb.Field)
+                        .padding(start = 20.dp, end = if (trailing != null) 8.dp else 20.dp)
+                        .heightIn(min = 50.dp),
             ) {
                 Box(modifier = Modifier.weight(1f).padding(vertical = 14.dp)) {
                     if (value.isEmpty()) {
@@ -256,18 +271,21 @@ internal fun OnbCard(
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     Box(
-        modifier = modifier
-            .graphicsLayer {
-                val s = if (pressed) 0.985f else 1f
-                scaleX = s
-                scaleY = s
-            }
-            .clip(shape)
-            .background(if (pressed) Onb.CardPressed else Onb.Card)
-            .then(
-                if (onClick != null) Modifier.clickable(interactionSource = interaction, indication = null, onClick = onClick)
-                else Modifier
-            ),
+        modifier =
+            modifier
+                .graphicsLayer {
+                    val s = if (pressed) 0.985f else 1f
+                    scaleX = s
+                    scaleY = s
+                }.clip(shape)
+                .background(if (pressed) Onb.CardPressed else Onb.Card)
+                .then(
+                    if (onClick != null) {
+                        Modifier.clickable(interactionSource = interaction, indication = null, onClick = onClick)
+                    } else {
+                        Modifier
+                    },
+                ),
     ) {
         content()
     }

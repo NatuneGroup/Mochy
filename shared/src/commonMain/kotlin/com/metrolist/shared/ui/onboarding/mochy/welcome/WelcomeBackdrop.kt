@@ -47,7 +47,10 @@ internal object WelcomeColors {
 
 // the dot grid, drawn as one batch of points that never changes
 @Composable
-internal fun WelcomeDots(spacing: Dp, modifier: Modifier = Modifier) {
+internal fun WelcomeDots(
+    spacing: Dp,
+    modifier: Modifier = Modifier,
+) {
     Spacer(
         modifier
             .fillMaxSize()
@@ -56,17 +59,18 @@ internal fun WelcomeDots(spacing: Dp, modifier: Modifier = Modifier) {
                 val dot = 1.6.dp.toPx()
                 val width = size.width
                 val height = size.height
-                val points = buildList {
-                    var y = step / 2f
-                    while (y < height) {
-                        var x = step / 2f
-                        while (x < width) {
-                            add(Offset(x, y))
-                            x += step
+                val points =
+                    buildList {
+                        var y = step / 2f
+                        while (y < height) {
+                            var x = step / 2f
+                            while (x < width) {
+                                add(Offset(x, y))
+                                x += step
+                            }
+                            y += step
                         }
-                        y += step
                     }
-                }
                 onDrawBehind {
                     drawPoints(points, PointMode.Points, WelcomeColors.Dot, strokeWidth = dot, cap = StrokeCap.Round)
                 }
@@ -76,23 +80,30 @@ internal fun WelcomeDots(spacing: Dp, modifier: Modifier = Modifier) {
 
 // rows of giant outlined welcomes in twenty languages, each row drifting the other way to the one above
 @Composable
-internal fun WelcomeWords(seconds: FloatState, fontSize: Dp, firstRowTop: Dp, modifier: Modifier = Modifier) {
+internal fun WelcomeWords(
+    seconds: FloatState,
+    fontSize: Dp,
+    firstRowTop: Dp,
+    modifier: Modifier = Modifier,
+) {
     val words = WelcomeWordList
     val density = LocalDensity.current
     val resolver = LocalFontFamilyResolver.current
     val family = mochyInterFontFamily()
     // twenty big lines with script fallbacks take a while to lay out, so it happens off the main thread
     val layouts by produceState<List<TextLayoutResult>?>(null, words, fontSize, density, family) {
-        value = withContext(Dispatchers.Default) {
-            val measurer = TextMeasurer(resolver, density, LayoutDirection.Ltr, 0)
-            val style = TextStyle(
-                fontFamily = family,
-                fontWeight = FontWeight.Bold,
-                fontSize = with(density) { fontSize.toSp() },
-                letterSpacing = (-0.02).em,
-            )
-            words.map { measurer.measure(it, style, TextOverflow.Clip, softWrap = false, maxLines = 1) }
-        }
+        value =
+            withContext(Dispatchers.Default) {
+                val measurer = TextMeasurer(resolver, density, LayoutDirection.Ltr, 0)
+                val style =
+                    TextStyle(
+                        fontFamily = family,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = with(density) { fontSize.toSp() },
+                        letterSpacing = (-0.02).em,
+                    )
+                words.map { measurer.measure(it, style, TextOverflow.Clip, softWrap = false, maxLines = 1) }
+            }
     }
     val fade = remember { Animatable(0f) }
     LaunchedEffect(layouts != null) {

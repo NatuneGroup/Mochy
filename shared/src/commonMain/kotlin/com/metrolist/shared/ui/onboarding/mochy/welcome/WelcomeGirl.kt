@@ -112,11 +112,12 @@ internal fun WelcomeGirl(
     screen: @Composable BoxScope.() -> Unit = { MochyPhoneScreen() },
 ) {
     BoxWithConstraints(modifier) {
-        val rawScale = if (constraints.hasBoundedWidth && constraints.maxWidth > 0) {
-            constraints.maxWidth / GirlArt.FRAME_WIDTH
-        } else {
-            0.5f
-        }
+        val rawScale =
+            if (constraints.hasBoundedWidth && constraints.maxWidth > 0) {
+                constraints.maxWidth / GirlArt.FRAME_WIDTH
+            } else {
+                0.5f
+            }
         val scale = rawScale.coerceAtLeast(0.05f)
         // decoded in 5% steps and never above the art's own size, so a tiny resize doesn't decode again
         val bitmapScale = (ceil(scale * 20f) / 20f).coerceIn(0.05f, 1f)
@@ -129,19 +130,20 @@ internal fun WelcomeGirl(
         val lift = with(LocalDensity.current) { 40.dp.toPx() }
 
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer {
-                    seconds.floatValue
-                    val shown = appear.value
-                    alpha = shown.coerceIn(0f, 1f)
-                    translationY = (1f - shown) * lift
-                    // breathing lifts her shoulders a touch from the bottom of the frame
-                    val breath = motion.pose.breath
-                    scaleX = 1f + 0.0012f * breath
-                    scaleY = 1f + 0.0045f * breath
-                    transformOrigin = TransformOrigin(0.5f, 1f)
-                },
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        seconds.floatValue
+                        val shown = appear.value
+                        alpha = shown.coerceIn(0f, 1f)
+                        translationY = (1f - shown) * lift
+                        // breathing lifts her shoulders a touch from the bottom of the frame
+                        val breath = motion.pose.breath
+                        scaleX = 1f + 0.0012f * breath
+                        scaleY = 1f + 0.0045f * breath
+                        transformOrigin = TransformOrigin(0.5f, 1f)
+                    },
         ) {
             Spacer(
                 Modifier
@@ -170,25 +172,32 @@ internal fun WelcomeGirl(
 @Composable
 internal fun BoxScope.MochyPhoneScreen() {
     Box(
-        modifier = Modifier
-            .matchParentSize()
-            .background(Brush.verticalGradient(listOf(Color(0xFF5C5C5C), Color(0xFF3B3B3B)))),
+        modifier =
+            Modifier
+                .matchParentSize()
+                .background(Brush.verticalGradient(listOf(Color(0xFF5C5C5C), Color(0xFF3B3B3B)))),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             painter = painterResource(Res.drawable.mochy_mark),
             contentDescription = null,
             tint = Color.White.copy(alpha = 0.92f),
-            modifier = Modifier
-                .fillMaxWidth(0.42f)
-                .aspectRatio(128f / 139f),
+            modifier =
+                Modifier
+                    .fillMaxWidth(0.42f)
+                    .aspectRatio(128f / 139f),
         )
     }
 }
 
 // the phone's white edge, black bezel and screen, drifting with her hand by layer props only
 @Composable
-private fun PhoneBody(motion: GirlMotion, seconds: FloatState, scale: Float, screen: @Composable BoxScope.() -> Unit) {
+private fun PhoneBody(
+    motion: GirlMotion,
+    seconds: FloatState,
+    scale: Float,
+    screen: @Composable BoxScope.() -> Unit,
+) {
     val width = GirlArt.PHONE_WIDTH * scale
     val height = GirlArt.PHONE_HEIGHT * scale
     val left = (GirlArt.PHONE_CENTER_X - GirlArt.FRAME_LEFT) * scale - width / 2f
@@ -199,29 +208,28 @@ private fun PhoneBody(motion: GirlMotion, seconds: FloatState, scale: Float, scr
     val bezel = GirlArt.PHONE_BEZEL * scale
     with(LocalDensity.current) {
         Box(
-            modifier = Modifier
-                .offset { placed }
-                .size(width.toDp(), height.toDp())
-                .graphicsLayer {
-                    seconds.floatValue
-                    val pose = motion.pose
-                    // where the phone's centre lands after her hand's drift, plus the pixel fraction the offset dropped
-                    val movedX = pose.phoneMoveX(GirlArt.PHONE_CENTER_X, GirlArt.PHONE_CENTER_Y)
-                    val movedY = pose.phoneMoveY(GirlArt.PHONE_CENTER_X, GirlArt.PHONE_CENTER_Y)
-                    translationX = (movedX - GirlArt.PHONE_CENTER_X) * scale + (left - placed.x)
-                    translationY = (movedY - GirlArt.PHONE_CENTER_Y) * scale + (top - placed.y)
-                    rotationZ = GirlArt.PHONE_TILT + pose.phoneDeg
-                }
-                .background(Color.White, RoundedCornerShape(outer.toDp()))
-                .padding(border.toDp())
-                .background(Color.Black, RoundedCornerShape((outer - border).toDp()))
-                .padding(bezel.toDp())
-                .clip(RoundedCornerShape((outer - border - bezel).coerceAtLeast(0f).toDp())),
+            modifier =
+                Modifier
+                    .offset { placed }
+                    .size(width.toDp(), height.toDp())
+                    .graphicsLayer {
+                        seconds.floatValue
+                        val pose = motion.pose
+                        // where the phone's centre lands after her hand's drift, plus the pixel fraction the offset dropped
+                        val movedX = pose.phoneMoveX(GirlArt.PHONE_CENTER_X, GirlArt.PHONE_CENTER_Y)
+                        val movedY = pose.phoneMoveY(GirlArt.PHONE_CENTER_X, GirlArt.PHONE_CENTER_Y)
+                        translationX = (movedX - GirlArt.PHONE_CENTER_X) * scale + (left - placed.x)
+                        translationY = (movedY - GirlArt.PHONE_CENTER_Y) * scale + (top - placed.y)
+                        rotationZ = GirlArt.PHONE_TILT + pose.phoneDeg
+                    }.background(Color.White, RoundedCornerShape(outer.toDp()))
+                    .padding(border.toDp())
+                    .background(Color.Black, RoundedCornerShape((outer - border).toDp()))
+                    .padding(bezel.toDp())
+                    .clip(RoundedCornerShape((outer - border - bezel).coerceAtLeast(0f).toDp())),
             content = screen,
         )
     }
 }
-
 
 // draws her straight onto the canvas: two bent meshes, small patches for the eyes and mouth
 private class GirlPainter {
@@ -315,7 +323,14 @@ private class GirlPainter {
         canvas.save()
         canvas.translate(layer.x, layer.y)
         canvas.scale(layer.w / image.width, layer.h / image.height)
-        canvas.drawImageRect(image, IntOffset.Zero, IntSize(image.width, image.height), IntOffset.Zero, IntSize(image.width, image.height), paint)
+        canvas.drawImageRect(
+            image,
+            IntOffset.Zero,
+            IntSize(image.width, image.height),
+            IntOffset.Zero,
+            IntSize(image.width, image.height),
+            paint,
+        )
         canvas.restore()
         paint.alpha = 1f
     }

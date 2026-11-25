@@ -42,44 +42,45 @@ internal fun AppSwitch(
     val trackColor by animateColorAsState(
         targetValue = if (checked) Grey.copy(alpha = alpha) else Color.Transparent,
         animationSpec = animSpec,
-        label = "trackColor"
+        label = "trackColor",
     )
     val borderColor by animateColorAsState(
         targetValue = if (checked) Color.Transparent else Grey.copy(alpha = 0.45f * alpha),
         animationSpec = animSpec,
-        label = "borderColor"
+        label = "borderColor",
     )
     val thumbColor by animateColorAsState(
         targetValue = if (checked) Color.White.copy(alpha = alpha) else Grey.copy(alpha = alpha),
         animationSpec = animSpec,
-        label = "thumbColor"
+        label = "thumbColor",
     )
     val thumbOffset by animateDpAsState(
         targetValue = if (checked) TrackWidth - ThumbSize - ThumbInset else ThumbInset,
         animationSpec = tween(150),
-        label = "thumbOffset"
+        label = "thumbOffset",
     )
 
     Box(
-        modifier = modifier
-            .size(TrackWidth, TrackHeight)
-            .toggleable(
-                value = checked,
-                enabled = enabled && onCheckedChange != null,
-                role = Role.Switch,
-                onValueChange = { onCheckedChange?.invoke(it) },
-            )
-            .clip(RoundedCornerShape(50))
-            .background(trackColor)
-            .border(1.dp, borderColor, RoundedCornerShape(50)),
+        modifier =
+            modifier
+                .size(TrackWidth, TrackHeight)
+                .toggleable(
+                    value = checked,
+                    enabled = enabled && onCheckedChange != null,
+                    role = Role.Switch,
+                    onValueChange = { onCheckedChange?.invoke(it) },
+                ).clip(RoundedCornerShape(50))
+                .background(trackColor)
+                .border(1.dp, borderColor, RoundedCornerShape(50)),
     ) {
         Box(
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .offset(x = thumbOffset)
-                .size(ThumbSize)
-                .clip(CircleShape)
-                .background(thumbColor),
+            modifier =
+                Modifier
+                    .align(Alignment.CenterStart)
+                    .offset(x = thumbOffset)
+                    .size(ThumbSize)
+                    .clip(CircleShape)
+                    .background(thumbColor),
             contentAlignment = Alignment.Center,
         ) {
             thumbContent?.invoke()

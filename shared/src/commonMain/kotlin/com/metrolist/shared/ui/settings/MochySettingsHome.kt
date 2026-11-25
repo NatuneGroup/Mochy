@@ -5,11 +5,8 @@
 
 package com.metrolist.shared.ui.settings
 
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -23,6 +20,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -34,6 +32,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -62,7 +62,6 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
-import kotlin.math.roundToInt
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
@@ -85,6 +84,7 @@ import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.roundToInt
 
 internal object MochySettingsColors {
     val Page = Color.Black
@@ -157,7 +157,13 @@ internal fun MochySettingsHome(
                     registry.rootGroups.filter { it.pages.isNotEmpty() }.forEachIndexed { groupIndex, group ->
                         // Mochy has no group headings, just a hairline between kinds of pages
                         if (groupIndex > 0) {
-                            Box(Modifier.fillMaxWidth().padding(vertical = 6.dp).height(0.8.dp).background(MochySettingsColors.Divider))
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 6.dp)
+                                    .height(0.8.dp)
+                                    .background(MochySettingsColors.Divider),
+                            )
                         }
                         group.pages.forEach { pageId ->
                             registry[pageId]?.let { page ->
@@ -333,7 +339,12 @@ private fun MochySettingsAvatar(
                 modifier = Modifier.fillMaxSize(),
             )
         } else {
-            Icon(MetrolistIcons.Outlined.Person, contentDescription = stringResource(Res.string.back), tint = MochySettingsColors.Secondary, modifier = Modifier.size(18.dp))
+            Icon(
+                MetrolistIcons.Outlined.Person,
+                contentDescription = stringResource(Res.string.back),
+                tint = MochySettingsColors.Secondary,
+                modifier = Modifier.size(18.dp),
+            )
         }
     }
 }
@@ -356,7 +367,12 @@ private fun MochySearchField(
                 .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(MetrolistIcons.Outlined.Search, contentDescription = null, tint = MochySettingsColors.Placeholder, modifier = Modifier.size(20.dp))
+        Icon(
+            MetrolistIcons.Outlined.Search,
+            contentDescription = null,
+            tint = MochySettingsColors.Placeholder,
+            modifier = Modifier.size(20.dp),
+        )
         Spacer(Modifier.width(10.dp))
         Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
             if (value.isEmpty()) {
@@ -581,7 +597,13 @@ internal fun MochySettingsNavigationPane(
                 registry.rootGroups.filter { it.pages.isNotEmpty() }.forEachIndexed { groupIndex, group ->
                     if (groupIndex > 0) {
                         item("divider:" + group.title) {
-                            Box(Modifier.fillMaxWidth().padding(vertical = 6.dp).height(0.8.dp).background(MochySettingsColors.Divider))
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 6.dp)
+                                    .height(0.8.dp)
+                                    .background(MochySettingsColors.Divider),
+                            )
                         }
                     }
                     items(group.pages.size, key = { group.pages[it].name }) { index ->

@@ -4,8 +4,6 @@
 
 package com.metrolist.shared.ui.onboarding.mochy
 
-import com.metrolist.shared.generated.resources.mochy_onb_check
-import com.metrolist.shared.ui.utils.supportsNativeBlur
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
@@ -44,26 +42,28 @@ import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import org.jetbrains.compose.resources.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.metrolist.shared.generated.resources.Res
+import com.metrolist.shared.generated.resources.mochy_onb_check
 import com.metrolist.shared.generated.resources.onb_all_good
 import com.metrolist.shared.generated.resources.onb_hello
 import com.metrolist.shared.generated.resources.onb_welcome_to_mochy
 import com.metrolist.shared.ui.mochy.ID_CARD_ASPECT
 import com.metrolist.shared.ui.mochy.ProfileIdCard
-import org.jetbrains.compose.resources.stringResource
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import kotlin.math.abs
+import com.metrolist.shared.ui.utils.supportsNativeBlur
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.min
@@ -108,35 +108,37 @@ internal fun HelloCardStep(
     }
 
     BoxWithConstraints(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Brush.radialGradient(listOf(Color(0xFF2A2A2A), Color(0xFF0E0E0E)), radius = 1400f))
-            .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragEnd = {
-                        scope.launch { tiltX.animateTo(0f, spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessLow)) }
-                        scope.launch { tiltY.animateTo(0f, spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessLow)) }
-                    },
-                ) { change, drag ->
-                    change.consume()
-                    scope.launch { tiltY.snapTo((tiltY.value + drag.x * 0.12f).coerceIn(-35f, 35f)) }
-                    scope.launch { tiltX.snapTo((tiltX.value - drag.y * 0.12f).coerceIn(-35f, 35f)) }
-                }
-            },
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(Brush.radialGradient(listOf(Color(0xFF2A2A2A), Color(0xFF0E0E0E)), radius = 1400f))
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragEnd = {
+                            scope.launch { tiltX.animateTo(0f, spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessLow)) }
+                            scope.launch { tiltY.animateTo(0f, spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessLow)) }
+                        },
+                    ) { change, drag ->
+                        change.consume()
+                        scope.launch { tiltY.snapTo((tiltY.value + drag.x * 0.12f).coerceIn(-35f, 35f)) }
+                        scope.launch { tiltX.snapTo((tiltX.value - drag.y * 0.12f).coerceIn(-35f, 35f)) }
+                    }
+                },
     ) {
         val cardWidth = min(maxWidth.value * 0.86f, 420f).dp
         val cardCenterFromTop = 0.42f
 
         // the benchmark load: a soft silver glow, blurred every frame like the app's glass is
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer {
-                    if (supportsNativeBlur()) {
-                        renderEffect = BlurEffect(with(density) { 56.dp.toPx() }, with(density) { 56.dp.toPx() }, TileMode.Decal)
-                    }
-                    alpha = (time / 0.5f).coerceIn(0f, 1f)
-                },
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        if (supportsNativeBlur()) {
+                            renderEffect = BlurEffect(with(density) { 56.dp.toPx() }, with(density) { 56.dp.toPx() }, TileMode.Decal)
+                        }
+                        alpha = (time / 0.5f).coerceIn(0f, 1f)
+                    },
         ) {
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val c = Offset(size.width / 2f, size.height * cardCenterFromTop)
@@ -179,42 +181,54 @@ internal fun HelloCardStep(
             joinedText = card.joinedText,
             silver = true,
             sheen = { 0.5f + (tiltY.value + deviceTilt.rotationY + cos(time * 1.4f) * 7f) / 45f },
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = (maxHeight * cardCenterFromTop - (cardWidth / ID_CARD_ASPECT) / 2).coerceAtLeast(0.dp))
-                .width(cardWidth)
-                .graphicsLayer {
-                    val enter = easeOutBack((time / 0.75f).coerceIn(0f, 1f))
-                    val s = 0.6f + 0.4f * enter
-                    scaleX = s
-                    scaleY = s
-                    alpha = (time / 0.25f).coerceIn(0f, 1f)
-                    rotationZ = -8f * enter
-                    rotationY = (1f - enter) * -55f + tiltY.value + deviceTilt.rotationY + cos(time * 1.4f) * 7f
-                    rotationX = tiltX.value + deviceTilt.rotationX + sin(time * 1.1f) * 4f
-                    cameraDistance = 14f * this.density
-                },
+            modifier =
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = (maxHeight * cardCenterFromTop - (cardWidth / ID_CARD_ASPECT) / 2).coerceAtLeast(0.dp))
+                    .width(cardWidth)
+                    .graphicsLayer {
+                        val enter = easeOutBack((time / 0.75f).coerceIn(0f, 1f))
+                        val s = 0.6f + 0.4f * enter
+                        scaleX = s
+                        scaleY = s
+                        alpha = (time / 0.25f).coerceIn(0f, 1f)
+                        rotationZ = -8f * enter
+                        rotationY = (1f - enter) * -55f + tiltY.value + deviceTilt.rotationY + cos(time * 1.4f) * 7f
+                        rotationX = tiltX.value + deviceTilt.rotationX + sin(time * 1.1f) * 4f
+                        cameraDistance = 14f * this.density
+                    },
         )
 
         Column(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .navigationBarsPadding()
-                .padding(start = 28.dp, end = 28.dp, bottom = 40.dp)
-                .graphicsLayer {
-                    val p = easeOut(((time - 0.35f) / 0.6f).coerceIn(0f, 1f))
-                    alpha = p
-                    translationY = (1f - p) * 40.dp.toPx()
-                },
+            modifier =
+                Modifier
+                    .align(Alignment.BottomStart)
+                    .navigationBarsPadding()
+                    .padding(start = 28.dp, end = 28.dp, bottom = 40.dp)
+                    .graphicsLayer {
+                        val p = easeOut(((time - 0.35f) / 0.6f).coerceIn(0f, 1f))
+                        alpha = p
+                        translationY = (1f - p) * 40.dp.toPx()
+                    },
         ) {
-            Text(stringResource(Res.string.onb_hello), color = Color.White, fontSize = 64.sp, lineHeight = 66.sp, fontWeight = FontWeight.Bold, letterSpacing = (-2).sp)
+            Text(
+                stringResource(Res.string.onb_hello),
+                color = Color.White,
+                fontSize = 64.sp,
+                lineHeight = 66.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = (-2).sp,
+            )
             Text(stringResource(Res.string.onb_welcome_to_mochy), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
 
 @Composable
-internal fun DoneStep(card: CardInfo, onFinished: () -> Unit) {
+internal fun DoneStep(
+    card: CardInfo,
+    onFinished: () -> Unit,
+) {
     var time by remember { mutableFloatStateOf(0f) }
     val deviceTilt = rememberDeviceTilt()
     val currentOnFinished by rememberUpdatedState(onFinished)
@@ -250,18 +264,23 @@ internal fun DoneStep(card: CardInfo, onFinished: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Box(
-                modifier = Modifier
-                    .size(68.dp)
-                    .graphicsLayer {
-                        val s = easeOutBack((time / 0.5f).coerceIn(0f, 1f))
-                        scaleX = s
-                        scaleY = s
-                    }
-                    .clip(CircleShape)
-                    .background(Onb.Badge),
+                modifier =
+                    Modifier
+                        .size(68.dp)
+                        .graphicsLayer {
+                            val s = easeOutBack((time / 0.5f).coerceIn(0f, 1f))
+                            scaleX = s
+                            scaleY = s
+                        }.clip(CircleShape)
+                        .background(Onb.Badge),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(painterResource(Res.drawable.mochy_onb_check), contentDescription = null, tint = Color(0xFF1C1C1C), modifier = Modifier.size(34.dp))
+                Icon(
+                    painterResource(Res.drawable.mochy_onb_check),
+                    contentDescription = null,
+                    tint = Color(0xFF1C1C1C),
+                    modifier = Modifier.size(34.dp),
+                )
             }
             Spacer(Modifier.height(18.dp))
             Text(
@@ -279,17 +298,18 @@ internal fun DoneStep(card: CardInfo, onFinished: () -> Unit) {
                 joinedText = card.joinedText,
                 silver = true,
                 sheen = { 0.3f + time / 3f + deviceTilt.rotationY / 45f },
-                modifier = Modifier
-                    .width(cardWidth)
-                    .graphicsLayer {
-                        val p = easeOutBack(((time - 0.15f) / 0.8f).coerceIn(0f, 1f))
-                        translationY = (1f - p) * size.height * 1.4f
-                        alpha = ((time - 0.15f) / 0.3f).coerceIn(0f, 1f)
-                        rotationZ = -6f + (1f - p) * 10f
-                        rotationY = sin(time * 1.2f) * 6f + deviceTilt.rotationY
-                        rotationX = deviceTilt.rotationX
-                        cameraDistance = 14f * this.density
-                    },
+                modifier =
+                    Modifier
+                        .width(cardWidth)
+                        .graphicsLayer {
+                            val p = easeOutBack(((time - 0.15f) / 0.8f).coerceIn(0f, 1f))
+                            translationY = (1f - p) * size.height * 1.4f
+                            alpha = ((time - 0.15f) / 0.3f).coerceIn(0f, 1f)
+                            rotationZ = -6f + (1f - p) * 10f
+                            rotationY = sin(time * 1.2f) * 6f + deviceTilt.rotationY
+                            rotationX = deviceTilt.rotationX
+                            cameraDistance = 14f * this.density
+                        },
             )
         }
     }
@@ -305,7 +325,9 @@ private fun easeOutBack(t: Float): Float {
 }
 
 /** silver confetti, one burst from the card falling with a little flutter */
-private class Confetti private constructor(private val pieces: List<Piece>) {
+private class Confetti private constructor(
+    private val pieces: List<Piece>,
+) {
     private class Piece(
         val vx: Float,
         val vy: Float,
@@ -317,7 +339,11 @@ private class Confetti private constructor(private val pieces: List<Piece>) {
         val color: Color,
     )
 
-    fun draw(scope: DrawScope, origin: Offset, time: Float) = with(scope) {
+    fun draw(
+        scope: DrawScope,
+        origin: Offset,
+        time: Float,
+    ) = with(scope) {
         if (time <= 0f) return@with
         val unit = size.minDimension / 400f
         val gravity = 900f * unit
@@ -339,32 +365,37 @@ private class Confetti private constructor(private val pieces: List<Piece>) {
     }
 
     companion object {
-        private val palette = listOf(
-            Color.White,
-            Color(0xFFE9EAEE),
-            Color(0xFFC4C6CC),
-            Color(0xFF9EA1A8),
-            Color(0xFFF5F5F7),
-            Color(0xFF7D8088),
-        )
+        private val palette =
+            listOf(
+                Color.White,
+                Color(0xFFE9EAEE),
+                Color(0xFFC4C6CC),
+                Color(0xFF9EA1A8),
+                Color(0xFFF5F5F7),
+                Color(0xFF7D8088),
+            )
 
-        fun burst(count: Int, seed: Int): Confetti {
+        fun burst(
+            count: Int,
+            seed: Int,
+        ): Confetti {
             val random = Random(seed)
-            val pieces = List(count) {
-                // mostly upward, fanning out; gravity brings everything back down past the card
-                val angle = (-PI / 2 + (random.nextFloat() - 0.5f) * PI * 1.25f).toFloat()
-                val speed = 260f + random.nextFloat() * 420f
-                Piece(
-                    vx = cos(angle) * speed,
-                    vy = sin(angle) * speed,
-                    spin = (random.nextFloat() - 0.5f) * 720f,
-                    flutter = 4f + random.nextFloat() * 8f,
-                    w = 5f + random.nextFloat() * 6f,
-                    h = 3f + random.nextFloat() * 4f,
-                    round = random.nextFloat() < 0.25f,
-                    color = palette[random.nextInt(palette.size)],
-                )
-            }
+            val pieces =
+                List(count) {
+                    // mostly upward, fanning out; gravity brings everything back down past the card
+                    val angle = (-PI / 2 + (random.nextFloat() - 0.5f) * PI * 1.25f).toFloat()
+                    val speed = 260f + random.nextFloat() * 420f
+                    Piece(
+                        vx = cos(angle) * speed,
+                        vy = sin(angle) * speed,
+                        spin = (random.nextFloat() - 0.5f) * 720f,
+                        flutter = 4f + random.nextFloat() * 8f,
+                        w = 5f + random.nextFloat() * 6f,
+                        h = 3f + random.nextFloat() * 4f,
+                        round = random.nextFloat() < 0.25f,
+                        color = palette[random.nextInt(palette.size)],
+                    )
+                }
             return Confetti(pieces)
         }
     }

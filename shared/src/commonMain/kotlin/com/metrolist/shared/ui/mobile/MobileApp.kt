@@ -4,9 +4,6 @@
 
 package com.metrolist.shared.ui.mobile
 
-import androidx.compose.ui.graphics.luminance
-import com.metrolist.shared.ui.mochy.MochyHomeTopBar
-import com.metrolist.shared.ui.mochy.MochyHomeBones
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandHorizontally
@@ -92,6 +89,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -222,6 +220,8 @@ import com.metrolist.shared.ui.listentogether.ListenTogetherGlobalEvents
 import com.metrolist.shared.ui.menu.ContentUndoHintsSnackbar
 import com.metrolist.shared.ui.menu.HiddenHomeItemsSnackbar
 import com.metrolist.shared.ui.menu.settingsPage
+import com.metrolist.shared.ui.mochy.MochyHomeBones
+import com.metrolist.shared.ui.mochy.MochyHomeTopBar
 import com.metrolist.shared.ui.navigation.AdaptiveFormFactor
 import com.metrolist.shared.ui.navigation.AdaptiveNavigationItem
 import com.metrolist.shared.ui.navigation.AdaptiveNavigationScaffold

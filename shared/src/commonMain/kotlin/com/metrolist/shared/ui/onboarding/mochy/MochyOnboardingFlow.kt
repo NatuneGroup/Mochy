@@ -50,11 +50,11 @@ import com.metrolist.shared.generated.resources.mochy_card_local_member
 import com.metrolist.shared.generated.resources.onboarding_migration_failed
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.mochy.ensureMochyCardNumber
+import com.metrolist.shared.ui.navigation.NavigationBackHandler
 import com.metrolist.shared.utils.isCrashReportingAvailable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
-import com.metrolist.shared.ui.navigation.NavigationBackHandler
 
 private enum class Step { WELCOME, IMPORT_ASK, IMPORT_MODE, MIGRATING, PROFILE, HELLO, LAST_ONE, DONE }
 
@@ -85,7 +85,10 @@ fun MochyOnboarding(
     var forward by remember { mutableStateOf(true) }
     val step = history.last()
 
-    fun go(next: Step, replaceCurrent: Boolean = false) {
+    fun go(
+        next: Step,
+        replaceCurrent: Boolean = false,
+    ) {
         forward = true
         if (replaceCurrent && history.size > 1) history.removeAt(history.lastIndex)
         history.add(next)
@@ -291,10 +294,10 @@ fun MochyOnboarding(
                                     onDragEnd = {
                                         scope.launch {
                                             animate(
-                                            initialValue = dragOffset,
-                                            targetValue = 0f,
-                                            animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f),
-                                        ) { value, _ ->
+                                                initialValue = dragOffset,
+                                                targetValue = 0f,
+                                                animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f),
+                                            ) { value, _ ->
                                                 dragOffset = value
                                             }
                                         }

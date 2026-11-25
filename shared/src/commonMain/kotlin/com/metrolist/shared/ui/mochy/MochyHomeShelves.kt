@@ -2,8 +2,6 @@
 
 package com.metrolist.shared.ui.mochy
 
-import androidx.compose.foundation.lazy.rememberLazyListState
-import com.metrolist.shared.ui.components.DesktopHorizontalScrollControls
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,6 +29,7 @@ import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -69,6 +68,7 @@ import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.settings.displayName
 import com.metrolist.shared.state.SongMetadataState
 import com.metrolist.shared.ui.components.CollectionPreviews
+import com.metrolist.shared.ui.components.DesktopHorizontalScrollControls
 import com.metrolist.shared.ui.components.ItemStatusBadges
 import com.metrolist.shared.ui.components.PlaylistCoverImage
 import com.metrolist.shared.ui.components.SongThumbnailPlayOverlay
@@ -116,76 +116,76 @@ internal fun MochyHomeTrackShelf(
         val columnWidth = if (twoColumnWidth >= 320.dp) twoColumnWidth else maxWidth * 0.76f
         // a mouse wheel can't move a sideways row, so desktop gets the arrow buttons other shelves have
         DesktopHorizontalScrollControls(state) {
-        LazyHorizontalGrid(
-            rows = GridCells.Fixed(rows),
-            state = state,
-            flingBehavior = fling,
-            contentPadding = PaddingValues(horizontal = HomeInset),
-            horizontalArrangement = Arrangement.spacedBy(39.dp),
-            verticalArrangement = Arrangement.spacedBy(gap),
-            modifier = Modifier.fillMaxWidth().height(rowHeight * rows + gap * (rows - 1)),
-        ) {
-            itemsIndexed(
-                items = tracks,
-                key = { index, item -> "$sectionKey/${canonicalHomeItemId(item)}/$index" },
-                contentType = { _, _ -> "mochy_home_track" },
-            ) { _, song ->
-                val playback by rememberItemPlayback(song.id, currentSongId, isPlaying)
-                val displayed = SongMetadataState.apply(song)
-                val menu = onItemMenu?.let { show -> { show(song) } }
-                val enabled = isItemEnabled(song) && !song.isUnavailable
-                val click = { onItemClick(song) }
-                val onSurface = MaterialTheme.colorScheme.onSurface
-                Row(
-                    modifier =
-                        Modifier
-                            .width(columnWidth)
-                            .heightIn(min = rowHeight)
-                            .homeMediaClick(song, enabled, click, menu, cornerRadius = 22.dp, highlightSpill = 8.dp)
-                            .currentSongSemantics(playback.isCurrent, playback.isPlaying),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    MochyHomeArtwork(
-                        item = displayed,
-                        size = TrackArtworkSize,
-                        shape = TrackArtworkShape,
-                        isCurrent = playback.isCurrent,
-                        isPlaying = playback.isPlaying,
-                    )
-                    Column(Modifier.weight(1f).padding(horizontal = 13.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            ItemStatusBadges(displayed)
-                            MochyHomeTitle(
-                                title = displayed.title,
-                                size = 15.sp,
-                                modifier = Modifier.weight(1f, fill = false),
-                                alpha = if (playback.isCurrent) 1f else 0.92f,
-                            )
+            LazyHorizontalGrid(
+                rows = GridCells.Fixed(rows),
+                state = state,
+                flingBehavior = fling,
+                contentPadding = PaddingValues(horizontal = HomeInset),
+                horizontalArrangement = Arrangement.spacedBy(39.dp),
+                verticalArrangement = Arrangement.spacedBy(gap),
+                modifier = Modifier.fillMaxWidth().height(rowHeight * rows + gap * (rows - 1)),
+            ) {
+                itemsIndexed(
+                    items = tracks,
+                    key = { index, item -> "$sectionKey/${canonicalHomeItemId(item)}/$index" },
+                    contentType = { _, _ -> "mochy_home_track" },
+                ) { _, song ->
+                    val playback by rememberItemPlayback(song.id, currentSongId, isPlaying)
+                    val displayed = SongMetadataState.apply(song)
+                    val menu = onItemMenu?.let { show -> { show(song) } }
+                    val enabled = isItemEnabled(song) && !song.isUnavailable
+                    val click = { onItemClick(song) }
+                    val onSurface = MaterialTheme.colorScheme.onSurface
+                    Row(
+                        modifier =
+                            Modifier
+                                .width(columnWidth)
+                                .heightIn(min = rowHeight)
+                                .homeMediaClick(song, enabled, click, menu, cornerRadius = 22.dp, highlightSpill = 8.dp)
+                                .currentSongSemantics(playback.isCurrent, playback.isPlaying),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        MochyHomeArtwork(
+                            item = displayed,
+                            size = TrackArtworkSize,
+                            shape = TrackArtworkShape,
+                            isCurrent = playback.isCurrent,
+                            isPlaying = playback.isPlaying,
+                        )
+                        Column(Modifier.weight(1f).padding(horizontal = 13.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                ItemStatusBadges(displayed)
+                                MochyHomeTitle(
+                                    title = displayed.title,
+                                    size = 15.sp,
+                                    modifier = Modifier.weight(1f, fill = false),
+                                    alpha = if (playback.isCurrent) 1f else 0.92f,
+                                )
+                            }
+                            MochyHomeSubtitle(displayed.artists.joinToString { it.displayName })
                         }
-                        MochyHomeSubtitle(displayed.artists.joinToString { it.displayName })
-                    }
-                    if (menu != null) {
-                        val menuLabel = stringResource(Res.string.more_options)
-                        Box(
-                            modifier = Modifier.size(38.dp).clip(CircleShape).clickable(role = Role.Button, onClick = menu),
-                            contentAlignment = Alignment.Center,
-                        ) {
+                        if (menu != null) {
+                            val menuLabel = stringResource(Res.string.more_options)
                             Box(
-                                Modifier.size(24.dp).background(onSurface.copy(alpha = 0.14f), CircleShape),
+                                modifier = Modifier.size(38.dp).clip(CircleShape).clickable(role = Role.Button, onClick = menu),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                Icon(
-                                    MetrolistIcons.Default.MoreHoriz,
-                                    contentDescription = menuLabel,
-                                    tint = onSurface.copy(alpha = 0.85f),
-                                    modifier = Modifier.size(17.dp),
-                                )
+                                Box(
+                                    Modifier.size(24.dp).background(onSurface.copy(alpha = 0.14f), CircleShape),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(
+                                        MetrolistIcons.Default.MoreHoriz,
+                                        contentDescription = menuLabel,
+                                        tint = onSurface.copy(alpha = 0.85f),
+                                        modifier = Modifier.size(17.dp),
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
-        }
         }
     }
 }
@@ -205,61 +205,61 @@ internal fun MochyHomeCoverShelf(
     val reveal = LocalRootContentActive.current && !LocalContentObscured.current && !rememberReducedMotion()
     val rowState = rememberLazyListState()
     DesktopHorizontalScrollControls(rowState) {
-    LazyRow(
-        state = rowState,
-        contentPadding = PaddingValues(horizontal = HomeInset),
-        horizontalArrangement = Arrangement.spacedBy(15.dp),
-    ) {
-        itemsIndexed(
-            items,
-            key = { index, item -> "$sectionKey/${canonicalHomeItemId(item)}/$index" },
-            contentType = { _, _ -> "mochy_home_cover" },
-        ) { index, item ->
-            val playback by rememberItemPlayback(item.id, currentSongId, isPlaying)
-            val displayed = (item as? SongItem)?.let(SongMetadataState::apply) ?: item
-            val enabled = isItemEnabled(item) && !item.isUnavailable
-            val menu = onItemMenu?.let { show -> { show(item) } }
-            val click = { onItemClick(item) }
-            val artwork = rememberAlbumArtworkSource(item, click.takeIf { enabled })
-            val circular = item is ArtistItem
-            val shape = if (circular) CircleShape else RoundedCornerShape(CoverRadius)
-            val subtitle = displayed.homeSubtitle()
-            Column(
-                Modifier
-                    .width(size)
-                    .revealOnAppear(
-                        key = "$sectionKey/${canonicalHomeItemId(item)}/$index",
-                        seenState = seen,
-                        enabled = reveal,
-                        delayMillis = minOf(index, 4) * 60,
-                    ).then(if (artwork != null) Modifier.navigationPageSource(artwork.token) else Modifier)
-                    .homeMediaClick(item, enabled, click, menu, cornerRadius = CoverRadius + 6.dp, highlightSpill = 7.dp)
-                    .currentSongSemantics(playback.isCurrent, playback.isPlaying),
-            ) {
-                MochyHomeArtwork(
-                    item = displayed,
-                    size = size,
-                    shape = shape,
-                    isCurrent = playback.isCurrent,
-                    isPlaying = playback.isPlaying,
-                    modifier = artwork?.modifier(CoverRadius) ?: Modifier,
-                )
-                Spacer(Modifier.height(8.dp))
-                MochyHomeTitle(
-                    title = displayed.title,
-                    size = 14.sp,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = if (circular) TextAlign.Center else TextAlign.Start,
-                )
-                if (subtitle.isNotBlank() || item is SongItem || item is AlbumItem) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        ItemStatusBadges(displayed)
-                        MochyHomeSubtitle(subtitle)
+        LazyRow(
+            state = rowState,
+            contentPadding = PaddingValues(horizontal = HomeInset),
+            horizontalArrangement = Arrangement.spacedBy(15.dp),
+        ) {
+            itemsIndexed(
+                items,
+                key = { index, item -> "$sectionKey/${canonicalHomeItemId(item)}/$index" },
+                contentType = { _, _ -> "mochy_home_cover" },
+            ) { index, item ->
+                val playback by rememberItemPlayback(item.id, currentSongId, isPlaying)
+                val displayed = (item as? SongItem)?.let(SongMetadataState::apply) ?: item
+                val enabled = isItemEnabled(item) && !item.isUnavailable
+                val menu = onItemMenu?.let { show -> { show(item) } }
+                val click = { onItemClick(item) }
+                val artwork = rememberAlbumArtworkSource(item, click.takeIf { enabled })
+                val circular = item is ArtistItem
+                val shape = if (circular) CircleShape else RoundedCornerShape(CoverRadius)
+                val subtitle = displayed.homeSubtitle()
+                Column(
+                    Modifier
+                        .width(size)
+                        .revealOnAppear(
+                            key = "$sectionKey/${canonicalHomeItemId(item)}/$index",
+                            seenState = seen,
+                            enabled = reveal,
+                            delayMillis = minOf(index, 4) * 60,
+                        ).then(if (artwork != null) Modifier.navigationPageSource(artwork.token) else Modifier)
+                        .homeMediaClick(item, enabled, click, menu, cornerRadius = CoverRadius + 6.dp, highlightSpill = 7.dp)
+                        .currentSongSemantics(playback.isCurrent, playback.isPlaying),
+                ) {
+                    MochyHomeArtwork(
+                        item = displayed,
+                        size = size,
+                        shape = shape,
+                        isCurrent = playback.isCurrent,
+                        isPlaying = playback.isPlaying,
+                        modifier = artwork?.modifier(CoverRadius) ?: Modifier,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    MochyHomeTitle(
+                        title = displayed.title,
+                        size = 14.sp,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = if (circular) TextAlign.Center else TextAlign.Start,
+                    )
+                    if (subtitle.isNotBlank() || item is SongItem || item is AlbumItem) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            ItemStatusBadges(displayed)
+                            MochyHomeSubtitle(subtitle)
+                        }
                     }
                 }
             }
         }
-    }
     }
 }
 

@@ -33,7 +33,11 @@ private val CardCorner = 16.dp
 /** sized like the phone hero (60% of the window) so nothing jumps when the real one lands */
 @Composable
 fun MochyHomeBones(modifier: Modifier = Modifier) {
-    val windowHeight = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() }
+    val windowHeight =
+        with(LocalDensity.current) {
+            LocalWindowInfo.current.containerSize.height
+                .toDp()
+        }
     Column(modifier = modifier.fillMaxWidth()) {
         BonesHost(modifier = Modifier.fillMaxWidth().height(windowHeight * 0.6f)) {
             Box(

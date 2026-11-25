@@ -33,6 +33,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -43,6 +44,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.metrolist.shared.generated.resources.Res
+import com.metrolist.shared.generated.resources.app_name
+import com.metrolist.shared.generated.resources.next
+import com.metrolist.shared.generated.resources.welcome_lets_listen
+import com.metrolist.shared.generated.resources.welcome_tap_anywhere
+import com.metrolist.shared.generated.resources.welcome_to
 import com.metrolist.shared.ui.onboarding.mochy.welcome.GirlArt
 import com.metrolist.shared.ui.onboarding.mochy.welcome.GirlMotion
 import com.metrolist.shared.ui.onboarding.mochy.welcome.WelcomeColors
@@ -50,17 +57,10 @@ import com.metrolist.shared.ui.onboarding.mochy.welcome.WelcomeDots
 import com.metrolist.shared.ui.onboarding.mochy.welcome.WelcomeGirl
 import com.metrolist.shared.ui.onboarding.mochy.welcome.WelcomeWords
 import com.metrolist.shared.ui.utils.HighRefreshWhile
-import com.metrolist.shared.generated.resources.Res
-import com.metrolist.shared.generated.resources.app_name
-import com.metrolist.shared.generated.resources.next
-import com.metrolist.shared.generated.resources.welcome_lets_listen
-import com.metrolist.shared.generated.resources.welcome_tap_anywhere
-import com.metrolist.shared.generated.resources.welcome_to
-import org.jetbrains.compose.resources.stringResource
-import androidx.compose.ui.draw.clipToBounds
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.max
 import kotlin.math.min
 
@@ -80,18 +80,19 @@ fun WelcomeStep(
     )
 
     BoxWithConstraints(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(WelcomeColors.Page)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClickLabel = stringResource(Res.string.next),
-                role = Role.Button,
-                onClick = onNext,
-            )
-            // everything here moves every frame; bounded, it never makes the app behind the sheet repaint
-            .clipToBounds(),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(WelcomeColors.Page)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClickLabel = stringResource(Res.string.next),
+                    role = Role.Button,
+                    onClick = onNext,
+                )
+                // everything here moves every frame; bounded, it never makes the app behind the sheet repaint
+                .clipToBounds(),
     ) {
         val layout = remember(maxWidth, maxHeight) { welcomeLayout(maxWidth, maxHeight) }
         val u = layout.unit
@@ -102,13 +103,14 @@ fun WelcomeStep(
         WelcomeGirl(
             motion = clock.girl,
             seconds = clock.seconds,
-            modifier = Modifier
-                .offset(x = layout.girlLeft, y = layout.girlTop)
-                .size(layout.girlWidth, layout.girlHeight)
-                .graphicsLayer {
-                    translationY = leave * 56.dp.toPx()
-                    alpha = 1f - leave
-                },
+            modifier =
+                Modifier
+                    .offset(x = layout.girlLeft, y = layout.girlTop)
+                    .size(layout.girlWidth, layout.girlHeight)
+                    .graphicsLayer {
+                        translationY = leave * 56.dp.toPx()
+                        alpha = 1f - leave
+                    },
         )
 
         // the bottom of the art melts into the page under the closing line
@@ -127,12 +129,13 @@ fun WelcomeStep(
         )
 
         Column(
-            modifier = Modifier
-                .padding(start = layout.titleStart, top = layout.titleTop)
-                .graphicsLayer {
-                    alpha = enter.value * (1f - leave)
-                    translationY = (1f - enter.value) * 18.dp.toPx()
-                },
+            modifier =
+                Modifier
+                    .padding(start = layout.titleStart, top = layout.titleTop)
+                    .graphicsLayer {
+                        alpha = enter.value * (1f - leave)
+                        translationY = (1f - enter.value) * 18.dp.toPx()
+                    },
         ) {
             Text(
                 text = stringResource(Res.string.welcome_to),
@@ -153,11 +156,12 @@ fun WelcomeStep(
         }
 
         Column(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .navigationBarsPadding()
-                .padding(start = layout.titleStart, end = 24.dp, bottom = 30.dp)
-                .graphicsLayer { alpha = enter.value * (1f - leave) },
+            modifier =
+                Modifier
+                    .align(Alignment.BottomStart)
+                    .navigationBarsPadding()
+                    .padding(start = layout.titleStart, end = 24.dp, bottom = 30.dp)
+                    .graphicsLayer { alpha = enter.value * (1f - leave) },
         ) {
             Text(
                 text = stringResource(Res.string.welcome_lets_listen),
@@ -213,8 +217,7 @@ private fun rememberWelcomeClock(motionEnabled: Boolean): WelcomeClock {
     LaunchedEffect(clock, motionEnabled, lifecycle) {
         combine(snapshotFlow { motionEnabled }, lifecycle.currentStateFlow) { free, state ->
             free && state.isAtLeast(Lifecycle.State.STARTED)
-        }
-            .distinctUntilChanged()
+        }.distinctUntilChanged()
             .collectLatest { visible -> if (visible) clock.run() }
     }
     // android 15+ drops draw-only animation to 60hz unless something asks, and this should glide at 120
@@ -238,7 +241,10 @@ private class WelcomeLayout(
 )
 
 // tall windows get the phone design; wide ones (tablets, foldables, landscape) put the girl on the right
-private fun welcomeLayout(width: Dp, height: Dp): WelcomeLayout {
+private fun welcomeLayout(
+    width: Dp,
+    height: Dp,
+): WelcomeLayout {
     val w = width.value
     val h = height.value
     val shape = GirlArt.FRAME_WIDTH / GirlArt.FRAME_HEIGHT

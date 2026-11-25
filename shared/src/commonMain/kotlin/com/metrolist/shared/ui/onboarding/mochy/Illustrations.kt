@@ -33,10 +33,11 @@ internal fun CrossfadeBanner(modifier: Modifier = Modifier) {
     // a still picture: fixed waveform shapes, nothing animating
     val phase = 0.9f
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(124.dp)
-            .border(1.dp, Color(0xFF5A5A5A), RoundedCornerShape(14.dp)),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(124.dp)
+                .border(1.dp, Color(0xFF5A5A5A), RoundedCornerShape(14.dp)),
     ) {
         Canvas(modifier = Modifier.fillMaxSize().padding(horizontal = 26.dp, vertical = 30.dp)) {
             val w = size.width
@@ -61,14 +62,16 @@ internal fun CrossfadeBanner(modifier: Modifier = Modifier) {
                 )
             }
             val curveStroke = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
-            val fadeOut = Path().apply {
-                moveTo(0f, 0f)
-                cubicTo(w * 0.45f, 0f, w * 0.55f, h, w, h)
-            }
-            val fadeIn = Path().apply {
-                moveTo(0f, h)
-                cubicTo(w * 0.45f, h, w * 0.55f, 0f, w, 0f)
-            }
+            val fadeOut =
+                Path().apply {
+                    moveTo(0f, 0f)
+                    cubicTo(w * 0.45f, 0f, w * 0.55f, h, w, h)
+                }
+            val fadeIn =
+                Path().apply {
+                    moveTo(0f, h)
+                    cubicTo(w * 0.45f, h, w * 0.55f, 0f, w, 0f)
+                }
             drawPath(fadeOut, Color(0xFF9A9A9A), style = curveStroke)
             drawPath(fadeIn, Color(0xFF9A9A9A), style = curveStroke)
         }

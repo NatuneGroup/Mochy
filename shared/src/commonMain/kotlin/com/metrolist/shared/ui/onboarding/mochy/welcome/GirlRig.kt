@@ -15,7 +15,13 @@ import kotlin.math.sqrt
 import kotlin.random.Random
 
 // one cut-out layer of the art, placed by its top-left corner in the 1528 x 2036 canvas it was cut from
-internal class GirlLayer(val file: String, val x: Float, val y: Float, val w: Float, val h: Float) {
+internal class GirlLayer(
+    val file: String,
+    val x: Float,
+    val y: Float,
+    val w: Float,
+    val h: Float,
+) {
     val right get() = x + w
     val bottom get() = y + h
 }
@@ -77,12 +83,18 @@ internal class GirlPose {
     val hairMesh = FloatArray((HAIR_COLS + 1) * (HAIR_ROWS + 1) * 2)
 
     // where a point of the phone ends up this frame, the same turn the fingers and the cuff get
-    fun phoneMoveX(x: Float, y: Float): Float {
+    fun phoneMoveX(
+        x: Float,
+        y: Float,
+    ): Float {
         val a = degreesToRadians(phoneDeg.toDouble())
         return GirlArt.WRIST_X + (x - GirlArt.WRIST_X) * cos(a).toFloat() - (y - GirlArt.WRIST_Y) * sin(a).toFloat() + phoneX
     }
 
-    fun phoneMoveY(x: Float, y: Float): Float {
+    fun phoneMoveY(
+        x: Float,
+        y: Float,
+    ): Float {
         val a = degreesToRadians(phoneDeg.toDouble())
         return GirlArt.WRIST_Y + (x - GirlArt.WRIST_X) * sin(a).toFloat() + (y - GirlArt.WRIST_Y) * cos(a).toFloat() + phoneY
     }
@@ -101,27 +113,47 @@ private const val TWO_PI = (2 * PI).toFloat()
 // the whole idle motion repeats every this many seconds, so it loops like a wallpaper
 private const val LOOP_SECONDS = 8f
 
-private fun smoothstep(from: Float, to: Float, x: Float): Float {
+private fun smoothstep(
+    from: Float,
+    to: Float,
+    x: Float,
+): Float {
     val t = ((x - from) / (to - from)).coerceIn(0f, 1f)
     return t * t * (3 - 2 * t)
 }
 
 // one blink as open-ness over its own seconds: an eased close, a short hold, a softer reopen
-private fun blinkCurve(s: Float): Float = when {
-    s < 0f -> 1f
-    s < 0.12f -> 1f - smoothstep(0f, 0.12f, s)
-    s < 0.18f -> 0f
-    s < 0.4f -> smoothstep(0.18f, 0.4f, s)
-    else -> 1f
-}
+private fun blinkCurve(s: Float): Float =
+    when {
+        s < 0f -> 1f
+        s < 0.12f -> 1f - smoothstep(0f, 0.12f, s)
+        s < 0.18f -> 0f
+        s < 0.4f -> smoothstep(0.18f, 0.4f, s)
+        else -> 1f
+    }
 
 // a hanging drawstring from where it leaves the hood down to its tip
-private class Drawstring(val topX: Float, val topY: Float, val tipX: Float, val tipY: Float, val phase: Float)
+private class Drawstring(
+    val topX: Float,
+    val topY: Float,
+    val tipX: Float,
+    val tipY: Float,
+    val phase: Float,
+)
 
 // how much each base point follows one of the moving parts, worked out once
-private class BaseWeights(val index: Int, val head: Float, val cuff: Float, val hand: Float, val string: Float, val stringPhase: Float)
+private class BaseWeights(
+    val index: Int,
+    val head: Float,
+    val cuff: Float,
+    val hand: Float,
+    val string: Float,
+    val stringPhase: Float,
+)
 
-internal class GirlMotion(seed: Long = Random.nextLong()) {
+internal class GirlMotion(
+    seed: Long = Random.nextLong(),
+) {
     val pose = GirlPose()
 
     private val random = Random(seed)
@@ -133,9 +165,10 @@ internal class GirlMotion(seed: Long = Random.nextLong()) {
     private val moving: Array<BaseWeights> = baseWeights()
 
     // how far down a strand each hair point sits: roots at the crown stay put, tips swing the most
-    private val hairReach = FloatArray(hairRest.size / 2) {
-        ((hairRest[2 * it + 1] - HAIR_ROOT_Y) / (HAIR_TIP_Y - HAIR_ROOT_Y)).coerceIn(0f, 1f).pow(1.35f)
-    }
+    private val hairReach =
+        FloatArray(hairRest.size / 2) {
+            ((hairRest[2 * it + 1] - HAIR_ROOT_Y) / (HAIR_TIP_Y - HAIR_ROOT_Y)).coerceIn(0f, 1f).pow(1.35f)
+        }
 
     // the still pose, for when animations are switched off
     init {
@@ -171,7 +204,10 @@ internal class GirlMotion(seed: Long = Random.nextLong()) {
     }
 
     // the face tilts from the neck, the cuff rides with the phone, the resting hand eases, the drawstrings swing
-    private fun fillBaseMesh(p: GirlPose, turn: Float) {
+    private fun fillBaseMesh(
+        p: GirlPose,
+        turn: Float,
+    ) {
         val out = p.baseMesh
         val handDeg = 1.1f * sin(turn + 0.6f) + 0.3f * sin(turn * 2f)
         for (w in moving) {
@@ -211,7 +247,10 @@ internal class GirlMotion(seed: Long = Random.nextLong()) {
     }
 
     // a soft wave runs down the strands and swells once a loop, all of it repeating every loop
-    private fun fillHairMesh(p: GirlPose, turn: Float) {
+    private fun fillHairMesh(
+        p: GirlPose,
+        turn: Float,
+    ) {
         val out = p.hairMesh
         val swell = 1f + 0.22f * sin(turn)
         for (i in hairReach.indices) {
@@ -232,10 +271,11 @@ internal class GirlMotion(seed: Long = Random.nextLong()) {
     }
 
     private fun baseWeights(): Array<BaseWeights> {
-        val strings = listOf(
-            Drawstring(512f, 995f, 495f, 1392f, phase = 0f),
-            Drawstring(840f, 930f, 860f, 1310f, phase = 1.1f),
-        )
+        val strings =
+            listOf(
+                Drawstring(512f, 995f, 495f, 1392f, phase = 0f),
+                Drawstring(840f, 930f, 860f, 1310f, phase = 1.1f),
+            )
         val list = ArrayList<BaseWeights>()
         for (i in 0 until baseRest.size / 2) {
             val x = baseRest[2 * i]
@@ -261,23 +301,41 @@ internal class GirlMotion(seed: Long = Random.nextLong()) {
         const val HAIR_ROOT_Y = 352f
         const val HAIR_TIP_Y = 1082f
 
-        fun restGrid(layer: GirlLayer, cols: Int, rows: Int) = FloatArray((cols + 1) * (rows + 1) * 2).also { out ->
+        fun restGrid(
+            layer: GirlLayer,
+            cols: Int,
+            rows: Int,
+        ) = FloatArray((cols + 1) * (rows + 1) * 2).also { out ->
             var i = 0
-            for (r in 0..rows) for (c in 0..cols) {
-                out[i++] = layer.x + layer.w * c / cols
-                out[i++] = layer.y + layer.h * r / rows
+            for (r in 0..rows) {
+                for (c in 0..cols) {
+                    out[i++] = layer.x + layer.w * c / cols
+                    out[i++] = layer.y + layer.h * r / rows
+                }
             }
         }
 
         // 1 inside the ellipse, fading out past it so a turn bends the edges instead of tearing them
-        fun ellipseWeight(x: Float, y: Float, cx: Float, cy: Float, rx: Float, ry: Float, fadeTo: Float): Float {
+        fun ellipseWeight(
+            x: Float,
+            y: Float,
+            cx: Float,
+            cy: Float,
+            rx: Float,
+            ry: Float,
+            fadeTo: Float,
+        ): Float {
             val nx = (x - cx) / rx
             val ny = (y - cy) / ry
             return 1f - smoothstep(1f, fadeTo, sqrt(nx * nx + ny * ny))
         }
 
         // still where the string leaves the hood, swinging most at its tip, and only right around it
-        fun stringWeight(s: Drawstring, x: Float, y: Float): Float {
+        fun stringWeight(
+            s: Drawstring,
+            x: Float,
+            y: Float,
+        ): Float {
             val along = (y - s.topY) / (s.tipY - s.topY)
             if (along <= 0f || along > 1.1f) return 0f
             val lineX = s.topX + (s.tipX - s.topX) * along.coerceAtMost(1f)
