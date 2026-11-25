@@ -5,13 +5,17 @@ package com.metrolist.shared.ui.player.mochy
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -32,12 +36,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -69,6 +80,7 @@ import com.metrolist.shared.ui.player.artworkSwipe
 import com.metrolist.shared.ui.player.mochy.turntable.TurntableStage
 import com.metrolist.shared.ui.player.mochy.turntable.VinylDisc
 import com.metrolist.shared.viewmodels.PlayerViewModel
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 
 // Exact Mochy FlagshipLandscape proportions and visual tokens.
@@ -80,6 +92,9 @@ private val PanelGutter = 26.dp
 private val ButtonSize = 34.dp
 private val SideButtonsRoom = ButtonSize + 30.dp
 private val EvenShade = Color.Black.copy(alpha = 0.38f)
+
+// the lyrics page tucks the seek bar and transport away after this long without a touch
+private const val LandscapeTransportIdleMs = 3_500L
 
 private enum class FlagshipLandscapePanel {
     INFO,
@@ -155,6 +170,18 @@ internal fun FlagshipLandscapePlayer(
             isQueueVisible -> FlagshipLandscapePanel.QUEUE
             else -> FlagshipLandscapePanel.INFO
         }
+
+    var transportRevealed by remember { mutableStateOf(true) }
+    var touchTick by remember { mutableLongStateOf(0L) }
+    val lyricsShowing = uiState.isLyricsVisible
+    LaunchedEffect(lyricsShowing, touchTick) {
+        transportRevealed = true
+        if (lyricsShowing) {
+            delay(LandscapeTransportIdleMs)
+            transportRevealed = false
+        }
+    }
+    val transportShown = transportRevealed || !lyricsShowing
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val squareSide = minOf(maxHeight * SQUARE_HEIGHT_SHARE, maxWidth * SQUARE_WIDTH_SHARE)
@@ -307,7 +334,13 @@ internal fun FlagshipLandscapePlayer(
                 Modifier
                     .fillMaxHeight()
                     .padding(start = coverWidth, end = endInset + SideButtonsRoom)
-                    .padding(bottom = bottomInset),
+                    .padding(bottom = bottomInset)
+                    .pointerInput(Unit) {
+                        awaitEachGesture {
+                            awaitFirstDown(requireUnconsumed = false)
+                            touchTick++
+                        }
+                    },
         ) {
             Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 AnimatedContent(
@@ -434,35 +467,43 @@ internal fun FlagshipLandscapePlayer(
             }
 
             Column(modifier = Modifier.padding(horizontal = PanelGutter - 12.dp)) {
-                PlayerProgressSlider(
-                    viewModel = viewModel,
-                    duration = duration,
-                    isPlaying = isPlaying,
-                    textBackgroundColor = contentColor,
-                    canSeek = !isListenTogetherGuest,
-                    isCasting = castState.isConnected,
-                    songId = currentSong?.id,
-                    isLive = uiState.isLive,
-                    mochyTrack = true,
-                    timerTextStyle = MaterialTheme.typography.labelMedium.copy(fontFamily = flagshipFont),
-                )
-            }
+                AnimatedVisibility(
+                    visible = transportShown,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut(),
+                ) {
+                    Column {
+                        PlayerProgressSlider(
+                            viewModel = viewModel,
+                            duration = duration,
+                            isPlaying = isPlaying,
+                            textBackgroundColor = contentColor,
+                            canSeek = !isListenTogetherGuest,
+                            isCasting = castState.isConnected,
+                            songId = currentSong?.id,
+                            isLive = uiState.isLive,
+                            mochyTrack = true,
+                            timerTextStyle = MaterialTheme.typography.labelMedium.copy(fontFamily = flagshipFont),
+                        )
+                    }
 
-            if (!isListenTogetherGuest) {
-                FlagshipTransport(
-                    playing = isPlaying,
-                    loading = isPlaybackLoading,
-                    onPlayPause = viewModel::togglePlayPause,
-                    onPrevious = viewModel::previous,
-                    onNext = viewModel::next,
-                    compact = compactHeight,
-                    contentColor = contentColor,
-                    modifier = Modifier.padding(vertical = 6.dp),
-                )
-            } else {
-                Spacer(Modifier.height(6.dp))
-            }
+                    if (!isListenTogetherGuest) {
+                        FlagshipTransport(
+                            playing = isPlaying,
+                            loading = isPlaybackLoading,
+                            onPlayPause = viewModel::togglePlayPause,
+                            onPrevious = viewModel::previous,
+                            onNext = viewModel::next,
+                            compact = compactHeight,
+                            contentColor = contentColor,
+                            modifier = Modifier.padding(vertical = 6.dp),
+                        )
+                    } else {
+                        Spacer(Modifier.height(6.dp))
+                    }
 
+                    }
+                }
             FlagshipBottomControls(
                 volume = volume,
                 lyricsVisible = uiState.isLyricsVisible,
