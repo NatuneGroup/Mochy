@@ -31,7 +31,7 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.em
-import com.metrolist.shared.ui.mochy.mochyInterFontFamily
+import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.PI

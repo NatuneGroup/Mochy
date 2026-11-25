@@ -46,11 +46,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.ipod_shuffle_songs
+import com.metrolist.shared.model.previewThumbnailUrl
 import com.metrolist.shared.playback.LocalPlayerSession
-import com.metrolist.shared.ui.mochy.mochyInterFontFamily
 import com.metrolist.shared.ui.playback.LocalPlaybackController
 import com.metrolist.shared.ui.player.PlayerArtworkCrossfade
 import com.metrolist.shared.ui.player.mochy.FlagshipVolume
+import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 

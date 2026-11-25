@@ -44,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.metrolist.shared.model.SongItem
+import com.metrolist.shared.model.previewThumbnailUrl
 import com.metrolist.shared.playback.LocalPlayerSession
 import com.metrolist.shared.ui.components.CrossfadeArtwork
 import com.metrolist.shared.ui.components.sliders.collectPlaybackDisplayState

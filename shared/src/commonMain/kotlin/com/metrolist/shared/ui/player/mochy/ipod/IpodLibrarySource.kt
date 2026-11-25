@@ -2,7 +2,6 @@
 
 package com.metrolist.shared.ui.player.mochy.ipod
 
-import com.metrolist.shared.api.GlobalYouTubeRepository
 import com.metrolist.shared.constants.ArtistSortType
 import com.metrolist.shared.constants.PlaylistSortType
 import com.metrolist.shared.constants.SongSortType
@@ -18,6 +17,8 @@ import com.metrolist.shared.generated.resources.ipod_no_artists
 import com.metrolist.shared.generated.resources.ipod_no_playlists
 import com.metrolist.shared.generated.resources.ipod_no_songs
 import com.metrolist.shared.model.SongItem
+import com.metrolist.shared.model.previewThumbnailUrl
+import com.metrolist.shared.state.GlobalYouTubeRepository
 import com.metrolist.shared.utils.sizedArtworkUrl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

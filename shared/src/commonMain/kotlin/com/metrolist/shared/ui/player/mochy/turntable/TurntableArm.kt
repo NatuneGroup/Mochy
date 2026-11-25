@@ -45,7 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.metrolist.shared.ui.haptics.HapticEvent
 import com.metrolist.shared.ui.haptics.rememberMetrolistHaptics
-import com.metrolist.shared.ui.mochy.mochyInterFontFamily
+import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import com.metrolist.shared.ui.utils.supportsNativeBlur
 import com.metrolist.shared.utils.formatDuration
 import kotlinx.coroutines.Job

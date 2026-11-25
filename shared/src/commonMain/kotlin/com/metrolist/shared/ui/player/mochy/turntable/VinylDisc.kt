@@ -24,6 +24,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -116,13 +118,20 @@ internal fun VinylDisc(
                     rotationZ = angle.floatValue
                 },
         ) {
+            val labelColorFilter =
+                remember(isPlaying) {
+                    if (isPlaying) null else ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0.7f) })
+                }
             Box(
                 modifier =
                     Modifier
                         .align(Alignment.Center)
                         .size(labelSide)
                         .clip(CircleShape)
-                        .background(LabelFallback),
+                        .background(LabelFallback)
+                        .graphicsLayer {
+                            colorFilter = labelColorFilter
+                        },
             ) {
                 CrossfadeArtwork(
                     animate = spinActive,
@@ -132,7 +141,6 @@ internal fun VinylDisc(
                     contentDescription = contentDescription,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),
-                    saturation = if (isPlaying) 1f else 0.7f,
                 )
                 artworkOverlay?.invoke(Modifier.fillMaxSize())
             }
