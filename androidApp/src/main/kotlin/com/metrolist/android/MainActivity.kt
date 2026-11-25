@@ -162,6 +162,7 @@ class MainActivity : ComponentActivity() {
             recovery.capture(error)
         }
         super.onCreate(savedInstanceState)
+        preferHighestRefreshRate()
         lifecycleScope.launch {
             recovery.report.collect { id -> if (id != null) showStartupRecovery() }
         }
@@ -396,6 +397,18 @@ class MainActivity : ComponentActivity() {
             if (error !is CancellationException) app.recovery.capture(error)
             false
         }
+    }
+
+    // Mochy asks for the fastest mode at the current resolution: left alone, many 120 Hz phones run apps at 60 Hz
+    @Suppress("DEPRECATION")
+    private fun preferHighestRefreshRate() {
+        val display = runCatching { window.windowManager.defaultDisplay }.getOrNull() ?: return
+        val current = display.mode
+        val fastest =
+            display.supportedModes
+                .filter { it.physicalWidth == current.physicalWidth && it.physicalHeight == current.physicalHeight }
+                .maxByOrNull { it.refreshRate } ?: return
+        window.attributes = window.attributes.apply { preferredDisplayModeId = fastest.modeId }
     }
 
     private fun consumeDiscordCallback(callback: Intent) {

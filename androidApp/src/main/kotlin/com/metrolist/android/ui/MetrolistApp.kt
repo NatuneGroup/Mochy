@@ -2,6 +2,7 @@
 
 package com.metrolist.android.ui
 
+import com.metrolist.shared.ui.utils.HighRefreshWhile
 import android.app.SearchManager
 import android.content.Context
 import android.content.Intent
@@ -1158,6 +1159,8 @@ fun MetrolistApp(
                             playerBottomSheetState.isExpanded || playerBottomSheetState.progress > 0f
                         }
                     }
+                    // the open player keeps moving with no finger on it (artwork, lyrics, turntable), so it holds the top rate
+                    HighRefreshWhile { isPlayerExpandedOrExpanding && isPlaying }
 
                     val isInPipMode = LocalIsInPipMode.current
                     val contentObscured by remember(playerBottomSheetState) {
