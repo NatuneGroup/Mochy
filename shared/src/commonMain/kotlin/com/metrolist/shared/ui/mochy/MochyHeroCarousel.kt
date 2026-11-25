@@ -127,8 +127,8 @@ internal fun MochyHeroCarousel(
     active: Boolean,
     onOpenItem: (YTItem) -> Unit,
     onTogglePlayPause: (() -> Unit)? = null,
-    hoverTilt: Boolean = false,
     modifier: Modifier = Modifier,
+    hoverTilt: Boolean = false,
 ) {
     if (items.isEmpty()) return
 
