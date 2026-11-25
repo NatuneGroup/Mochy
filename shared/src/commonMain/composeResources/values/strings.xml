@@ -5832,6 +5832,8 @@
     <string name="ipod_theme_true_dark">True Dark</string>
     <!-- Translators: Setting title choosing the color of the click wheel in the iPod player style. -->
     <string name="ipod_wheel_color">Click wheel color</string>
+    <!-- Translators: Screen reader label for the iPod click wheel, which offers play, skip, menu and select actions. -->
+    <string name="ipod_click_wheel">Click wheel</string>
     <!-- Translators: Click wheel option that automatically follows the chosen iPod finish. -->
     <string name="ipod_wheel_theme">Match finish</string>
     <!-- Translators: White click wheel color option for the iPod player style. -->
