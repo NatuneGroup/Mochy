@@ -19,18 +19,28 @@ Read first: [mochy-port.md](mochy-port.md), [../CLAUDE.md](../CLAUDE.md) and
 
 ## Current state
 
+Snapshot updated 2026-11-25.
+
 - PR #1 is open and not a draft. `AI usage:` is disclosed in the PR body.
-- Last full run on `0bdd6d9a` passed: Android / APK, Desktop / Linux x64,
-  iOS / Validate iOS, Select checks and repository checks, and disclosure.
-- Android artifact from that run: `Mochy.apk`, 16,809,276 bytes (16.8 MB),
-  `com.natune.mochy`, version 14.0.1, v2 and v3 APK signatures (v1 is not used at
-  minSdk 24), 3 dex files, 18 native library entries. The previous debug APK was
-  48 MB with 23 dex files.
+- Last full CI on `6941dae5` passed: Select checks and repository checks, Android / APK,
+  Desktop / Linux x64 and iOS / Validate iOS.
+- The signed release from `eb2e7514` (`build-android.yml`, `variant=release`, run
+  45550453298) produced `Mochy.apk` at 16,935,941 bytes. It has v2 and v3 signatures,
+  and `apksigner` printed `CN=Mochy (NatuneGroup), O=NatuneGroup`.
 - Release signing secrets are set in `NatuneGroup/Mochy` (2026-11-25): `KEYSTORE_PATH`
   (base64 PKCS12), `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`. Certificate
   `CN=Mochy (NatuneGroup), O=NatuneGroup`, SHA-256
   `B8:8C:3C:FE:9C:4A:F0:A0:D0:9F:70:30:E8:A7:A4:DD:7B:43:55:ED:86:07:3D:A3:03:0E:59:D5:11:13:1F:95`.
   The keystore and its password are kept offline by the operator, never in the repo.
+- Formatting without a local Gradle run: push a commit whose message contains
+  `[ktlint-format]`. `.github/workflows/ktlint-format.yml` formats on Blacksmith and pushes
+  `style: apply ktlintFormat`. CI started by that bot push waits for approval
+  (`gh api -X POST repos/NatuneGroup/Mochy/actions/runs/<id>/approve`). If nothing needed
+  formatting, rerun the PR's CI run instead.
+- Compose resource strings accept only `%1$s` and `%1$d` placeholders, so do not use `%%`
+  or `%.2f`. Each `Res.string.<key>` needs its own import unless the file has the wildcard
+  import. `python3 scripts/check_translation_mechanics.py` and
+  `python3 scripts/check_compose_resource_escapes.py` catch the first two locally.
 - CI run history: `gh run list --repo NatuneGroup/Mochy --branch feat/mochy-multiplatform`.
 
 ## Completed work
@@ -45,6 +55,12 @@ Read first: [mochy-port.md](mochy-port.md), [../CLAUDE.md](../CLAUDE.md) and
 | Updater | `d18baccf` | In-app updater points at `NatuneGroup/Mochy` releases on Android and Desktop. |
 | Bedside Clock | `50960cf0` | Three faces (Big FlipDigits, Stacked, Analog), swipe-up Now Playing, night tint, burn-in drift, persisted settings, all platforms. |
 | Android release packaging | `0bdd6d9a`, this commit | Mochy app ID/label/icon, R8 + resource shrinking, `Mochy.apk` collection, `apksigner verify` on every APK, persistent published test key. |
+| Wave 1: navigation and screens | `7456612c`, `0afa9be1` | Mochy nav pill, library, detail, search and settings styling. |
+| Wave 2: player styles | `9f520afa`, `8229f32b` | Turntable/vinyl style and iPod click-wheel style. The wheel has screen-reader actions, and a pending wheel seek is tied to the queue item. |
+| Review round (PR #1) | `e8fa57e8`, `80c9b777`, `c8bf80a7`, `4f3db510` | Desktop data under `mochy/`, iOS bundle ID `com.natune.mochy`, profile name clamp, offline desktop hero fallback. |
+| Wave 3: Audio Lab | `a4bf6592`…`605985b4` | Spatial (crossfeed/virtual speakers), Freeverb-style reverb with presets, and 8D. Shared DSP cores are in `shared/.../audiolab/dsp` and run on Android (Media3 wrappers), desktop (`AudioRenderer`) and iOS (audio tap; HLS bypasses it). The settings page is reached from Playback. See [audiolab.md](audiolab.md). |
+| Wave 4: share and profile | `906f387a`, `ff0cb673`, `03394cca`, `14011c10` | ID card back face with tap flip. The song share card (cover/wide) is in the player menu on Android and iOS. Recap is the existing Wrapped feature, so it was not duplicated. |
+| CI formatting | `edaaf448` | `[ktlint-format]` workflow (see Current state). |
 
 ### Android release details
 
@@ -62,119 +78,26 @@ Read first: [mochy-port.md](mochy-port.md), [../CLAUDE.md](../CLAUDE.md) and
   `apksigner verify --verbose --print-certs` and only requires Last.fm/Lyprio
   secrets when `require-signing` is true.
 
-## Remaining waves
+## Remaining work
 
-Wave 1 is the largest. Each wave should land as its own reviewable change on the
-same branch unless maintainers ask for separate PRs.
+Waves 1 to 4 have landed (see Completed work). Still open:
 
-### Wave 1: UI shell and screens
-
-Reference:
-
-- `Mochy-Music/app/src/main/kotlin/com/mochyy/mochymusic/ui/component/NavPill.kt`
-- `.../ui/component/AppNavigation.kt`
-- `.../ui/screens/library/**`
-- `.../ui/screens/search/**`
-- `.../ui/screens/AlbumScreen.kt`, `.../ui/screens/artist/**`, `.../ui/screens/playlist/**`
-- `.../ui/component/detail/**`
-
-Targets:
-
-- `shared/src/commonMain/kotlin/com/metrolist/shared/ui/navigation/FloatingNavigationBar.kt`
-  currently draws a static capsule. Port Mochy's `NavPillState`: two `Animatable`
-  edges with lead/trail springs, lift on touch, horizontal drag across tabs, tap
-  settle fallback, and fade when no tab is lit.
-- `AdaptiveNavigationScaffold.kt` passes items and heights; keep its desktop rail and
-  all platform entry points working. Android legacy navigation is
-  `androidApp/src/main/kotlin/com/metrolist/android/ui/Navigation.kt`; KMP mobile
-  host is `shared/src/commonMain/kotlin/com/metrolist/shared/ui/mobile/MobileApp.kt`.
-- Library screens exist as `LibraryContent.kt`; split or restyle against Mochy's
-  `LibraryHomeScreen`, `LibraryTabs`, `LibraryShelfCards`, `LibraryGridScreen`,
-  `LibraryEntityListScreen`, `LibraryImport*`.
-- Detail screens: `AlbumContent.kt`, `ArtistScreen.kt`, `PlaylistContent.kt`,
-  `StoredPlaylistContent.kt`; Mochy's shared pieces are in
-  `ui/component/detail/` (collapsing top bar, cover background, action row,
-  track row, side layout).
-- Search: `SearchScreen.kt` / `SearchContent.kt`; Mochy reference
-  `ui/screens/search/SearchDesign.kt`, `SearchSidePane.kt`, `RecentSearches.kt`.
-- Settings: reuse existing settings pages, apply Mochy type/spacing and section
-  styling only; do not rename preference keys.
-
-Platform notes: `NavPill` has no Android imports and ports into `commonMain`.
-`RemoteFocus` and haptics are Android-only and must stay behind existing platform
-abstractions. Mochy uses Coil painters for SVG tab icons; Metrolist has vector icons,
-so select the nearest `MetrolistIcons` and keep tab identity stable.
-
-### Wave 2: Vinyl, turntable and iPod player styles
-
-Reference:
-
-- `.../ui/player/customize/TurntableArm.kt`, `TurntableArt.kt`
-- `.../ui/player/TurntableControls.kt`
-- `.../ui/player/ipod/*` (`IpodClickWheel.kt`, `IpodScreen.kt`, `IpodNowPlaying.kt`,
-  `IpodCoverFlow.kt`, `IpodMenu.kt`, `IpodGeometry.kt`, `IpodLook.kt`)
-
-Targets:
-
-- `shared/src/commonMain/kotlin/com/metrolist/shared/ui/player/mochy/` holds the
-  ported Flagship and Bedside work; add `VinylDisc`, `TurntableArm`, and `IpodPlayer`.
-- Wire style selection through settings and the existing module `look.player` mapping
-  (`flagship`, `modern`, `vintage`, `classic`) where it already exists.
-- Tonearm drag maps angle to seek position with a commit on release; disc rotation
-  follows playback position and pauses with the player. Reuse the existing
-  `FlagshipSeekTrack` interaction rules for tap, drag and cancellation.
-- iPod Click Wheel needs circular gesture math, detents and haptics; keep seek and
-  volume on the same player APIs, not a second player.
-
-### Wave 3: Audio Lab
-
-Reference:
-
-- `.../ui/screens/audiolab/**` including `AudioLabScreen.kt`, `ReverbCard.kt`,
-  `stage/Stage*`
-- `.../viewmodels/AudioLabViewModel.kt`, `.../di/AudioLabEntryPoint.kt`
-- `.../eq/AudioLabStore.kt`, `ReverbSettings.kt`
-- `.../eq/audio/ReverbAudioProcessor.kt`, `StageAudioProcessor.kt`
-- `.../eq/stage/StageNative.kt`, `StageOutput.kt`, `StageSettings.kt`, `StagePresets.kt`
-
-Targets:
-
-- Android audio processing lives in
-  `androidApp/src/main/kotlin/com/metrolist/android/playback/`
-  (`EqualizerAudioProcessor.kt`, `NormalizationAudioProcessor.kt`,
-  `ExoPlaybackPlayer.kt`). Add 8D/reverb/stage processors to that chain and expose
-  enable/disable through `MochyModuleRegistry` so disabled modules restore defaults.
-- Shared settings go through `PreferenceKeys.kt` and `Settings.shared`.
-- Stage room UI port belongs in `shared/.../ui/mochy/` or a new `ui/audiolab/`
-  package. `StageNative.kt` is Android JNI; iOS and desktop need an expect/actual
-  fallback or a shared pan/delay implementation. Audit the DSP path before coding;
-  do not pretend parity where a platform cannot run the native stage engine.
-- CrossMix transitions must reuse the player queue and transport, not add a second
-  queue (rejected feature).
-
-### Wave 4: Share Studio and Recap Story
-
-Reference:
-
-- `.../ui/player/share/**` (`ShareKit.kt`, `ShareCanvas.kt`, `SharePalette.kt`,
-  `ShareChoreography.kt`, `LyricsShareSession.kt`, `song/SongShare*.kt`,
-  `song/export/**`)
-- `.../ui/screens/recap/**` (`RecapStory.kt`, `RecapStoryPages.kt`, `RecapData.kt`,
-  `RecapVisuals.kt`, `IdCardBack.kt`, `RecapSnippetPlayer.kt`)
-- `.../ui/screens/setup/onboarding/ProfileIdCard.kt`
-
-Targets:
-
-- Existing Metrolist share code: `shared/.../ui/components/lyrics/LyricsShareDialog.kt`
-  and player share entry points in `PlayerViewModel.kt`.
-- Share image/video export is platform-specific: Android MediaStore + MediaCodec/GL,
-  iOS AVFoundation/`UIActivityViewController`, desktop Skia file save. Define an
-  expect/actual export boundary and test each host. `share/song/export/ShareGlEffects.kt`
-  is Android GL and cannot compile in `commonMain`.
-- Recap data needs an event source. Metrolist has statistics/wrapped code; extend it
-  instead of adding a parallel history table.
-- `IdCardBack` and the existing `MochyProfileIdCard` should share one geometry and
-  finish model.
+- **Stage (3D room) effect.** The reference engine is native C++ (`app/src/main/cpp/stage/`,
+  CMake, the `mochystage` JNI library and `assets/stage_hrtf.bin`). Porting it needs an NDK
+  build in `androidApp` (see how `opusDecoder` builds JNI) and a licence check of the HRTF
+  asset. Desktop and iOS need a shared fallback or nothing at all; do not claim parity.
+- **Flagship landscape parity.** Landscape still uses the generic tablet layout around the
+  Flagship controls, not the reference's cover, queue and lyrics treatment.
+- **Share Studio extras.** Video/karaoke export (`share/song/export/**`, Android GL) is not
+  ported. The lyrics share card keeps the Metrolist look. The desktop player has its own UI
+  and no song card entry; `desktopApp/.../utils/ImageSharing.kt` `saveImage` is ready to reuse.
+  The iOS share file is named `metrolist-statistics-*.png` by `IosNativeFiles.shareImage`.
+- **ID card back stats.** No caller passes `MochyCardStats` yet, so the back shows a hint.
+  A host with database access can map `historyStatisticsSnapshot` totals and the top artist.
+- **Audio Lab module switch.** `MochyModuleRegistry` has no effect-module kind, so disabling a
+  module cannot reset the effects.
+- **Device checks.** Nothing here was tested on a device: Audio Lab sound and toggling
+  mid-song, TalkBack/VoiceOver on the click wheel, side-by-side desktop and iOS installs.
 
 ## Reuse instead of duplicating
 
@@ -251,14 +174,11 @@ workflow tests and Android collector test do not.
 
 ## Next actions
 
-1. Push this handoff plus the test keystore and confirm the release APK verifies
-   with `CN=Mochy Test Build` on two consecutive runs.
-2. Port `NavPill` into `FloatingNavigationBar.kt` (Wave 1, highest visible impact).
-3. Restyle Library, detail and Search screens against the Mochy reference; keep
-   desktop rail behavior.
-4. Wave 2 vinyl/turntable, then iPod.
-5. Wave 3 Audio Lab with a per-platform DSP audit before implementation.
-6. Wave 4 Share Studio and Recap.
+1. Install `Mochy.apk` from the latest release run on a phone. Check Audio Lab (Spatial,
+   Reverb, 8D), the song share card and the ID card flip.
+2. Stage effect: audit the reference C++ and the HRTF asset licence, then add the NDK build.
+3. Flagship landscape parity against the reference.
+4. Answer any new review comments on PR #1.
 
 Do not bump `appVersion`, rewrite history, change Blacksmith runners, add paywalls,
 or remove Mochy/Metrolist/ViviMusic credit.
