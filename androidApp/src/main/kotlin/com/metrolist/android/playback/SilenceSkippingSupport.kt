@@ -56,6 +56,10 @@ internal class SilenceSkippingSupport(
 
     @Volatile private var equalizer: EqualizerAudioProcessor? = null
 
+    // Off until settings are wired; each is inactive while its settings say disabled.
+    val reverbProcessor = ReverbAudioProcessor()
+    val eightDProcessor = EightDAudioProcessor()
+
     @Volatile
     var audioOutputDetails: Map<String, String> = emptyMap()
         private set
@@ -73,7 +77,9 @@ internal class SilenceSkippingSupport(
                 return pitchSafeAudioSink(
                     context,
                     enableAudioOutputPlaybackParams,
-                    playoutTracker.wrap(musicAudioProcessorChain(equalizer, *extraProcessors, detector)),
+                    playoutTracker.wrap(
+                        musicAudioProcessorChain(equalizer, reverbProcessor, eightDProcessor, *extraProcessors, detector),
+                    ),
                     outputProvider = {
                         playoutTracker.wrap(
                             audioPositionDiagnostics.wrap(
