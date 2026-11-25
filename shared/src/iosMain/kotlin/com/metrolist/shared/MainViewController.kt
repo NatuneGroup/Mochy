@@ -491,8 +491,8 @@ fun MetrolistIOSApp() {
             }
             key(appGeneration) {
                 MobileApp(
-                    onExportStatistics = { IosNativeFiles.shareImage(presenter, it) },
-                    songCardExport = { IosNativeFiles.shareImage(presenter, it) },
+                    onExportStatistics = { IosNativeFiles.shareImage(presenter, it, "mochy-statistics-") },
+                    songCardExport = { IosNativeFiles.shareImage(presenter, it, "mochy-song-") },
                     onPickPlaylistCover = { pickIosPlaylistCover(presenter) },
                     rememberMochyProfilePhotoPicker = { onPicked -> rememberIosMochyProfilePhotoPicker(onPicked) },
                     onSavePlaylistCover = { playlist, bytes ->
