@@ -53,7 +53,6 @@ import com.metrolist.shared.generated.resources.brand_better_lyrics
 import com.metrolist.shared.generated.resources.brand_kugou
 import com.metrolist.shared.generated.resources.brand_lrclib
 import com.metrolist.shared.generated.resources.brand_lrcred
-import com.metrolist.shared.generated.resources.brand_lyprio
 import com.metrolist.shared.generated.resources.brand_paxsenix
 import com.metrolist.shared.generated.resources.brand_unison
 import com.metrolist.shared.generated.resources.cancel
@@ -326,7 +325,6 @@ private fun providerName(provider: LyricsProvider): String =
     stringResource(
         when (provider) {
             LyricsProvider.USER -> Res.string.lyrics_provider_user
-            LyricsProvider.LYPRIO -> Res.string.brand_lyprio
             LyricsProvider.BETTERLYRICS -> Res.string.brand_better_lyrics
             LyricsProvider.LRCRED -> Res.string.brand_lrcred
             LyricsProvider.UNISON -> Res.string.brand_unison

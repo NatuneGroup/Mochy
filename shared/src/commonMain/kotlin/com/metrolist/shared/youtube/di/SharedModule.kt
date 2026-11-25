@@ -11,9 +11,7 @@ import com.metrolist.innertubex.extraction.YtConfigParserImpl
 import com.metrolist.innertubex.extraction.strategy.ClientFallbackStrategy
 import com.metrolist.innertubex.extraction.strategy.ClientHealthMonitor
 import com.metrolist.innertubex.extraction.strategy.ContentAwareFallbackStrategy
-import com.metrolist.shared.BuildConfig
 import com.metrolist.shared.api.lyrics.AiModelCatalog
-import com.metrolist.shared.api.lyrics.LyprioLyricsProvider
 import com.metrolist.shared.api.lyrics.LyricsClient
 import com.metrolist.shared.api.lyrics.LyricsFetcher
 import com.metrolist.shared.api.lyrics.LyricsTranslationClient
@@ -91,13 +89,6 @@ val sharedModule =
             LyricsClient(
                 httpClient = get(),
                 youtubeLyricsApi = get(),
-                lyprioLyricsProvider =
-                    LyprioLyricsProvider.createOrNull(
-                        httpClient = get(),
-                        baseUrl = BuildConfig.LYPRIO_BASE_URL,
-                        signingKeyBase64 = BuildConfig.LYPRIO_HMAC_KEY,
-                        allowInsecureHttp = BuildConfig.DEBUG,
-                    ),
             )
         }
         single<LyricsFetcher> { get<LyricsClient>() }

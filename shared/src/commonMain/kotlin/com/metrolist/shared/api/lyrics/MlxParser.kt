@@ -14,7 +14,6 @@ import com.metrolist.shared.model.MlxMeta
 import com.metrolist.shared.model.MlxSong
 import com.metrolist.shared.model.MlxSongPart
 import com.metrolist.shared.model.WordTimestamp
-import meow.nyx.glyphmind.containsJapaneseKanji
 
 object MlxParser {
     private const val MAX_DOCUMENT_CHARS = 8 * 1024 * 1024
@@ -70,7 +69,7 @@ object MlxParser {
     ): MlxDocument {
         if (text.length > MAX_DOCUMENT_CHARS) return emptyDocument()
         if (text.trimStart().startsWith('{')) {
-            return MlxJsonParser.parse(text)?.withValidatedRomanization() ?: emptyDocument()
+            return MlxJsonParser.parse(text) ?: emptyDocument()
         }
         if (!isWithinBudget(text)) return emptyDocument()
         val cleanedText = text.replace("&#x27;", "'")
@@ -193,7 +192,7 @@ object MlxParser {
             colors = parseColors(sections["colors"] ?: emptyList()),
         ).let { document ->
             if (applyLrcOffset) document.withLrcOffset(lrcOffsetMs(text)) else document
-        }.withValidatedRomanization()
+        }
     }
 
     private fun matchAuxiliaryLyrics(
@@ -208,22 +207,6 @@ object MlxParser {
             val position = exact[index] ?: index.takeIf { it in auxiliaryLines.indices && !reserved[it] && line.time !in byTime }
             position?.let(auxiliaryLines::get)
         }
-    }
-
-    private fun MlxDocument.withValidatedRomanization(): MlxDocument {
-        if (!meta.provider.equals("LYPRIO", ignoreCase = true) || !meta.subprovider.equals("KUGOU", ignoreCase = true)) return this
-        return copy(
-            lines =
-                lines.map { line ->
-                    if (containsJapaneseKanji(line.romanizedText.orEmpty()) ||
-                        line.romanizedWords.orEmpty().any { containsJapaneseKanji(it.text) }
-                    ) {
-                        line.copy(romanizedText = null, romanizedWords = null)
-                    } else {
-                        line
-                    }
-                },
-        )
     }
 
     internal fun withTranslations(

@@ -1496,7 +1496,7 @@ class PlayerViewModel(
                                     rawLyrics = rawLyrics,
                                     rawLyricsProvider = result?.provider,
                                     lyricsUserSelected = result?.isUserSelected == true,
-                                    lyricsProvider = lyricsProviderLabel(result?.provider, lyricsDoc),
+                                    lyricsProvider = lyricsProviderLabel(result?.provider),
                                     lyricsOffsetMs = if (loaded) _uiState.value.lyricsOffsetMs else lyricsOffsetMs,
                                     isLyricsLoading = skipCache || entries.isEmpty(),
                                     manualAiTranslationEnabled = forceAiTranslation,
@@ -1650,7 +1650,7 @@ class PlayerViewModel(
                             _uiState.value =
                                 _uiState.value.copy(
                                     lyrics = enrichedLyrics,
-                                    lyricsProvider = lyricsProviderLabel(_uiState.value.rawLyricsProvider, lyricsDoc),
+                                    lyricsProvider = lyricsProviderLabel(_uiState.value.rawLyricsProvider),
                                     lyricsMeta = lyricsDoc.meta,
                                     lyricsAgents = lyricsDoc.agents,
                                     lyricsSongwriters =
@@ -1730,7 +1730,7 @@ class PlayerViewModel(
                                 lyricsAgents = videoLyricsDoc.agents,
                                 lyricsSongwriters =
                                     videoLyricsDoc.song.songwriters.takeIf { it.isNotEmpty() } ?: _uiState.value.lyricsSongwriters,
-                                lyricsProvider = lyricsProviderLabel(videoLyrics.provider, videoLyricsDoc),
+                                lyricsProvider = lyricsProviderLabel(videoLyrics.provider),
                                 lyricsMeta = videoLyricsDoc.meta,
                                 mvLyricsRetimed = true,
                             )
@@ -1892,7 +1892,7 @@ class PlayerViewModel(
                         rawLyrics = effectiveResult.lyrics,
                         rawLyricsProvider = effectiveResult.providerName,
                         lyricsUserSelected = true,
-                        lyricsProvider = lyricsProviderLabel(effectiveResult.providerName, document),
+                        lyricsProvider = lyricsProviderLabel(effectiveResult.providerName),
                         manualAiTranslationEnabled = false,
                         mvLyricsRetimed = false,
                     )

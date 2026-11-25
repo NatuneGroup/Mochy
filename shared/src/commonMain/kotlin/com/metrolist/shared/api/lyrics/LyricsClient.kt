@@ -39,7 +39,6 @@ interface LyricsFetcher {
 class LyricsClient(
     httpClient: HttpClient,
     youtubeLyricsApi: YouTubeLyricsApi,
-    private val lyprioLyricsProvider: LyprioLyricsProvider?,
 ) : LyricsFetcher {
     private val betterLyricsProvider = BetterLyricsProvider(httpClient)
     private val unisonLyricsProvider = UnisonProvider(httpClient)
@@ -77,11 +76,6 @@ class LyricsClient(
         return when (provider) {
             LyricsProvider.USER -> {
                 null
-            }
-
-            LyricsProvider.LYPRIO -> {
-                val lyprio = checkNotNull(lyprioLyricsProvider) { "Lyprio is not configured" }
-                lyprio.getLyrics(title, artist, duration, album, videoId)
             }
 
             LyricsProvider.BETTERLYRICS -> {
@@ -157,12 +151,7 @@ class LyricsClient(
         isVideoContext: Boolean,
     ): List<LyricsWithProvider> =
         withContext(QuietHttpFailures) {
-            if (provider == LyricsProvider.LYPRIO) {
-                val lyprio = checkNotNull(lyprioLyricsProvider) { "Lyprio is not configured" }
-                lyprio.getLyricsResults(title, artist, duration, album, videoId).map { LyricsWithProvider(it, "Lyprio") }
-            } else {
-                listOfNotNull(fetchLyrics(title, artist, duration, album, videoId, provider, isVideoContext))
-            }
+            listOfNotNull(fetchLyrics(title, artist, duration, album, videoId, provider, isVideoContext))
         }
 
     private suspend fun result(
