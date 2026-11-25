@@ -16,22 +16,22 @@ Source: Mochy Music (realidkroo, GPL-3.0), `app/src/main/kotlin/com/mochyy/mochy
 Media3 `BaseAudioProcessor` subclasses in `androidApp/src/main/kotlin/com/metrolist/android/playback/`, following `EqualizerAudioProcessor`.
 
 - Spatial, Reverb and 8D: done. All three are always in the chain, after the equalizer, built in `SilenceSkippingSupport.kt`. Spatial sits before Reverb, as in the reference. While disabled they pass audio through untouched; enabling or disabling fades them in and out, so changes apply mid-song without reconfiguring the sink. Types live in `shared/src/commonMain/kotlin/com/metrolist/shared/audiolab/`, saved values in `Settings.shared` (`reverb*` and `eightD*` keys), and `AudioLabSettings.kt` turns them into flows that each player's `SilenceSkippingSupport` applies.
-- Spatial: done on Android (`SpatialAudioProcessor.kt`, settings `spatial*`). Desktop and iOS are not wired.
+- Spatial: done (`SpatialAudioProcessor.kt`, settings `spatial*`).
+- DSP: `shared/src/commonMain/kotlin/com/metrolist/shared/audiolab/dsp/` holds `SpatialCore`, `ReverbCore`, `EightDCore` and the shared soft knee (`SoftKnee.kt`). The Android processors are Media3 wrappers around them (`Pcm16CoreAudioProcessor.kt`). Desktop and iOS run the same cores through `AudioLabChain` in commonMain, in the same order. Spatial and reverb go through the soft knee at the output edge, 8D is clipped to the sample range.
 - Stage: needs the NDK build (CMake, JNI library, HRTF asset). A separate wave.
 
-Settings page: the Audio Lab row sits next to the equalizer in the sound settings. On desktop and iOS the cards are shown disabled, since the processors are not wired there.
+Settings page: the Audio Lab row sits next to the equalizer in the sound settings. The cards work on Android, desktop and iOS. On iOS a note says effects do not apply to HLS streams.
 
 ## Desktop plan
 
-Engine: `shared/src/desktopMain/kotlin/com/metrolist/shared/playback/ffmpeg/AudioRenderer.kt`. The equalizer runs at line 129 (`val equalized = equalize(data, boostDb)`) and the silence skipper at line 131. An effect hook fits between those two lines, on the PCM from `equalized`. Not wired in Part 1.
+Engine: `shared/src/desktopMain/kotlin/com/metrolist/shared/playback/ffmpeg/AudioRenderer.kt`. The equalizer runs at line 129 (`val equalized = equalize(data, boostDb)`) and the silence skipper at line 131. Hook: `AudioLabChain.processPcm16` runs on `equalized` between those two lines. The renderer owns the chain and its settings scope, `reset()` runs with the equalizer on flush, and `close()` cancels the scope.
 
 ## iOS plan
 
-Engine: `MTAudioProcessingTap` in `shared/src/iosMain/kotlin/com/metrolist/shared/playback/IosAudioProcessingTap.kt`. The tap reads `EqualizerProfiles.configuration` (line 66), and `processIosAudioTap` (line 256) processes the buffers. An effect can run after the equalizer there. HLS fallback bypasses the tap, so effects are unavailable on HLS streams (see `docs/audio-processing.md`). Not wired in Part 1.
+Engine: `MTAudioProcessingTap` in `shared/src/iosMain/kotlin/com/metrolist/shared/playback/IosAudioProcessingTap.kt`. The tap reads `EqualizerProfiles.configuration` (line 66), and `processIosAudioTap` (line 256) processes the buffers. Hook: `IosAudioTapState.process` runs `AudioLabChain.process` on the float buffer after the equalizer and the spectrum meter. `prepare` configures the chain, `unprepare` stops it, and settings reach the cores from the tap scope. HLS fallback bypasses the tap, so effects are unavailable on HLS streams (see `docs/audio-processing.md`).
 
 ## Not done yet
 
 - Stage port.
-- Desktop and iOS hooks.
 - A Mochy module entry for Audio Lab. The module registry only models source, lyrics, look and metadata modules, with no effect-module pattern, so turning a module off cannot reset the effects yet.
 - Unit tests: `shared/src/commonTest` is kept small by policy (see `CLAUDE.md`), and the preset and clamping values here are constants.
