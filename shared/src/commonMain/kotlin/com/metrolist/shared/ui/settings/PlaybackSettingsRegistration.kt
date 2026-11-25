@@ -254,6 +254,14 @@ internal fun SettingsUiRegistryBuilder.registerPlaybackSettings(host: SharedSett
                     description = stringResource(Res.string.settings_equalizer_overview),
                 )
             }
+            if (SettingsPageId.AUDIO_LAB in host.availablePages) {
+                navigation(
+                    "audioLab",
+                    stringResource(Res.string.audio_lab),
+                    SettingsPageId.AUDIO_LAB,
+                    description = stringResource(Res.string.settings_audio_lab_overview),
+                )
+            }
             switch(
                 id = "crossfadeEnabled",
                 title = stringResource(Res.string.crossfade),

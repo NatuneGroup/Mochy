@@ -109,6 +109,7 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.round
 import com.metrolist.shared.generated.resources.*
 import com.metrolist.shared.ui.LocalIsTv
+import com.metrolist.shared.ui.audiolab.AudioLabScreen
 import com.metrolist.shared.ui.components.ExpressiveSwitch
 import com.metrolist.shared.ui.components.RefreshIndicator
 import com.metrolist.shared.ui.components.SwipeBackLayout
@@ -146,6 +147,7 @@ fun SharedSettingsScreen(
             availablePages =
                 host.availablePages +
                     SettingsPageId.EQUALIZER +
+                    SettingsPageId.AUDIO_LAB +
                     SettingsPageId.MOCHY_PROFILE +
                     SettingsPageId.MOCHY_MODULES,
             pageContent = { page, onBack, onNavigate ->
@@ -154,6 +156,8 @@ fun SharedSettingsScreen(
                         rememberProfilePicker = host.rememberMetroEqProfilePicker,
                         isAudioProcessingAvailable = host.isAudioProcessingAvailable,
                     )
+                } else if (page == SettingsPageId.AUDIO_LAB) {
+                    AudioLabScreen(available = host.platform == SettingsPlatform.ANDROID)
                 } else if (page == SettingsPageId.MOCHY_PROFILE) {
                     MochyProfileSettingsScreen(rememberPhotoPicker = host.rememberMochyProfilePhotoPicker)
                 } else if (page == SettingsPageId.MOCHY_MODULES) {
