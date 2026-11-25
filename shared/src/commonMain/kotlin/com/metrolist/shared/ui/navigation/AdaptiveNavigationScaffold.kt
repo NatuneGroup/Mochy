@@ -51,6 +51,7 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.NavigationItemIconPosition
 import androidx.compose.material3.ShortNavigationBar
 import androidx.compose.material3.ShortNavigationBarArrangement
@@ -75,6 +76,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -84,7 +86,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
@@ -100,6 +104,8 @@ import com.metrolist.shared.generated.resources.expand_sidebar
 import com.metrolist.shared.ui.haptics.HapticEvent
 import com.metrolist.shared.ui.haptics.rememberMetrolistHaptics
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.theme.mochyInterFontFamily
+import com.metrolist.shared.ui.theme.rememberMochyLook
 import com.metrolist.shared.ui.utils.DragScrollableColumn
 import org.jetbrains.compose.resources.stringResource
 import sh.calvin.reorderable.ReorderableItem
@@ -456,6 +462,9 @@ private fun <T> DesktopWideNavigationRail(
     LaunchedEffect(isSidebarExpanded) {
         if (isSidebarExpanded) railState.expand() else railState.collapse()
     }
+    val mochy = rememberMochyLook().isActive
+    var pillTop by remember { mutableStateOf<Float?>(null) }
+    var pillHeight by remember { mutableFloatStateOf(0f) }
     val animatedWidth by animateDpAsState(
         targetValue = if (isSidebarExpanded) WideNavigationRailExpandedWidth else WideNavigationRailCollapsedWidth,
         animationSpec =
@@ -563,12 +572,36 @@ private fun <T> DesktopWideNavigationRail(
                             }
                         } else {
                             Column(
-                                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .verticalScroll(rememberScrollState())
+                                        .mochyNavPillIndicator(
+                                            selectedTop =
+                                                if (mochy && visibleItems.any { it.key == selectedKey }) pillTop else null,
+                                            selectedHeight = pillHeight,
+                                            color = MaterialTheme.colorScheme.secondaryContainer,
+                                        ),
                                 verticalArrangement = Arrangement.spacedBy(if (isSidebarExpanded) 0.dp else 4.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                             ) {
                                 visibleItems.forEach { item ->
                                     val selected = item.key == selectedKey
+                                    val interactionSource = remember { MutableInteractionSource() }
+                                    val hovered by interactionSource.collectIsHoveredAsState()
+                                    val hoverBackground =
+                                        if (mochy && hovered && !selected) {
+                                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+                                        } else {
+                                            Color.Transparent
+                                        }
+                                    val pillItemModifier =
+                                        Modifier.onGloballyPositioned { coordinates ->
+                                            if (mochy && selected) {
+                                                pillTop = coordinates.positionInParent().y
+                                                pillHeight = coordinates.size.height.toFloat()
+                                            }
+                                        }
                                     val icon: @Composable () -> Unit = {
                                         AnimatedContent(
                                             targetState = selected,
@@ -609,25 +642,53 @@ private fun <T> DesktopWideNavigationRail(
                                                 Text(
                                                     item.label,
                                                     style = MaterialTheme.typography.labelLarge,
+                                                    fontFamily = if (mochy) mochyInterFontFamily() else null,
                                                     maxLines = 1,
                                                     overflow = TextOverflow.Ellipsis,
                                                 )
                                             },
-                                            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp),
+                                            modifier =
+                                                pillItemModifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                                                    .then(
+                                                        if (mochy) {
+                                                            Modifier
+                                                                .clip(RoundedCornerShape(16.dp))
+                                                                .background(hoverBackground)
+                                                                .hoverable(interactionSource)
+                                                        } else {
+                                                            Modifier
+                                                        },
+                                                    ),
+                                            colors =
+                                                if (mochy) {
+                                                    NavigationDrawerItemDefaults.colors(
+                                                        selectedContainerColor = Color.Transparent,
+                                                    )
+                                                } else {
+                                                    NavigationDrawerItemDefaults.colors()
+                                                },
                                         )
                                     } else {
                                         val colors = MaterialTheme.colorScheme
-                                        val foreground = if (selected) colors.onPrimaryContainer else colors.onSurfaceVariant
+                                        val selectedContent = if (mochy) colors.onSecondaryContainer else colors.onPrimaryContainer
+                                        val foreground = if (selected) selectedContent else colors.onSurfaceVariant
                                         Column(
                                             modifier =
-                                                Modifier
+                                                pillItemModifier
                                                     .fillMaxWidth()
                                                     .padding(horizontal = 8.dp, vertical = 2.dp)
                                                     .heightIn(min = 60.dp)
                                                     .clip(RoundedCornerShape(16.dp))
                                                     .background(
-                                                        if (selected) colors.primaryContainer else Color.Transparent,
-                                                    ).selectable(selected = selected, role = Role.Tab, onClick = { onSelect(item.key) })
+                                                        when {
+                                                            mochy -> hoverBackground
+                                                            selected -> colors.primaryContainer
+                                                            else -> Color.Transparent
+                                                        },
+                                                    ).hoverable(interactionSource)
+                                                    .selectable(selected = selected, role = Role.Tab, onClick = { onSelect(item.key) })
                                                     .padding(horizontal = 4.dp, vertical = 8.dp),
                                             horizontalAlignment = Alignment.CenterHorizontally,
                                             verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
@@ -637,6 +698,7 @@ private fun <T> DesktopWideNavigationRail(
                                                 text = item.label,
                                                 color = foreground,
                                                 style = MaterialTheme.typography.labelSmall,
+                                                fontFamily = if (mochy) mochyInterFontFamily() else null,
                                                 textAlign = TextAlign.Center,
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis,
