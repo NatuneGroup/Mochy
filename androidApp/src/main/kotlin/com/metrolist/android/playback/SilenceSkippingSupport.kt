@@ -56,7 +56,7 @@ internal class SilenceSkippingSupport(
 
     @Volatile private var equalizer: EqualizerAudioProcessor? = null
 
-    // Off until settings are wired; each is inactive while its settings say disabled.
+    // Both pass audio through untouched until their settings turn them on.
     val reverbProcessor = ReverbAudioProcessor()
     val eightDProcessor = EightDAudioProcessor()
 

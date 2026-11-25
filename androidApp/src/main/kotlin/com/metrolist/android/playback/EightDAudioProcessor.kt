@@ -20,7 +20,6 @@ import kotlin.math.sin
 /** Pans the song slowly around the head with equal-power gains. Stereo PCM16 only; other formats pass through. */
 @OptIn(UnstableApi::class)
 internal class EightDAudioProcessor : BaseAudioProcessor() {
-
     @Volatile private var settings = EightDSettings()
 
     private var sampleRate = 0
@@ -28,12 +27,10 @@ internal class EightDAudioProcessor : BaseAudioProcessor() {
     private var smoothedEnabled = 0f
     private var smoothedDepth = 0f
 
-    /** Read once per buffer. Media3 checks isActive only when the sink configures, so enabling takes effect on the next configure. */
+    // Read once per buffer; when off, audio passes through after a short fade, like the equalizer.
     fun update(newSettings: EightDSettings) {
         settings = newSettings
     }
-
-    override fun isActive(): Boolean = settings.enabled && super.isActive()
 
     override fun onConfigure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
         if (inputAudioFormat.encoding != C.ENCODING_PCM_16BIT || inputAudioFormat.channelCount != 2) {
@@ -60,9 +57,9 @@ internal class EightDAudioProcessor : BaseAudioProcessor() {
 
         val targetDepth = params.depth.coerceIn(0f, 1f)
         val speed = params.rotationSpeedHz.coerceIn(0.05f, 0.5f).toDouble()
-        val smoothingStep = 1f / (sampleRate * SmoothingSeconds).coerceAtLeast(1f)
-        val frameCount = byteCount / StereoFrameBytes
-        val phaseStep = TwoPi * speed / sampleRate
+        val smoothingStep = 1f / (sampleRate * SMOOTHING_SECONDS).coerceAtLeast(1f)
+        val frameCount = byteCount / STEREO_FRAME_BYTES
+        val phaseStep = TWO_PI * speed / sampleRate
 
         repeat(frameCount) {
             val left = source.getShort().toInt()
@@ -79,7 +76,7 @@ internal class EightDAudioProcessor : BaseAudioProcessor() {
 
             output.putShort(processedLeft.roundToInt().coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort())
             output.putShort(processedRight.roundToInt().coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort())
-            phase = (phase + phaseStep) % TwoPi
+            phase = (phase + phaseStep) % TWO_PI
         }
         output.flip()
     }
@@ -105,8 +102,8 @@ internal class EightDAudioProcessor : BaseAudioProcessor() {
     }
 
     private companion object {
-        const val StereoFrameBytes = 4
-        const val SmoothingSeconds = 0.01f
-        val TwoPi = 2.0 * PI
+        const val STEREO_FRAME_BYTES = 4
+        const val SMOOTHING_SECONDS = 0.01f
+        val TWO_PI = 2.0 * PI
     }
 }
