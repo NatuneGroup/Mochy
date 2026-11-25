@@ -8,7 +8,7 @@ import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import com.metrolist.shared.ui.theme.rememberMochyLook
 
 @Composable
-internal fun flagshipFontFamily(): FontFamily =
+fun flagshipFontFamily(): FontFamily =
     if (rememberMochyLook().font == "system") {
         localeAwareSystemFontFamily(currentAppLocaleList()[0].toLanguageTag())
     } else {

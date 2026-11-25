@@ -40,7 +40,7 @@ private const val SPIN_DEGREES_PER_SECOND = 26f
 private val LabelFallback = Color(0xFF27303B)
 
 @Composable
-internal fun VinylDisc(
+fun VinylDisc(
     artworkUrl: String?,
     nextArtworkUrl: String?,
     crossfadeProgressProvider: () -> Float,
