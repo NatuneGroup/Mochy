@@ -493,6 +493,7 @@ dependencies {
     implementation(libs.media3.common)
     implementation(libs.media3.exoplayer)
     implementation(project(":opusDecoder"))
+    implementation(project(":stageEngine"))
     implementation(libs.media3.inspector)
     implementation(libs.media3.exoplayer.dash)
     implementation(libs.media3.exoplayer.hls)

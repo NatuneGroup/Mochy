@@ -41,7 +41,7 @@ def classify(paths):
             ".github/scripts/ci_paths.py", ".github/scripts/release_verification.py",
         ):
             selected.update(ALL_CHECKS)
-        elif path.startswith(("androidApp/", "opusDecoder/", "shared/src/android")) or path in (
+        elif path.startswith(("androidApp/", "opusDecoder/", "stageEngine/", "shared/src/android")) or path in (
             "scripts/collect_android_apks.py", "scripts/test_collect_android_apks.py", "scripts/test_generate_android_strings.py",
         ):
             selected.add("android")
