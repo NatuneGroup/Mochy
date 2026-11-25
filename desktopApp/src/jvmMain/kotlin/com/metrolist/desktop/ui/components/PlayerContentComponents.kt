@@ -455,7 +455,7 @@ fun PlayerCoreContent(
 }
 
 @Composable
-fun PlayerProgressSection() {
+fun PlayerProgressSection(flagshipTrack: Boolean = false) {
     val position = rememberPlaybackSecondPosition()
     val bufferedPosition by PlayerState.playbackBufferedPosition.collectAsSecondsState()
     val duration by PlayerState.playbackDuration.collectAsState()
@@ -568,6 +568,7 @@ fun PlayerProgressSection() {
                         .semantics {
                             contentDescription = playbackPositionDescription
                         },
+                flagshipTrack = flagshipTrack && !isLive,
             )
         }
 
