@@ -177,6 +177,7 @@ import com.metrolist.shared.generated.resources.repeat
 import com.metrolist.shared.generated.resources.seek_feedback_description
 import com.metrolist.shared.generated.resources.seek_feedback_seconds
 import com.metrolist.shared.generated.resources.share
+import com.metrolist.shared.generated.resources.share_song_card
 import com.metrolist.shared.generated.resources.sleep_timer
 import com.metrolist.shared.generated.resources.small_album_art
 import com.metrolist.shared.generated.resources.song
@@ -249,6 +250,7 @@ import com.metrolist.shared.ui.player.mochy.ipod.rememberIpodLook
 import com.metrolist.shared.ui.player.mochy.turntable.TurntableControls
 import com.metrolist.shared.ui.player.mochy.turntable.TurntablePills
 import com.metrolist.shared.ui.player.mochy.turntable.TurntableStage
+import com.metrolist.shared.ui.share.SongShareCardDialog
 import com.metrolist.shared.ui.theme.ComponentShapes
 import com.metrolist.shared.ui.theme.rememberMochyLook
 import com.metrolist.shared.ui.utils.supportsNativeBlur
@@ -547,6 +549,7 @@ fun PlayerScreen(
     SideEffect { onLyricsVisibleChange(uiState.isLyricsVisible) }
 
     val platform = LocalPlayerPlatform.current
+    val songCardExport = platform.rememberSongCardExport()
     val playerConnection = LocalPlayerSession.current
     val isReconnecting by playerConnection?.isReconnecting?.collectWhilePlayerActive(isPlayerContentVisible && isScreenVisible)
         ?: remember { mutableStateOf(false) }
@@ -619,6 +622,7 @@ fun PlayerScreen(
 
     var showPlayerMenu by remember { mutableStateOf(false) }
     var showBedsideClock by remember { mutableStateOf(false) }
+    var showSongCard by remember { mutableStateOf(false) }
     val likeBurstState = remember { LikeBurstState() }
     var flagshipLandscapeQueueVisible by rememberSaveable { mutableStateOf(false) }
     var showSongDetails by remember { mutableStateOf(false) }
@@ -2937,6 +2941,18 @@ fun PlayerScreen(
                             },
                             extraActions =
                                 landscapeMenuActions +
+                                    listOfNotNull(
+                                        songCardExport?.let {
+                                            PlayerMenuAction(
+                                                icon = MetrolistIcons.Outlined.Share,
+                                                title = stringResource(Res.string.share_song_card),
+                                                onClick = {
+                                                    showPlayerMenu = false
+                                                    showSongCard = true
+                                                },
+                                            )
+                                        },
+                                    ) +
                                     PlayerMenuAction(
                                         icon = MetrolistIcons.Outlined.Bedtime,
                                         title = stringResource(Res.string.mochy_bedside_clock),
@@ -2946,6 +2962,20 @@ fun PlayerScreen(
                                         },
                                     ),
                         )
+                    }
+
+                    if (showSongCard) {
+                        val cardSong = uiState.currentSong
+                        val exportCard = songCardExport
+                        if (cardSong != null && exportCard != null) {
+                            SongShareCardDialog(
+                                title = cardSong.title,
+                                artist = cardSong.artists.joinToString { it.name },
+                                artworkUrl = cardSong.displayThumbnail,
+                                onExport = exportCard,
+                                onDismiss = { showSongCard = false },
+                            )
+                        }
                     }
 
                     if (showBedsideClock) {

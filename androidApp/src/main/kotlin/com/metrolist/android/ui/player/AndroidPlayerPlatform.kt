@@ -58,6 +58,7 @@ import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.cast_permission_required
 import com.metrolist.shared.generated.resources.queued_songs
 import com.metrolist.shared.generated.resources.share_lyrics
+import com.metrolist.shared.generated.resources.share_song_card
 import com.metrolist.shared.generated.resources.share_song_to_story
 import com.metrolist.shared.generated.resources.unknown
 import com.metrolist.shared.listentogether.ListenTogetherManager
@@ -348,6 +349,16 @@ class AndroidPlayerPlatform(
             volume = volume,
             onDismiss = onDismiss,
         )
+    }
+
+    @Composable
+    override fun rememberSongCardExport(): (suspend (ImageBitmap) -> Boolean)? {
+        val context = LocalContext.current
+        val title = stringResource(Res.string.share_song_card)
+        return remember(context, title) {
+            val export: suspend (ImageBitmap) -> Boolean = { image -> shareImage(context, image, title) }
+            export
+        }
     }
 
     @Composable
