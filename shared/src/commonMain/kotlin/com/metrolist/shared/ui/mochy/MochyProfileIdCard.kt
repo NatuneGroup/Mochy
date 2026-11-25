@@ -3,13 +3,16 @@
 package com.metrolist.shared.ui.mochy
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.withInfiniteAnimationFrameNanos
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -40,6 +43,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -83,6 +87,9 @@ import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.mochy_add_profile_picture
+import com.metrolist.shared.generated.resources.mochy_card_back_minutes_label
+import com.metrolist.shared.generated.resources.mochy_card_back_no_stats
+import com.metrolist.shared.generated.resources.mochy_card_back_top_artist
 import com.metrolist.shared.generated.resources.mochy_card_celebrate_action
 import com.metrolist.shared.generated.resources.mochy_card_celebrate_close
 import com.metrolist.shared.generated.resources.mochy_card_default_name
@@ -296,9 +303,143 @@ fun ProfileIdCard(
     }
 }
 
+/** Listening numbers printed on the back of the profile ID card. Null when there is no stats source. */
+data class MochyCardStats(
+    val minutesListened: Long,
+    val topArtist: String?,
+)
+
+/** Alternating bar and gap widths for the card back's decorative barcode, stable for a given number. */
+private fun barcodeRuns(cardNumber: String): List<Float> {
+    val random = Random(cardNumber.hashCode())
+    return List(44) { 1f + random.nextInt(3) }
+}
+
+/**
+ * Back face of the Mochy profile ID card: a barcode drawn from the card number and, when [stats]
+ * is available, the listening numbers. Same geometry and finish as [ProfileIdCard].
+ */
+@Composable
+fun ProfileIdCardBack(
+    username: String,
+    cardNumber: String,
+    stats: MochyCardStats?,
+    modifier: Modifier = Modifier,
+    silver: Boolean = false,
+    sheen: () -> Float = { 0.5f },
+) {
+    val defaultName = stringResource(Res.string.mochy_card_default_name)
+    val name = username.trim().ifEmpty { defaultName }
+    val shape = RoundedCornerShape(22.dp)
+    val bodyText = if (silver) Color(0xFF111114) else Color.White
+    val mutedText = if (silver) Color(0xFF3A3A40) else Color(0xFFB5B5B5)
+    val barColor = if (silver) Color(0xFF111114) else Color(0xFFD9D9D9)
+    val runs = remember(cardNumber) { barcodeRuns(cardNumber) }
+    val fontFamily = mochyInterFontFamily()
+
+    BoxWithConstraints(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .aspectRatio(ID_CARD_ASPECT)
+                .clip(shape)
+                .then(if (silver) Modifier.silverSurface(sheen) else Modifier.background(Color(0xFF2F2F2F))),
+    ) {
+        val unit = maxWidth / 332f
+        Row(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .padding(start = unit * 22f, top = unit * 20f, end = unit * 12f, bottom = unit * 18f),
+            ) {
+                Canvas(modifier = Modifier.fillMaxWidth().height(unit * 60f)) {
+                    val step = size.width / runs.sum()
+                    var x = 0f
+                    runs.forEachIndexed { index, run ->
+                        if (index % 2 == 0) drawRect(barColor, Offset(x, 0f), Size(run * step, size.height))
+                        x += run * step
+                    }
+                }
+                Text(
+                    text = stringResource(Res.string.mochy_card_profile_usr, cardNumber),
+                    color = mutedText,
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = (unit.value * 10f).sp,
+                    maxLines = 1,
+                )
+                Spacer(Modifier.weight(1f))
+                if (stats == null) {
+                    Text(
+                        text = stringResource(Res.string.mochy_card_back_no_stats),
+                        color = mutedText,
+                        fontFamily = fontFamily,
+                        fontSize = (unit.value * 11f).sp,
+                    )
+                } else {
+                    val topArtist = stats.topArtist
+                    Row(horizontalArrangement = Arrangement.spacedBy(unit * 18f)) {
+                        Column {
+                            Text(
+                                text = stringResource(Res.string.mochy_card_back_minutes_label),
+                                color = mutedText,
+                                fontFamily = fontFamily,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = (unit.value * 9f).sp,
+                                maxLines = 1,
+                            )
+                            Text(
+                                text = stats.minutesListened.toString(),
+                                color = bodyText,
+                                fontFamily = fontFamily,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = (unit.value * 21f).sp,
+                                maxLines = 1,
+                            )
+                        }
+                        if (topArtist != null) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = stringResource(Res.string.mochy_card_back_top_artist),
+                                    color = mutedText,
+                                    fontFamily = fontFamily,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = (unit.value * 9f).sp,
+                                    maxLines = 1,
+                                )
+                                Text(
+                                    text = topArtist,
+                                    color = bodyText,
+                                    fontFamily = fontFamily,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = (unit.value * 15f).sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            MarqueeStrip(
+                text = stringResource(Res.string.mochy_card_of_name, name),
+                color = if (silver) Color(0xFF2B2B30).copy(alpha = 0.75f) else Color(0xFF8A8A8A),
+                background = if (silver) Color.Black.copy(alpha = 0.18f) else Color(0xFF1B1B1B),
+                modifier =
+                    Modifier
+                        .width(unit * 40f)
+                        .fillMaxHeight(),
+                fontSizeSp = unit.value * 17f,
+            )
+        }
+    }
+}
+
 /**
  * Interactive 3D-tiltable wrapper around [ProfileIdCard]: dragging tilts the card in 3D space,
  * sweeps the brushed silver sheen across the surface, and springs smoothly back on release.
+ * A tap turns the card over to [ProfileIdCardBack] and back again.
  */
 @Composable
 fun InteractiveProfileIdCard(
@@ -309,10 +450,13 @@ fun InteractiveProfileIdCard(
     silver: Boolean,
     modifier: Modifier = Modifier,
     onPhotoClick: (() -> Unit)? = null,
+    backStats: MochyCardStats? = null,
 ) {
     val scope = rememberCoroutineScope()
     val tiltX = remember { Animatable(0f) }
     val tiltY = remember { Animatable(0f) }
+    val flip = remember { Animatable(0f) }
+    val showBack by remember { derivedStateOf { flip.value >= 90f } }
 
     Box(
         modifier =
@@ -332,21 +476,39 @@ fun InteractiveProfileIdCard(
                         scope.launch { tiltY.snapTo((tiltY.value + drag.x * 0.12f).coerceIn(-28f, 28f)) }
                         scope.launch { tiltX.snapTo((tiltX.value - drag.y * 0.12f).coerceIn(-22f, 22f)) }
                     }
+                }.clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
+                    val target = if (showBack) 0f else 180f
+                    scope.launch { flip.animateTo(target, tween(durationMillis = 600, easing = FastOutSlowInEasing)) }
                 }.graphicsLayer {
                     rotationX = tiltX.value
-                    rotationY = tiltY.value
+                    rotationY = tiltY.value + flip.value
                     cameraDistance = 14f * density
                 },
     ) {
-        ProfileIdCard(
-            username = username,
-            photo = photo,
-            cardNumber = cardNumber,
-            joinedText = joinedText,
-            silver = silver,
-            onPhotoClick = onPhotoClick,
-            sheen = { 0.5f + tiltY.value / 42f },
-        )
+        if (!showBack) {
+            ProfileIdCard(
+                username = username,
+                photo = photo,
+                cardNumber = cardNumber,
+                joinedText = joinedText,
+                silver = silver,
+                onPhotoClick = onPhotoClick,
+                sheen = { 0.5f + tiltY.value / 42f },
+            )
+        } else {
+            // the back is mirrored in its own layer; the flip above turns it back the right way round
+            ProfileIdCardBack(
+                username = username,
+                cardNumber = cardNumber,
+                stats = backStats,
+                silver = silver,
+                sheen = { 0.5f + tiltY.value / 42f },
+                modifier = Modifier.graphicsLayer {
+                    rotationY = 180f
+                    cameraDistance = 14f * density
+                },
+            )
+        }
     }
 }
 
