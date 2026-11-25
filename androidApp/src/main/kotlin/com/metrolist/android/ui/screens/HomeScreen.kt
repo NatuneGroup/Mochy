@@ -7,7 +7,6 @@
 
 package com.metrolist.android.ui.screens
 
-import com.metrolist.shared.ui.mochy.MochyHomeBones
 import android.content.res.Configuration
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -107,6 +106,7 @@ import com.metrolist.shared.ui.components.HomeLoadingPlaceholder
 import com.metrolist.shared.ui.components.PopupVisibility
 import com.metrolist.shared.ui.components.RefreshIndicator
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.mochy.MochyHomeBones
 import com.metrolist.shared.ui.mochy.MochyHomeTopBar
 import com.metrolist.shared.ui.navigation.LocalRootContentActive
 import com.metrolist.shared.ui.screens.HomeContent

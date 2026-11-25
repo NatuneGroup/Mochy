@@ -14,9 +14,6 @@
 
 package com.metrolist.desktop
 
-import com.metrolist.shared.ui.mochy.rememberMochyLaunchIntroState
-import com.metrolist.shared.ui.mochy.MochyLaunchIntroOverlay
-import com.metrolist.shared.ui.mochy.LocalMochyLaunchIntro
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -230,6 +227,9 @@ import com.metrolist.shared.ui.components.LocalDownloadedSongIds
 import com.metrolist.shared.ui.components.LocalVisualWorkActive
 import com.metrolist.shared.ui.components.PopupVisibility
 import com.metrolist.shared.ui.crash.CrashLogsScreen
+import com.metrolist.shared.ui.mochy.LocalMochyLaunchIntro
+import com.metrolist.shared.ui.mochy.MochyLaunchIntroOverlay
+import com.metrolist.shared.ui.mochy.rememberMochyLaunchIntroState
 import com.metrolist.shared.ui.navigation.LocalNavigationContainerState
 import com.metrolist.shared.ui.navigation.LocalNavigator
 import com.metrolist.shared.ui.navigation.NavigationContentProvider

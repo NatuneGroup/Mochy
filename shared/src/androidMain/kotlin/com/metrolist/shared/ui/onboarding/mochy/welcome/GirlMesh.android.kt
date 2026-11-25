@@ -7,7 +7,6 @@ package com.metrolist.shared.ui.onboarding.mochy.welcome
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.BitmapShader
-import android.graphics.Canvas as NativeCanvas
 import android.graphics.Paint
 import android.graphics.Shader
 import android.os.Build
@@ -17,6 +16,7 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.nativeCanvas
 import kotlin.math.min
+import android.graphics.Canvas as NativeCanvas
 
 internal actual fun sizedGirlImage(
     bytes: ByteArray,
@@ -67,24 +67,29 @@ private class BandedMesh(
     private var texsFor: Bitmap? = null
 
     // each band is a strip, because skia glues back to back triangle draws into one big buffer again but never glues strips
-    private val indices = ShortArray(stripLength(bandRows)).also { out ->
-        var at = 0
-        for (row in 0 until bandRows) {
-            if (row > 0) {
-                // the last point again plus this row's first: the hop between rows makes flat triangles that draw nothing
-                out[at++] = (row * perRow - 1).toShort()
-                out[at++] = ((row + 1) * perRow).toShort()
-            }
-            // bottom then top of each column gives drawBitmapMesh's own two triangles per cell, in its order
-            for (col in 0..cols) {
-                out[at++] = ((row + 1) * perRow + col).toShort()
-                out[at++] = (row * perRow + col).toShort()
+    private val indices =
+        ShortArray(stripLength(bandRows)).also { out ->
+            var at = 0
+            for (row in 0 until bandRows) {
+                if (row > 0) {
+                    // the last point again plus this row's first: the hop between rows makes flat triangles that draw nothing
+                    out[at++] = (row * perRow - 1).toShort()
+                    out[at++] = ((row + 1) * perRow).toShort()
+                }
+                // bottom then top of each column gives drawBitmapMesh's own two triangles per cell, in its order
+                for (col in 0..cols) {
+                    out[at++] = ((row + 1) * perRow + col).toShort()
+                    out[at++] = (row * perRow + col).toShort()
+                }
             }
         }
-    }
 
     // verts holds every grid point row by row, like drawBitmapMesh takes them
-    fun draw(canvas: NativeCanvas, bitmap: Bitmap, verts: FloatArray) {
+    fun draw(
+        canvas: NativeCanvas,
+        bitmap: Bitmap,
+        verts: FloatArray,
+    ) {
         // hardware canvases only draw vertices from android 10, older phones keep the one big mesh
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             canvas.drawBitmapMesh(bitmap, cols, rows, verts, 0, null, 0, paint)
@@ -96,8 +101,18 @@ private class BandedMesh(
             val count = min(bandRows, rows - row)
             val offset = row * perRow * 2
             canvas.drawVertices(
-                NativeCanvas.VertexMode.TRIANGLE_STRIP, (count + 1) * perRow * 2, verts, offset, texs, offset,
-                null, 0, indices, 0, stripLength(count), paint,
+                NativeCanvas.VertexMode.TRIANGLE_STRIP,
+                (count + 1) * perRow * 2,
+                verts,
+                offset,
+                texs,
+                offset,
+                null,
+                0,
+                indices,
+                0,
+                stripLength(count),
+                paint,
             )
             row += count
         }

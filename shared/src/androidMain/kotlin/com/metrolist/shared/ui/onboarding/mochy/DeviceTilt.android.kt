@@ -37,8 +37,9 @@ internal actual fun rememberDeviceTilt(maxDegrees: Float): DeviceTilt {
 
     DisposableEffect(context, lifecycleOwner) {
         val sensors = context.getSystemService(SensorManager::class.java)
-        val sensor = sensors?.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR)
-            ?: sensors?.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+        val sensor =
+            sensors?.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR)
+                ?: sensors?.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
         if (sensors == null || sensor == null) return@DisposableEffect onDispose { }
 
         val matrix = FloatArray(9)
@@ -46,31 +47,36 @@ internal actual fun rememberDeviceTilt(maxDegrees: Float): DeviceTilt {
         var restPitch = Float.NaN
         var restRoll = Float.NaN
 
-        val listener = object : SensorEventListener {
-            override fun onSensorChanged(event: SensorEvent) {
-                SensorManager.getRotationMatrixFromVector(matrix, event.values)
-                SensorManager.getOrientation(matrix, angles)
-                val pitch = Math.toDegrees(angles[1].toDouble()).toFloat()
-                val roll = Math.toDegrees(angles[2].toDouble()).toFloat()
-                if (restPitch.isNaN()) {
-                    restPitch = pitch
-                    restRoll = roll
-                }
-                val dPitch = pitch - restPitch
-                val dRoll = wrapDegrees(roll - restRoll)
-                restPitch += dPitch * RECENTRE
-                restRoll = wrapDegrees(restRoll + dRoll * RECENTRE)
+        val listener =
+            object : SensorEventListener {
+                override fun onSensorChanged(event: SensorEvent) {
+                    SensorManager.getRotationMatrixFromVector(matrix, event.values)
+                    SensorManager.getOrientation(matrix, angles)
+                    val pitch = Math.toDegrees(angles[1].toDouble()).toFloat()
+                    val roll = Math.toDegrees(angles[2].toDouble()).toFloat()
+                    if (restPitch.isNaN()) {
+                        restPitch = pitch
+                        restRoll = roll
+                    }
+                    val dPitch = pitch - restPitch
+                    val dRoll = wrapDegrees(roll - restRoll)
+                    restPitch += dPitch * RECENTRE
+                    restRoll = wrapDegrees(restRoll + dRoll * RECENTRE)
 
-                val targetX = (-dPitch * FOLLOW).coerceIn(-maxDegrees, maxDegrees)
-                val targetY = (dRoll * FOLLOW).coerceIn(-maxDegrees, maxDegrees)
-                tilt.rotationX += (targetX - tilt.rotationX) * SMOOTH
-                tilt.rotationY += (targetY - tilt.rotationY) * SMOOTH
+                    val targetX = (-dPitch * FOLLOW).coerceIn(-maxDegrees, maxDegrees)
+                    val targetY = (dRoll * FOLLOW).coerceIn(-maxDegrees, maxDegrees)
+                    tilt.rotationX += (targetX - tilt.rotationX) * SMOOTH
+                    tilt.rotationY += (targetY - tilt.rotationY) * SMOOTH
+                }
+
+                override fun onAccuracyChanged(
+                    sensor: Sensor?,
+                    accuracy: Int,
+                ) = Unit
             }
 
-            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
-        }
-
         var listening = false
+
         fun listen(on: Boolean) {
             if (on == listening) return
             listening = on
@@ -85,13 +91,14 @@ internal actual fun rememberDeviceTilt(maxDegrees: Float): DeviceTilt {
             }
         }
 
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_RESUME -> listen(true)
-                Lifecycle.Event.ON_PAUSE -> listen(false)
-                else -> Unit
+        val observer =
+            LifecycleEventObserver { _, event ->
+                when (event) {
+                    Lifecycle.Event.ON_RESUME -> listen(true)
+                    Lifecycle.Event.ON_PAUSE -> listen(false)
+                    else -> Unit
+                }
             }
-        }
         lifecycleOwner.lifecycle.addObserver(observer)
         if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) listen(true)
 

@@ -1,9 +1,5 @@
 package com.metrolist.android
 
-import com.metrolist.shared.ui.mochy.rememberMochyLaunchIntroState
-import com.metrolist.shared.ui.mochy.MochyLaunchIntroOverlay
-import com.metrolist.shared.ui.mochy.LocalMochyLaunchIntro
-import com.metrolist.android.onboarding.mochy.MochyOnboardingScreen
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
@@ -55,6 +51,7 @@ import com.metrolist.android.listentogether.AndroidListenTogetherManager
 import com.metrolist.android.locale.AppLocale
 import com.metrolist.android.onboarding.OnboardingDestination
 import com.metrolist.android.onboarding.OnboardingScreen
+import com.metrolist.android.onboarding.mochy.MochyOnboardingScreen
 import com.metrolist.android.playback.PlayerConnection
 import com.metrolist.android.playback.playbackAudioQuality
 import com.metrolist.android.playback.prefetchIncomingAudio
@@ -77,6 +74,9 @@ import com.metrolist.shared.state.GlobalYouTubeRepository
 import com.metrolist.shared.state.applyContentRegion
 import com.metrolist.shared.ui.LocalIsInPipMode
 import com.metrolist.shared.ui.LocalIsTv
+import com.metrolist.shared.ui.mochy.LocalMochyLaunchIntro
+import com.metrolist.shared.ui.mochy.MochyLaunchIntroOverlay
+import com.metrolist.shared.ui.mochy.rememberMochyLaunchIntroState
 import com.metrolist.shared.ui.theme.appearanceDensity
 import com.metrolist.shared.youtube.playback.AndroidTokenProvider
 import com.metrolist.shared.youtube.playback.PlaybackNetworkStateStore
@@ -323,17 +323,17 @@ class MainActivity : ComponentActivity() {
                     if (onboardingComplete) {
                         CompositionLocalProvider(LocalMochyLaunchIntro provides launchIntro) {
                             MetrolistApp(
-                            navigationSaveKey = navigationRestoration.saveKey,
-                            incomingIntent = incomingIntentState.value,
-                            incomingPlaybackSong = incomingPlaybackSong,
-                            onExitApp = ::exitApp,
-                            onIncomingIntentConsumed = { consumed ->
-                                if (incomingIntentState.value === consumed) {
-                                    incomingIntentState.value = null
-                                    setIntent(Intent(this@MainActivity, MainActivity::class.java))
-                                }
-                            },
-                        )
+                                navigationSaveKey = navigationRestoration.saveKey,
+                                incomingIntent = incomingIntentState.value,
+                                incomingPlaybackSong = incomingPlaybackSong,
+                                onExitApp = ::exitApp,
+                                onIncomingIntentConsumed = { consumed ->
+                                    if (incomingIntentState.value === consumed) {
+                                        incomingIntentState.value = null
+                                        setIntent(Intent(this@MainActivity, MainActivity::class.java))
+                                    }
+                                },
+                            )
                         }
                         MochyLaunchIntroOverlay(launchIntro)
                     } else {

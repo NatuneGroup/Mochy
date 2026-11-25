@@ -1,6 +1,5 @@
 package com.metrolist.android.onboarding.mochy
 
-import android.provider.Settings as AndroidSettings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -9,6 +8,7 @@ import com.metrolist.android.onboarding.LegacyInstallMigration
 import com.metrolist.android.onboarding.OnboardingDestination
 import com.metrolist.android.ui.component.rememberMochyProfilePhotoPicker
 import com.metrolist.shared.ui.onboarding.mochy.MochyOnboarding
+import android.provider.Settings as AndroidSettings
 
 /** Mochy's setup sheet on phones and tablets, with the old app's library offered when one is on the phone */
 @Composable

@@ -2,10 +2,6 @@
 
 package com.metrolist.desktop.ui.screens
 
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.graphics.luminance
-import com.metrolist.shared.ui.mochy.MochyHomeTopBar
-import com.metrolist.shared.ui.mochy.MochyHomeBones
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,6 +13,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -30,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
 import com.metrolist.desktop.state.app.DesktopNavigation
 import com.metrolist.desktop.state.content.ArtistState
@@ -73,6 +71,8 @@ import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.menu.MediaContextMenu
 import com.metrolist.shared.ui.menu.contextMenuAnchor
 import com.metrolist.shared.ui.menu.rememberCursorContextMenuState
+import com.metrolist.shared.ui.mochy.MochyHomeBones
+import com.metrolist.shared.ui.mochy.MochyHomeTopBar
 import com.metrolist.shared.ui.navigation.Screen
 import com.metrolist.shared.ui.screens.HomeContent
 import com.metrolist.shared.ui.screens.homeContentText
