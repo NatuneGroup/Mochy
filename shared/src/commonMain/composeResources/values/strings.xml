@@ -5885,4 +5885,68 @@
         <item quantity="one">%1$d song</item>
         <item quantity="other">%1$d songs</item>
     </plurals>
+    <!-- Translators: Title of the Audio Lab settings page. -->
+    <string name="audio_lab">Audio Lab</string>
+    <!-- Translators: Subtitle of the Audio Lab row in the sound settings. -->
+    <string name="settings_audio_lab_overview">Reverb and 8D sound effects</string>
+    <!-- Translators: Note shown on the Audio Lab page when the effects are not available on this platform yet. -->
+    <string name="audio_lab_android_only">Available on Android for now</string>
+    <!-- Translators: Name of the reverb effect card in Audio Lab. -->
+    <string name="audio_lab_reverb">Reverb</string>
+    <!-- Translators: Short explanation under the reverb switch. -->
+    <string name="audio_lab_reverb_description">Adds a room around the music. Turn it on, then pick a room or shape your own.</string>
+    <!-- Translators: Name of the 8D effect card in Audio Lab. -->
+    <string name="audio_lab_eightd">8D audio</string>
+    <!-- Translators: Short explanation under the 8D switch. -->
+    <string name="audio_lab_eightd_description">Slowly moves the sound around your head. Headphones work best.</string>
+    <!-- Translators: Reverb slider: how much of the room sound is mixed in. -->
+    <string name="audio_lab_mix">Mix</string>
+    <!-- Translators: Reverb slider: size of the simulated room. -->
+    <string name="audio_lab_room_size">Room size</string>
+    <!-- Translators: Reverb slider: how quickly the room sound fades high notes. -->
+    <string name="audio_lab_damping">Damping</string>
+    <!-- Translators: Reverb slider: loudness of the room sound. -->
+    <string name="audio_lab_wet">Wet level</string>
+    <!-- Translators: Reverb slider: loudness of the original sound. -->
+    <string name="audio_lab_dry">Dry level</string>
+    <!-- Translators: Reverb slider: stereo width of the room sound. -->
+    <string name="audio_lab_width">Width</string>
+    <!-- Translators: Reverb slider: delay before the room sound starts. -->
+    <string name="audio_lab_pre_delay">Pre-delay</string>
+    <!-- Translators: Reverb slider: frequency below which the room sound is removed. -->
+    <string name="audio_lab_low_cut">Low cut</string>
+    <!-- Translators: Reverb preset name. -->
+    <string name="audio_lab_preset_room">Room</string>
+    <!-- Translators: Reverb preset name. -->
+    <string name="audio_lab_preset_studio">Studio</string>
+    <!-- Translators: Reverb preset name. -->
+    <string name="audio_lab_preset_bathroom">Bathroom</string>
+    <!-- Translators: Reverb preset name. -->
+    <string name="audio_lab_preset_plate">Plate</string>
+    <!-- Translators: Reverb preset name. -->
+    <string name="audio_lab_preset_hall">Hall</string>
+    <!-- Translators: Reverb preset name. -->
+    <string name="audio_lab_preset_cathedral">Cathedral</string>
+    <!-- Translators: Reverb preset name. -->
+    <string name="audio_lab_preset_stadium">Stadium</string>
+    <!-- Translators: Reverb preset name. -->
+    <string name="audio_lab_preset_dream">Dream</string>
+    <!-- Translators: 8D slider: how fast the sound turns around the head. -->
+    <string name="audio_lab_rotation_speed">Rotation speed</string>
+    <!-- Translators: 8D slider: how far the sound moves to each side. -->
+    <string name="audio_lab_depth">Depth</string>
+    <!-- Translators: 8D preset name: slow and gentle. -->
+    <string name="audio_lab_eightd_preset_chill">Chill</string>
+    <!-- Translators: 8D preset name: medium speed and depth. -->
+    <string name="audio_lab_eightd_preset_balanced">Balanced</string>
+    <!-- Translators: 8D preset name: fast and deep. -->
+    <string name="audio_lab_eightd_preset_extreme">Extreme</string>
+    <!-- Translators: Percentage shown next to an Audio Lab slider. %1$d is the number. -->
+    <string name="audio_lab_percent">%1$d%%</string>
+    <!-- Translators: Milliseconds shown next to the pre-delay slider. %1$d is the number. -->
+    <string name="audio_lab_ms">%1$d ms</string>
+    <!-- Translators: Frequency in hertz shown next to the low cut slider. %1$d is the number. -->
+    <string name="audio_lab_hz">%1$d Hz</string>
+    <!-- Translators: Frequency in hertz with two decimals, shown next to the 8D rotation slider. %1$.2f is the number. -->
+    <string name="audio_lab_hz_decimal">%1$.2f Hz</string>
 </resources>

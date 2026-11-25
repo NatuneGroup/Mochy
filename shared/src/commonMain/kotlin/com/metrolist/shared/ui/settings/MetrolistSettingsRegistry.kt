@@ -167,6 +167,13 @@ fun rememberMetrolistSettingsRegistry(
         SettingsTone.PURPLE,
     )
     customPage(
+        SettingsPageId.AUDIO_LAB,
+        stringResource(Res.string.audio_lab),
+        stringResource(Res.string.settings_audio_lab_overview),
+        MetrolistIcons.Outlined.Headphones,
+        SettingsTone.ORANGE,
+    )
+    customPage(
         SettingsPageId.MOCHY_PROFILE,
         stringResource(Res.string.mochy_profile_settings_title),
         stringResource(Res.string.mochy_profile_settings_overview),

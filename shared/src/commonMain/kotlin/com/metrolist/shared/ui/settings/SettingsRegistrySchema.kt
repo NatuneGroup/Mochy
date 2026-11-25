@@ -64,6 +64,7 @@ enum class SettingsPageId {
     DEVICE_CONNECT,
     LISTEN_TOGETHER,
     EQUALIZER,
+    AUDIO_LAB,
     MOCHY_PROFILE,
     MOCHY_MODULES,
 }
