@@ -1059,7 +1059,12 @@ fun MobileApp(
                                     }
 
                                 // Mochy's hero runs under the status bar, so its Home only keeps the bottom inset
-                                val homePadding = if (mochyHome) PaddingValues(bottom = routePadding.calculateBottomPadding()) else routePadding
+                                val homePadding =
+                                    if (mochyHome) {
+                                        PaddingValues(bottom = routePadding.calculateBottomPadding())
+                                    } else {
+                                        routePadding
+                                    }
                                 if (homeState.showLoadingPlaceholder) {
                                     if (mochyHome) {
                                         MochyHomeBones(Modifier.fillMaxSize().padding(homePadding))

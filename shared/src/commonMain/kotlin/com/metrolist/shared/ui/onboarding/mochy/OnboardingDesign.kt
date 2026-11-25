@@ -234,7 +234,9 @@ internal fun OnbTextField(
                     .heightIn(min = 50.dp),
             ) {
                 Box(modifier = Modifier.weight(1f).padding(vertical = 14.dp)) {
-                    if (value.isEmpty()) Text(placeholder, color = Onb.Faint, fontSize = 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    if (value.isEmpty()) {
+                        Text(placeholder, color = Onb.Faint, fontSize = 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
                     inner()
                 }
                 trailing?.invoke()

@@ -141,7 +141,9 @@ internal fun MochySettingsHome(
 
             AnimatedVisibility(
                 visible = query.isNotBlank(),
-                enter = fadeIn(tween(160, easing = FastOutSlowInEasing)) + slideInVertically(tween(160, easing = FastOutSlowInEasing)) { 20 },
+                enter =
+                    fadeIn(tween(160, easing = FastOutSlowInEasing)) +
+                        slideInVertically(tween(160, easing = FastOutSlowInEasing)) { 20 },
                 exit = fadeOut(tween(120, easing = FastOutSlowInEasing)),
             ) {
                 MochySearchResults(results, onSearchResultSelected, Modifier.padding(horizontal = 20.dp))

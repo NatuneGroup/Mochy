@@ -276,36 +276,40 @@ fun MochyOnboarding(
 
             // the sheet's own handle
             if (showHandle) {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(40.dp)
-                        .pointerInput(Unit) {
-                            detectVerticalDragGestures(
-                                onVerticalDrag = { change, amount ->
-                                    change.consume()
-                                    val resistance = 1f - (dragOffset / 2000f).coerceIn(0f, 0.8f)
-                                    dragOffset = (dragOffset + amount * resistance).coerceAtLeast(0f)
-                                },
-                                onDragEnd = {
-                                    scope.launch {
-                                        animate(dragOffset, 0f, animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f)) { value, _ ->
-                                            dragOffset = value
-                                        }
-                                    }
-                                },
-                            )
-                        },
-                contentAlignment = Alignment.Center,
-            ) {
                 Box(
-                    Modifier
-                        .size(width = 36.dp, height = 5.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.28f)),
-                )
-            }
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(40.dp)
+                            .pointerInput(Unit) {
+                                detectVerticalDragGestures(
+                                    onVerticalDrag = { change, amount ->
+                                        change.consume()
+                                        val resistance = 1f - (dragOffset / 2000f).coerceIn(0f, 0.8f)
+                                        dragOffset = (dragOffset + amount * resistance).coerceAtLeast(0f)
+                                    },
+                                    onDragEnd = {
+                                        scope.launch {
+                                            animate(
+                                            initialValue = dragOffset,
+                                            targetValue = 0f,
+                                            animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f),
+                                        ) { value, _ ->
+                                                dragOffset = value
+                                            }
+                                        }
+                                    },
+                                )
+                            },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Box(
+                        Modifier
+                            .size(width = 36.dp, height = 5.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.28f)),
+                    )
+                }
             }
         }
     }
