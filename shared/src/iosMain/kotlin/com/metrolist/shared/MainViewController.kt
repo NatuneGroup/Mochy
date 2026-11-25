@@ -89,7 +89,7 @@ import com.metrolist.shared.ui.mobile.iosLyricsShareAction
 import com.metrolist.shared.ui.mobile.pickIosPlaylistCover
 import com.metrolist.shared.ui.mobile.rememberVoiceOverEnabled
 import com.metrolist.shared.ui.mochy.rememberIosMochyProfilePhotoPicker
-import com.metrolist.shared.ui.onboarding.IosOnboarding
+import com.metrolist.shared.ui.onboarding.mochy.MochyOnboarding
 import com.metrolist.shared.ui.settings.BackupRestorePage
 import com.metrolist.shared.ui.settings.BackupRestoreStatus
 import com.metrolist.shared.ui.settings.IosNativeFiles
@@ -473,13 +473,17 @@ fun MetrolistIOSApp() {
                 darkTheme = Settings.shared.getCurrentThemeIsDark(),
                 pureBlack = Settings.shared.isPureBlackTheme(),
             ) {
-                IosOnboarding { consent, login, restore ->
-                    if (isCrashReportingAvailable()) Settings.shared.sentryEnabled = consent
-                    Settings.shared.iosOnboardingComplete = true
-                    showOnboarding = false
-                    if (login) handleOpenUrl("metrolist://login")
-                    if (restore) initialSettingsPage = SettingsPageId.BACKUP_RESTORE
-                }
+                // Mochy's setup sheet, the same pages and motion as on Android
+                MochyOnboarding(
+                    rememberPhotoPicker = { onPicked -> rememberIosMochyProfilePhotoPicker(onPicked) },
+                    onComplete = { result ->
+                        if (isCrashReportingAvailable()) Settings.shared.sentryEnabled = result.sendCrashReports
+                        Settings.shared.iosOnboardingComplete = true
+                        showOnboarding = false
+                        if (result.signIn) handleOpenUrl("metrolist://login")
+                        if (result.restoreBackup) initialSettingsPage = SettingsPageId.BACKUP_RESTORE
+                    },
+                )
             }
         } else if (showMobileApp) {
             LifecycleResumeEffect(player) {

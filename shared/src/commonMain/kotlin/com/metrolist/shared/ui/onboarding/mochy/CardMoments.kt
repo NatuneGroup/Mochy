@@ -2,9 +2,10 @@
 
 // the hello and done card pages, all motion runs off one frame clock read in draw lambdas so nothing recomposes
 
-package com.metrolist.android.onboarding.mochy
+package com.metrolist.shared.ui.onboarding.mochy
 
-import android.os.Build
+import com.metrolist.shared.generated.resources.mochy_onb_check
+import com.metrolist.shared.ui.utils.supportsNativeBlur
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
@@ -48,11 +49,10 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.metrolist.android.R
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.onb_all_good
 import com.metrolist.shared.generated.resources.onb_hello
@@ -132,7 +132,7 @@ internal fun HelloCardStep(
             modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    if (supportsNativeBlur()) {
                         renderEffect = BlurEffect(with(density) { 56.dp.toPx() }, with(density) { 56.dp.toPx() }, TileMode.Decal)
                     }
                     alpha = (time / 0.5f).coerceIn(0f, 1f)
@@ -261,7 +261,7 @@ internal fun DoneStep(card: CardInfo, onFinished: () -> Unit) {
                     .background(Onb.Badge),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(painterResource(R.drawable.mochy_onb_check), contentDescription = null, tint = Color(0xFF1C1C1C), modifier = Modifier.size(34.dp))
+                Icon(painterResource(Res.drawable.mochy_onb_check), contentDescription = null, tint = Color(0xFF1C1C1C), modifier = Modifier.size(34.dp))
             }
             Spacer(Modifier.height(18.dp))
             Text(

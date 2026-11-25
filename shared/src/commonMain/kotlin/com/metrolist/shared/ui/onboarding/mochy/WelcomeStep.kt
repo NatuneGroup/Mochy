@@ -2,7 +2,7 @@
 
 // the first onboarding page: the mochy girl showing off her phone over drifting welcomes, a tap anywhere moves on
 
-package com.metrolist.android.onboarding.mochy
+package com.metrolist.shared.ui.onboarding.mochy
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -43,12 +43,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.metrolist.android.onboarding.mochy.welcome.GirlArt
-import com.metrolist.android.onboarding.mochy.welcome.GirlMotion
-import com.metrolist.android.onboarding.mochy.welcome.WelcomeColors
-import com.metrolist.android.onboarding.mochy.welcome.WelcomeDots
-import com.metrolist.android.onboarding.mochy.welcome.WelcomeGirl
-import com.metrolist.android.onboarding.mochy.welcome.WelcomeWords
+import com.metrolist.shared.ui.onboarding.mochy.welcome.GirlArt
+import com.metrolist.shared.ui.onboarding.mochy.welcome.GirlMotion
+import com.metrolist.shared.ui.onboarding.mochy.welcome.WelcomeColors
+import com.metrolist.shared.ui.onboarding.mochy.welcome.WelcomeDots
+import com.metrolist.shared.ui.onboarding.mochy.welcome.WelcomeGirl
+import com.metrolist.shared.ui.onboarding.mochy.welcome.WelcomeWords
 import com.metrolist.shared.ui.utils.HighRefreshWhile
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.app_name
@@ -57,8 +57,6 @@ import com.metrolist.shared.generated.resources.welcome_lets_listen
 import com.metrolist.shared.generated.resources.welcome_tap_anywhere
 import com.metrolist.shared.generated.resources.welcome_to
 import org.jetbrains.compose.resources.stringResource
-import android.provider.Settings as AndroidSettings
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clipToBounds
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -67,8 +65,12 @@ import kotlin.math.max
 import kotlin.math.min
 
 @Composable
-fun WelcomeStep(isHiding: Boolean, onNext: () -> Unit) {
-    val clock = rememberWelcomeClock()
+fun WelcomeStep(
+    isHiding: Boolean,
+    onNext: () -> Unit,
+    motionEnabled: Boolean = true,
+) {
+    val clock = rememberWelcomeClock(motionEnabled)
     val enter = remember { Animatable(0f) }
     LaunchedEffect(Unit) { enter.animateTo(1f, tween(650, easing = FastOutSlowInEasing)) }
     val leave by animateFloatAsState(
@@ -205,14 +207,8 @@ private class WelcomeClock {
 
 // runs only while someone can see it: not under the player, not in the background, not with animations off
 @Composable
-private fun rememberWelcomeClock(): WelcomeClock {
+private fun rememberWelcomeClock(motionEnabled: Boolean): WelcomeClock {
     val clock = remember { WelcomeClock() }
-    val context = LocalContext.current
-    // animations switched off in the system settings leave her still
-    val motionEnabled =
-        remember(context) {
-            AndroidSettings.Global.getFloat(context.contentResolver, AndroidSettings.Global.ANIMATOR_DURATION_SCALE, 1f) != 0f
-        }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(clock, motionEnabled, lifecycle) {
         combine(snapshotFlow { motionEnabled }, lifecycle.currentStateFlow) { free, state ->

@@ -1,6 +1,6 @@
 // Ported from Mochy Music by realidkroo (github.com/realidkroo/mochy-music). Licensed under GPL-3.0.
 
-package com.metrolist.android.onboarding.mochy
+package com.metrolist.shared.ui.onboarding.mochy
 
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -8,11 +8,7 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.Stable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -29,28 +25,12 @@ private const val RECENTRE = 0.012f
 private const val SMOOTH = 0.22f
 
 /**
- * How far the phone has been tipped from the way it's being held, as a lean for a card to follow
- * (degrees, ready for graphicsLayer's rotationX / rotationY). Changes ~60 times a second, so read it
- * in a graphicsLayer or draw lambda only; nothing recomposes.
- */
-@Stable
-internal class DeviceTilt {
-    /** for graphicsLayer.rotationX: the phone's top edge tipping towards or away from you */
-    var rotationX by mutableFloatStateOf(0f)
-        internal set
-
-    /** for graphicsLayer.rotationY: the phone rolling left or right */
-    var rotationY by mutableFloatStateOf(0f)
-        internal set
-}
-
-/**
  * Listens to the game rotation vector (gyro and accelerometer, no compass, so it doesn't jump near
  * metal) while the screen is resumed, and only then. Phones without one get a card that just
  * doesn't lean: [DeviceTilt] stays at zero.
  */
 @Composable
-internal fun rememberDeviceTilt(maxDegrees: Float = 14f): DeviceTilt {
+internal actual fun rememberDeviceTilt(maxDegrees: Float): DeviceTilt {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val tilt = remember { DeviceTilt() }

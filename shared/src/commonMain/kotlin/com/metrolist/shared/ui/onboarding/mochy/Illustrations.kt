@@ -2,7 +2,7 @@
 
 // the crossfade banner on the last one page
 
-package com.metrolist.android.onboarding.mochy
+package com.metrolist.shared.ui.onboarding.mochy
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border

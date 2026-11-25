@@ -2,9 +2,8 @@
 
 // the welcome girl's layers and her idle loop, like an animated wallpaper: breathing, flowing hair, small easy sways
 
-package com.metrolist.android.onboarding.mochy.welcome
+package com.metrolist.shared.ui.onboarding.mochy.welcome
 
-import com.metrolist.android.R
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
@@ -16,7 +15,7 @@ import kotlin.math.sqrt
 import kotlin.random.Random
 
 // one cut-out layer of the art, placed by its top-left corner in the 1528 x 2036 canvas it was cut from
-internal class GirlLayer(val res: Int, val x: Float, val y: Float, val w: Float, val h: Float) {
+internal class GirlLayer(val file: String, val x: Float, val y: Float, val w: Float, val h: Float) {
     val right get() = x + w
     val bottom get() = y + h
 }
@@ -31,15 +30,15 @@ internal object GirlArt {
     // how far across the frame her fingertips reach, so layouts can keep the phone on screen
     const val FINGERTIPS_ACROSS = 0.965f
 
-    val Base = GirlLayer(R.drawable.onboarding_girl_base, 255f, 208f, 1079f, 1828f)
-    val Hair = GirlLayer(R.drawable.onboarding_girl_hair, 421f, 210f, 631f, 637f)
-    val EyeLeft = GirlLayer(R.drawable.onboarding_girl_eye_l, 563f, 507f, 127f, 70f)
-    val EyeRight = GirlLayer(R.drawable.onboarding_girl_eye_r, 769f, 543f, 126f, 73f)
-    val EyeLeftShut = GirlLayer(R.drawable.onboarding_girl_eye_l_closed, 562f, 528f, 122f, 37f)
-    val EyeRightShut = GirlLayer(R.drawable.onboarding_girl_eye_r_closed, 778f, 571f, 125f, 32f)
-    val Mouth = GirlLayer(R.drawable.onboarding_girl_mouth, 663f, 636f, 98f, 107f)
-    val Hand = GirlLayer(R.drawable.onboarding_girl_phone_hand, 978f, 762f, 356f, 282f)
-    val MotionLines = GirlLayer(R.drawable.onboarding_girl_motion, 938f, 763f, 79f, 217f)
+    val Base = GirlLayer("onboarding_girl_base", 255f, 208f, 1079f, 1828f)
+    val Hair = GirlLayer("onboarding_girl_hair", 421f, 210f, 631f, 637f)
+    val EyeLeft = GirlLayer("onboarding_girl_eye_l", 563f, 507f, 127f, 70f)
+    val EyeRight = GirlLayer("onboarding_girl_eye_r", 769f, 543f, 126f, 73f)
+    val EyeLeftShut = GirlLayer("onboarding_girl_eye_l_closed", 562f, 528f, 122f, 37f)
+    val EyeRightShut = GirlLayer("onboarding_girl_eye_r_closed", 778f, 571f, 125f, 32f)
+    val Mouth = GirlLayer("onboarding_girl_mouth", 663f, 636f, 98f, 107f)
+    val Hand = GirlLayer("onboarding_girl_phone_hand", 978f, 762f, 356f, 282f)
+    val MotionLines = GirlLayer("onboarding_girl_motion", 938f, 763f, 79f, 217f)
 
     // the phone she holds, drawn in code so its screen can hold anything, a video later
     const val PHONE_CENTER_X = 1141.9f
@@ -79,12 +78,12 @@ internal class GirlPose {
 
     // where a point of the phone ends up this frame, the same turn the fingers and the cuff get
     fun phoneMoveX(x: Float, y: Float): Float {
-        val a = Math.toRadians(phoneDeg.toDouble())
+        val a = degreesToRadians(phoneDeg.toDouble())
         return GirlArt.WRIST_X + (x - GirlArt.WRIST_X) * cos(a).toFloat() - (y - GirlArt.WRIST_Y) * sin(a).toFloat() + phoneX
     }
 
     fun phoneMoveY(x: Float, y: Float): Float {
-        val a = Math.toRadians(phoneDeg.toDouble())
+        val a = degreesToRadians(phoneDeg.toDouble())
         return GirlArt.WRIST_Y + (x - GirlArt.WRIST_X) * sin(a).toFloat() + (y - GirlArt.WRIST_Y) * cos(a).toFloat() + phoneY
     }
 
@@ -122,7 +121,7 @@ private class Drawstring(val topX: Float, val topY: Float, val tipX: Float, val 
 // how much each base point follows one of the moving parts, worked out once
 private class BaseWeights(val index: Int, val head: Float, val cuff: Float, val hand: Float, val string: Float, val stringPhase: Float)
 
-internal class GirlMotion(seed: Long = System.nanoTime()) {
+internal class GirlMotion(seed: Long = Random.nextLong()) {
     val pose = GirlPose()
 
     private val random = Random(seed)
@@ -180,7 +179,7 @@ internal class GirlMotion(seed: Long = System.nanoTime()) {
             var x = baseRest[2 * i]
             var y = baseRest[2 * i + 1]
             if (w.head > 0f) {
-                val a = Math.toRadians((p.headDeg * w.head).toDouble())
+                val a = degreesToRadians((p.headDeg * w.head).toDouble())
                 val c = cos(a).toFloat()
                 val s = sin(a).toFloat()
                 val dx = x - GirlArt.NECK_X
@@ -195,7 +194,7 @@ internal class GirlMotion(seed: Long = System.nanoTime()) {
                 y += (my - y) * w.cuff
             }
             if (w.hand > 0f) {
-                val a = Math.toRadians((handDeg * w.hand).toDouble())
+                val a = degreesToRadians((handDeg * w.hand).toDouble())
                 val c = cos(a).toFloat()
                 val s = sin(a).toFloat()
                 val dx = x - GirlArt.RESTING_WRIST_X
@@ -288,3 +287,5 @@ internal class GirlMotion(seed: Long = System.nanoTime()) {
         }
     }
 }
+
+internal fun degreesToRadians(degrees: Double): Double = degrees * PI / 180.0

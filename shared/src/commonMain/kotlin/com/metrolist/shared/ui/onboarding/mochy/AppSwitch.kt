@@ -1,6 +1,6 @@
 // Ported from Mochy Music by realidkroo (github.com/realidkroo/mochy-music). Licensed under GPL-3.0.
 
-package com.metrolist.android.onboarding.mochy
+package com.metrolist.shared.ui.onboarding.mochy
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState

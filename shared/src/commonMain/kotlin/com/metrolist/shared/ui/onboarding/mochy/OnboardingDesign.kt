@@ -2,7 +2,7 @@
 
 // shared building blocks for every onboarding page, width is capped so tablets don't stretch them
 
-package com.metrolist.android.onboarding.mochy
+package com.metrolist.shared.ui.onboarding.mochy
 
 import androidx.compose.ui.unit.em
 import androidx.compose.foundation.background

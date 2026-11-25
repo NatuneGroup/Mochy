@@ -4,6 +4,9 @@
 
 package com.metrolist.shared.ui.mobile
 
+import androidx.compose.ui.graphics.luminance
+import com.metrolist.shared.ui.mochy.MochyHomeTopBar
+import com.metrolist.shared.ui.mochy.MochyHomeBones
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandHorizontally
@@ -825,6 +828,60 @@ fun MobileApp(
                             selectedTab == MobileRoute.Library ||
                             selectedTab == MobileRoute.EasterEgg
                     )
+            // the profile button and its menu: in the app bar, or on Home in Mochy's own top bar
+            val accountButton: @Composable () -> Unit = {
+                Box {
+                    IconButton(
+                        modifier = Modifier.navigationPopupSource(),
+                        onClick = { showAccountMenu = true },
+                        shapes = IconButtonDefaults.shapes(),
+                    ) {
+                        if (authManager.isLoggedIn && authManager.accountThumbnail.isNotBlank()) {
+                            AsyncImage(
+                                url = authManager.accountThumbnail,
+                                modifier = Modifier.size(32.dp).clip(CircleShape),
+                                contentDescription = stringResource(Res.string.account),
+                            )
+                        } else {
+                            Icon(
+                                MetrolistIcons.Outlined.AccountCircle,
+                                contentDescription = stringResource(Res.string.account),
+                                modifier = Modifier.size(24.dp),
+                            )
+                        }
+                    }
+                    if (showAccountMenu) {
+                        AccountPopupDialog(
+                            isSignedIn = authManager.isLoggedIn,
+                            accountName = authManager.accountName,
+                            accountSubtitle =
+                                authManager.accountChannelHandle.ifBlank { authManager.accountEmail },
+                            accountImageUrl = authManager.accountThumbnail,
+                            onDismiss = { showAccountMenu = false },
+                            onSignIn = { open(MobileRoute.Login(isSwitchingChannel = false)) },
+                            onTokenLogin = { open(MobileRoute.TokenLogin) },
+                            onSwitchChannel = { open(MobileRoute.Login(isSwitchingChannel = true)) },
+                            onNavigateToHistory = { open(MobileRoute.History) },
+                            onNavigateToStatistics = { open(MobileRoute.Statistics) },
+                            onNavigateToIntegrations = { open(MobileRoute.Integrations) },
+                            onNavigateToSettings = { open(MobileRoute.Settings()) },
+                            onLogout = { complete ->
+                                scope.launch {
+                                    account.logout()
+                                    appRevision++
+                                    homeViewModel.refresh {}
+                                    libraryViewModel.refresh()
+                                    complete()
+                                }
+                            },
+                            showStatistics = true,
+                            showIntegrations = true,
+                        )
+                    }
+                }
+            }
+            // Mochy's Home draws its own top bar over the hero
+            val mochyHome = MaterialTheme.colorScheme.background.luminance() < 0.5f
             AdaptiveNavigationScaffold(
                 layout = adaptiveLayout,
                 items = navigationItems,
@@ -849,7 +906,7 @@ fun MobileApp(
                     modifier = Modifier.consumeWindowInsets(PaddingValues(bottom = floatingContentInset)),
                     containerColor = MaterialTheme.colorScheme.surface,
                     topBar = {
-                        if (isTopLevelRoute) {
+                        if (isTopLevelRoute && !(mochyHome && selectedTab == MobileRoute.Home)) {
                             TopAppBar(
                                 title = {
                                     Text(
@@ -901,55 +958,7 @@ fun MobileApp(
                                             )
                                         }
                                     }
-                                    Box {
-                                        IconButton(
-                                            modifier = Modifier.navigationPopupSource(),
-                                            onClick = { showAccountMenu = true },
-                                            shapes = IconButtonDefaults.shapes(),
-                                        ) {
-                                            if (authManager.isLoggedIn && authManager.accountThumbnail.isNotBlank()) {
-                                                AsyncImage(
-                                                    url = authManager.accountThumbnail,
-                                                    modifier = Modifier.size(32.dp).clip(CircleShape),
-                                                    contentDescription = stringResource(Res.string.account),
-                                                )
-                                            } else {
-                                                Icon(
-                                                    MetrolistIcons.Outlined.AccountCircle,
-                                                    contentDescription = stringResource(Res.string.account),
-                                                    modifier = Modifier.size(24.dp),
-                                                )
-                                            }
-                                        }
-                                        if (showAccountMenu) {
-                                            AccountPopupDialog(
-                                                isSignedIn = authManager.isLoggedIn,
-                                                accountName = authManager.accountName,
-                                                accountSubtitle =
-                                                    authManager.accountChannelHandle.ifBlank { authManager.accountEmail },
-                                                accountImageUrl = authManager.accountThumbnail,
-                                                onDismiss = { showAccountMenu = false },
-                                                onSignIn = { open(MobileRoute.Login(isSwitchingChannel = false)) },
-                                                onTokenLogin = { open(MobileRoute.TokenLogin) },
-                                                onSwitchChannel = { open(MobileRoute.Login(isSwitchingChannel = true)) },
-                                                onNavigateToHistory = { open(MobileRoute.History) },
-                                                onNavigateToStatistics = { open(MobileRoute.Statistics) },
-                                                onNavigateToIntegrations = { open(MobileRoute.Integrations) },
-                                                onNavigateToSettings = { open(MobileRoute.Settings()) },
-                                                onLogout = { complete ->
-                                                    scope.launch {
-                                                        account.logout()
-                                                        appRevision++
-                                                        homeViewModel.refresh {}
-                                                        libraryViewModel.refresh()
-                                                        complete()
-                                                    }
-                                                },
-                                                showStatistics = true,
-                                                showIntegrations = true,
-                                            )
-                                        }
-                                    }
+                                    accountButton()
                                 },
                                 colors =
                                     TopAppBarDefaults.topAppBarColors(
@@ -1049,14 +1058,20 @@ fun MobileApp(
                                         }
                                     }
 
+                                // Mochy's hero runs under the status bar, so its Home only keeps the bottom inset
+                                val homePadding = if (mochyHome) PaddingValues(bottom = routePadding.calculateBottomPadding()) else routePadding
                                 if (homeState.showLoadingPlaceholder) {
-                                    HomeLoadingPlaceholder(Modifier.fillMaxSize().padding(routePadding))
+                                    if (mochyHome) {
+                                        MochyHomeBones(Modifier.fillMaxSize().padding(homePadding))
+                                    } else {
+                                        HomeLoadingPlaceholder(Modifier.fillMaxSize().padding(routePadding))
+                                    }
                                 } else {
                                     Box(
                                         modifier =
                                             Modifier
                                                 .fillMaxSize()
-                                                .padding(routePadding)
+                                                .padding(homePadding)
                                                 .nestedScroll(fabNestedScrollConnection),
                                     ) {
                                         val pullToRefreshState = rememberPullToRefreshState()
@@ -1092,6 +1107,12 @@ fun MobileApp(
                                                 },
                                                 onTogglePlayPause = playbackController::togglePlayPause,
                                                 heroCurrentSong = playerState.currentSong,
+                                                mochyTopBar =
+                                                    if (mochyHome) {
+                                                        { progress -> MochyHomeTopBar(scrollProgress = progress) { accountButton() } }
+                                                    } else {
+                                                        null
+                                                    },
                                                 onLibraryClick = { filter ->
                                                     filter?.let { Settings.shared.libraryFilter = it }
                                                     selectTab(MobileRoute.Library)
@@ -1125,7 +1146,7 @@ fun MobileApp(
                                                             }
                                                         }
                                                     }
-                                                    if (homeState.chips.isNotEmpty()) {
+                                                    if (homeState.chips.isNotEmpty() && !mochyHome) {
                                                         item(key = "home_chips") {
                                                             ChipShelf(
                                                                 options = homeState.chips,
@@ -1147,7 +1168,7 @@ fun MobileApp(
                                         }
 
                                         AnimatedVisibility(
-                                            visible = showFloatingActions,
+                                            visible = showFloatingActions && !mochyHome,
                                             enter = fadeIn() + slideInVertically { it / 2 },
                                             exit = fadeOut() + slideOutVertically { it / 2 },
                                             modifier =

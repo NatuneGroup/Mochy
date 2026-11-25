@@ -2,8 +2,15 @@
 
 // every page after the welcome screen as stateless composables, MochyOnboardingScreen picks the page and wires it
 
-package com.metrolist.android.onboarding.mochy
+package com.metrolist.shared.ui.onboarding.mochy
 
+import com.metrolist.shared.generated.resources.mochy_onb_bug_report
+import com.metrolist.shared.generated.resources.mochy_onb_tune
+import com.metrolist.shared.generated.resources.mochy_onb_person
+import com.metrolist.shared.generated.resources.mochy_onb_backup
+import com.metrolist.shared.generated.resources.mochy_onb_login
+import com.metrolist.shared.generated.resources.mochy_onb_restore
+import com.metrolist.shared.generated.resources.mochy_onb_download
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,11 +26,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.res.painterResource
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.metrolist.android.R
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.next
 import com.metrolist.shared.generated.resources.onb_auto_crossfade_title
@@ -62,7 +68,7 @@ internal fun ImportAskPage(
     onSkip: () -> Unit,
 ) {
     OnboardingPage(
-        badge = { PageBadge(painterResource(R.drawable.mochy_onb_download)) },
+        badge = { PageBadge(painterResource(Res.drawable.mochy_onb_download)) },
         title = stringResource(Res.string.onb_import_title),
         subtitle = stringResource(Res.string.onb_import_ask_subtitle),
         footer = {
@@ -83,7 +89,7 @@ internal fun ImportModePage(
     error: String?,
 ) {
     OnboardingPage(
-        badge = { PageBadge(painterResource(R.drawable.mochy_onb_download)) },
+        badge = { PageBadge(painterResource(Res.drawable.mochy_onb_download)) },
         title = stringResource(Res.string.onb_import_title),
         subtitle = stringResource(Res.string.onb_import_mode_subtitle),
         footer = { OnbButton(stringResource(Res.string.onb_go_back), onClick = onBack, style = OnbButtonStyle.Secondary) },
@@ -92,20 +98,20 @@ internal fun ImportModePage(
             // only offered when the app that came before left a library on this phone
             if (onPreviousData != null) {
                 OnbChoiceCard(
-                    icon = painterResource(R.drawable.mochy_onb_restore),
+                    icon = painterResource(Res.drawable.mochy_onb_restore),
                     title = stringResource(Res.string.onb_import_previous_title),
                     description = stringResource(Res.string.onb_import_previous_desc),
                     onClick = onPreviousData,
                 )
             }
             OnbChoiceCard(
-                icon = painterResource(R.drawable.mochy_onb_login),
+                icon = painterResource(Res.drawable.mochy_onb_login),
                 title = stringResource(Res.string.onb_sign_in_title),
                 description = stringResource(Res.string.onb_sign_in_desc),
                 onClick = onSignIn,
             )
             OnbChoiceCard(
-                icon = painterResource(R.drawable.mochy_onb_backup),
+                icon = painterResource(Res.drawable.mochy_onb_backup),
                 title = stringResource(Res.string.onb_import_backup_title),
                 description = stringResource(Res.string.onb_import_backup_desc),
                 onClick = onBackup,
@@ -122,7 +128,7 @@ internal fun ImportModePage(
 @Composable
 internal fun MigratingPage() {
     OnboardingPage(
-        badge = { PageBadge(painterResource(R.drawable.mochy_onb_restore)) },
+        badge = { PageBadge(painterResource(Res.drawable.mochy_onb_restore)) },
         title = stringResource(Res.string.onb_bringing_over),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -144,7 +150,7 @@ internal fun ProfilePage(
     onNext: () -> Unit,
 ) {
     OnboardingPage(
-        badge = { PageBadge(painterResource(R.drawable.mochy_onb_person)) },
+        badge = { PageBadge(painterResource(Res.drawable.mochy_onb_person)) },
         title = stringResource(Res.string.onb_profile_title),
         footer = {
             Text(
@@ -195,7 +201,7 @@ internal fun LastOnePage(
     onNext: () -> Unit,
 ) {
     OnboardingPage(
-        badge = { PageBadge(painterResource(R.drawable.mochy_onb_tune)) },
+        badge = { PageBadge(painterResource(Res.drawable.mochy_onb_tune)) },
         title = stringResource(Res.string.onb_last_one),
         subtitle = stringResource(Res.string.onb_last_one_subtitle),
         footer = { OnbButton(stringResource(Res.string.onb_next_lower), onClick = onNext) },
@@ -216,7 +222,7 @@ internal fun LastOnePage(
                     checked = crashReports,
                     onCheckedChange = onCrashReportsChange,
                     leading = {
-                        PageBadge(painterResource(R.drawable.mochy_onb_bug_report), size = 32.dp)
+                        PageBadge(painterResource(Res.drawable.mochy_onb_bug_report), size = 32.dp)
                     },
                 )
             }

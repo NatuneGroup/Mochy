@@ -2,22 +2,64 @@
 
 // a bitmap bent over a grid like drawBitmapMesh, drawn a few rows at a time so no single draw hands the gpu a big vertex buffer
 
-package com.metrolist.android.onboarding.mochy.welcome
+package com.metrolist.shared.ui.onboarding.mochy.welcome
 
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.BitmapShader
-import android.graphics.Canvas
+import android.graphics.Canvas as NativeCanvas
 import android.graphics.Paint
 import android.graphics.Shader
 import android.os.Build
+import androidx.compose.ui.graphics.Canvas
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.nativeCanvas
 import kotlin.math.min
 
-// each band's points stay well under the size the allocator puts next to a guard page, see docs/notes/mali-mesh.md
+internal actual fun sizedGirlImage(
+    bytes: ByteArray,
+    width: Int,
+    height: Int,
+): ImageBitmap {
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+    var sample = 1
+    while (bounds.outWidth / (sample * 2) >= width) sample *= 2
+    val raw = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = sample })
+    val sized = if (raw.width == width && raw.height == height) raw else Bitmap.createScaledBitmap(raw, width, height, true)
+    if (sized !== raw) raw.recycle()
+    // hands the upload to the render thread now, so the first frame she shows up in doesn't stall
+    sized.prepareToDraw()
+    return sized.asImageBitmap()
+}
+
+internal actual class GirlMesh actual constructor(
+    cols: Int,
+    rows: Int,
+) {
+    private val mesh = BandedMesh(cols, rows)
+
+    actual fun draw(
+        canvas: Canvas,
+        image: ImageBitmap,
+        verts: FloatArray,
+    ) {
+        mesh.draw(canvas.nativeCanvas, image.asAndroidBitmap(), verts)
+    }
+}
+
+// each band's points stay well under the size the allocator puts next to a guard page
 private const val MAX_BAND_BYTES = 24 * 1024
+
 // a point is its place plus where it reads the bitmap, two floats each
 private const val BYTES_PER_POINT = 16
 
-internal class BandedMesh(private val cols: Int, private val rows: Int) {
+private class BandedMesh(
+    private val cols: Int,
+    private val rows: Int,
+) {
     private val perRow = cols + 1
     private val bandRows = (MAX_BAND_BYTES / (BYTES_PER_POINT * perRow) - 1).coerceIn(1, rows)
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
@@ -42,7 +84,7 @@ internal class BandedMesh(private val cols: Int, private val rows: Int) {
     }
 
     // verts holds every grid point row by row, like drawBitmapMesh takes them
-    fun draw(canvas: Canvas, bitmap: Bitmap, verts: FloatArray) {
+    fun draw(canvas: NativeCanvas, bitmap: Bitmap, verts: FloatArray) {
         // hardware canvases only draw vertices from android 10, older phones keep the one big mesh
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             canvas.drawBitmapMesh(bitmap, cols, rows, verts, 0, null, 0, paint)
@@ -54,7 +96,7 @@ internal class BandedMesh(private val cols: Int, private val rows: Int) {
             val count = min(bandRows, rows - row)
             val offset = row * perRow * 2
             canvas.drawVertices(
-                Canvas.VertexMode.TRIANGLE_STRIP, (count + 1) * perRow * 2, verts, offset, texs, offset,
+                NativeCanvas.VertexMode.TRIANGLE_STRIP, (count + 1) * perRow * 2, verts, offset, texs, offset,
                 null, 0, indices, 0, stripLength(count), paint,
             )
             row += count

@@ -2,7 +2,7 @@
 
 // the welcome page's backdrop: a dot grid with giant outlined welcomes drifting past
 
-package com.metrolist.android.onboarding.mochy.welcome
+package com.metrolist.shared.ui.onboarding.mochy.welcome
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
