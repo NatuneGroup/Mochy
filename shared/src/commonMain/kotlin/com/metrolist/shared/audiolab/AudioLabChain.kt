@@ -76,6 +76,10 @@ class AudioLabChain(
     ) {
         val frames = if (channels == 0) 0 else byteCount / (2 * channels)
         if (frames <= 0) return
+        // all three off and faded out: leave the bytes alone instead of converting every sample
+        val spatialIdle = spatial.settleIfIdle()
+        val reverbIdle = reverb.settleIfIdle()
+        if (spatialIdle && reverbIdle && eightD.settleIfIdle()) return
         val count = frames * channels
         if (scratch.size < count) scratch = FloatArray(count)
         for (i in 0 until count) {
