@@ -963,7 +963,7 @@ private fun runDesktopApp(args: Array<String>) {
         DesktopUrlHandler.handleUrl(url)
     }
     if (!settings.desktopOnboardingInitialized) {
-        settings.desktopOnboardingComplete = File(XdgUtils.getXdgDataHome(), "metrolist/metrolist.db").isFile
+        settings.desktopOnboardingComplete = File(XdgUtils.getXdgDataHome(), "${XdgUtils.APP_DIR}/metrolist.db").isFile
         settings.desktopOnboardingInitialized = true
     }
     if (isCrashReportingAvailable()) {

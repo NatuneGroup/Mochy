@@ -202,8 +202,8 @@ data class AlbumStat(
 )
 
 object HistoryRepository {
-    private val oldFile get() = File(System.getProperty("user.home"), ".metrolist/history.db")
-    private val xdgFile get() = File(XdgUtils.getXdgDataHome(), "metrolist/history.db")
+    private val oldFile get() = File(System.getProperty("user.home"), ".${XdgUtils.APP_DIR}/history.db")
+    private val xdgFile get() = File(XdgUtils.getXdgDataHome(), "${XdgUtils.APP_DIR}/history.db")
     private val database get() = GlobalContext.get().get<MusicDatabase>()
     private var initialized = false
 

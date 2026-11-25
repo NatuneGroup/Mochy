@@ -12,7 +12,7 @@ internal fun windowsWebViewDataDirectory(
     userHome: String,
 ): File {
     val baseDirectory = localAppData?.takeIf(String::isNotBlank)?.let(::File) ?: File(userHome, "AppData/Local")
-    return File(baseDirectory, "Metrolist/WebView2")
+    return File(baseDirectory, "Mochy/WebView2")
 }
 
 internal fun desktopWebViewDataDirectory(
@@ -27,12 +27,12 @@ internal fun desktopWebViewDataDirectory(
         }
 
         osName.contains("mac", ignoreCase = true) -> {
-            File(userHome, "Library/Application Support/Metrolist/WebView")
+            File(userHome, "Library/Application Support/Mochy/WebView")
         }
 
         else -> {
             val xdgDirectory = xdgDataHome?.takeIf(String::isNotBlank)?.let(::File)?.takeIf(File::isAbsolute)
-            File(xdgDirectory ?: File(userHome, ".local/share"), "Metrolist/WebView")
+            File(xdgDirectory ?: File(userHome, ".local/share"), "Mochy/WebView")
         }
     }
 

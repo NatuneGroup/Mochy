@@ -35,7 +35,7 @@ internal object MatugenColors {
         private set
 
     /** Loads the palette and reloads it whenever Matugen rewrites the file, until cancelled. */
-    suspend fun watch(file: File = File(XdgUtils.getXdgConfigHome(), "metrolist/matugen.properties")) =
+    suspend fun watch(file: File = File(XdgUtils.getXdgConfigHome(), "${XdgUtils.APP_DIR}/matugen.properties")) =
         withContext(Dispatchers.IO) {
             val directory = file.parentFile.apply { mkdirs() }
             try {

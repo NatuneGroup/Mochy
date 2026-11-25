@@ -46,7 +46,7 @@ private fun persistDesktopMochyProfilePhoto(source: File): String? =
     try {
         val bytes = readPlaylistCover(source)
         val ext = source.extension.lowercase().takeIf { it in playlistCoverExtensions } ?: "jpg"
-        val dir = File(XdgUtils.getXdgDataHome(), "metrolist/mochy_profile").apply { mkdirs() }
+        val dir = File(XdgUtils.getXdgDataHome(), "${XdgUtils.APP_DIR}/mochy_profile").apply { mkdirs() }
         val dest = File(dir, "avatar_${System.currentTimeMillis()}.$ext")
         dest.outputStream().use { it.write(bytes) }
         dir

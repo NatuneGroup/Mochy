@@ -162,7 +162,7 @@ object ListenTogetherState {
     private fun presentationText(key: ListenTogetherText): String = presentationTextMap[key].orEmpty()
 
     private fun migrateLegacySettings() {
-        val legacyFile = File(XdgUtils.getXdgConfigHome(), "metrolist/listen_together.properties")
+        val legacyFile = File(XdgUtils.getXdgConfigHome(), "${XdgUtils.APP_DIR}/listen_together.properties")
         val migratedFile = File(legacyFile.parentFile, "${legacyFile.name}.migrated")
         if (!legacyFile.isFile || migratedFile.exists()) return
         val properties = Properties().apply { legacyFile.inputStream().use { load(it) } }

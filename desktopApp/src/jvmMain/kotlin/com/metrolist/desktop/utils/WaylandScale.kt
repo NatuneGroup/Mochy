@@ -31,7 +31,7 @@ object WaylandScale {
     private const val MAX_COMMAND_OUTPUT_CHARS = 64 * 1_024
     private const val MONITOR_REFRESH_NANOS = 60_000_000_000L
     private val TRUSTED_EXECUTABLE_DIRECTORIES = listOf("/usr/bin", "/bin", "/usr/local/bin")
-    private val LOG_FILE: File = File(XdgUtils.getXdgCacheHome(), "metrolist/wayland_scale.log")
+    private val LOG_FILE: File = File(XdgUtils.getXdgCacheHome(), "${XdgUtils.APP_DIR}/wayland_scale.log")
     private var applied = false
 
     @Volatile

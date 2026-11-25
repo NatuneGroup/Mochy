@@ -67,8 +67,8 @@ object DesktopBackupRestoreManager {
     internal var databaseFileOverride: File? = null
     internal var restoreDirOverride: File? = null
     internal val backupLock = ReentrantLock()
-    private val databaseFile get() = databaseFileOverride ?: File(XdgUtils.getXdgDataHome(), "metrolist/metrolist.db")
-    private val restoreDir get() = restoreDirOverride ?: File(XdgUtils.getXdgStateHome(), "metrolist/pending-restore")
+    private val databaseFile get() = databaseFileOverride ?: File(XdgUtils.getXdgDataHome(), "${XdgUtils.APP_DIR}/metrolist.db")
+    private val restoreDir get() = restoreDirOverride ?: File(XdgUtils.getXdgStateHome(), "${XdgUtils.APP_DIR}/pending-restore")
 
     fun backup(destination: File): Result<Unit> =
         backupLock.withLock {

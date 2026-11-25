@@ -44,7 +44,7 @@ object DesktopAutomaticBackupScheduler {
                         continue
                     }
                     if (pruningPending) {
-                        val directory = File(XdgUtils.getXdgDataHome(), "metrolist/automatic-backups")
+                        val directory = File(XdgUtils.getXdgDataHome(), "${XdgUtils.APP_DIR}/automatic-backups")
                         val pruneResult = withContext(Dispatchers.IO) { runCatching { pruneBackups(directory) } }
                         pruningPending = pruneResult.isFailure
                         if (pruneResult.isFailure) {
@@ -56,7 +56,7 @@ object DesktopAutomaticBackupScheduler {
                     }
                     val now = System.currentTimeMillis()
                     if (isAutoBackupDue(settings.autoBackupLastSuccessEpochMillis, now, frequency)) {
-                        val directory = File(XdgUtils.getXdgDataHome(), "metrolist/automatic-backups")
+                        val directory = File(XdgUtils.getXdgDataHome(), "${XdgUtils.APP_DIR}/automatic-backups")
                         val destination = File(directory, "${defaultBackupFilename(BACKUP_FILENAME_PREFIX)}.zip")
                         val result =
                             withContext(Dispatchers.IO + NonCancellable) {
@@ -95,7 +95,7 @@ object DesktopAutomaticBackupScheduler {
     }
 
     fun listBackups(): List<File> =
-        File(XdgUtils.getXdgDataHome(), "metrolist/automatic-backups")
+        File(XdgUtils.getXdgDataHome(), "${XdgUtils.APP_DIR}/automatic-backups")
             .listFiles { file -> file.isFile && file.extension == "zip" }
             .orEmpty()
             .sortedByDescending(File::lastModified)

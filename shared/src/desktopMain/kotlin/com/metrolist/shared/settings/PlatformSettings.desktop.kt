@@ -40,7 +40,7 @@ import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 import com.russhwolf.settings.Settings as KmpSettings
 
-private const val APP_DIR_NAME = "metrolist"
+private const val APP_DIR_NAME = XdgUtils.APP_DIR
 private const val SETTINGS_FILE_NAME = "settings.properties"
 private const val SECRETS_FILE_NAME = "secrets.properties"
 private const val WINDOWS_SECRET_ENTROPY = "MetrolistDesktopSecretsV1"
@@ -542,13 +542,8 @@ private fun migrateLegacyPreferences(
     secretStore: SecretStore,
     settingsFile: File,
 ) {
-    val root = Preferences.userRoot()
-    val legacyNodes =
-        listOf(
-            root,
-            root.node("/com/metrolist/composeApp/state"),
-            root.node("/com/metrolist/desktop/state"),
-        )
+    // Mochy runs beside Metrolist, so it never reads or clears Metrolist's java.util.prefs nodes.
+    val legacyNodes = emptyList<Preferences>()
     val legacySecretAliases =
         mapOf(
             "innerTubeCookie" to listOf("innerTubeCookie", "COOKIES"),

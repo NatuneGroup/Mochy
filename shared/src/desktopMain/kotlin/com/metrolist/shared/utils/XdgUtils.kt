@@ -8,6 +8,9 @@ package com.metrolist.shared.utils
 import java.io.File
 
 object XdgUtils {
+    // Mochy keeps its own files so it can run beside an installed Metrolist.
+    const val APP_DIR = "mochy"
+
     fun getXdgDataHome(): File {
         val env = System.getenv("XDG_DATA_HOME")
         return if (env != null && File(env).isAbsolute) {

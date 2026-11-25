@@ -28,7 +28,7 @@ fun CollectionCoverEditor(
     val scope = rememberCoroutineScope()
     var busy by remember(type) { mutableStateOf(false) }
     var failed by remember(type) { mutableStateOf(false) }
-    val directory = remember { File(XdgUtils.getXdgDataHome(), "metrolist/playlist_covers") }
+    val directory = remember { File(XdgUtils.getXdgDataHome(), "${XdgUtils.APP_DIR}/playlist_covers") }
     val title = stringResource(Res.string.edit_playlist_cover)
 
     fun save(source: File?) {

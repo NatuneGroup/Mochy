@@ -57,7 +57,7 @@ import kotlin.system.exitProcess
 
 object DesktopCrashRecovery {
     const val ARGUMENT = "--crash-report"
-    val store get() = FileCrashStore(File(XdgUtils.getXdgDataHome(), "metrolist/crashes"))
+    val store get() = FileCrashStore(File(XdgUtils.getXdgDataHome(), "${XdgUtils.APP_DIR}/crashes"))
 
     private val shareScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 

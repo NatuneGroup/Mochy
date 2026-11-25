@@ -46,7 +46,7 @@ object AppLogger {
     private val urlCredentialsRegex = Regex("""(?i)(https?://)[^/@\s]+@""")
     private val ipAddressRegex = Regex("""\b(?:\d{1,3}\.){3}\d{1,3}\b""")
 
-    private var logDir = File(XdgUtils.getXdgStateHome(), "metrolist/logs")
+    private var logDir = File(XdgUtils.getXdgStateHome(), "${XdgUtils.APP_DIR}/logs")
     private val logFile get() = File(logDir, "app.log")
     private val bufferLock = Any()
     private var logBuffer = ArrayDeque<LogEntry>(LOG_BUFFER_SIZE)
@@ -76,7 +76,7 @@ object AppLogger {
 
     fun initialize(
         coroutineScope: CoroutineScope,
-        logDirectory: File = File(XdgUtils.getXdgStateHome(), "metrolist/logs"),
+        logDirectory: File = File(XdgUtils.getXdgStateHome(), "${XdgUtils.APP_DIR}/logs"),
         writerDispatcher: CoroutineDispatcher = Dispatchers.IO,
         onUncaughtException: (() -> Unit)? = null,
     ) {
