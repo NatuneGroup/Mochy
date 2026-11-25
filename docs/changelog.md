@@ -58,7 +58,7 @@ Metrolist 14.0.0 replaces the standalone Android app with Metrolist-KMP.
 - Added optional blocking of AI-generated artists and local hiding of artists and podcasts (@nyxiereal)
 - Added SponsorBlock skipping for podcast episodes on Android and desktop (@nyxiereal)
 - Added opt-in Device Connect pairing and remote playback between Android and desktop on the local network (@adrielGGmotion @nyxiereal)
-- Added Lyprio, lrc.red, SimpMusic and Unison lyrics sources, provider search and an editor for lyrics and word timings (@l6t9 @nyxiereal @ibratabian17)
+- Added lrc.red, SimpMusic and Unison lyrics sources, provider search and an editor for lyrics and word timings (@l6t9 @nyxiereal @ibratabian17)
 - Added custom font imports and on-demand Google Sans downloads on Android (@nyxiereal @adrielGGmotion)
 
 ## Changes from 13.x
@@ -73,7 +73,7 @@ Metrolist 14.0.0 replaces the standalone Android app with Metrolist-KMP.
 - Corrected crossfade gain with silence skipping and volume normalization (@kairosci @nyxiereal)
 - Preserved duplicate song occurrences when importing foreign playlists (@nyxiereal)
 - Restored offline browsing of saved YouTube playlists in Android Auto (@nyxiereal)
-- Rejected Lyprio results for the wrong artist and preserved manual lyric edits when switching providers (@nyxiereal)
+- Preserved manual lyric edits when switching providers (@nyxiereal)
 
 ## Known limitations
 - iOS does not yet support music-video playback, casting, Device Connect, SponsorBlock or foreign-app backup import
