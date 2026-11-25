@@ -157,7 +157,7 @@ fun SharedSettingsScreen(
                         isAudioProcessingAvailable = host.isAudioProcessingAvailable,
                     )
                 } else if (page == SettingsPageId.AUDIO_LAB) {
-                    AudioLabScreen(available = host.platform == SettingsPlatform.ANDROID)
+                    AudioLabScreen(showHlsNote = host.platform == SettingsPlatform.IOS)
                 } else if (page == SettingsPageId.MOCHY_PROFILE) {
                     MochyProfileSettingsScreen(rememberPhotoPicker = host.rememberMochyProfilePhotoPicker)
                 } else if (page == SettingsPageId.MOCHY_MODULES) {

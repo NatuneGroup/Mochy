@@ -33,7 +33,6 @@ import com.metrolist.shared.audiolab.spatialSettings
 import com.metrolist.shared.audiolab.withPreset
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.audio_lab_amount
-import com.metrolist.shared.generated.resources.audio_lab_android_only
 import com.metrolist.shared.generated.resources.audio_lab_damping
 import com.metrolist.shared.generated.resources.audio_lab_db
 import com.metrolist.shared.generated.resources.audio_lab_degrees
@@ -44,6 +43,7 @@ import com.metrolist.shared.generated.resources.audio_lab_eightd_description
 import com.metrolist.shared.generated.resources.audio_lab_eightd_preset_balanced
 import com.metrolist.shared.generated.resources.audio_lab_eightd_preset_chill
 import com.metrolist.shared.generated.resources.audio_lab_eightd_preset_extreme
+import com.metrolist.shared.generated.resources.audio_lab_hls_note
 import com.metrolist.shared.generated.resources.audio_lab_hz
 import com.metrolist.shared.generated.resources.audio_lab_hz_decimal
 import com.metrolist.shared.generated.resources.audio_lab_low_cut
@@ -82,10 +82,10 @@ import kotlin.math.log10
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
-/** Audio Lab settings: the spatial, reverb and 8D cards. The controls stay disabled where the effects are not wired yet. */
+/** Audio Lab settings: the spatial, reverb and 8D cards. [showHlsNote] adds the note that effects skip HLS streams. */
 @Composable
 fun AudioLabScreen(
-    available: Boolean,
+    showHlsNote: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -96,29 +96,28 @@ fun AudioLabScreen(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        if (!available) {
+        if (showHlsNote) {
             Text(
-                text = stringResource(Res.string.audio_lab_android_only),
+                text = stringResource(Res.string.audio_lab_hls_note),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        SpatialCard(available)
-        ReverbCard(available)
-        EightDCard(available)
+        SpatialCard()
+        ReverbCard()
+        EightDCard()
     }
 }
 
 @Composable
-private fun SpatialCard(available: Boolean) {
+private fun SpatialCard() {
     val spatial = Settings.shared.spatialSettings()
-    val active = available && spatial.enabled
+    val active = spatial.enabled
     AudioLabCard {
         SettingsMainSwitch(
             title = stringResource(Res.string.audio_lab_spatial),
             checked = spatial.enabled,
             onCheckedChange = { saveSpatial(spatial.copy(enabled = it)) },
-            enabled = available,
         )
         Text(
             text = stringResource(Res.string.audio_lab_spatial_description),
@@ -180,16 +179,15 @@ private fun SpatialCard(available: Boolean) {
 }
 
 @Composable
-private fun ReverbCard(available: Boolean) {
+private fun ReverbCard() {
     val reverb = Settings.shared.reverbSettings()
     val presetId = Settings.shared.reverbPresetId
-    val active = available && reverb.enabled
+    val active = reverb.enabled
     AudioLabCard {
         SettingsMainSwitch(
             title = stringResource(Res.string.audio_lab_reverb),
             checked = reverb.enabled,
             onCheckedChange = { saveReverb(reverb.copy(enabled = it), presetId) },
-            enabled = available,
         )
         Text(
             text = stringResource(Res.string.audio_lab_reverb_description),
@@ -251,15 +249,14 @@ private fun ReverbCard(available: Boolean) {
 }
 
 @Composable
-private fun EightDCard(available: Boolean) {
+private fun EightDCard() {
     val eightD = Settings.shared.eightDSettings()
-    val active = available && eightD.enabled
+    val active = eightD.enabled
     AudioLabCard {
         SettingsMainSwitch(
             title = stringResource(Res.string.audio_lab_eightd),
             checked = eightD.enabled,
             onCheckedChange = { saveEightD(eightD.copy(enabled = it)) },
-            enabled = available,
         )
         Text(
             text = stringResource(Res.string.audio_lab_eightd_description),

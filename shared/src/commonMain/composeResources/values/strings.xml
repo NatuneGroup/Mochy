@@ -5903,8 +5903,8 @@
     <string name="audio_lab">Audio Lab</string>
     <!-- Translators: Subtitle of the Audio Lab row in the sound settings. -->
     <string name="settings_audio_lab_overview">Spatial, reverb and 8D sound effects</string>
-    <!-- Translators: Note shown on the Audio Lab page when the effects are not available on this platform yet. -->
-    <string name="audio_lab_android_only">Available on Android for now</string>
+    <!-- Translators: Note on the iOS Audio Lab page. The effects skip HLS streams because they play without the audio tap. -->
+    <string name="audio_lab_hls_note">Effects do not apply to HLS streams.</string>
     <!-- Translators: Name of the spatial audio effect card in Audio Lab. -->
     <string name="audio_lab_spatial">Spatial</string>
     <!-- Translators: Short explanation under the spatial switch. -->
