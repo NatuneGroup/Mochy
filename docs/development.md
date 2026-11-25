@@ -321,7 +321,7 @@ Android accepts TTF and OTF imports from document providers regardless of their 
 
 Automatic lookup uses the first usable source in the configured provider order, even when a later source has richer timing. With Prefer word-synced lyrics (off by default), lookup continues until it finds word timing, keeping provider order within each timing type and falling back to line-synced or plain lyrics. User edits and explicit source choices always take priority. Cached automatic results are used offline only while their provider is enabled and cannot outrank an earlier provider. Changing the source order reloads the current song's lyrics.
 
-Automatic searches wait for Lyprio within its 50-second timeout before trying lower providers. If a completed Lyprio search returns nothing, it retries once with the picker's full provider set within the same budget. Errors and cancellation are not cached as misses. The final selection is cached after the search completes, including refetches. Video-specific sources used for retiming also follow provider priority.
+Errors and cancellation are not cached as misses. The final selection is cached after the search completes, including refetches. Video-specific sources used for retiming also follow provider priority.
 
 TTML imports read inline translations and metadata translations keyed to lyric lines. They use the saved translation target or system language and preserve vocal timing. Bundled translations appear only when their language and mode match the selection. Successful AI output takes priority over bundled text; missing output keeps matching bundled translations or the source lyrics.
 
@@ -335,12 +335,6 @@ While the shared network state reports no connection, lookup returns saved lyric
 
 Shared lyrics HTTP reads retry a 503 twice with 500 ms and 1 s backoff, honoring Retry-After within a five-second budget.
 
-Lyprio fetches remove a leading title-and-artist header only when the whole line matches the requested metadata, separated by a spaced hyphen, en dash or em dash in either order, and another nonblank line follows. Matching ignores case and repeated whitespace.
-
-Unison song and curator attribution links also apply to Lyprio results labeled `Lyprio/UNISON` or whose MLX `source.name` is `Unison`. Other Lyprio sources do not get Unison links.
-
-Shared MLX parsing rejects Han text in Lyprio/KUGOU romanization fields, because older KRC responses labeled Chinese translations as romanization. This applies to cached lyrics too; missing romanization is then generated locally.
-
 LyricsPlus and Zemer are not lookup providers. Stored provider settings drop them, and saved lyrics from either remain readable.
 
 Each candidate includes cached translations and dictionary-free romanization before display. When romanization dictionary preparation is needed and nothing is displayed, plain lyrics publish first. Enrichment replaces only the displayed entries and keeps source timestamps. Cancelled requests and late enrichment cannot overwrite newer results. Songwriter lookups run independently.
@@ -351,7 +345,7 @@ The shared player keeps empty results loading until the request releases its ded
 
 A persistent global offset adds to each song's saved adjustment everywhere. Positive values advance lyrics. Highlighting, scrolling, captions and tap seeking use the combined offset.
 
-Activation uses scroll lookahead and per-line overlap handling unless "Highlight lyrics by their timestamps" is on, which activates each row only between its start and end. Braccato and Expressive word animations finish their vocal timestamps even when scroll focus moves early. Braccato keeps the completion wipe lit before fading; Expressive fades over half a second after deactivation. Lyprio JSON lines without an end use the next line start, or the song duration for the last line. Legacy LRC offsets shift timestamps with the same sign as Lyprio's converter. Enhanced LRC uses the next line for a missing final-word end. Interpolation uses monotonic time and resets on backward seeks. During active cast playback, both smooth and deadline lyrics clocks interpolate at 1x speed without reading the local player position, stay sample-driven while paused or while the cast receiver is buffering or transitioning, emit discontinuities immediately on seek, use a wider discontinuity tolerance for quantized receiver polls, and pass deadline seek generations to the sync engine so normal line gaps do not trigger seek scrolling. No platform adds a fixed output-latency offset: Android reads Media3's position, anchored to AudioTrack timestamps for PCM output, and desktop reads played frames. Verify sync on speakers and Bluetooth, at changed speeds and after seeks.
+Activation uses scroll lookahead and per-line overlap handling unless "Highlight lyrics by their timestamps" is on, which activates each row only between its start and end. Braccato and Expressive word animations finish their vocal timestamps even when scroll focus moves early. Braccato keeps the completion wipe lit before fading; Expressive fades over half a second after deactivation. Enhanced LRC uses the next line for a missing final-word end. Interpolation uses monotonic time and resets on backward seeks. During active cast playback, both smooth and deadline lyrics clocks interpolate at 1x speed without reading the local player position, stay sample-driven while paused or while the cast receiver is buffering or transitioning, emit discontinuities immediately on seek, use a wider discontinuity tolerance for quantized receiver polls, and pass deadline seek generations to the sync engine so normal line gaps do not trigger seek scrolling. No platform adds a fixed output-latency offset: Android reads Media3's position, anchored to AudioTrack timestamps for PCM output, and desktop reads played frames. Verify sync on speakers and Bluetooth, at changed speeds and after seeks.
 
 ### Manual search and editing
 
