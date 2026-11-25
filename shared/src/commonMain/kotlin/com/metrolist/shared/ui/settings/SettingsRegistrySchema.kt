@@ -124,6 +124,8 @@ data class SharedSettingsHost(
     val lyricsPreview: @Composable (Modifier) -> Unit = { LyricsSettingsPreview(it) },
     val playbackSpeedEnabled: Boolean = true,
     val isAudioProcessingAvailable: Boolean = true,
+    /** Whether the Android Stage room loaded its native library here; other platforms leave it false. */
+    val isStageAvailable: Boolean = false,
     val playbackSpeedOverride: Float? = null,
     val playbackSpeedDescription: String? = null,
     val homeSections: List<SettingsHomeSection> = emptyList(),

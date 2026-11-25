@@ -27,9 +27,12 @@ import com.metrolist.shared.audiolab.ReverbPresets
 import com.metrolist.shared.audiolab.ReverbSettings
 import com.metrolist.shared.audiolab.SpatialMode
 import com.metrolist.shared.audiolab.SpatialSettings
+import com.metrolist.shared.audiolab.StagePresets
+import com.metrolist.shared.audiolab.StageSettings
 import com.metrolist.shared.audiolab.eightDSettings
 import com.metrolist.shared.audiolab.reverbSettings
 import com.metrolist.shared.audiolab.spatialSettings
+import com.metrolist.shared.audiolab.stageSettings
 import com.metrolist.shared.audiolab.withPreset
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.audio_lab_amount
@@ -70,6 +73,19 @@ import com.metrolist.shared.generated.resources.audio_lab_spatial_description
 import com.metrolist.shared.generated.resources.audio_lab_spatial_feed
 import com.metrolist.shared.generated.resources.audio_lab_spatial_mode_crossfeed
 import com.metrolist.shared.generated.resources.audio_lab_spatial_mode_speakers
+import com.metrolist.shared.generated.resources.audio_lab_stage
+import com.metrolist.shared.generated.resources.audio_lab_stage_android_only
+import com.metrolist.shared.generated.resources.audio_lab_stage_description
+import com.metrolist.shared.generated.resources.audio_lab_stage_echo
+import com.metrolist.shared.generated.resources.audio_lab_stage_kemar_credit
+import com.metrolist.shared.generated.resources.audio_lab_stage_level
+import com.metrolist.shared.generated.resources.audio_lab_stage_preset_around
+import com.metrolist.shared.generated.resources.audio_lab_stage_preset_front_row
+import com.metrolist.shared.generated.resources.audio_lab_stage_preset_hall
+import com.metrolist.shared.generated.resources.audio_lab_stage_preset_living
+import com.metrolist.shared.generated.resources.audio_lab_stage_preset_on_stage
+import com.metrolist.shared.generated.resources.audio_lab_stage_preset_studio
+import com.metrolist.shared.generated.resources.audio_lab_stage_unavailable
 import com.metrolist.shared.generated.resources.audio_lab_wet
 import com.metrolist.shared.generated.resources.audio_lab_width
 import com.metrolist.shared.generated.resources.percent_symbol
@@ -82,10 +98,17 @@ import kotlin.math.log10
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
-/** Audio Lab settings: the spatial, reverb and 8D cards. [showHlsNote] adds the note that effects skip HLS streams. */
+/** Whether the Stage room can run on this host: Android only, and only once its native library loads. */
+enum class AudioLabStageSupport { Available, AndroidOnly, EngineUnavailable }
+
+/**
+ * Audio Lab settings: the Stage, spatial, reverb and 8D cards. [showHlsNote] adds the note that effects skip HLS
+ * streams. [stageSupport] decides whether the Stage switch is usable here.
+ */
 @Composable
 fun AudioLabScreen(
     showHlsNote: Boolean,
+    stageSupport: AudioLabStageSupport,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -103,9 +126,72 @@ fun AudioLabScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        StageCard(stageSupport)
+        Text(
+            text = stringResource(Res.string.audio_lab_stage_kemar_credit),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         SpatialCard()
         ReverbCard()
         EightDCard()
+    }
+}
+
+@Composable
+private fun StageCard(support: AudioLabStageSupport) {
+    val stage = Settings.shared.stageSettings()
+    val usable = support == AudioLabStageSupport.Available
+    val active = usable && stage.enabled
+    AudioLabCard {
+        SettingsMainSwitch(
+            title = stringResource(Res.string.audio_lab_stage),
+            checked = stage.enabled,
+            onCheckedChange = { saveStage(stage.copy(enabled = it)) },
+            enabled = usable,
+        )
+        Text(
+            text = stringResource(Res.string.audio_lab_stage_description),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (!usable) {
+            Text(
+                text =
+                    stringResource(
+                        if (support == AudioLabStageSupport.AndroidOnly) {
+                            Res.string.audio_lab_stage_android_only
+                        } else {
+                            Res.string.audio_lab_stage_unavailable
+                        },
+                    ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            StagePresets.All.forEach { preset ->
+                FilterChip(
+                    selected = stage.presetId == preset.id,
+                    onClick = { saveStage(StagePresets.apply(stage, preset)) },
+                    label = { Text(stringResource(stagePresetName(preset.id))) },
+                    enabled = active,
+                )
+            }
+        }
+        SliderRow(stringResource(Res.string.audio_lab_room_size), percent(stage.roomSize), stage.roomSize, 0f..1f, active) {
+            saveStage(stage.copy(roomSize = it))
+        }
+        SliderRow(stringResource(Res.string.audio_lab_stage_echo), percent(stage.roomAmount), stage.roomAmount, 0f..1f, active) {
+            saveStage(stage.copy(roomAmount = it))
+        }
+        SliderRow(stringResource(Res.string.audio_lab_stage_level), decibels(stage.levelDb), stage.levelDb, -12f..6f, active) {
+            saveStage(stage.copy(levelDb = it))
+        }
     }
 }
 
@@ -309,6 +395,16 @@ private fun saveReverb(
     Settings.shared.reverbPresetId = presetId
 }
 
+/** Writes every Stage control. The preset id is kept, so the chip stays lit after a slider change. */
+private fun saveStage(settings: StageSettings) {
+    Settings.shared.stageEnabled = settings.enabled
+    Settings.shared.stagePresetId = settings.presetId
+    Settings.shared.stageRoomSize = settings.roomSize
+    Settings.shared.stageWalls = settings.walls
+    Settings.shared.stageRoomAmount = settings.roomAmount
+    Settings.shared.stageLevelDb = settings.levelDb
+}
+
 private fun saveSpatial(settings: SpatialSettings) {
     Settings.shared.spatialEnabled = settings.enabled
     Settings.shared.spatialMode = settings.mode
@@ -336,6 +432,17 @@ private val EightDPresets =
         EightDPreset(Res.string.audio_lab_eightd_preset_balanced, 0.15f, 0.85f),
         EightDPreset(Res.string.audio_lab_eightd_preset_extreme, 0.5f, 1f),
     )
+
+private fun stagePresetName(id: String): StringResource =
+    when (id) {
+        "studio" -> Res.string.audio_lab_stage_preset_studio
+        "living" -> Res.string.audio_lab_stage_preset_living
+        "front_row" -> Res.string.audio_lab_stage_preset_front_row
+        "on_stage" -> Res.string.audio_lab_stage_preset_on_stage
+        "around" -> Res.string.audio_lab_stage_preset_around
+        "hall" -> Res.string.audio_lab_stage_preset_hall
+        else -> error("Unknown Stage preset: $id")
+    }
 
 private fun reverbPresetName(id: String): StringResource =
     when (id) {

@@ -110,6 +110,7 @@ import androidx.compose.ui.unit.round
 import com.metrolist.shared.generated.resources.*
 import com.metrolist.shared.ui.LocalIsTv
 import com.metrolist.shared.ui.audiolab.AudioLabScreen
+import com.metrolist.shared.ui.audiolab.AudioLabStageSupport
 import com.metrolist.shared.ui.components.ExpressiveSwitch
 import com.metrolist.shared.ui.components.RefreshIndicator
 import com.metrolist.shared.ui.components.SwipeBackLayout
@@ -157,7 +158,15 @@ fun SharedSettingsScreen(
                         isAudioProcessingAvailable = host.isAudioProcessingAvailable,
                     )
                 } else if (page == SettingsPageId.AUDIO_LAB) {
-                    AudioLabScreen(showHlsNote = host.platform == SettingsPlatform.IOS)
+                    AudioLabScreen(
+                        showHlsNote = host.platform == SettingsPlatform.IOS,
+                        stageSupport =
+                            when {
+                                host.platform != SettingsPlatform.ANDROID -> AudioLabStageSupport.AndroidOnly
+                                host.isStageAvailable -> AudioLabStageSupport.Available
+                                else -> AudioLabStageSupport.EngineUnavailable
+                            },
+                    )
                 } else if (page == SettingsPageId.MOCHY_PROFILE) {
                     MochyProfileSettingsScreen(rememberPhotoPicker = host.rememberMochyProfilePhotoPicker)
                 } else if (page == SettingsPageId.MOCHY_MODULES) {

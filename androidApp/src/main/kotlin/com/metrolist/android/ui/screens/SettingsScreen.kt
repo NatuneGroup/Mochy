@@ -48,6 +48,7 @@ import com.metrolist.android.locale.rememberAppLanguageChoices
 import com.metrolist.android.playback.AudioCacheManager
 import com.metrolist.android.playback.LocalPlayerConnection
 import com.metrolist.android.playback.PlayerConnection
+import com.metrolist.android.playback.stage.StageNative
 import com.metrolist.android.spotifyimport.SpotifyLoginScreen
 import com.metrolist.android.spotifyimport.androidSpotifyImportManager
 import com.metrolist.android.ui.component.rememberMetroEqProfilePicker
@@ -383,6 +384,7 @@ fun SettingsScreen(
             host =
                 SharedSettingsHost(
                     platform = SettingsPlatform.ANDROID,
+                    isStageAvailable = StageNative.ready(context),
                     lyricsPreview = { modifier ->
                         val viewModel: PlayerViewModel = koinInject()
                         val castState = playerConnection?.castState?.collectAsState()?.value

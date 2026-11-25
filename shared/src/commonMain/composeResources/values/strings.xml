@@ -5975,6 +5975,32 @@
     <string name="audio_lab_eightd_preset_balanced">Balanced</string>
     <!-- Translators: 8D preset name: fast and deep. -->
     <string name="audio_lab_eightd_preset_extreme">Extreme</string>
+    <!-- Translators: Name of the Stage (3D room) effect card in Audio Lab. -->
+    <string name="audio_lab_stage">Stage</string>
+    <!-- Translators: Short explanation under the Stage switch. -->
+    <string name="audio_lab_stage_description">A 3D room around the song, placed with measured ear responses. Turn it on, then pick a room.</string>
+    <!-- Translators: Note under the Stage card on desktop and iOS, where the room is not available. -->
+    <string name="audio_lab_stage_android_only">Stage runs on Android only.</string>
+    <!-- Translators: Note under the Stage card on Android when the native room cannot load on this device. -->
+    <string name="audio_lab_stage_unavailable">Stage could not start its native room on this device, so it stays off.</string>
+    <!-- Translators: Credit shown under the Stage card for the measured ear responses it uses. -->
+    <string name="audio_lab_stage_kemar_credit">Ear measurements from the MIT Media Lab KEMAR set by Bill Gardner and Keith Martin.</string>
+    <!-- Translators: Stage slider: how much the room's walls echo the sound back. -->
+    <string name="audio_lab_stage_echo">Echo</string>
+    <!-- Translators: Stage slider: how loud the song is inside the room, in decibels. -->
+    <string name="audio_lab_stage_level">Level</string>
+    <!-- Translators: Stage preset: a small studio with the sounds close in front. -->
+    <string name="audio_lab_stage_preset_studio">Studio</string>
+    <!-- Translators: Stage preset: a living room with soft walls. -->
+    <string name="audio_lab_stage_preset_living">Living room</string>
+    <!-- Translators: Stage preset: sitting in the front row of a small venue. -->
+    <string name="audio_lab_stage_preset_front_row">Front row</string>
+    <!-- Translators: Stage preset: standing on the stage facing the audience. -->
+    <string name="audio_lab_stage_preset_on_stage">On stage</string>
+    <!-- Translators: Stage preset: sounds moving around the listener. -->
+    <string name="audio_lab_stage_preset_around">Around you</string>
+    <!-- Translators: Stage preset: a large concert hall. -->
+    <string name="audio_lab_stage_preset_hall">Hall</string>
     <!-- Translators: Percentage shown next to an Audio Lab slider. %1$d is the number. -->
     <string name="audio_lab_percent">%1$d%2$s</string>
     <!-- Translators: Milliseconds shown next to the pre-delay slider. %1$d is the number. -->
