@@ -1,5 +1,6 @@
 package com.metrolist.shared.playback.ffmpeg
 
+import com.metrolist.shared.audiolab.AudioLabChain
 import com.metrolist.shared.equalizer.AudioSpectrumMeter
 import com.metrolist.shared.equalizer.EqualizerConfiguration
 import com.metrolist.shared.equalizer.EqualizerProfile
@@ -11,6 +12,10 @@ import com.metrolist.shared.playback.normalizationBoostPcm16
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.youtube.playback.PlaybackEventKind
 import com.metrolist.shared.youtube.playback.PlaybackEventLog
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import java.util.ArrayDeque
 import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.FloatControl
@@ -95,6 +100,8 @@ class AudioRenderer internal constructor(
     private var closed = false
     private var tempoProcessor: AudioTempoProcessor? = null
     private val equalizer = ParametricEqualizer(sampleRate, channelCount)
+    private val audioLabScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val audioLab = AudioLabChain(audioLabScope).also { it.configure(sampleRate, channelCount) }
     private val positionClock = AudioPositionClock(audioFormat.sampleRate)
     private val silenceSkipper = PcmSilenceSkipper(sampleRate, channelCount)
 
@@ -127,6 +134,7 @@ class AudioRenderer internal constructor(
                 equalizer.update(current.profile)
                 val boostDb = current.preampDb.coerceIn(MIN_AUDIO_PREAMP_DB, MAX_AUDIO_BOOST_DB)
                 val equalized = equalize(data, boostDb)
+                audioLab.processPcm16(equalized, equalized.size)
                 val (enabled, instant) = silenceSettings()
                 val input = silenceSkipper.process(equalized, enabled, instant, positionClock::skipSilence)
                 val chunks =
@@ -558,6 +566,7 @@ class AudioRenderer internal constructor(
             tempoProcessor?.close()
             tempoProcessor = null
             equalizer.reset()
+            audioLab.reset()
             silenceSkipper.reset()
             if (line.isOpen) {
                 line.flush()
@@ -665,6 +674,8 @@ class AudioRenderer internal constructor(
         synchronized(safeLock) {
             if (closed) return
             closed = true
+            audioLab.close()
+            audioLabScope.cancel()
             outputGeneration++
             safeLock.notifyAll()
             pendingOutputChunks.clear()
