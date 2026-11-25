@@ -27,12 +27,12 @@ class DesktopSmokeTest(unittest.TestCase):
             for kind in ("CONFIG", "DATA", "STATE", "CACHE"):
                 self.assertEqual(str(profile / kind.lower()), env[f"XDG_{kind}_HOME"])
                 self.assertTrue(Path(env[f"XDG_{kind}_HOME"]).is_dir())
-            settings = (profile / "config/metrolist/settings.properties").read_text()
+            settings = (profile / "config/mochy/settings.properties").read_text()
             for setting in ("desktopOnboardingComplete=true", "desktopOnboardingInitialized=true",
                             "sentryEnabled=false", "enableLogging=true"):
                 self.assertIn(setting + "\n", settings)
             self.assertIn(f'"-Duser.home={profile}"', env["_JAVA_OPTIONS"])
-            self.assertIn(f'"-XX:ErrorFile={profile}/state/metrolist/logs/hs_err_pid%p.log"', env["_JAVA_OPTIONS"])
+            self.assertIn(f'"-XX:ErrorFile={profile}/state/mochy/logs/hs_err_pid%p.log"', env["_JAVA_OPTIONS"])
 
     def test_parses_applogger_levels_tags_and_multiline_native_errors(self):
         harmless = (
@@ -74,7 +74,7 @@ if "--appimage-extract-and-run" in sys.argv:
     sys.exit(status)
 
 mode = os.environ["SMOKE_TEST_MODE"]
-logs = Path(os.environ["XDG_STATE_HOME"]) / "metrolist/logs"
+logs = Path(os.environ["XDG_STATE_HOME"]) / "mochy/logs"
 log = logs / "app.log"
 if mode != "no-log":
     log.write_text("[2026-11-10 12:00:00.000] [INFO] [Main] Started\\n")
@@ -131,7 +131,7 @@ while True:
             smoke.profile_environment(work / "profile")
             output = work / "evidence"
             output.mkdir()
-            logs = work / "profile/state/metrolist/logs"
+            logs = work / "profile/state/mochy/logs"
             (logs / "app.log").touch()
             (logs / "app.log.1").write_text(f"{HEADER} [ERRO] [UncaughtException] Rotated crash\n")
             (work / "hs_err_pid123.log").write_text("cwd fallback")
@@ -169,7 +169,7 @@ while True:
         with tempfile.TemporaryDirectory() as directory:
             output=Path(directory)/"evidence";output.mkdir()
             def run(command, **options):
-                logs=Path(options["env"]["XDG_STATE_HOME"])/"metrolist/logs"
+                logs=Path(options["env"]["XDG_STATE_HOME"])/"mochy/logs"
                 (logs/"native_err_pid7.log").write_text("hung")
                 raise smoke.subprocess.TimeoutExpired(command, 60)
             with patch.object(smoke,"packaged_command",return_value=nullcontext(["Metrolist"])), patch.object(smoke.subprocess,"run",side_effect=run):
@@ -182,7 +182,7 @@ while True:
                 root=Path(directory);output=root/"evidence";output.mkdir()
                 def run(command, **options):
                     options["stdout"].write(b"[NativeBackendSmoke] passed\n")
-                    logs=Path(options["env"]["XDG_STATE_HOME"])/"metrolist/logs"
+                    logs=Path(options["env"]["XDG_STATE_HOME"])/"mochy/logs"
                     if missing:
                         (logs/"native_err_pid1.log").write_text("MissingJNIRegistrationError")
                     return Mock(returncode=0)

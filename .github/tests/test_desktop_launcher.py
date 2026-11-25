@@ -93,7 +93,7 @@ class DesktopLauncherTest(unittest.TestCase):
             XCURSOR_THEME="UserTheme", XCURSOR_SIZE="32", XDG_CACHE_HOME=cache
         )
         self.assertEqual(
-            ["UserTheme", "32", "1", f"{cache}/metrolist", "argument with spaces"],
+            ["UserTheme", "32", "1", f"{cache}/mochy", "argument with spaces"],
             self.launch(),
         )
         self.assertFalse(Path(self.environment["PROBE_LOG"]).exists())
@@ -110,9 +110,9 @@ class DesktopLauncherTest(unittest.TestCase):
                 else:
                     self.environment["XDG_STATE_HOME"] = state
                 directory = (
-                    f"{state}/metrolist/logs"
+                    f"{state}/mochy/logs"
                     if state and Path(state).is_absolute()
-                    else f'{self.environment["HOME"]}/.local/state/metrolist/logs'
+                    else f'{self.environment["HOME"]}/.local/state/mochy/logs'
                 )
                 expected = directory.replace("%", "%%") + "/hs_err_pid%p.log"
                 self.assertEqual([expected], self.launch())
@@ -130,7 +130,7 @@ class DesktopLauncherTest(unittest.TestCase):
             ["cursor:theme", "cursor:size"],
             Path(self.environment["PROBE_LOG"]).read_text().splitlines(),
         )
-        self.assertEqual(f'{self.environment["HOME"]}/.cache/metrolist', result[3])
+        self.assertEqual(f'{self.environment["HOME"]}/.cache/mochy', result[3])
 
     def test_hanging_probe_is_bounded_and_falls_back(self):
         self.executable(self.tools / "hyprctl", "exec sleep 30")
@@ -179,7 +179,7 @@ class DesktopLauncherTest(unittest.TestCase):
             XCURSOR_THEME="UserTheme", XCURSOR_SIZE="32", XDG_CACHE_HOME="relative"
         )
         self.assertEqual(
-            f'{self.environment["HOME"]}/.cache/metrolist', self.launch()[3]
+            f'{self.environment["HOME"]}/.cache/mochy', self.launch()[3]
         )
 
 

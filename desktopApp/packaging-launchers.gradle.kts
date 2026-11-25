@@ -243,14 +243,14 @@ export METROLIST_CURSOR_CONFIGURED=1
 
 # Keep archives outside read-only installations, including AppImage mounts and Flatpak's /app.
 case "$XDG_CACHE_HOME" in
-    /*) METROLIST_CDS_CACHE="$XDG_CACHE_HOME/metrolist" ;;
-    *) METROLIST_CDS_CACHE="$HOME/.cache/metrolist" ;;
+    /*) METROLIST_CDS_CACHE="$XDG_CACHE_HOME/mochy" ;;
+    *) METROLIST_CDS_CACHE="$HOME/.cache/mochy" ;;
 esac
 export METROLIST_CDS_CACHE
 
 case "$XDG_STATE_HOME" in
-    /*) METROLIST_LOG_DIR="$XDG_STATE_HOME/metrolist/logs" ;;
-    *) METROLIST_LOG_DIR="$HOME/.local/state/metrolist/logs" ;;
+    /*) METROLIST_LOG_DIR="$XDG_STATE_HOME/mochy/logs" ;;
+    *) METROLIST_LOG_DIR="$HOME/.local/state/mochy/logs" ;;
 esac
 METROLIST_JVM_ERROR_FILE="$(printf '%s' "$METROLIST_LOG_DIR" | sed 's/%/%%/g')/hs_err_pid%p.log"
 export METROLIST_JVM_ERROR_FILE

@@ -43,13 +43,13 @@ def profile_environment(profile):
         directory = profile / kind.lower()
         directory.mkdir(parents=True)
         env[f"XDG_{kind}_HOME"] = str(directory)
-    config = profile / "config/metrolist"
+    config = profile / "config/mochy"
     config.mkdir()
     (config / "settings.properties").write_text(
         "desktopOnboardingComplete=true\ndesktopOnboardingInitialized=true\n"
         "sentryEnabled=false\nenableLogging=true\n", encoding="utf-8"
     )
-    logs = profile / "state/metrolist/logs"
+    logs = profile / "state/mochy/logs"
     logs.mkdir(parents=True)
     # XdgUtils honors these paths on every OS. Isolate legacy home-directory files too.
     # Setting ErrorFile now avoids the app's crash-log configuration relaunch.
@@ -225,7 +225,7 @@ def quit_app(process, launcher, system, java_trace=False):
 
 def collect_logs(work, output, native=False):
     errors = []
-    logs = work / "profile/state/metrolist/logs"
+    logs = work / "profile/state/mochy/logs"
     if not (logs / "app.log").is_file():
         errors.append("app.log is missing; startup did not reach the logger")
     for log in sorted(logs.glob("app.log*")):

@@ -745,8 +745,8 @@ compose.desktop {
                 "-XX:ErrorFile=${
                     when (platform) {
                         "linux" -> "\$METROLIST_JVM_ERROR_FILE"
-                        "win" -> "\$USERPROFILE/.local/state/metrolist/logs/hs_err_pid%p.log"
-                        else -> "\$HOME/.local/state/metrolist/logs/hs_err_pid%p.log"
+                        "win" -> "\$USERPROFILE/.local/state/mochy/logs/hs_err_pid%p.log"
+                        else -> "\$HOME/.local/state/mochy/logs/hs_err_pid%p.log"
                     }
                 }",
             ) + desktopMemoryJvmArgs
