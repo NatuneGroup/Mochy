@@ -5955,12 +5955,12 @@
     <string name="audio_lab_eightd_preset_balanced">Balanced</string>
     <!-- Translators: 8D preset name: fast and deep. -->
     <string name="audio_lab_eightd_preset_extreme">Extreme</string>
-    <!-- Translators: Percentage shown next to an Audio Lab slider. %1$d is the number. -->
-    <string name="audio_lab_percent">%1$d%%</string>
+    <!-- Translators: Percentage shown next to an Audio Lab slider. %1$d is the number and %2$s is the percent sign. -->
+    <string name="audio_lab_percent">%1$d%2$s</string>
     <!-- Translators: Milliseconds shown next to the pre-delay slider. %1$d is the number. -->
     <string name="audio_lab_ms">%1$d ms</string>
     <!-- Translators: Frequency in hertz shown next to the low cut slider. %1$d is the number. -->
     <string name="audio_lab_hz">%1$d Hz</string>
-    <!-- Translators: Frequency in hertz with two decimals, shown next to the 8D rotation slider. %1$.2f is the number. -->
-    <string name="audio_lab_hz_decimal">%1$.2f Hz</string>
+    <!-- Translators: Frequency in hertz with two decimals, shown next to the 8D rotation slider. %1$s is the number. -->
+    <string name="audio_lab_hz_decimal">%1$s Hz</string>
 </resources>

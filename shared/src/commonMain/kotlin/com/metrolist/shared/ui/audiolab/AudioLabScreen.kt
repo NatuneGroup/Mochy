@@ -58,6 +58,7 @@ import com.metrolist.shared.generated.resources.audio_lab_reverb_description
 import com.metrolist.shared.generated.resources.audio_lab_room_size
 import com.metrolist.shared.generated.resources.audio_lab_rotation_speed
 import com.metrolist.shared.generated.resources.audio_lab_wet
+import com.metrolist.shared.generated.resources.percent_symbol
 import com.metrolist.shared.generated.resources.audio_lab_width
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.settings.SettingsMainSwitch
@@ -197,7 +198,7 @@ private fun EightDCard(available: Boolean) {
         }
         SliderRow(
             stringResource(Res.string.audio_lab_rotation_speed),
-            stringResource(Res.string.audio_lab_hz_decimal, eightD.rotationSpeedHz),
+            stringResource(Res.string.audio_lab_hz_decimal, twoDecimals(eightD.rotationSpeedHz)),
             eightD.rotationSpeedHz,
             0.05f..0.5f,
             active,
@@ -308,10 +309,17 @@ private fun SliderRow(
 }
 
 @Composable
-private fun percent(value: Float): String = stringResource(Res.string.audio_lab_percent, (value * 100f).roundToInt())
+private fun percent(value: Float): String =
+    stringResource(Res.string.audio_lab_percent, (value * 100f).roundToInt(), stringResource(Res.string.percent_symbol))
 
 @Composable
 private fun milliseconds(value: Float): String = stringResource(Res.string.audio_lab_ms, value.roundToInt())
 
 @Composable
 private fun hertz(value: Float): String = stringResource(Res.string.audio_lab_hz, value.roundToInt())
+
+// Compose resources have no %.2f placeholder, so the two decimals are formatted here.
+private fun twoDecimals(value: Float): String {
+    val hundredths = (value * 100f).roundToInt()
+    return "${hundredths / 100}.${(hundredths % 100).toString().padStart(2, '0')}"
+}
