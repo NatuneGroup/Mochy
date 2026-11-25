@@ -25,6 +25,8 @@ import com.metrolist.shared.audiolab.reverbSettings
 import com.metrolist.shared.audiolab.reverbSettingsFlow
 import com.metrolist.shared.audiolab.spatialSettings
 import com.metrolist.shared.audiolab.spatialSettingsFlow
+import com.metrolist.shared.audiolab.stageSettings
+import com.metrolist.shared.audiolab.stageSettingsFlow
 import com.metrolist.shared.playback.InstantSilenceDetector
 import com.metrolist.shared.playback.PlaybackSeekSource
 import com.metrolist.shared.playback.instantSilenceSeekTarget
@@ -62,15 +64,18 @@ internal class SilenceSkippingSupport(
 
     @Volatile private var equalizer: EqualizerAudioProcessor? = null
 
-    // All three pass audio through untouched until their settings turn them on.
+    // All four pass audio through untouched until their settings turn them on.
+    val stageProcessor = StageAudioProcessor(context)
     val spatialProcessor = SpatialAudioProcessor()
     val reverbProcessor = ReverbAudioProcessor()
     val eightDProcessor = EightDAudioProcessor()
 
     init {
+        stageProcessor.update(Settings.shared.stageSettings())
         spatialProcessor.update(Settings.shared.spatialSettings())
         reverbProcessor.update(Settings.shared.reverbSettings())
         eightDProcessor.update(Settings.shared.eightDSettings())
+        scope.launch { Settings.shared.stageSettingsFlow().collect { stageProcessor.update(it) } }
         scope.launch { Settings.shared.spatialSettingsFlow().collect { spatialProcessor.update(it) } }
         scope.launch { Settings.shared.reverbSettingsFlow().collect { reverbProcessor.update(it) } }
         scope.launch { Settings.shared.eightDSettingsFlow().collect { eightDProcessor.update(it) } }
@@ -96,6 +101,7 @@ internal class SilenceSkippingSupport(
                     playoutTracker.wrap(
                         musicAudioProcessorChain(
                             equalizer,
+                            stageProcessor,
                             spatialProcessor,
                             reverbProcessor,
                             eightDProcessor,
