@@ -113,7 +113,7 @@ class LegacySettingsMigrationTest {
     fun storedLyricsProvidersDropRetiredSourcesAndKeepTheRemainingOrder() {
         val backing =
             MapSettings(
-                "lyricsProviderOrder" to "ZEMER,KUGOU,LyricsPlus,LRCLIB,BETTERLYRICS,Zemer,UNISON,PAXSENIX,LRCRED",
+                "lyricsProviderOrder" to "ZEMER,KUGOU,LyricsPlus,LRCLIB,BETTERLYRICS,LYPRIO,Zemer,UNISON,PAXSENIX,LRCRED",
                 "lyricsEnabledProviders" to "LyricsPlus,LRCLIB,ZEMER,KUGOU",
                 "enableLyricsPlus" to true,
             )
