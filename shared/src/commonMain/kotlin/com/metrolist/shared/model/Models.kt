@@ -503,6 +503,7 @@ enum class LyricsProvider {
     LRCLIB,
     KUGOU,
     PAXSENIX,
+    GENIUS,
     YOUTUBESUBTITLE,
     YOUTUBE,
     ;
@@ -510,8 +511,11 @@ enum class LyricsProvider {
     companion object {
         val alwaysLastFallbacks: List<LyricsProvider> = listOf(YOUTUBESUBTITLE, YOUTUBE)
 
+        // Newly added sources stay off until a user enables them, so existing enabled sets keep their meaning.
+        private val disabledByDefault: Set<LyricsProvider> = setOf(GENIUS)
+
         val userConfigurable: List<LyricsProvider> =
-            listOf(BETTERLYRICS, LRCRED, UNISON, LRCLIB, KUGOU, PAXSENIX)
+            listOf(BETTERLYRICS, LRCRED, UNISON, LRCLIB, KUGOU, PAXSENIX, GENIUS)
 
         private val legacyDefaultUserOrders =
             listOf(
@@ -533,6 +537,7 @@ enum class LyricsProvider {
                 "LrcLib" -> LRCLIB
                 "KuGou" -> KUGOU
                 "Paxsenix" -> PAXSENIX
+                "Genius" -> GENIUS
                 "SimpMusic" -> SIMPMUSIC
                 "YouTubeSubtitle" -> YOUTUBESUBTITLE
                 "YouTube Music", "YouTube" -> YOUTUBE
@@ -561,11 +566,11 @@ enum class LyricsProvider {
         fun parseEnabledFromStoredCsv(csv: String): Set<LyricsProvider> {
             val trimmed = csv.trim()
             if (trimmed.equals("NONE", ignoreCase = true)) return emptySet()
-            if (trimmed.isBlank()) return userConfigurable.toSet()
+            if (trimmed.isBlank()) return userConfigurable.toSet() - disabledByDefault
             val parsed =
                 trimmed.split(",").mapNotNull { parseTokenFromSettings(it) }.filter { it in userConfigurable }
             if (isLegacyDefaultUserOrder(csv, parsed)) {
-                return userConfigurable.toSet()
+                return userConfigurable.toSet() - disabledByDefault
             }
             return parsed.toSet()
         }

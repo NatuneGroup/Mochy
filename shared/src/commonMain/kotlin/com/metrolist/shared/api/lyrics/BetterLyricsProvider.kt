@@ -884,7 +884,7 @@ class UnisonProvider(
 
 private val lrcTimeTag = Regex("""\[(\d{1,2}):(\d{2})(?:[.:](\d{1,3}))?]""")
 
-private fun parseLrcToMlx(
+internal fun parseLrcToMlx(
     lrc: String,
     title: String,
     artist: String,
@@ -892,6 +892,7 @@ private fun parseLrcToMlx(
     sourceId: String? = null,
     lyricsCurator: String? = null,
     lyricsCuratorId: String? = null,
+    source: String = "Unison",
 ): String {
     data class Entry(
         val ms: Long,
@@ -924,7 +925,7 @@ private fun parseLrcToMlx(
     val builder =
         MlxBuilder()
             .meta(
-                "Unison",
+                source,
                 ignoreRetiming = ignoreRetiming,
                 sourceId = sourceId,
                 lyricsCurator = lyricsCurator,
@@ -936,7 +937,7 @@ private fun parseLrcToMlx(
     return builder.build()
 }
 
-private fun parsePlainToMlx(
+internal fun parsePlainToMlx(
     text: String,
     title: String,
     artist: String,
@@ -944,11 +945,12 @@ private fun parsePlainToMlx(
     sourceId: String? = null,
     lyricsCurator: String? = null,
     lyricsCuratorId: String? = null,
+    source: String = "Unison",
 ): String {
     val builder =
         MlxBuilder()
             .meta(
-                "Unison",
+                source,
                 ignoreRetiming = ignoreRetiming,
                 sourceId = sourceId,
                 lyricsCurator = lyricsCurator,

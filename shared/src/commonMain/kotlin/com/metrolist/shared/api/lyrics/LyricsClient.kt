@@ -47,6 +47,7 @@ class LyricsClient(
     private val simpMusicProvider = SimpMusicLyricsProvider(httpClient)
     private val kuGouLyricsProvider = KuGouLyricsProvider(httpClient)
     private val paxsenixLyricsProvider = PaxsenixLyricsProvider(httpClient)
+    private val geniusLyricsProvider = GeniusLyricsProvider(httpClient)
     private val youtubeLyricsProvider = YouTubeLyricsProvider(youtubeLyricsApi)
     private val youtubeSubtitleLyricsProvider = YouTubeSubtitleLyricsProvider(youtubeLyricsApi)
 
@@ -104,6 +105,10 @@ class LyricsClient(
 
             LyricsProvider.PAXSENIX -> {
                 result("Paxsenix") { paxsenixLyricsProvider.getLyrics(title, artist, duration, album) }
+            }
+
+            LyricsProvider.GENIUS -> {
+                result("Genius") { geniusLyricsProvider.getLyrics(title, artist) }
             }
 
             LyricsProvider.YOUTUBESUBTITLE -> {
