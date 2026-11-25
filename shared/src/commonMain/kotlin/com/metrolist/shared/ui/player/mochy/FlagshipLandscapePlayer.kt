@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import com.metrolist.shared.cast.CastState
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.album_art
+import com.metrolist.shared.settings.PlayerCoverStyle
 import com.metrolist.shared.ui.components.BlurredArtworkBackground
 import com.metrolist.shared.ui.components.CrossfadeArtwork
 import com.metrolist.shared.ui.components.lyrics.LyricsOffsetEditor
@@ -66,6 +67,7 @@ import com.metrolist.shared.ui.player.QueueSession
 import com.metrolist.shared.ui.player.artworkSeekGestures
 import com.metrolist.shared.ui.player.artworkSwipe
 import com.metrolist.shared.ui.player.mochy.turntable.TurntableStage
+import com.metrolist.shared.ui.player.mochy.turntable.VinylDisc
 import com.metrolist.shared.viewmodels.PlayerViewModel
 import org.jetbrains.compose.resources.stringResource
 
@@ -131,6 +133,7 @@ internal fun FlagshipLandscapePlayer(
     onNavigateToListenTogether: () -> Unit,
     modifier: Modifier = Modifier,
     turntableMode: Boolean = false,
+    coverStyle: PlayerCoverStyle = PlayerCoverStyle.SQUARED,
     canSeek: Boolean = !isListenTogetherGuest,
     onSeek: (Long) -> Unit = {},
     positionProvider: () -> Long = { 0L },
@@ -158,6 +161,17 @@ internal fun FlagshipLandscapePlayer(
         val squareStart = startInset + (maxHeight - squareSide) / 2
         val coverWidth = squareStart + squareSide + PanelGap
         val compactHeight = maxHeight < 420.dp
+        val coverFrame =
+            when (coverStyle) {
+                PlayerCoverStyle.EDGE_TO_EDGE -> Modifier.size(width = coverWidth, height = maxHeight)
+                PlayerCoverStyle.DISC -> Modifier.padding(start = squareStart).size(squareSide)
+                PlayerCoverStyle.SQUARED ->
+                    Modifier
+                        .padding(start = squareStart)
+                        .size(squareSide)
+                        .shadow(24.dp, SquareShape)
+                        .clip(SquareShape)
+            }
 
         currentSong?.displayThumbnail?.let { thumbUrl ->
             BlurredArtworkBackground(
@@ -204,10 +218,7 @@ internal fun FlagshipLandscapePlayer(
                 modifier =
                     Modifier
                         .align(Alignment.CenterStart)
-                        .padding(start = squareStart)
-                        .size(squareSide)
-                        .shadow(24.dp, SquareShape)
-                        .clip(SquareShape)
+                        .then(coverFrame)
                         .artworkSwipe(
                             enabled = artworkSwipeEnabled,
                             sensitivity = artworkSwipeSensitivity,
@@ -235,6 +246,20 @@ internal fun FlagshipLandscapePlayer(
                                 hasVideo = true,
                             )
                         },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                } else if (coverStyle == PlayerCoverStyle.DISC) {
+                    VinylDisc(
+                        artworkUrl = currentSong?.displayThumbnail,
+                        nextArtworkUrl = crossfadeNextArtworkUrl,
+                        crossfadeProgressProvider = artworkCrossfadeProgress,
+                        isPlaying = isPlaying,
+                        spinActive = LocalPlayerContentActive.current,
+                        contentDescription = stringResource(Res.string.album_art),
+                        artworkOverlay = artworkOverlay.takeUnless { uiState.isLyricsVisible },
+                        discDiameter = FLAGSHIP_DISC_DIAMETER,
+                        discCenterX = FLAGSHIP_DISC_CENTER,
+                        discCenterYByWidth = FLAGSHIP_DISC_CENTER,
                         modifier = Modifier.fillMaxSize(),
                     )
                 } else {
