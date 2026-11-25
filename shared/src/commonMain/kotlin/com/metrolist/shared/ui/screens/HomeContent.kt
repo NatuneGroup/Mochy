@@ -2,6 +2,9 @@
 
 package com.metrolist.shared.ui.screens
 
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
@@ -228,6 +231,7 @@ fun HomeContent(
     heroCurrentSong: SongItem? = null,
     desktopHome: Boolean = false,
     heroFallbackItems: List<YTItem> = emptyList(),
+    mochyTopBar: (@Composable (scrollProgress: () -> Float) -> Unit)? = null,
 ) {
     val activeSongId =
         remember(currentSongId) {
@@ -294,13 +298,33 @@ fun HomeContent(
             )
         }
 
+        // Mochy's bar collapses over the hero's height, or over the room left for the bar when there is no hero
+        val collapseDistancePx =
+            with(LocalDensity.current) { (if (heroItems.isNotEmpty()) heroHeight ?: 284.dp else 140.dp).toPx() }
+        val heroScrollProgress =
+            remember(listState, collapseDistancePx) {
+                {
+                    if (listState.firstVisibleItemIndex == 0) {
+                        (listState.firstVisibleItemScrollOffset / collapseDistancePx).coerceIn(0f, 1f)
+                    } else {
+                        1f
+                    }
+                }
+            }
+        val mochyTopRoom = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 78.dp
+
         DragScrollableColumn(
             state = listState,
             modifier = Modifier.fillMaxSize().nestedScroll(paginationScrollConnection).desktopArrowScroll(listState),
             contentPadding = contentPadding,
             verticalArrangement = Arrangement.spacedBy(if (isWide) 16.dp else 8.dp),
         ) {
-            header?.invoke(this)
+            // with Mochy's bar the hero sits at the very top, under the status bar, and the header follows it
+            if (mochyTopBar == null) {
+                header?.invoke(this)
+            } else if (heroItems.isEmpty()) {
+                item(key = "mochy_top_room") { Spacer(Modifier.height(mochyTopRoom)) }
+            }
 
             if (heroItems.isNotEmpty()) {
                 item(key = "mochy_hero_carousel") {
@@ -323,6 +347,8 @@ fun HomeContent(
                     )
                 }
             }
+
+            if (mochyTopBar != null) header?.invoke(this)
 
             renderHomeShelves(
                 shelves = effectiveShelves,
@@ -367,10 +393,15 @@ fun HomeContent(
                 }
             }
         }
+        mochyTopBar?.invoke(heroScrollProgress)
+
 
         HomeRevalidationIndicator(
             visible = uiState.isRevalidating,
-            modifier = Modifier.align(Alignment.TopCenter).padding(top = contentPadding.calculateTopPadding()),
+            modifier =
+                Modifier.align(Alignment.TopCenter).padding(
+                    top = if (mochyTopBar != null) mochyTopRoom else contentPadding.calculateTopPadding(),
+                ),
         )
     }
 }

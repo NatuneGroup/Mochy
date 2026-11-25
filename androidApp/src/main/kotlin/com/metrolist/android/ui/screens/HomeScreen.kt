@@ -7,6 +7,11 @@
 
 package com.metrolist.android.ui.screens
 
+import com.metrolist.android.ui.component.LocalMochyHomeAccountButton
+import com.metrolist.shared.ui.mochy.MochyHomeTopBar
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.asPaddingValues
 import android.content.res.Configuration
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -209,6 +214,9 @@ fun HomeScreen(
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     val enablePullToRefresh = !isTv
     val topPadding = tabContentTopPadding()
+    val mochyAccountButton = LocalMochyHomeAccountButton.current
+    val mochyTop = mochyAccountButton != null && !isTv
+    val mochyTopRoom = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 60.dp
 
     val initialTvFocusRequester = remember { FocusRequester() }
     RequestTvFocus(initialTvFocusRequester, enabled = rootActive && !showTopRefreshIndicator)
@@ -269,6 +277,12 @@ fun HomeScreen(
             onPlaySongs = { songs -> playerConnection?.playQueue(songs, queueTitle = sharedText.quickPicks) },
             onTogglePlayPause = { playerConnection?.togglePlayPause() },
             heroCurrentSong = currentSong.value,
+            mochyTopBar =
+                if (mochyAccountButton != null && mochyTop) {
+                    { progress -> MochyHomeTopBar(scrollProgress = progress) { mochyAccountButton(Modifier) } }
+                } else {
+                    null
+                },
             onLibraryClick = onNavigateToLibrary,
             onLocalShelfClick = onNavigateToHomeSection,
             onArtistClick = { artistId -> onNavigateToArtist(artistId) },
@@ -284,7 +298,7 @@ fun HomeScreen(
             listState = listState,
             contentPadding =
                 PaddingValues(
-                    top = topPadding,
+                    top = if (mochyTop) 0.dp else topPadding,
                     bottom = miniPlayerInset + 16.dp,
                 ),
             modifier =
@@ -342,14 +356,17 @@ fun HomeScreen(
                     }
 
                     else -> {
-                        item {
-                            ChipShelf(
+                        // Mochy's home has no mood chips
+                        if (!mochyTop) {
+                            item {
+                                ChipShelf(
                                 options = uiState.chips,
                                 selectedOption = selectedChip,
                                 onSelectionChange = viewModel.shared::toggleChip,
                                 label = { it.title },
-                                modifier = Modifier.padding(top = 1.dp),
-                            )
+                                    modifier = Modifier.padding(top = 1.dp),
+                                )
+                            }
                         }
                         item(key = "wrapped_card") {
                             WrappedHomeCard(
@@ -382,7 +399,7 @@ fun HomeScreen(
                         modifier =
                             Modifier
                                 .align(Alignment.TopCenter)
-                                .padding(top = topPadding),
+                                .padding(top = if (mochyTop) mochyTopRoom else topPadding),
                     )
                 },
                 modifier = Modifier.fillMaxSize(),
@@ -393,7 +410,8 @@ fun HomeScreen(
             homeContent()
         }
 
-        if (!isTv) {
+        // Mochy's home has no floating buttons; recognition stays in Search
+        if (!isTv && !mochyTop) {
             AnimatedVisibility(
                 visible = (LocalIsTv.current || showFloatingActions),
                 enter = fadeIn() + slideInVertically { it / 2 },

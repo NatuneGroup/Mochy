@@ -2,6 +2,7 @@
 
 package com.metrolist.android.ui
 
+import com.metrolist.android.ui.component.LocalMochyHomeAccountButton
 import android.app.SearchManager
 import android.content.Context
 import android.content.Intent
@@ -842,8 +843,11 @@ fun MetrolistApp(
         val shouldRenderMiniPlayer = shouldShowMiniPlayer && !shouldHideMiniPlayerForIme
 
         val topLevelScreens = remember { setOf(Screen.Home, Screen.Library, Screen.EasterEgg) }
+        // phones and tablets get Mochy's home top bar, drawn by Home itself over its hero
+        val mochyHomeTop = !isAndroidTv && !useDesktopUi && !hasDesktopCaption
         val shouldShowTopBar =
-            navigationState.topLevelRoute in topLevelScreens && currentRoute in topLevelScreens
+            navigationState.topLevelRoute in topLevelScreens && currentRoute in topLevelScreens &&
+                !(mochyHomeTop && navigationState.topLevelRoute == Screen.Home)
 
         val useFloatingTopBar = Settings.shared.floatingTopBar && !hasDesktopCaption
         val topAppBarScrollBehavior = appBarScrollBehavior()
@@ -1728,7 +1732,10 @@ fun MetrolistApp(
                                                                 onSearchResultsVisible = { searchResultsVisible = it },
                                                             )
                                                         }
-                                                    CompositionLocalProvider(LocalHostDefaultProvider provides routeHostDefaults) {
+                                                    CompositionLocalProvider(
+                                                        LocalHostDefaultProvider provides routeHostDefaults,
+                                                        LocalMochyHomeAccountButton provides if (mochyHomeTop) appAccountButton else null,
+                                                    ) {
                                                         RootExitBackHandler(
                                                             enabled = !navigator.canGoBack && !playerHandlesBack,
                                                             onExit = onExitApp,
