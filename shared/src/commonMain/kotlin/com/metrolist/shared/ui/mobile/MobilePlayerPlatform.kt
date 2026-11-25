@@ -75,9 +75,13 @@ internal class MobilePlayerPlatform(
     private val listenTogether: ListenTogetherManager,
     private val touchExplorationEnabled: Boolean,
     private val shareLyrics: @Composable (PlayerViewModel) -> ((String) -> Unit)?,
+    private val songCardExport: (suspend (ImageBitmap) -> Boolean)?,
 ) : PlayerPlatform {
     @Composable
     override fun lyricsShareAction(viewModel: PlayerViewModel): ((String) -> Unit)? = shareLyrics(viewModel)
+
+    @Composable
+    override fun rememberSongCardExport(): (suspend (ImageBitmap) -> Boolean)? = songCardExport
 
     override val supportsPictureInPicture = false
     override val supportsVideoPlayback = true
