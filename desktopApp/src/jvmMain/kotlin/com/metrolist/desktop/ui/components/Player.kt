@@ -149,6 +149,7 @@ import com.metrolist.shared.ui.navigation.blockInput
 import com.metrolist.shared.ui.navigation.navigationPopupSource
 import com.metrolist.shared.ui.playback.retainPlaybackKeyFocus
 import com.metrolist.shared.ui.player.mochy.AnimatedPlayGlyph
+import com.metrolist.shared.ui.player.mochy.FlagshipTransport
 import com.metrolist.shared.ui.theme.rememberMochyLook
 import com.metrolist.shared.ui.theme.uiEnhanced
 import com.metrolist.shared.utils.ShareUrls
@@ -1039,6 +1040,19 @@ fun StandardBottomPlayer(
                                                         else -> 320.dp
                                                     },
                                             ),
+                                    )
+                                } else if (playerType == PlayerType.MOCHY) {
+                                    FlagshipTransport(
+                                        playing = PlayerState.isPlaying,
+                                        loading = PlayerState.isPlaybackLoading,
+                                        onPlayPause = { PlayerState.togglePlay() },
+                                        onPrevious = {
+                                            if (PlayerState.canSkipPrevious) PlayerState.skipPrevious()
+                                        },
+                                        onNext = { PlayerState.skipNext() },
+                                        modifier = Modifier.widthIn(max = if (isMedium) 260.dp else 320.dp),
+                                        compact = isCompact,
+                                        contentColor = colorScheme.onSurface,
                                     )
                                 } else {
                                     PlayerPrimaryControls(

@@ -80,7 +80,7 @@ private data class ActiveSpeedHold(
 )
 
 @Composable
-internal fun FlagshipTransport(
+fun FlagshipTransport(
     playing: Boolean,
     loading: Boolean,
     onPlayPause: () -> Unit,
