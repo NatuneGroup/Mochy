@@ -79,7 +79,7 @@ Snapshot updated 2026-11-25.
 - `scripts/collect_android_apks.py` emits `Mochy.apk`, `Mochy-izzy.apk` and
   `mochy-android-<version>-debug.apk`.
 - `reusable-android-build.yml` verifies every collected APK with
-  `apksigner verify --verbose --print-certs` and only requires Last.fm/Lyprio
+  `apksigner verify --verbose --print-certs` and only requires Last.fm
   secrets when `require-signing` is true.
 
 ## Remaining work
@@ -165,7 +165,7 @@ workflow tests and Android collector test do not.
   Metrolist library is a manual backup and restore.
 - Intent actions remain `com.metrolist.music.action.*` on purpose. Shortcuts and
   internal receivers use them, and they are not package IDs.
-- Without Last.fm/Lyprio secrets the release APK ships empty keys. Those features
+- Without Last.fm secrets the release APK ships empty keys. Those features
   degrade; set `require-signing: true` for a store-quality build with secrets.
 - The R8 mapping artifact is large (about 359 MB uncompressed) and is now named
   `Mochy-KMP-mapping.txt` alongside the APK assets.

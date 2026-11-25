@@ -222,10 +222,6 @@ Metrolist uses these projects and services.
       <td>YouTube streaming engine, developed with help from <a href="https://github.com/ZemerTeam/">ZemerTeam</a></td>
     </tr>
     <tr>
-      <td align="center">Lyprio</td>
-      <td>Lyrics provider</td>
-    </tr>
-    <tr>
       <td align="center"><a href="https://github.com/MetrolistGroup/metroserver">metroserver</a></td>
       <td>Listen Together real-time synchronization backend</td>
     </tr>
