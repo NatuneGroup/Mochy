@@ -810,9 +810,16 @@ fun PlayerScreen(
             !bottomSheetState.isCollapsed &&
             !showVideoSurface &&
             !uiState.isLyricsVisible
+    // a white or pale cover under the full-screen player's title would swallow white text, so it goes dark there
+    val fullscreenCoverIsLight =
+        usesFullscreenThumbnail && !showVideoSurface && (uiState.artworkTitleAreaLuminance ?: 0f) >= LIGHT_COVER_TITLE_LUMINANCE
     val textBackgroundColor by animateColorAsState(
         targetValue =
             if (
+                usesFullscreenThumbnail && currentSong?.displayThumbnail != null && !uiState.isLyricsVisible && fullscreenCoverIsLight
+            ) {
+                Color.Black
+            } else if (
                 isCanvasBackdropVisible ||
                 (usesMochyTurntable && !uiState.isLyricsVisible) ||
                 (
@@ -3079,6 +3086,9 @@ private fun FullscreenBackgroundBounds(
 ) {
     content(bounds.value)
 }
+
+// average light under the full-screen title above which white text stops reading
+private const val LIGHT_COVER_TITLE_LUMINANCE = 0.62f
 
 private val MinPortraitPlayerHeight = 420.dp
 private val ArtworkBesideTitleMaxHeight = 600.dp

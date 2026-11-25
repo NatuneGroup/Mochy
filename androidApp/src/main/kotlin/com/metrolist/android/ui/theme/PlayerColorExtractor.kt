@@ -29,7 +29,12 @@ import kotlin.math.sqrt
 
 object PlayerColorExtractor {
     private val paletteMutex = Mutex()
-    private val palettes = linkedMapOf<String, Map<Int, Int>>()
+    private val palettes = linkedMapOf<String, ArtworkSample>()
+
+    private class ArtworkSample(
+        val palette: Map<Int, Int>,
+        val titleAreaLuminance: Float?,
+    )
 
     suspend fun extractColors(
         context: Context,
@@ -38,7 +43,7 @@ object PlayerColorExtractor {
         fallbackColor: Color,
     ): PlayerArtworkColors? {
         val key = artworkColorSourceUrl(artworkUrl)
-        val palette =
+        val sample =
             paletteMutex.withLock {
                 palettes.remove(key)?.also { palettes[key] = it } ?: run {
                     val request =
@@ -48,16 +53,16 @@ object PlayerColorExtractor {
                             .allowHardware(false)
                             .build()
                     val result = imageLoader.execute(request) as? SuccessResult ?: return@withLock null
-                    quantize(result.image.toBitmap()).also { palette ->
-                        palettes[key] = palette
+                    sampleArtwork(result.image.toBitmap()).also { sample ->
+                        palettes[key] = sample
                         while (palettes.size > 32) palettes.remove(palettes.keys.first())
                     }
                 }
             } ?: return null
-        return colorsFromPalette(palette, fallbackColor)
+        return colorsFromPalette(sample.palette, fallbackColor).copy(titleAreaLuminance = sample.titleAreaLuminance)
     }
 
-    private suspend fun quantize(bitmap: Bitmap): Map<Int, Int> =
+    private suspend fun sampleArtwork(bitmap: Bitmap): ArtworkSample =
         withContext(Dispatchers.Default) {
             val scale = sqrt(10_000.0 / (bitmap.width.toDouble() * bitmap.height)).coerceAtMost(1.0)
             val source =
@@ -69,11 +74,34 @@ object PlayerColorExtractor {
             try {
                 val pixels = IntArray(source.width * source.height)
                 source.getPixels(pixels, 0, source.width, 0, 0, source.width, source.height)
-                quantizePixels(pixels)
+                ArtworkSample(quantizePixels(pixels), titleAreaLuminance(pixels, source.width, source.height))
             } finally {
                 if (source !== bitmap) source.recycle()
             }
         }
+
+    // the full-screen player crops the cover's sides and writes the title over its lower part, fading into the page
+    private fun titleAreaLuminance(
+        pixels: IntArray,
+        width: Int,
+        height: Int,
+    ): Float? {
+        if (width <= 0 || height <= 0) return null
+        var total = 0f
+        var count = 0
+        for (y in (height * 0.55f).toInt() until (height * 0.92f).toInt().coerceAtMost(height)) {
+            for (x in (width * 0.15f).toInt() until (width * 0.85f).toInt().coerceAtMost(width)) {
+                val argb = pixels[y * width + x]
+                if (argb ushr 24 < 128) continue
+                val red = ((argb shr 16) and 0xFF) / 255f
+                val green = ((argb shr 8) and 0xFF) / 255f
+                val blue = (argb and 0xFF) / 255f
+                total += 0.2126f * red + 0.7152f * green + 0.0722f * blue
+                count++
+            }
+        }
+        return if (count == 0) null else total / count
+    }
 
     internal fun extractColors(
         pixels: IntArray,

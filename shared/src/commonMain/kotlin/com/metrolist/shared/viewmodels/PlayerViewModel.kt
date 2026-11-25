@@ -117,6 +117,8 @@ import kotlin.time.Duration.Companion.milliseconds
 data class PlayerArtworkColors(
     val dominant: Color,
     val gradient: List<Color>,
+    /** how light the cover is low down where the full-screen player writes the title, 0 to 1, when measured */
+    val titleAreaLuminance: Float? = null,
 )
 
 interface PlayerPlatformServices {
@@ -1063,6 +1065,7 @@ class PlayerViewModel(
             _uiState.value =
                 _uiState.value.copy(
                     dominantColor = DefaultThemeColor,
+                    artworkTitleAreaLuminance = null,
                     gradientColors = createDefaultGradient(DefaultThemeColor),
                 )
             return
@@ -1086,6 +1089,7 @@ class PlayerViewModel(
         _uiState.value =
             _uiState.value.copy(
                 dominantColor = colors?.dominant ?: DefaultThemeColor,
+                artworkTitleAreaLuminance = colors?.titleAreaLuminance,
                 gradientColors = colors?.gradient ?: createDefaultGradient(DefaultThemeColor),
             )
     }
@@ -2088,6 +2092,7 @@ class PlayerViewModel(
         val isLyricsVisible: Boolean = false,
         val isLyricsExpanded: Boolean = false,
         val dominantColor: Color = DefaultThemeColor,
+        val artworkTitleAreaLuminance: Float? = null,
         val gradientColors: List<Color> =
             listOf(
                 DefaultThemeColor,
