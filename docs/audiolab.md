@@ -15,11 +15,11 @@ Source: Mochy Music (realidkroo, GPL-3.0), `app/src/main/kotlin/com/mochyy/mochy
 
 Media3 `BaseAudioProcessor` subclasses in `androidApp/src/main/kotlin/com/metrolist/android/playback/`, following `EqualizerAudioProcessor`.
 
-- Reverb and 8D: ported in Part 1. Both return `isActive() == false` while disabled and are built with the sink in `SilenceSkippingSupport.kt`, after the equalizer. Their settings types live in `shared/src/commonMain/kotlin/com/metrolist/shared/audiolab/`. Preferences are not wired yet.
+- Reverb and 8D: done. Both are always in the chain, after the equalizer, built in `SilenceSkippingSupport.kt`. While disabled they pass audio through untouched; enabling or disabling fades them in and out, so changes apply mid-song without reconfiguring the sink. Types live in `shared/src/commonMain/kotlin/com/metrolist/shared/audiolab/`, saved values in `Settings.shared` (`reverb*` and `eightD*` keys), and `AudioLabSettings.kt` turns them into flows that each player's `SilenceSkippingSupport` applies.
 - Spatial: pure Kotlin, next after Part 1.
 - Stage: needs the NDK build (CMake, JNI library, HRTF asset). A separate wave.
 
-Note: Media3 reads `isActive()` when the sink configures, so a change to enabled applies on the next configure (next track or format change), not mid-buffer.
+Settings page: the Audio Lab row sits next to the equalizer in the sound settings. On desktop and iOS the cards are shown disabled, since the processors are not wired there.
 
 ## Desktop plan
 
@@ -29,9 +29,9 @@ Engine: `shared/src/desktopMain/kotlin/com/metrolist/shared/playback/ffmpeg/Audi
 
 Engine: `MTAudioProcessingTap` in `shared/src/iosMain/kotlin/com/metrolist/shared/playback/IosAudioProcessingTap.kt`. The tap reads `EqualizerProfiles.configuration` (line 66), and `processIosAudioTap` (line 256) processes the buffers. An effect can run after the equalizer there. HLS fallback bypasses the tap, so effects are unavailable on HLS streams (see `docs/audio-processing.md`). Not wired in Part 1.
 
-## Not done in Part 1
+## Not done yet
 
 - Stage and Spatial ports.
 - Desktop and iOS hooks.
-- Preferences, the Audio Lab UI, and the `update()` calls from the player.
+- A Mochy module entry for Audio Lab. The module registry only models source, lyrics, look and metadata modules, with no effect-module pattern, so turning a module off cannot reset the effects yet.
 - Unit tests: `shared/src/commonTest` is kept small by policy (see `CLAUDE.md`), and the preset and clamping values here are constants.
