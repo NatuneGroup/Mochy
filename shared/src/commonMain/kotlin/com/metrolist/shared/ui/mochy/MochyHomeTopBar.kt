@@ -101,6 +101,7 @@ fun MochyHomeTopBar(
                     tint = Color.White,
                     modifier =
                         Modifier
+                            .mochyLaunchMarkTarget()
                             .size(MOCHY_MARK_WIDTH.dp, MOCHY_MARK_HEIGHT.dp)
                             .graphicsLayer {
                                 alpha = 1f - topBarProgress
@@ -132,6 +133,7 @@ fun MochyHomeTopBar(
             Box(
                 modifier =
                     Modifier
+                        .mochyLaunchRise(order = 0, distance = 16.dp)
                         .graphicsLayer {
                             val scale = 1f - topBarProgress * 0.1f
                             scaleX = scale

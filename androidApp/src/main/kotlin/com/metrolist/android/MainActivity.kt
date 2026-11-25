@@ -1,5 +1,8 @@
 package com.metrolist.android
 
+import com.metrolist.shared.ui.mochy.rememberMochyLaunchIntroState
+import com.metrolist.shared.ui.mochy.MochyLaunchIntroOverlay
+import com.metrolist.shared.ui.mochy.LocalMochyLaunchIntro
 import com.metrolist.android.onboarding.mochy.MochyOnboardingScreen
 import android.content.Context
 import android.content.Intent
@@ -133,6 +136,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var startupPresentation: StartupPresentation
     private var startupTraceOpen = false
 
+    private var playLaunchIntro = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val app = application as App
         val recovery = app.recovery
@@ -193,6 +198,8 @@ class MainActivity : ComponentActivity() {
                 intent
             }
         incomingIntentState.value = pendingIntent
+        // only a fresh start from the launcher plays Mochy's launch intro; deep links and recreations open straight away
+        playLaunchIntro = savedInstanceState == null && intent?.action == Intent.ACTION_MAIN
         setIntent(pendingIntent ?: Intent(this, MainActivity::class.java))
         isInPipModeState.value = isInPictureInPictureMode
         WindowCompat.enableEdgeToEdge(window)
@@ -310,9 +317,12 @@ class MainActivity : ComponentActivity() {
             ) {
                 val app = application as App
                 var onboardingComplete by remember { mutableStateOf(app.onboardingManager.isComplete) }
+                val launchIntro =
+                    rememberMochyLaunchIntroState(plays = playLaunchIntro && onboardingComplete && !isAndroidTv())
                 Box(Modifier.fillMaxSize().onGloballyPositioned { startupPresentation.contentLaidOut = true }) {
                     if (onboardingComplete) {
-                        MetrolistApp(
+                        CompositionLocalProvider(LocalMochyLaunchIntro provides launchIntro) {
+                            MetrolistApp(
                             navigationSaveKey = navigationRestoration.saveKey,
                             incomingIntent = incomingIntentState.value,
                             incomingPlaybackSong = incomingPlaybackSong,
@@ -324,6 +334,8 @@ class MainActivity : ComponentActivity() {
                                 }
                             },
                         )
+                        }
+                        MochyLaunchIntroOverlay(launchIntro)
                     } else {
                         val tvDevice = remember { isAndroidTv() }
                         CompositionLocalProvider(LocalIsTv provides tvDevice) {

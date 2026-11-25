@@ -2,6 +2,7 @@
 
 package com.metrolist.shared.ui.screens
 
+import com.metrolist.shared.ui.mochy.mochyLaunchRise
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
@@ -315,7 +316,12 @@ fun HomeContent(
 
         DragScrollableColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize().nestedScroll(paginationScrollConnection).desktopArrowScroll(listState),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .then(if (mochyTopBar != null) Modifier.mochyLaunchRise(order = 1) else Modifier)
+                    .nestedScroll(paginationScrollConnection)
+                    .desktopArrowScroll(listState),
             contentPadding = contentPadding,
             verticalArrangement = Arrangement.spacedBy(if (isWide) 16.dp else 8.dp),
         ) {
