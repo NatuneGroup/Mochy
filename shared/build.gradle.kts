@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeSimulatorTest
 import java.io.File
 import java.io.OutputStream
-import java.net.URI
 import java.util.Base64
 import java.util.Locale
 import java.util.Properties
@@ -548,7 +547,6 @@ val generateBuildConfig =
                 .orElse(providers.provider { "" })
                 .get()
                 .trim()
-        val isIzzyTask = gradle.startParameter.taskNames.any { it.contains("Izzy", ignoreCase = true) }
         val isReleaseTask =
             gradle.startParameter.taskNames.any { name ->
                 name.contains("Izzy", ignoreCase = true) ||
@@ -568,48 +566,8 @@ val generateBuildConfig =
                 .orNull
                 ?.let { !it.equals("Release", ignoreCase = true) }
         val debugValue: Boolean = metrolistDebugProp ?: xcodeDebug ?: !isReleaseTask
-        val lyprioBaseUrl =
-            providers
-                .gradleProperty("LYPRIO_BASE_URL")
-                .filter { it.isNotEmpty() }
-                .orElse(providers.environmentVariable("LYPRIO_BASE_URL").filter { it.isNotEmpty() })
-                .orElse(providers.provider { localProperties.getProperty("LYPRIO_BASE_URL").orEmpty() }.filter { it.isNotEmpty() })
-                .orElse(providers.provider { "" })
-                .get()
-                .trim()
-        val lyprioHmacKey =
-            providers
-                .gradleProperty("LYPRIO_HMAC_KEY")
-                .filter { it.isNotEmpty() }
-                .orElse(providers.environmentVariable("LYPRIO_HMAC_KEY").filter { it.isNotEmpty() })
-                .orElse(providers.provider { localProperties.getProperty("LYPRIO_HMAC_KEY").orEmpty() }.filter { it.isNotEmpty() })
-                .orElse(providers.provider { "" })
-                .get()
-                .trim()
-        require(lyprioBaseUrl.isBlank() == lyprioHmacKey.isBlank()) {
-            "LYPRIO_BASE_URL and LYPRIO_HMAC_KEY must be configured together"
-        }
-        if (lyprioBaseUrl.isNotBlank()) {
-            val uri = URI(lyprioBaseUrl)
-            require(
-                !uri.host.isNullOrBlank() &&
-                    uri.rawUserInfo == null &&
-                    uri.rawQuery == null &&
-                    uri.rawFragment == null &&
-                    (
-                        (uri.scheme == "https" && (uri.port == -1 || uri.port == 443)) ||
-                            (debugValue && uri.scheme == "http")
-                    ),
-            ) { "LYPRIO_BASE_URL must use HTTPS on port 443; HTTP is allowed only in debug builds" }
-            require(Base64.getDecoder().decode(lyprioHmacKey).size == 32) {
-                "LYPRIO_HMAC_KEY must be a base64-encoded 32-byte key"
-            }
-        }
         inputs.property("lastFmKey", lastFmKey)
         inputs.property("lastFmSecret", lastFmSecret)
-        // shortcut: BuildConfig is per invocation, so an Izzy build leaves Lyprio out of every APK it assembles; build Izzy alone.
-        inputs.property("lyprioBaseUrl", if (isIzzyTask) "" else lyprioBaseUrl)
-        inputs.property("lyprioHmacKey", if (isIzzyTask) "" else lyprioHmacKey)
         val sourceRevision =
             providers
                 .gradleProperty("metrolist.sourceRevision")
@@ -642,8 +600,6 @@ val generateBuildConfig =
                 object BuildConfig {
                     const val LASTFM_API_KEY = "${inputs.properties["lastFmKey"]}"
                     const val LASTFM_SECRET = "${inputs.properties["lastFmSecret"]}"
-                    const val LYPRIO_BASE_URL = "${inputs.properties["lyprioBaseUrl"]}"
-                    const val LYPRIO_HMAC_KEY = "${inputs.properties["lyprioHmacKey"]}"
                     const val APP_VERSION = "${inputs.properties["appVersion"]}"
                     const val SOURCE_REVISION = "${inputs.properties["sourceRevision"]}"
                     const val BUNDLED_LANGUAGE_TAGS = "${inputs.properties["bundledLanguageTags"]}"

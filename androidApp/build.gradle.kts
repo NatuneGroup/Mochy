@@ -350,7 +350,7 @@ android {
             isProfileable = true
             matchingFallbacks += "release"
         }
-        // IzzyOnDroid ships updates itself and must not carry Sentry or Lyprio credentials.
+        // IzzyOnDroid ships updates itself and must not carry Sentry credentials.
         create("izzy") {
             initWith(getByName("release"))
             buildConfigField("Boolean", "UPDATER_ENABLED", "false")

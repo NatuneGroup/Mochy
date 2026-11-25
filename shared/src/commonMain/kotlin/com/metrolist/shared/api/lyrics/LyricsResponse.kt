@@ -1,6 +1,5 @@
 package com.metrolist.shared.api.lyrics
 
-import com.metrolist.shared.BuildConfig
 import com.metrolist.shared.api.parseRetryAfter
 import com.metrolist.shared.network.ExpectedHttpFailureStatusCodes
 import com.metrolist.shared.network.readTextLimited
@@ -53,20 +52,13 @@ internal suspend fun HttpStatement.readLyricsText(maxBytes: Int = 1024 * 1024): 
 fun isExpectedLyricsServiceFailure(
     url: String?,
     statusCode: Int,
-): Boolean = isExpectedLyricsServiceFailure(url, statusCode, BuildConfig.LYPRIO_BASE_URL)
-
-internal fun isExpectedLyricsServiceFailure(
-    url: String?,
-    statusCode: Int,
-    lyprioBaseUrl: String,
 ): Boolean {
     if (statusCode != HttpStatusCode.ServiceUnavailable.value || url == null) return false
     val request = runCatching { Url(url) }.getOrNull() ?: return false
     val endpoints =
-        listOfNotNull(
+        listOf(
             "https://lyrics.paxsenix.org/apple-music/lyrics",
             "https://lrclib.net/api/search",
-            lyprioBaseUrl.takeIf { it.isNotBlank() }?.trimEnd('/')?.plus("/v2/lyrics/search"),
         )
     return endpoints.any { endpoint ->
         val expected = Url(endpoint)

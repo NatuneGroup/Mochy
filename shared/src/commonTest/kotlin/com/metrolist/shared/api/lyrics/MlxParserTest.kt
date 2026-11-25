@@ -4,93 +4,9 @@ import com.metrolist.shared.model.LyricsTimingKind
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class MlxParserTest {
-    @Test
-    fun rejectsKugouChineseTranslationInRomanizationWithoutChangingOtherFields() {
-        for (translation in listOf("你好", "Hello 世界", "\uD840\uDC00", "\uFA11")) {
-            val mlx =
-                """
-                {
-                  "version":2,"provider":"LYPRIO","subprovider":"KUGOU","sourceFormat":"krc",
-                  "song":{"title":"Song"},"agents":{"v1":{"type":"person"}},
-                  "lines":[{
-                    "startMs":1000,"endMs":2000,"text":"Hello","agent":"v1",
-                    "words":[{"text":"Hello","startMs":1000,"endMs":2000}],
-                    "backgroundText":"Echo","translatedText":"Bonjour",
-                    "romanizedText":"$translation",
-                    "romanizedWords":[{"text":"$translation","startMs":1000,"endMs":2000}]
-                  }]
-                }
-                """.trimIndent()
-            val unvalidated = requireNotNull(MlxJsonParser.parse(mlx))
-            val expected = unvalidated.copy(lines = unvalidated.lines.map { it.copy(romanizedText = null, romanizedWords = null) })
-            assertEquals(expected, MlxParser.parse(mlx))
-            assertEquals(expected.lines, LyricsUtils.parseLyrics(mlx))
-            assertEquals(expected, LyricsUtils.parseMlxDocument(mlx))
-        }
-    }
-
-    @Test
-    fun rejectsMalformedRomanizedWordsEvenWithoutMalformedLineText() {
-        for (romanizedText in listOf("null", "\"Hello\"")) {
-            val mlx =
-                """
-                {"version":2,"provider":"lyprio","subprovider":"kugou","lines":[{
-                  "text":"Hello","romanizedText":$romanizedText,
-                  "romanizedWords":[{"text":"你好","startMs":1000,"endMs":2000}]
-                }]}
-                """.trimIndent()
-            val entry = MlxParser.parse(mlx).lines.single()
-            assertNull(entry.romanizedText)
-            assertNull(entry.romanizedWords)
-        }
-    }
-
-    @Test
-    fun preservesCorrectedKugouRomanizationAndOtherProviders() {
-        val corrected =
-            """
-            {"version":2,"provider":"LYPRIO","subprovider":"KUGOU","lines":[
-              {"text":"你好","romanizedText":"nǐ hǎo","translatedText":"Hello",
-               "romanizedWords":[{"text":"nǐ hǎo","startMs":1000,"endMs":2000}]},
-              {"text":"こんにちは","romanizedText":"konnichiwa","translatedText":"你好"},
-              {"text":"Hello","translatedText":"你好"}
-            ]}
-            """.trimIndent()
-        assertEquals(MlxJsonParser.parse(corrected), MlxParser.parse(corrected))
-        for (metadata in listOf("\"provider\":\"OTHER\",\"subprovider\":\"KUGOU\",", "\"provider\":\"LYPRIO\",", "")) {
-            val mlx = """{"version":2,$metadata"lines":[{"text":"Hello","romanizedText":"你好"}]}"""
-            assertEquals(MlxJsonParser.parse(mlx), MlxParser.parse(mlx))
-        }
-    }
-
-    @Test
-    fun validatesLegacyKugouMlxRomanization() {
-        val mlx =
-            """
-            [meta]
-            provider=LYPRIO
-            subprovider=KUGOU
-            source_format=krc
-            [lyrics]
-            [00:01.000~00:02.000]<00:01.000>Hello<00:02.000>
-            [00:02.000]こんにちは
-            [romanLyrics]
-            [00:01.000~00:02.000]<00:01.000>你好<00:02.000>
-            [00:02.000]konnichiwa
-            [translatedLyrics]
-            [00:01.000]Bonjour
-            [00:02.000]你好
-            """.trimIndent()
-        val document = MlxParser.parse(mlx)
-        val original = MlxParser.parse(mlx.replace("provider=LYPRIO", "provider=OTHER"))
-        assertEquals(original.lines[0].copy(romanizedText = null, romanizedWords = null), document.lines[0])
-        assertEquals(original.lines[1], document.lines[1])
-    }
-
     @Test
     fun jsonStructuralBudgetsRejectExcessLinesWordsAndLineText() {
         fun document(lines: String) = """{"version":2,"lines":[$lines]}"""

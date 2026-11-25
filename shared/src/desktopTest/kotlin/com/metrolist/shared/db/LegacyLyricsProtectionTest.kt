@@ -30,7 +30,7 @@ class LegacyLyricsProtectionTest {
         runBlocking {
             val directory = Files.createTempDirectory("legacy-lyrics-protection").toFile()
             val client = HttpClient(MockEngine { error("No translation expected") })
-            val fetched = MlxBuilder().meta("Lyprio").line(1_000, 2_000, words = listOf(MlxWord("Replacement", 1_000, 2_000))).build()
+            val fetched = MlxBuilder().meta("BetterLyrics").line(1_000, 2_000, words = listOf(MlxWord("Replacement", 1_000, 2_000))).build()
             Settings.replaceSharedForTest(Settings(MapSettings()))
             try {
                 for (version in listOf(38, 65)) {
@@ -63,10 +63,10 @@ class LegacyLyricsProtectionTest {
                                     if (preferWords) {
                                         listOf(
                                             LyricsProvider.SIMPMUSIC,
-                                            LyricsProvider.LYPRIO,
+                                            LyricsProvider.BETTERLYRICS,
                                         )
                                     } else {
-                                        listOf(LyricsProvider.LYPRIO)
+                                        listOf(LyricsProvider.BETTERLYRICS)
                                     }
                                 for ((id, text) in originals) {
                                     val result =
@@ -92,7 +92,7 @@ class LegacyLyricsProtectionTest {
                                         requireNotNull(dao.cacheLyricsIfUnchanged(row.copy(translatedLyrics = "Saved translation"), row))
                                     assertTrue(translated.isLegacyProtected)
                                     assertEquals("Saved translation", translated.translatedLyrics)
-                                    assertEquals(translated, dao.cacheLyricsIfUnchanged(LyricsEntity(id, fetched, "Lyprio"), translated))
+                                    assertEquals(translated, dao.cacheLyricsIfUnchanged(LyricsEntity(id, fetched, "BetterLyrics"), translated))
                                     assertEquals(
                                         translated,
                                         dao.cacheLyricsIfUnchanged(LyricsEntity(id, "", LyricsEntity.LYRICS_NOT_FOUND), translated),
@@ -116,7 +116,7 @@ class LegacyLyricsProtectionTest {
                                 "Synthetic song",
                                 "Synthetic artist",
                                 null,
-                                preferredProviders = listOf(LyricsProvider.LYPRIO),
+                                preferredProviders = listOf(LyricsProvider.BETTERLYRICS),
                                 skipCache = true,
                             )
                         assertEquals(fetched, result?.lyrics)
@@ -128,10 +128,10 @@ class LegacyLyricsProtectionTest {
                         assertEquals(425, row.offsetMs)
                         repository.selectProviderResult(
                             "plain",
-                            LyricsProviderResult(LyricsProvider.LYPRIO, "Lyprio", fetched, LyricsTimingKind.WORD_SYNCED),
+                            LyricsProviderResult(LyricsProvider.BETTERLYRICS, "BetterLyrics", fetched, LyricsTimingKind.WORD_SYNCED),
                         )
                         assertFalse(requireNotNull(database.dao().cachedLyrics("plain")).isLegacyProtected)
-                        database.dao().upsert(LyricsEntity("new", fetched, "Lyprio"))
+                        database.dao().upsert(LyricsEntity("new", fetched, "BetterLyrics"))
                     } finally {
                         database.close()
                     }
@@ -204,7 +204,7 @@ class LegacyLyricsProtectionTest {
             isVideoContext: Boolean,
         ): LyricsWithProvider {
             calls++
-            return LyricsWithProvider(lyrics, "Lyprio")
+            return LyricsWithProvider(lyrics, "BetterLyrics")
         }
     }
 }

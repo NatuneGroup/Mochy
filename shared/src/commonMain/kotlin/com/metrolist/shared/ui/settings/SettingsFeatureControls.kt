@@ -265,7 +265,6 @@ internal fun LyricsProviderOrderSetting() {
 @Composable
 private fun lyricsProviderLabel(provider: LyricsProvider): String =
     when (provider) {
-        LyricsProvider.LYPRIO -> stringResource(Res.string.brand_lyprio)
         LyricsProvider.BETTERLYRICS -> stringResource(Res.string.brand_better_lyrics)
         LyricsProvider.LRCRED -> stringResource(Res.string.brand_lrcred)
         LyricsProvider.UNISON -> stringResource(Res.string.brand_unison)
@@ -279,7 +278,6 @@ private fun lyricsProviderLabel(provider: LyricsProvider): String =
 private fun lyricsProviderDescription(provider: LyricsProvider): String =
     stringResource(
         when (provider) {
-            LyricsProvider.LYPRIO -> Res.string.lyrics_provider_lyrics_plus_description
             LyricsProvider.BETTERLYRICS -> Res.string.lyrics_provider_better_lyrics_description
             LyricsProvider.LRCRED -> Res.string.lyrics_provider_lrcred_description
             LyricsProvider.UNISON -> Res.string.lyrics_provider_unison_description

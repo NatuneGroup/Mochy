@@ -113,7 +113,7 @@ class LegacySettingsMigrationTest {
     fun storedLyricsProvidersDropRetiredSourcesAndKeepTheRemainingOrder() {
         val backing =
             MapSettings(
-                "lyricsProviderOrder" to "ZEMER,KUGOU,LyricsPlus,LRCLIB,BETTERLYRICS,LYPRIO,Zemer,UNISON,PAXSENIX,LRCRED",
+                "lyricsProviderOrder" to "ZEMER,KUGOU,LyricsPlus,LRCLIB,BETTERLYRICS,Zemer,UNISON,PAXSENIX,LRCRED",
                 "lyricsEnabledProviders" to "LyricsPlus,LRCLIB,ZEMER,KUGOU",
                 "enableLyricsPlus" to true,
             )
@@ -123,7 +123,6 @@ class LegacySettingsMigrationTest {
                 LyricsProvider.KUGOU,
                 LyricsProvider.LRCLIB,
                 LyricsProvider.BETTERLYRICS,
-                LyricsProvider.LYPRIO,
                 LyricsProvider.UNISON,
                 LyricsProvider.PAXSENIX,
                 LyricsProvider.LRCRED,
@@ -141,7 +140,6 @@ class LegacySettingsMigrationTest {
         for (csv in listOf(
             "BETTERLYRICS,LRCLIB,KUGOU",
             "BETTERLYRICS,UNISON,LRCLIB,KUGOU,PAXSENIX",
-            "LYPRIO,BETTERLYRICS,UNISON,LRCLIB,KUGOU,PAXSENIX",
         )) {
             val remaining = csv.split(",").map { LyricsProvider.valueOf(it) }
             assertEquals(remaining.toSet(), LyricsProvider.parseEnabledFromStoredCsv(csv))

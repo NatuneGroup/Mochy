@@ -2,7 +2,6 @@ package com.metrolist.shared.repository
 
 import com.metrolist.shared.api.lyrics.AiModelCatalog
 import com.metrolist.shared.api.lyrics.AiProviderPresets
-import com.metrolist.shared.api.lyrics.LyprioLyricsProvider
 import com.metrolist.shared.api.lyrics.LyricsAiResult
 import com.metrolist.shared.api.lyrics.LyricsFetcher
 import com.metrolist.shared.api.lyrics.LyricsTranslationClient
@@ -557,7 +556,7 @@ class LyricsRepository(
                             send(
                                 LyricsProviderResult(
                                     provider = provider,
-                                    providerName = lyricsProviderLabel(result.provider, document) ?: result.provider,
+                                    providerName = lyricsProviderLabel(result.provider) ?: result.provider,
                                     lyrics = result.lyrics,
                                     timingKind = lyricsTimingKind(parsed),
                                     song =
@@ -616,9 +615,7 @@ class LyricsRepository(
     ): ProviderLyricsFetch {
         val normalizedVideoId = videoId?.takeIf { it.isNotBlank() }
         return try {
-            withTimeoutOrNull(
-                (if (provider == LyricsProvider.LYPRIO) LyprioLyricsProvider.SEARCH_TIMEOUT_MS else PROVIDER_TIMEOUT_MS).milliseconds,
-            ) {
+            withTimeoutOrNull(PROVIDER_TIMEOUT_MS.milliseconds) {
                 ProviderLyricsFetch(
                     lyrics =
                         if (allSources) {
