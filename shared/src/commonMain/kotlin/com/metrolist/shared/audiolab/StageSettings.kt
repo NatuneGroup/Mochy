@@ -60,7 +60,7 @@ data class StageBox(
  */
 data class StageSettings(
     val enabled: Boolean = false,
-    val presetId: String = StagePresets.DefaultId,
+    val presetId: String = StagePresets.DEFAULT_ID,
     /** 0 a small studio .. 1 a concert hall */
     val roomSize: Float = StagePresets.Default.roomSize,
     val walls: StageWalls = StagePresets.Default.walls,
@@ -147,7 +147,7 @@ private fun putObject(
 private fun dbToGain(db: Float): Float = 10f.pow(db / 20f)
 
 object StagePresets {
-    const val DefaultId = "studio"
+    const val DEFAULT_ID = "studio"
 
     private class Spot(
         val x: Float,
@@ -183,7 +183,7 @@ object StagePresets {
 
     val Default =
         StagePreset(
-            id = DefaultId,
+            id = DEFAULT_ID,
             objects =
                 layout(
                     vocal = at(0f, 0.42f, 0.45f),
