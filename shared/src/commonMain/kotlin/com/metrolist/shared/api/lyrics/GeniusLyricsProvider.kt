@@ -218,7 +218,9 @@ class GeniusLyricsProvider(
                     index = after + 4
                 }
 
-                else -> index = after
+                else -> {
+                    index = after
+                }
             }
         }
         return null

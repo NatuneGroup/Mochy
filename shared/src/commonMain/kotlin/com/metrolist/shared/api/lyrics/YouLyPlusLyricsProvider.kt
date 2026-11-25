@@ -97,7 +97,8 @@ class YouLyPlusLyricsProvider(
                             parameter("artist", artist)
                             if (album.isNotBlank()) parameter("album", album)
                             if (durationSec > 0) parameter("duration", durationSec)
-                        }.readLyricsText()?.let(decode)
+                        }.readLyricsText()
+                        ?.let(decode)
                 } catch (error: CancellationException) {
                     throw error
                 } catch (error: Exception) {
