@@ -47,6 +47,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
@@ -85,6 +86,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
+import com.metrolist.shared.db.MusicDatabase
+import com.metrolist.shared.db.historyStatisticsSnapshot
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.mochy_add_profile_picture
 import com.metrolist.shared.generated.resources.mochy_card_back_minutes_label
@@ -114,6 +117,7 @@ import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
+import org.koin.mp.KoinPlatform
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
@@ -121,6 +125,7 @@ import kotlin.math.hypot
 import kotlin.math.min
 import kotlin.math.sin
 import kotlin.random.Random
+import kotlin.time.Clock
 
 /** Width-to-height ratio of Mochy's profile ID card (332 x 176). */
 const val ID_CARD_ASPECT = 1.89f
@@ -531,6 +536,9 @@ fun MochyProfileEditorContent(
     var silver by remember { mutableStateOf(settings.mochyProfileCardSilver) }
     var localPhotoUri by remember { mutableStateOf(settings.mochyProfilePhotoUri) }
     var showCelebration by remember { mutableStateOf(false) }
+    val cardStats by produceState<MochyCardStats?>(initialValue = null) {
+        value = loadMochyCardStats()
+    }
 
     val photoUrl = localPhotoUri.ifBlank { settings.accountThumbnail }.takeIf { it.isNotBlank() }
     val joinedText = stringResource(Res.string.mochy_card_local_member)
@@ -551,6 +559,7 @@ fun MochyProfileEditorContent(
             joinedText = joinedText,
             silver = silver,
             onPhotoClick = launchPhotoPicker,
+            backStats = cardStats,
             modifier = Modifier.widthIn(max = 420.dp),
         )
 
@@ -648,6 +657,21 @@ fun MochyProfileEditorContent(
         }
     }
 }
+
+/** All-time listening totals and top artist for the card back. Null when the history cannot be read. */
+private suspend fun loadMochyCardStats(): MochyCardStats? =
+    runCatching {
+        val database = KoinPlatform.getKoin().get<MusicDatabase>()
+        val snapshot =
+            database.historyStatisticsSnapshot(
+                sinceMs = 0L,
+                untilMs = Clock.System.now().toEpochMilliseconds(),
+            )
+        MochyCardStats(
+            minutesListened = snapshot.totals.playTimeMs / 60_000L,
+            topArtist = snapshot.artists.maxByOrNull { it.playCount }?.name,
+        )
+    }.getOrNull()
 
 /** Settings page wrapper around [MochyProfileEditorContent]. */
 @Composable

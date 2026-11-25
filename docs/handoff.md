@@ -88,8 +88,6 @@ Waves 1 to 4 have landed (see Completed work). Still open:
 - **Share Studio extras.** Video/karaoke export (`share/song/export/**`, Android GL) is not
   ported. The lyrics share card keeps the Metrolist look. The desktop player has its own UI
   and no song card entry; `desktopApp/.../utils/ImageSharing.kt` `saveImage` is ready to reuse.
-- **ID card back stats.** No caller passes `MochyCardStats` yet, so the back shows a hint.
-  A host with database access can map `historyStatisticsSnapshot` totals and the top artist.
 - **Audio Lab module switch.** `MochyModuleRegistry` has no effect-module kind, so disabling a
   module cannot reset the effects.
 - **Device checks.** Nothing here was tested on a device: Audio Lab sound and toggling
