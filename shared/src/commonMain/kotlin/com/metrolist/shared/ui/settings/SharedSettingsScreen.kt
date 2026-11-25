@@ -538,6 +538,37 @@ private fun CompactSettingsDetail(
 ) {
     val isTv = LocalIsTv.current
     val contentFocusRequester = remember { FocusRequester() }
+    // the dark theme gets Mochy's own page header
+    if (!isTv && MaterialTheme.colorScheme.background.luminance() < 0.5f) {
+        MochySubSettingsScaffold(
+            title = page.title,
+            onBack = onBack,
+            listState = if (page.custom) null else listState,
+        ) { headerHeight ->
+            if (page.custom) {
+                Box(Modifier.fillMaxSize().padding(top = headerHeight)) {
+                    CompositionLocalProvider(
+                        LocalSettingsPageBottomPadding provides bottomContentPadding,
+                        LocalSettingsPageHasTopBar provides true,
+                    ) {
+                        pageContent(page.id, onBack, onNavigate)
+                    }
+                }
+            } else {
+                SettingsPageList(
+                    page = page,
+                    listState = listState,
+                    lyricsPreview = lyricsPreview,
+                    highlightedItemId = highlightedItemId,
+                    onNavigate = onNavigate,
+                    onSettingValueChanged = onSettingValueChanged,
+                    contentPadding = PaddingValues(top = headerHeight, bottom = 24.dp + bottomContentPadding),
+                    onRefresh = onRefresh,
+                )
+            }
+        }
+        return
+    }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),

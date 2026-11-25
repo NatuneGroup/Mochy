@@ -2,6 +2,20 @@
 
 package com.metrolist.shared.ui.mochy
 
+import com.metrolist.shared.ui.utils.supportsNativeBlur
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.BlurEffect
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.layer.GraphicsLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
@@ -387,12 +401,33 @@ private fun MochyHeroCard(
             curve = wipeCurve,
             peek = peek,
         ) {
-            AsyncImage(
-                url = item.thumbnail,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize().pageMediaDrift(pageOffset, peek),
-            )
+            // Mochy frosts the hero's top and bottom: the page's media is recorded once and drawn again, blurred,
+            // into two edge bands beside it, never inside it, so the layer can't end up drawing itself
+            val edgeBlur = fullBleed && remember { supportsNativeBlur() }
+            val mediaLayer = rememberGraphicsLayer()
+            Box(
+                Modifier.fillMaxSize().then(
+                    if (edgeBlur) {
+                        Modifier.drawWithContent {
+                            mediaLayer.record { this@drawWithContent.drawContent() }
+                            drawLayer(mediaLayer)
+                        }
+                    } else {
+                        Modifier
+                    },
+                ),
+            ) {
+                AsyncImage(
+                    url = item.thumbnail,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize().pageMediaDrift(pageOffset, peek),
+                )
+            }
+            if (edgeBlur) {
+                HeroBlurBand(mediaLayer, atTop = true, heightFraction = 0.46f, radius = 22.dp)
+                HeroBlurBand(mediaLayer, atTop = false, heightFraction = 0.5f, radius = 30.dp)
+            }
             HeroScrims(fullBleed)
             Box(
                 modifier =
@@ -479,6 +514,49 @@ private fun MochyHeroCard(
                 }
             }
         }
+    }
+}
+
+// one edge of the hero, blurred from the recorded media and faded into the sharp middle by its mask
+@Composable
+private fun BoxScope.HeroBlurBand(
+    mediaLayer: GraphicsLayer,
+    atTop: Boolean,
+    heightFraction: Float,
+    radius: Dp,
+) {
+    val mask =
+        remember(atTop) {
+            if (atTop) {
+                Brush.verticalGradient(0f to Color.Black, 0.35f to Color.Black.copy(alpha = 0.85f), 1f to Color.Transparent)
+            } else {
+                Brush.verticalGradient(0f to Color.Transparent, 0.55f to Color.Black.copy(alpha = 0.85f), 1f to Color.Black)
+            }
+        }
+    Box(
+        modifier =
+            Modifier
+                .align(if (atTop) Alignment.TopCenter else Alignment.BottomCenter)
+                .fillMaxWidth()
+                .fillMaxHeight(heightFraction)
+                .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                .drawWithContent {
+                    drawContent()
+                    drawRect(mask, blendMode = BlendMode.DstIn)
+                },
+    ) {
+        Spacer(
+            Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    val px = radius.toPx()
+                    renderEffect = BlurEffect(px, px, TileMode.Clamp)
+                    clip = true
+                }.drawBehind {
+                    val dy = if (atTop) 0f else size.height - mediaLayer.size.height.toFloat()
+                    translate(top = dy) { drawLayer(mediaLayer) }
+                },
+        )
     }
 }
 
