@@ -19,6 +19,10 @@ import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.audio.ForwardingAudioOutputProvider
 import androidx.media3.exoplayer.audio.ForwardingAudioSink
 import androidx.media3.exoplayer.audio.SilenceSkippingAudioProcessor
+import com.metrolist.shared.audiolab.eightDSettings
+import com.metrolist.shared.audiolab.eightDSettingsFlow
+import com.metrolist.shared.audiolab.reverbSettings
+import com.metrolist.shared.audiolab.reverbSettingsFlow
 import com.metrolist.shared.playback.InstantSilenceDetector
 import com.metrolist.shared.playback.PlaybackSeekSource
 import com.metrolist.shared.playback.instantSilenceSeekTarget
@@ -59,6 +63,13 @@ internal class SilenceSkippingSupport(
     // Both pass audio through untouched until their settings turn them on.
     val reverbProcessor = ReverbAudioProcessor()
     val eightDProcessor = EightDAudioProcessor()
+
+    init {
+        reverbProcessor.update(Settings.shared.reverbSettings())
+        eightDProcessor.update(Settings.shared.eightDSettings())
+        scope.launch { Settings.shared.reverbSettingsFlow().collect { reverbProcessor.update(it) } }
+        scope.launch { Settings.shared.eightDSettingsFlow().collect { eightDProcessor.update(it) } }
+    }
 
     @Volatile
     var audioOutputDetails: Map<String, String> = emptyMap()
