@@ -95,10 +95,19 @@ internal class IpodLibrarySource(
     private suspend fun buildList(page: IpodPage): IpodList {
         val dao = database.dao()
         return when (page) {
-            IpodPage.Main -> IpodMainList
-            IpodPage.Music -> IpodMusicList
-            IpodPage.NowPlaying, IpodPage.CoverFlow -> IpodList.Loading
-            IpodPage.Playlists ->
+            IpodPage.Main -> {
+                IpodMainList
+            }
+
+            IpodPage.Music -> {
+                IpodMusicList
+            }
+
+            IpodPage.NowPlaying, IpodPage.CoverFlow -> {
+                IpodList.Loading
+            }
+
+            IpodPage.Playlists -> {
                 withArt(
                     rows =
                         dao.playlists(PlaylistSortType.NAME, descending = false).first().map { playlist ->
@@ -112,7 +121,9 @@ internal class IpodLibrarySource(
                         },
                     emptyRes = Res.string.ipod_no_playlists,
                 )
-            IpodPage.Artists ->
+            }
+
+            IpodPage.Artists -> {
                 withArt(
                     rows =
                         dao.artists(ArtistSortType.NAME, descending = false).first().map { artist ->
@@ -127,7 +138,9 @@ internal class IpodLibrarySource(
                         },
                     emptyRes = Res.string.ipod_no_artists,
                 )
-            IpodPage.Albums ->
+            }
+
+            IpodPage.Albums -> {
                 withArt(
                     rows =
                         albums().map { album ->
@@ -141,12 +154,27 @@ internal class IpodLibrarySource(
                         },
                     emptyRes = Res.string.ipod_no_albums,
                 )
-            IpodPage.Songs -> songs(dao.songs(SongSortType.NAME, descending = false).first().map(Song::toSongItem), art = true)
-            IpodPage.LikedSongs ->
+            }
+
+            IpodPage.Songs -> {
+                songs(dao.songs(SongSortType.NAME, descending = false).first().map(Song::toSongItem), art = true)
+            }
+
+            IpodPage.LikedSongs -> {
                 songs(dao.likedSongs(SongSortType.NAME, descending = false).first().map(Song::toSongItem), art = true)
-            is IpodPage.Playlist -> songs(dao.playlistSongs(page.id).first().map { it.toSongItem() }, art = true)
-            is IpodPage.Artist -> songs(dao.artistSongsByNameAsc(page.id).first().map(Song::toSongItem), art = true)
-            is IpodPage.Album -> albumTracks(page.id)
+            }
+
+            is IpodPage.Playlist -> {
+                songs(dao.playlistSongs(page.id).first().map { it.toSongItem() }, art = true)
+            }
+
+            is IpodPage.Artist -> {
+                songs(dao.artistSongsByNameAsc(page.id).first().map(Song::toSongItem), art = true)
+            }
+
+            is IpodPage.Album -> {
+                albumTracks(page.id)
+            }
         }
     }
 
@@ -177,7 +205,12 @@ internal class IpodLibrarySource(
 
     suspend fun shuffledLibrary(): List<SongItem> =
         withContext(Dispatchers.Default) {
-            database.dao().songs(SongSortType.NAME, descending = false).first().shuffled().map(Song::toSongItem)
+            database
+                .dao()
+                .songs(SongSortType.NAME, descending = false)
+                .first()
+                .shuffled()
+                .map(Song::toSongItem)
         }
 
     private suspend fun albums(): List<Album> {

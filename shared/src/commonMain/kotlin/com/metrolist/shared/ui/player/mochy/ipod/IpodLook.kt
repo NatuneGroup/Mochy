@@ -81,16 +81,26 @@ internal fun lookOf(
         }
     val wheelColors =
         when (wheel) {
-            IpodWheelColor.WHITE -> WhiteWheel
-            IpodWheelColor.BLACK -> BlackWheel
-            IpodWheelColor.RED -> RedWheel
-            IpodWheelColor.THEME ->
+            IpodWheelColor.WHITE -> {
+                WhiteWheel
+            }
+
+            IpodWheelColor.BLACK -> {
+                BlackWheel
+            }
+
+            IpodWheelColor.RED -> {
+                RedWheel
+            }
+
+            IpodWheelColor.THEME -> {
                 when (theme) {
                     IpodTheme.SILVER -> WhiteWheel
                     IpodTheme.BLACK -> BlackWheel
                     IpodTheme.U2 -> RedWheel
                     IpodTheme.TRUE_DARK -> DarkWheel
                 }
+            }
         }
     val screen = if (theme == IpodTheme.TRUE_DARK) DarkScreen else LightScreen
     return IpodLook(body, wheelColors, screen, shadow, tall)

@@ -95,11 +95,16 @@ internal class EightDAudioProcessor : BaseAudioProcessor() {
         smoothedDepth = 0f
     }
 
-    private fun approach(current: Float, target: Float, step: Float): Float = when {
-        current < target -> min(target, current + step)
-        current > target -> max(target, current - step)
-        else -> current
-    }
+    private fun approach(
+        current: Float,
+        target: Float,
+        step: Float,
+    ): Float =
+        when {
+            current < target -> min(target, current + step)
+            current > target -> max(target, current - step)
+            else -> current
+        }
 
     private companion object {
         const val STEREO_FRAME_BYTES = 4

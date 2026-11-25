@@ -146,7 +146,15 @@ internal fun IpodCoverFlow(
                             detectTapGestures { at ->
                                 if (state.flipped) return@detectTapGestures
                                 val third = size.width / 3f
-                                onTapSide(if (at.x < third) -1 else if (at.x > third * 2f) 1 else 0)
+                                onTapSide(
+                                    if (at.x < third) {
+                                        -1
+                                    } else if (at.x > third * 2f) {
+                                        1
+                                    } else {
+                                        0
+                                    },
+                                )
                             }
                         }
                     },

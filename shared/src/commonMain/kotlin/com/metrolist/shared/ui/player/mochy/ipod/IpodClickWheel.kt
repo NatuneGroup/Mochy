@@ -127,8 +127,7 @@ internal fun IpodClickWheel(
                                 true
                             },
                         )
-                }
-                .pointerInput(enabled, haptics) {
+                }.pointerInput(enabled, haptics) {
                     if (!enabled) return@pointerInput
                     val spinner = Spinner()
                     awaitEachGesture {
@@ -162,12 +161,19 @@ internal fun IpodClickWheel(
                         try {
                             val start = withTimeoutOrNull(HOLD_MS) { awaitRingStart(down.id, down.position, slop) }
                             when {
-                                start == RingStart.Tap -> tap(zone, haptics, current)
+                                start == RingStart.Tap -> {
+                                    tap(zone, haptics, current)
+                                }
+
                                 start == RingStart.Spin -> {
                                     spinning()
                                     spin(down.id, middle, outer, down.position, notch)
                                 }
-                                start == RingStart.Cancel -> Unit
+
+                                start == RingStart.Cancel -> {
+                                    Unit
+                                }
+
                                 zone == RingZone.NEXT || zone == RingZone.PREVIOUS -> {
                                     haptics.press()
                                     scanWhileHeld(down.id) {
@@ -176,29 +182,46 @@ internal fun IpodClickWheel(
                                     }
                                     haptics.release()
                                 }
-                                zone == RingZone.MENU ->
+
+                                zone == RingZone.MENU -> {
                                     when (withTimeoutOrNull(MENU_HOLD_MORE_MS) { awaitRingStart(down.id, down.position, slop) }) {
-                                        RingStart.Tap -> tap(zone, haptics, current)
+                                        RingStart.Tap -> {
+                                            tap(zone, haptics, current)
+                                        }
+
                                         RingStart.Spin -> {
                                             spinning()
                                             spin(down.id, middle, outer, down.position, notch)
                                         }
-                                        RingStart.Cancel -> Unit
+
+                                        RingStart.Cancel -> {
+                                            Unit
+                                        }
+
                                         null -> {
                                             haptics.press()
                                             current.menuHeld()
                                             awaitLift(down.id)
                                         }
                                     }
-                                else ->
+                                }
+
+                                else -> {
                                     when (awaitRingStart(down.id, down.position, slop)) {
-                                        RingStart.Tap -> tap(zone, haptics, current)
+                                        RingStart.Tap -> {
+                                            tap(zone, haptics, current)
+                                        }
+
                                         RingStart.Spin -> {
                                             spinning()
                                             spin(down.id, middle, outer, down.position, notch)
                                         }
-                                        RingStart.Cancel -> Unit
+
+                                        RingStart.Cancel -> {
+                                            Unit
+                                        }
                                     }
+                                }
                             }
                         } finally {
                             dim()

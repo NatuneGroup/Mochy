@@ -1598,8 +1598,7 @@ fun PlayerScreen(
                                                     usesMochyTurntable -> 28.dp
                                                     else -> 24.dp
                                                 },
-                                        )
-                                        .padding(top = if (usesMochyChrome) 0.dp else 16.dp),
+                                        ).padding(top = if (usesMochyChrome) 0.dp else 16.dp),
                             ) {
                                 if (usesMochyChrome && !canvasMinimalUi) {
                                     FlagshipHandle(
@@ -2655,7 +2654,7 @@ fun PlayerScreen(
                                         exit = canvasControlsExit,
                                     ) {
                                         Spacer(modifier = Modifier.height(24.dp))
-                                }
+                                    }
                                 }
                             }
                         }

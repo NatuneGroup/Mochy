@@ -49,9 +49,9 @@ import com.metrolist.shared.model.previewThumbnailUrl
 import com.metrolist.shared.playback.LocalPlayerSession
 import com.metrolist.shared.ui.components.CrossfadeArtwork
 import com.metrolist.shared.ui.components.sliders.collectPlaybackDisplayState
+import com.metrolist.shared.ui.playback.LocalPlaybackController
 import com.metrolist.shared.ui.player.LocalPlayerPositionActive
 import com.metrolist.shared.ui.player.PlayerArtworkCrossfade
-import com.metrolist.shared.ui.playback.LocalPlaybackController
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -77,7 +77,12 @@ internal fun IpodNowPlaying(
     val song = session?.currentSong?.collectAsState()?.value ?: playbackState.currentSong
     val queueIndex = session?.currentMediaItemIndex?.collectAsState()?.value ?: playbackState.currentQueueIndex
     LaunchedEffect(song?.id, queueIndex) { state.scrubMs = -1L }
-    val duration = session?.duration?.collectAsState()?.value?.takeIf { it > 0L } ?: playbackState.durationMs.coerceAtLeast(1L)
+    val duration =
+        session
+            ?.duration
+            ?.collectAsState()
+            ?.value
+            ?.takeIf { it > 0L } ?: playbackState.durationMs.coerceAtLeast(1L)
     val positionFlow = session?.currentPosition ?: remember { MutableStateFlow(0L) }
 
     Box(Modifier.fillMaxSize()) {

@@ -66,8 +66,14 @@ internal class IpodController(
                 nowPlaying.bar = if (nowPlaying.bar == IpodBar.SCRUB) IpodBar.PROGRESS else IpodBar.SCRUB
                 touch()
             }
-            IpodPage.CoverFlow -> if (coverFlow.flipped) playTrack(coverFlow.back.selected) else turnOver()
-            else -> pick(nav.top, nav.top.selected)
+
+            IpodPage.CoverFlow -> {
+                if (coverFlow.flipped) playTrack(coverFlow.back.selected) else turnOver()
+            }
+
+            else -> {
+                pick(nav.top, nav.top.selected)
+            }
         }
     }
 
@@ -95,8 +101,10 @@ internal class IpodController(
 
     override fun scan(forward: Boolean) {
         val activeSession = session
-        val end = activeSession?.duration?.value?.takeIf { it > 0L } ?: playbackController.state.value.durationMs.takeIf { it > 0L }
-            ?: Long.MAX_VALUE
+        val end =
+            activeSession?.duration?.value?.takeIf { it > 0L } ?: playbackController.state.value.durationMs
+                .takeIf { it > 0L }
+                ?: Long.MAX_VALUE
         val currentMs = activeSession?.currentPositionMs() ?: playbackController.currentPositionMs()
         val target = (currentMs + if (forward) SCAN_STEP_MS else -SCAN_STEP_MS).coerceIn(0L, end)
         if (activeSession != null) activeSession.seekTo(target) else playbackController.seekTo(target)
@@ -128,20 +136,34 @@ internal class IpodController(
         entry: IpodEntry,
         index: Int,
     ) {
-        when (val pick = entry.list.rows.getOrNull(index)?.pick) {
-            is IpodPick.Open -> open(pick.page)
-            is IpodPick.Play ->
+        when (
+            val pick =
+                entry.list.rows
+                    .getOrNull(index)
+                    ?.pick
+        ) {
+            is IpodPick.Open -> {
+                open(pick.page)
+            }
+
+            is IpodPick.Play -> {
                 scope.launch {
                     play(entry.list.songs, pick.index, entry.page.resolveTitle())
                 }
-            IpodPick.Shuffle ->
+            }
+
+            IpodPick.Shuffle -> {
                 scope.launch {
                     val items = library?.shuffledLibrary().orEmpty()
                     if (items.isEmpty()) return@launch
                     playbackController.shuffleQueue(items, queueTitle = shuffleQueueTitle)
                     nav.showNowPlaying()
                 }
-            null -> Unit
+            }
+
+            null -> {
+                Unit
+            }
         }
     }
 
@@ -265,7 +287,8 @@ internal class IpodController(
         val activeSession = session
         val duration =
             activeSession?.duration?.value?.takeIf { it > 0L }
-                ?: playbackController.state.value.durationMs.takeIf { it > 0L }
+                ?: playbackController.state.value.durationMs
+                    .takeIf { it > 0L }
                 ?: return false
         val item = currentItem()
         val from =

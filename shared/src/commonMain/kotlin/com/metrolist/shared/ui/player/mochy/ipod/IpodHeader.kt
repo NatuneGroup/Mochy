@@ -33,7 +33,11 @@ internal fun IpodHeader(
     scale: IpodScale,
     modifier: Modifier = Modifier,
 ) {
-    val playing = LocalPlayerSession.current?.isPlaying?.collectAsState()?.value ?: false
+    val playing =
+        LocalPlayerSession.current
+            ?.isPlaying
+            ?.collectAsState()
+            ?.value ?: false
     val battery: State<Float> = rememberIpodBatteryLevel()
     val colors = LocalIpodLook.current.screen
     Box(

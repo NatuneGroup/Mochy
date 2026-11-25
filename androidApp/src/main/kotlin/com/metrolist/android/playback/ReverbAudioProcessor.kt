@@ -84,8 +84,10 @@ internal class ReverbAudioProcessor : BaseAudioProcessor() {
         val damp = params.damping.coerceIn(0f, 1f) * SCALE_DAMP
         for (c in combsL) c.set(feedback, damp)
         for (c in combsR) c.set(feedback, damp)
-        val delayFrames = (params.preDelayMs.coerceIn(0f, MAX_PRE_DELAY_MS) / 1000f * sampleRate).roundToInt()
-            .coerceIn(0, preDelay.size - 1)
+        val delayFrames =
+            (params.preDelayMs.coerceIn(0f, MAX_PRE_DELAY_MS) / 1000f * sampleRate)
+                .roundToInt()
+                .coerceIn(0, preDelay.size - 1)
         val lowCut = exp(-2.0 * PI * params.lowCutHz.coerceIn(10f, 2000f) / sampleRate).toFloat()
 
         val width = params.width.coerceIn(0f, 1f)
@@ -203,7 +205,9 @@ internal class ReverbAudioProcessor : BaseAudioProcessor() {
         clearRoom()
     }
 
-    private class Comb(size: Int) {
+    private class Comb(
+        size: Int,
+    ) {
         private val line = FloatArray(size.coerceAtLeast(1))
         private var index = 0
         private var store = 0f
@@ -211,7 +215,10 @@ internal class ReverbAudioProcessor : BaseAudioProcessor() {
         private var damp1 = 0.2f
         private var damp2 = 0.8f
 
-        fun set(feedback: Float, damp: Float) {
+        fun set(
+            feedback: Float,
+            damp: Float,
+        ) {
             this.feedback = feedback
             damp1 = damp
             damp2 = 1f - damp
@@ -231,7 +238,9 @@ internal class ReverbAudioProcessor : BaseAudioProcessor() {
         }
     }
 
-    private class Allpass(size: Int) {
+    private class Allpass(
+        size: Int,
+    ) {
         private val line = FloatArray(size.coerceAtLeast(1))
         private var index = 0
 
@@ -265,12 +274,13 @@ internal class ReverbAudioProcessor : BaseAudioProcessor() {
         /** a soft knee above -1 dB instead of a hard clip: a full room adds level on loud songs */
         fun toPcm(sample: Float): Short {
             val a = abs(sample)
-            val shaped = if (a <= KNEE) {
-                sample
-            } else {
-                val over = (a - KNEE) / (1f - KNEE)
-                (KNEE + (1f - KNEE) * tanh(over)) * if (sample < 0) -1f else 1f
-            }
+            val shaped =
+                if (a <= KNEE) {
+                    sample
+                } else {
+                    val over = (a - KNEE) / (1f - KNEE)
+                    (KNEE + (1f - KNEE) * tanh(over)) * if (sample < 0) -1f else 1f
+                }
             val s = (shaped * 32767f).roundToInt()
             return s.coerceIn(-32768, 32767).toShort()
         }

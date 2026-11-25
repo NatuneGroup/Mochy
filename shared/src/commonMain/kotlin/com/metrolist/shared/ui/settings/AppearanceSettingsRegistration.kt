@@ -601,10 +601,13 @@ internal fun SettingsUiRegistryBuilder.registerAppearanceSettings(host: SharedSe
         val selectedPlayerType =
             when {
                 host.platform != SettingsPlatform.DESKTOP -> settings.playerType
+
                 settings.playerType == PlayerType.CLASSIC -> PlayerType.VINTAGE
+
                 settings.playerType == PlayerType.MOCHY ||
                     settings.playerType == PlayerType.TURNTABLE ||
                     settings.playerType == PlayerType.IPOD -> PlayerType.MODERN
+
                 else -> settings.playerType
             }
         val playerBackgroundChoices =

@@ -255,14 +255,16 @@ private fun IpodPageContent(
 ) {
     val background = LocalIpodLook.current.screen.background
     when {
-        entry.page == IpodPage.NowPlaying ->
+        entry.page == IpodPage.NowPlaying -> {
             IpodNowPlaying(
                 state = controller.nowPlaying,
                 scale = scale,
                 marquee = marquee,
                 artworkCrossfade = artworkCrossfade,
             )
-        entry.page == IpodPage.CoverFlow ->
+        }
+
+        entry.page == IpodPage.CoverFlow -> {
             IpodCoverFlow(
                 state = controller.coverFlow,
                 scale = scale,
@@ -270,7 +272,9 @@ private fun IpodPageContent(
                 onTapSide = controller::tapCoverFlow,
                 onTapTrack = controller::tapTrack,
             )
-        entry.page.isSidebar ->
+        }
+
+        entry.page.isSidebar -> {
             Box(Modifier.fillMaxSize()) {
                 if (showCoverCycle) {
                     IpodCoverCycle(
@@ -325,7 +329,9 @@ private fun IpodPageContent(
                     )
                 }
             }
-        else ->
+        }
+
+        else -> {
             IpodMenuList(
                 entry = entry,
                 scale = scale,
@@ -334,6 +340,7 @@ private fun IpodPageContent(
                 onTapRow = { controller.tapRow(entry, it) },
                 modifier = Modifier.fillMaxSize(),
             )
+        }
     }
 }
 
