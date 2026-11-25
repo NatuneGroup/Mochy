@@ -2587,6 +2587,14 @@
     <string name="share_song">Share song</string>
     <!-- Translators: Button label for sharing selected lyrics as a vertical story card. -->
     <string name="share_song_to_story">Share to story</string>
+    <!-- Translators: Menu label and dialog title for sharing the current song as an image card. -->
+    <string name="share_song_card">Share song card</string>
+    <!-- Translators: Chip label for the square-cover song card layout. -->
+    <string name="song_card_style_cover">Cover</string>
+    <!-- Translators: Chip label for the wide song card layout with the cover beside the title. -->
+    <string name="song_card_style_wide">Wide</string>
+    <!-- Translators: Error shown when the song card image could not be shared. -->
+    <string name="song_card_share_failed">Could not share the song card.</string>
     <!-- Translators: Imperative action label for shuffle artist in the search. -->
     <!-- Translators: Imperative action label for shuffle playlist in the search. -->
     <string name="shuffle_playlist">Shuffle playlist</string>
