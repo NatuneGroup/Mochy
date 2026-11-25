@@ -177,8 +177,9 @@ internal object IosNativeFiles {
     suspend fun shareImage(
         presenter: UIViewController,
         image: ImageBitmap,
+        fileNamePrefix: String,
     ): Boolean {
-        val path = NSTemporaryDirectory() + "metrolist-statistics-${NSUUID().UUIDString}.png"
+        val path = NSTemporaryDirectory() + "${fileNamePrefix}${NSUUID().UUIDString}.png"
         try {
             withContext(Dispatchers.Default) {
                 Image.makeFromBitmap(image.asSkiaBitmap()).use { encodedImage ->
