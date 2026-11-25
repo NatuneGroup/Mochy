@@ -525,7 +525,9 @@ fun MochyProfileEditorContent(
 ) {
     val settings = Settings.shared
     val cardNumber = remember { ensureMochyCardNumber() }
-    var username by remember { mutableStateOf(settings.mochyUsername.ifBlank { settings.accountName }) }
+    var username by remember {
+        mutableStateOf(truncateDisplayName(settings.mochyUsername.ifBlank { settings.accountName }))
+    }
     var silver by remember { mutableStateOf(settings.mochyProfileCardSilver) }
     var localPhotoUri by remember { mutableStateOf(settings.mochyProfilePhotoUri) }
     var showCelebration by remember { mutableStateOf(false) }
