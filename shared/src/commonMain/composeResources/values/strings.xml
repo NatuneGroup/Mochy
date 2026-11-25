@@ -5726,6 +5726,12 @@
     <string name="mochy_card_default_name">Listener</string>
     <!-- Translators: Tagline displayed below the username on the local Mochy profile ID card. -->
     <string name="mochy_card_local_member">LOCAL PROFILE</string>
+    <!-- Translators: Label above the listening minutes on the back of the Mochy profile ID card. -->
+    <string name="mochy_card_back_minutes_label">MINUTES LISTENED</string>
+    <!-- Translators: Label above the most-played artist on the back of the Mochy profile ID card. -->
+    <string name="mochy_card_back_top_artist">TOP ARTIST</string>
+    <!-- Translators: Hint on the back of the Mochy profile ID card shown before any listening stats exist. -->
+    <string name="mochy_card_back_no_stats">Play a few songs to fill in this side of the card.</string>
     <!-- Translators: Accessibility description for the user avatar on the Mochy profile ID card. -->
     <string name="mochy_profile_picture">Profile picture</string>
     <!-- Translators: Accessibility description for adding a profile picture on the Mochy profile ID card. -->
