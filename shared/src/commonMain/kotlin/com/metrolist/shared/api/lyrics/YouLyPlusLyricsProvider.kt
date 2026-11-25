@@ -1,9 +1,11 @@
 /*
- * Metrolist Project (C) 2026
- * Licensed under GPL-3.0 | See git history for contributors
+ * ArchiveTune (2026)
+ * © Rukamori — github.com/rukamori
+ * GPL-3.0 License | Contributors: see git history
+ * Do not remove or alter this notice. - Per GPL-3.0 Section 4 & Section 5
+ * Portions © vossgraves — github.com/vossgraves
  */
 
-// Ported and adapted from Mochy Music by realidkroo. Licensed under GPL-3.0.
 // Ported to Mochy from Natune (NatuneGroup).
 
 package com.metrolist.shared.api.lyrics

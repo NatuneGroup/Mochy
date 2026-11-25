@@ -1,11 +1,8 @@
 /*
- * Metrolist Project (C) 2026
- * Licensed under GPL-3.0 | See git history for contributors
- */
-/*
- * Adapted from BitChord (GPL-3.0) https://github.com/kushagrasinghx/BitChord
- * (shared/src/jvmSharedMain/kotlin/com/music/bitchord/data/lyrics/LyricsHttp.kt) —
- * original re-implementation for ArchiveTune.
+ * ArchiveTune (2026)
+ * © Rukamori — github.com/rukamori
+ * GPL-3.0 License | Contributors: see git history
+ * Do not remove or alter this notice. - Per GPL-3.0 Section 4 & Section 5
  */
 /*
  * Adapted from BitChord (GPL-3.0) https://github.com/kushagrasinghx/BitChord
@@ -14,7 +11,6 @@
  * original re-implementation for ArchiveTune.
  */
 
-// Ported and adapted from Mochy Music by realidkroo. Licensed under GPL-3.0.
 // Ported to Mochy from Natune (NatuneGroup).
 
 package com.metrolist.shared.api.lyrics

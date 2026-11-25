@@ -8,4 +8,4 @@ The Stage room uses the MIT Media Lab KEMAR compact set of measured ear response
 
 Inter is distributed under the [SIL Open Font License 1.1](shared/src/commonMain/composeResources/files/licenses/inter.txt). The copies bundled here are Mochy's unmodified Inter font files from [the Inter Project](https://github.com/rsms/inter).
 
-The lyrics search-text and entity helpers in `shared/src/commonMain/kotlin/com/metrolist/shared/api/lyrics/LyricsSearchText.kt` are adapted from BitChord (GPL-3.0), https://github.com/kushagrasinghx/BitChord, through Natune (NatuneGroup). Their original notices are kept in that file.
+The Genius, BiniLyrics and YouLyPlus lyrics providers and the lyrics search-text helpers in `shared/src/commonMain/kotlin/com/metrolist/shared/api/lyrics/` come from Natune (NatuneGroup), which builds on ArchiveTune by Rukamori (GPL-3.0, https://github.com/rukamori). Parts are adapted from BitChord (GPL-3.0), https://github.com/kushagrasinghx/BitChord. The original notices are kept in those files.
