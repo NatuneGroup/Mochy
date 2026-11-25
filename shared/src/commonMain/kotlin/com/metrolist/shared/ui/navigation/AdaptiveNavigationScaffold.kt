@@ -101,6 +101,7 @@ import com.metrolist.shared.constants.WideNavigationRailExpandedWidth
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.drag_to_reorder_x
 import com.metrolist.shared.generated.resources.expand_sidebar
+import com.metrolist.shared.settings.PlayerType
 import com.metrolist.shared.ui.haptics.HapticEvent
 import com.metrolist.shared.ui.haptics.rememberMetrolistHaptics
 import com.metrolist.shared.ui.icons.MetrolistIcons
@@ -462,7 +463,8 @@ private fun <T> DesktopWideNavigationRail(
     LaunchedEffect(isSidebarExpanded) {
         if (isSidebarExpanded) railState.expand() else railState.collapse()
     }
-    val mochy = rememberMochyLook().isActive
+    // the Mochy chrome follows the player style: only the Standard (Metrolist) player keeps the stock rail
+    val mochy = rememberMochyLook().playerType != PlayerType.MODERN
     var pillTop by remember { mutableStateOf<Float?>(null) }
     var pillHeight by remember { mutableFloatStateOf(0f) }
     val animatedWidth by animateDpAsState(

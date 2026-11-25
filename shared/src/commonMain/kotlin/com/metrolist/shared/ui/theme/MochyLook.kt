@@ -19,8 +19,6 @@ class MochyLook internal constructor(
     private val bar = values["bar"]?.trim()
     internal val font = values["font"]?.trim()?.lowercase()
 
-    val isActive: Boolean = values.isNotEmpty()
-
     val playerType: PlayerType
         get() =
             when {
