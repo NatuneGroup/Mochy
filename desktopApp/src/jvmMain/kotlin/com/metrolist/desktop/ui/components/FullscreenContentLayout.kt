@@ -68,12 +68,14 @@ import com.metrolist.shared.model.lyricsCuratorUrl
 import com.metrolist.shared.model.lyricsProviderUrl
 import com.metrolist.shared.repository.isLocalLyricsProvider
 import com.metrolist.shared.settings.PlayerBackgroundStyle
+import com.metrolist.shared.settings.PlayerType
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.components.lyrics.LyricsOffsetEditor
 import com.metrolist.shared.ui.components.lyrics.LyricsSelectionState
 import com.metrolist.shared.ui.components.lyrics.LyricsShareDialog
 import com.metrolist.shared.ui.components.lyrics.LyricsView
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.theme.rememberMochyLook
 import com.metrolist.shared.ui.utils.verticalScrollWithDrag
 import org.jetbrains.compose.resources.stringResource
 
@@ -86,6 +88,7 @@ fun FullscreenContentLayout(
     toggleWindowFullscreen: () -> Unit,
     closeExpandedPlayer: () -> Unit,
 ) {
+    val flagship = rememberMochyLook().playerType == PlayerType.MOCHY
     val lyricsFraction by animateFloatAsState(
         targetValue = if (UiState.showLyricsDrawer) 1f else 0f,
         animationSpec = tween(450, easing = CubicBezierEasing(0.2f, 0.0f, 0.0f, 1.0f)),
@@ -107,14 +110,25 @@ fun FullscreenContentLayout(
                 Row(
                     modifier = Modifier.fillMaxSize(),
                 ) {
-                    PlayerContentColumn(
-                        currentTrack = currentTrack,
-                        isPlaying = isPlaying,
-                        availableHeight = availableHeight,
-                        scale = scale,
-                        modifier = Modifier.weight(1f).fillMaxHeight().padding(end = 40.dp * scale * lyricsFraction),
-                        toggleWindowFullscreen = toggleWindowFullscreen,
-                    )
+                    val contentModifier = Modifier.weight(1f).fillMaxHeight().padding(end = 40.dp * scale * lyricsFraction)
+                    if (flagship) {
+                        FlagshipFullscreenContent(
+                            currentTrack = currentTrack,
+                            isPlaying = isPlaying,
+                            scale = scale,
+                            toggleWindowFullscreen = toggleWindowFullscreen,
+                            modifier = contentModifier,
+                        )
+                    } else {
+                        PlayerContentColumn(
+                            currentTrack = currentTrack,
+                            isPlaying = isPlaying,
+                            availableHeight = availableHeight,
+                            scale = scale,
+                            modifier = contentModifier,
+                            toggleWindowFullscreen = toggleWindowFullscreen,
+                        )
+                    }
 
                     if (lyricsFraction > 0.001f) {
                         Box(
