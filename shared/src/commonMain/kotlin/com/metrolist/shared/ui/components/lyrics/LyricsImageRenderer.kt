@@ -53,7 +53,7 @@ internal data class LyricsImageStyle(
     val contentScale: Float = 1f,
 )
 
-private fun DrawScope.drawCover(
+internal fun DrawScope.drawCover(
     image: ImageBitmap,
     topLeft: Offset,
     side: Float,
