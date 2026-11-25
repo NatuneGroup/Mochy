@@ -23,6 +23,8 @@ import com.metrolist.shared.audiolab.eightDSettings
 import com.metrolist.shared.audiolab.eightDSettingsFlow
 import com.metrolist.shared.audiolab.reverbSettings
 import com.metrolist.shared.audiolab.reverbSettingsFlow
+import com.metrolist.shared.audiolab.spatialSettings
+import com.metrolist.shared.audiolab.spatialSettingsFlow
 import com.metrolist.shared.playback.InstantSilenceDetector
 import com.metrolist.shared.playback.PlaybackSeekSource
 import com.metrolist.shared.playback.instantSilenceSeekTarget
@@ -60,13 +62,16 @@ internal class SilenceSkippingSupport(
 
     @Volatile private var equalizer: EqualizerAudioProcessor? = null
 
-    // Both pass audio through untouched until their settings turn them on.
+    // All three pass audio through untouched until their settings turn them on.
+    val spatialProcessor = SpatialAudioProcessor()
     val reverbProcessor = ReverbAudioProcessor()
     val eightDProcessor = EightDAudioProcessor()
 
     init {
+        spatialProcessor.update(Settings.shared.spatialSettings())
         reverbProcessor.update(Settings.shared.reverbSettings())
         eightDProcessor.update(Settings.shared.eightDSettings())
+        scope.launch { Settings.shared.spatialSettingsFlow().collect { spatialProcessor.update(it) } }
         scope.launch { Settings.shared.reverbSettingsFlow().collect { reverbProcessor.update(it) } }
         scope.launch { Settings.shared.eightDSettingsFlow().collect { eightDProcessor.update(it) } }
     }
@@ -89,7 +94,14 @@ internal class SilenceSkippingSupport(
                     context,
                     enableAudioOutputPlaybackParams,
                     playoutTracker.wrap(
-                        musicAudioProcessorChain(equalizer, reverbProcessor, eightDProcessor, *extraProcessors, detector),
+                        musicAudioProcessorChain(
+                            equalizer,
+                            spatialProcessor,
+                            reverbProcessor,
+                            eightDProcessor,
+                            *extraProcessors,
+                            detector,
+                        ),
                     ),
                     outputProvider = {
                         playoutTracker.wrap(
