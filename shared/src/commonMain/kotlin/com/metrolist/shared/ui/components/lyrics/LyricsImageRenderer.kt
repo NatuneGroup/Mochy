@@ -214,23 +214,20 @@ internal fun renderLyricsImage(
             artwork?.let {
                 val topLeft = Offset(layout.artworkX * scale, (layout.artworkTop + verticalOffset) * scale)
                 val artworkSide = layout.artworkSize * scale
-                if (story) {
-                    val artworkClip =
-                        Path().apply {
-                            addRoundRect(
-                                RoundRect(
-                                    topLeft.x,
-                                    topLeft.y,
-                                    topLeft.x + artworkSide,
-                                    topLeft.y + artworkSide,
-                                    CornerRadius(18 * scale),
-                                ),
-                            )
-                        }
-                    clipPath(artworkClip) { drawCover(it, topLeft, artworkSide) }
-                } else {
-                    drawCover(it, topLeft, artworkSide)
-                }
+                val artworkRadius = if (story) 18 * scale else artworkSide * 0.22f
+                val artworkClip =
+                    Path().apply {
+                        addRoundRect(
+                            RoundRect(
+                                topLeft.x,
+                                topLeft.y,
+                                topLeft.x + artworkSide,
+                                topLeft.y + artworkSide,
+                                CornerRadius(artworkRadius),
+                            ),
+                        )
+                    }
+                clipPath(artworkClip) { drawCover(it, topLeft, artworkSide) }
             }
 
             fun label(
