@@ -127,6 +127,7 @@ internal fun MochyHeroCarousel(
     active: Boolean,
     onOpenItem: (YTItem) -> Unit,
     onTogglePlayPause: (() -> Unit)? = null,
+    hoverTilt: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     if (items.isEmpty()) return
@@ -227,6 +228,7 @@ internal fun MochyHeroCarousel(
                     pageOffset = { pagerState.offsetOf(page) },
                     wipeCurve = { wipeCurve },
                     peek = peek,
+                    hoverTilt = hoverTilt,
                     compact = maxWidth < 480.dp,
                     fullBleed = fullBleed,
                     fullBleedLandscape = fullBleed && isWide,
@@ -324,6 +326,7 @@ private fun MochyHeroCard(
     pageOffset: () -> Float,
     wipeCurve: () -> Float,
     peek: Boolean,
+    hoverTilt: Boolean,
     compact: Boolean,
     fullBleed: Boolean,
     fullBleedLandscape: Boolean,
@@ -369,7 +372,12 @@ private fun MochyHeroCard(
                     if (fullBleed) {
                         Modifier
                     } else {
-                        Modifier.press3D(maxTilt = if (peek) 3.5f else 5f, pressedScale = 0.985f).clickable(onClick = onCardClick)
+                        val tilt = if (peek) 3.5f else 5f
+                        if (hoverTilt) {
+                            Modifier.hover3D(maxTilt = tilt).clickable(onClick = onCardClick)
+                        } else {
+                            Modifier.press3D(maxTilt = tilt, pressedScale = 0.985f).clickable(onClick = onCardClick)
+                        }
                     },
                 ).clip(shape)
                 .background(surfaceFallback),

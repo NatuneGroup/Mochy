@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.node.DelegatableNode
 import androidx.compose.ui.node.DrawModifierNode
@@ -133,6 +134,59 @@ fun Modifier.press3D(
                 val t = press.value
                 if (t > 0f) {
                     val s = 1f - (1f - pressedScale) * t
+                    scaleX = s
+                    scaleY = s
+                    rotationX = -normalized.y * maxTilt * t
+                    rotationY = normalized.x * maxTilt * t
+                    cameraDistance = (size.width.takeIf { it > 0 }?.toFloat() ?: 1000f) * 3f
+                    transformOrigin = origin
+                }
+            }
+    }
+
+fun Modifier.hover3D(
+    maxTilt: Float = DEFAULT_MAX_TILT,
+    hoverScale: Float = 1.01f,
+    origin: TransformOrigin = TransformOrigin.Center,
+): Modifier =
+    composed {
+        val scope = rememberCoroutineScope()
+        val hover = remember { Animatable(0f) }
+
+        var normalized by remember { mutableStateOf(Offset.Zero) }
+        var size by remember { mutableStateOf(IntSize.Zero) }
+
+        this
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        val change = event.changes.firstOrNull() ?: continue
+                        when (event.type) {
+                            PointerEventType.Enter, PointerEventType.Move -> {
+                                val bounds = this.size
+                                if (bounds.width > 0 && bounds.height > 0) {
+                                    val point = change.position
+                                    normalized =
+                                        Offset(
+                                            x = ((point.x / bounds.width) * 2f - 1f).coerceIn(-1f, 1f),
+                                            y = ((point.y / bounds.height) * 2f - 1f).coerceIn(-1f, 1f),
+                                        )
+                                    size = bounds
+                                }
+                                scope.launch { hover.animateTo(1f, TiltSpring) }
+                            }
+
+                            PointerEventType.Exit -> {
+                                scope.launch { hover.animateTo(0f, TiltSpring) }
+                            }
+                        }
+                    }
+                }
+            }.graphicsLayer {
+                val t = hover.value
+                if (t > 0f) {
+                    val s = 1f + (hoverScale - 1f) * t
                     scaleX = s
                     scaleY = s
                     rotationX = -normalized.y * maxTilt * t
