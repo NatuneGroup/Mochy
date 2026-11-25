@@ -34,6 +34,7 @@ internal class StageAudioProcessor(
     private var channels = 0
     private var handle = 0L
     private var pushed: FloatArray? = null
+
     // true while the room only passes the song through, so it can be skipped without the native call
     private var idle = true
     private var directCopy: ByteBuffer = ByteBuffer.allocateDirect(0).order(ByteOrder.nativeOrder())

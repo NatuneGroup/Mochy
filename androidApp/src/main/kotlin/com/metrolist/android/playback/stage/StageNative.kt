@@ -20,7 +20,10 @@ internal object StageNative {
         val ok =
             runCatching {
                 System.loadLibrary("mochystage")
-                val bytes = context.applicationContext.assets.open(HRTF_ASSET).use { it.readBytes() }
+                val bytes =
+                    context.applicationContext.assets
+                        .open(HRTF_ASSET)
+                        .use { it.readBytes() }
                 loadHrtf(bytes)
             }.getOrDefault(false)
         loaded = ok
