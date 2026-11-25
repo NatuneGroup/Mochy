@@ -2143,11 +2143,22 @@ fun PlayerScreen(
                                                                                 clipInOverlayDuringTransition = OverlayClip(albumArtShape),
                                                                             ).then(
                                                                                 if (flagshipCoverStyle == PlayerCoverStyle.EDGE_TO_EDGE) {
-                                                                                    Modifier.coverBleed(FlagshipSidePadding).coverFadeToBottom()
+                                                                                    Modifier
+                                                                                        .coverBleed(
+                                                                                            FlagshipSidePadding,
+                                                                                        ).coverFadeToBottom()
                                                                                 } else {
                                                                                     Modifier.aspectRatio(1f)
                                                                                 },
-                                                                            ).then(if (flagshipCoverStyle == PlayerCoverStyle.SQUARED) Modifier.clip(albumArtShape) else Modifier),
+                                                                            ).then(
+                                                                                if (flagshipCoverStyle ==
+                                                                                    PlayerCoverStyle.SQUARED
+                                                                                ) {
+                                                                                    Modifier.clip(albumArtShape)
+                                                                                } else {
+                                                                                    Modifier
+                                                                                },
+                                                                            ),
                                                                 ) {
                                                                     if (flagshipCoverStyle == PlayerCoverStyle.DISC) {
                                                                         VinylDisc(
@@ -2157,7 +2168,10 @@ fun PlayerScreen(
                                                                             isPlaying = isPlaying,
                                                                             spinActive = LocalPlayerContentActive.current,
                                                                             contentDescription = stringResource(Res.string.album_art),
-                                                                            artworkOverlay = artworkOverlay.takeUnless { uiState.isLyricsVisible },
+                                                                            artworkOverlay =
+                                                                                artworkOverlay.takeUnless {
+                                                                                    uiState.isLyricsVisible
+                                                                                },
                                                                             discDiameter = FLAGSHIP_DISC_DIAMETER,
                                                                             discCenterX = FLAGSHIP_DISC_CENTER,
                                                                             discCenterYByWidth = FLAGSHIP_DISC_CENTER,

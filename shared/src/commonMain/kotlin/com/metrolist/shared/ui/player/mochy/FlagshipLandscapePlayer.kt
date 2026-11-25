@@ -190,14 +190,21 @@ internal fun FlagshipLandscapePlayer(
         val compactHeight = maxHeight < 420.dp
         val coverFrame =
             when (coverStyle) {
-                PlayerCoverStyle.EDGE_TO_EDGE -> Modifier.size(width = coverWidth, height = maxHeight)
-                PlayerCoverStyle.DISC -> Modifier.padding(start = squareStart).size(squareSide)
-                PlayerCoverStyle.SQUARED ->
+                PlayerCoverStyle.EDGE_TO_EDGE -> {
+                    Modifier.size(width = coverWidth, height = maxHeight)
+                }
+
+                PlayerCoverStyle.DISC -> {
+                    Modifier.padding(start = squareStart).size(squareSide)
+                }
+
+                PlayerCoverStyle.SQUARED -> {
                     Modifier
                         .padding(start = squareStart)
                         .size(squareSide)
                         .shadow(24.dp, SquareShape)
                         .clip(SquareShape)
+                }
             }
 
         currentSong?.displayThumbnail?.let { thumbUrl ->
