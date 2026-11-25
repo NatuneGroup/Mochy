@@ -1,5 +1,6 @@
 package com.metrolist.android
 
+import com.metrolist.android.onboarding.mochy.MochyOnboardingScreen
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
@@ -327,21 +328,31 @@ class MainActivity : ComponentActivity() {
                         val tvDevice = remember { isAndroidTv() }
                         CompositionLocalProvider(LocalIsTv provides tvDevice) {
                             MetrolistTheme {
-                                OnboardingScreen(
-                                    migration = app.legacyInstallMigration,
-                                    hasLegacyInstallationOverride = app.hadLegacyInstallationAtStartup,
-                                    onComplete = { sendCrashReports, destination ->
-                                        app.completeOnboarding(sendCrashReports)
-                                        incomingIntentState.value =
-                                            when (destination) {
-                                                OnboardingDestination.HOME -> incomingIntentState.value
-                                                OnboardingDestination.LOGIN -> Intent(ACTION_LOGIN)
-                                                OnboardingDestination.BACKUP_RESTORE -> Intent(ACTION_BACKUP_RESTORE)
-                                            }
-                                        prepareIncomingPlayback()
-                                        onboardingComplete = true
-                                    },
-                                )
+                                val onOnboardingComplete: (Boolean, OnboardingDestination) -> Unit = { sendCrashReports, destination ->
+                                    app.completeOnboarding(sendCrashReports)
+                                    incomingIntentState.value =
+                                        when (destination) {
+                                            OnboardingDestination.HOME -> incomingIntentState.value
+                                            OnboardingDestination.LOGIN -> Intent(ACTION_LOGIN)
+                                            OnboardingDestination.BACKUP_RESTORE -> Intent(ACTION_BACKUP_RESTORE)
+                                        }
+                                    prepareIncomingPlayback()
+                                    onboardingComplete = true
+                                }
+                                // phones and tablets get Mochy's own setup sheet, TV keeps the remote-friendly pages
+                                if (tvDevice) {
+                                    OnboardingScreen(
+                                        migration = app.legacyInstallMigration,
+                                        hasLegacyInstallationOverride = app.hadLegacyInstallationAtStartup,
+                                        onComplete = onOnboardingComplete,
+                                    )
+                                } else {
+                                    MochyOnboardingScreen(
+                                        migration = app.legacyInstallMigration,
+                                        hasLegacyInstallationOverride = app.hadLegacyInstallationAtStartup,
+                                        onComplete = onOnboardingComplete,
+                                    )
+                                }
                             }
                         }
                     }
