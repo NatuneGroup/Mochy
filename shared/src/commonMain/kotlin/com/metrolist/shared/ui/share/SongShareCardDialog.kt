@@ -182,13 +182,14 @@ fun SongShareCardDialog(
                             busy = true
                             failed = false
                             scope.launch {
-                                val shared = try {
-                                    onExport(image)
-                                } catch (e: CancellationException) {
-                                    throw e
-                                } catch (_: Exception) {
-                                    false
-                                }
+                                val shared =
+                                    try {
+                                        onExport(image)
+                                    } catch (e: CancellationException) {
+                                        throw e
+                                    } catch (_: Exception) {
+                                        false
+                                    }
                                 busy = false
                                 if (shared) onDismiss() else failed = true
                             }

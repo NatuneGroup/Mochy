@@ -43,8 +43,11 @@ private const val LYRIC_SIZE = 15f
 
 private val FallbackPalette = listOf(Color(0xFF3A3A3C), Color(0xFF242426))
 
-private fun textStyle(size: Float, weight: FontWeight, color: Color) =
-    TextStyle(color = color, fontSize = size.sp, fontWeight = weight)
+private fun textStyle(
+    size: Float,
+    weight: FontWeight,
+    color: Color,
+) = TextStyle(color = color, fontSize = size.sp, fontWeight = weight)
 
 /**
  * Draws a song card at [widthPx] wide. The card is drawn directly into an ImageBitmap, the same
@@ -68,7 +71,14 @@ fun renderSongShareCard(
     val ink = Color.White
     val inkSoft = Color.White.copy(alpha = 0.72f)
 
-    fun measure(text: String, size: Float, weight: FontWeight, color: Color, maxWidthUnits: Float, maxLines: Int = Int.MAX_VALUE): TextLayoutResult =
+    fun measure(
+        text: String,
+        size: Float,
+        weight: FontWeight,
+        color: Color,
+        maxWidthUnits: Float,
+        maxLines: Int = Int.MAX_VALUE,
+    ): TextLayoutResult =
         textMeasurer.measure(
             text,
             style = textStyle(size, weight, color),
@@ -83,18 +93,36 @@ fun renderSongShareCard(
     val pad = if (style == SongShareCardStyle.COVER) COVER_PADDING else WIDE_PADDING
     val contentWidth = cardUnits - 2 * pad
     val headerTextWidth = if (style == SongShareCardStyle.COVER) contentWidth else contentWidth - WIDE_COVER_SIDE - WIDE_COVER_GAP
-    val titleLayout = measure(title, TITLE_SIZE, FontWeight.Bold, ink, headerTextWidth, maxLines = if (style == SongShareCardStyle.COVER) 2 else 1)
+    val titleLayout =
+        measure(
+            title,
+            TITLE_SIZE,
+            FontWeight.Bold,
+            ink,
+            headerTextWidth,
+            maxLines =
+                if (style ==
+                    SongShareCardStyle.COVER
+                ) {
+                    2
+                } else {
+                    1
+                },
+        )
     val artistLayout = measure(artist, ARTIST_SIZE, FontWeight.SemiBold, inkSoft, headerTextWidth, maxLines = 1)
     val lyricLayouts = lyricLines.map { measure(it, LYRIC_SIZE, FontWeight.Bold, ink, contentWidth) }
 
     val headerHeight = titleLayout.size.height + artistLayout.size.height + 2f * scale
     val heightUnits =
         when (style) {
-            SongShareCardStyle.COVER ->
+            SongShareCardStyle.COVER -> {
                 pad + contentWidth + COVER_GAP + titleLayout.size.height / scale + 2f + artistLayout.size.height / scale + pad
+            }
+
             SongShareCardStyle.WIDE -> {
-                val lyricsHeight = lyricLayouts.sumOf { it.size.height / scale.toDouble() }.toFloat() +
-                    LINE_GAP * (lyricLayouts.size - 1).coerceAtLeast(0)
+                val lyricsHeight =
+                    lyricLayouts.sumOf { it.size.height / scale.toDouble() }.toFloat() +
+                        LINE_GAP * (lyricLayouts.size - 1).coerceAtLeast(0)
                 val header = maxOf(WIDE_COVER_SIDE, headerHeight / scale)
                 pad + header + (if (lyricLayouts.isEmpty()) 0f else 14f + lyricsHeight) + pad
             }
@@ -119,6 +147,7 @@ fun renderSongShareCard(
                 y += titleLayout.size.height + 2f * scale
                 drawText(artistLayout, topLeft = Offset(padPx, y))
             }
+
             SongShareCardStyle.WIDE -> {
                 val side = WIDE_COVER_SIDE * scale
                 val top = padPx
