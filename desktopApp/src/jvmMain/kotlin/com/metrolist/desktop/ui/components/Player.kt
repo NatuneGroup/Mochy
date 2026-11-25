@@ -149,6 +149,7 @@ import com.metrolist.shared.ui.navigation.blockInput
 import com.metrolist.shared.ui.navigation.navigationPopupSource
 import com.metrolist.shared.ui.playback.retainPlaybackKeyFocus
 import com.metrolist.shared.ui.player.mochy.AnimatedPlayGlyph
+import com.metrolist.shared.ui.player.mochy.FlagshipSeekTrack
 import com.metrolist.shared.ui.player.mochy.FlagshipTransport
 import com.metrolist.shared.ui.theme.rememberMochyLook
 import com.metrolist.shared.ui.theme.uiEnhanced
@@ -378,6 +379,7 @@ fun PlayerSlider(
     enabled: Boolean = true,
     showThumb: Boolean = true,
     valueProvider: () -> Float = { value },
+    flagshipTrack: Boolean = false,
 ) {
     PlaybackProgressSlider(
         value = value,
@@ -398,6 +400,20 @@ fun PlayerSlider(
                 disabledInactiveTrackColor = color.copy(alpha = 0.24f),
             ),
         bufferedFraction = bufferedValue,
+        trackOverride =
+            if (flagshipTrack && style == SliderStyle.DEFAULT) {
+                { state, interaction ->
+                    FlagshipSeekTrack(
+                        fraction = { state.value },
+                        interaction = interaction,
+                        loading = false,
+                        active = true,
+                        contentColor = color,
+                    )
+                }
+            } else {
+                null
+            },
         modifier = modifier,
     )
 }
@@ -432,6 +448,7 @@ private fun StandardPlayerProgress(colorScheme: ColorScheme) {
     val playerDuration by PlayerState.playbackDuration.collectAsState()
     val isPlaying = PlayerState.isPlaying
     val isListenTogetherGuest = ListenTogetherState.isListenTogetherGuest()
+    val flagshipTrack = rememberMochyLook().playerType == PlayerType.MOCHY
 
     val isLive = playerIsLiveStream()
     var sliderWidthPx by remember { mutableIntStateOf(0) }
@@ -534,6 +551,7 @@ private fun StandardPlayerProgress(colorScheme: ColorScheme) {
                 modifier = Modifier.weight(1f).onSizeChanged { sliderWidthPx = it.width },
                 bufferedValue = bufferedProgress,
                 enabled = canSeek,
+                flagshipTrack = flagshipTrack && !isLive,
             )
             Text(
                 text = formatDuration(playerDuration),

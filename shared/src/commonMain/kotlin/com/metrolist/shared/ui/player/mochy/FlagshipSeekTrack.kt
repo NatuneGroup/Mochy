@@ -32,7 +32,7 @@ private const val SWEEP_MILLIS = 1500L
 private val SweepEasing = CubicBezierEasing(0.45f, 0f, 0.25f, 1f)
 
 @Composable
-internal fun FlagshipSeekTrack(
+fun FlagshipSeekTrack(
     fraction: () -> Float,
     interaction: MutableInteractionSource,
     loading: Boolean,
