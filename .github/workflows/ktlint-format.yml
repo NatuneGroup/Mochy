@@ -1,0 +1,62 @@
+name: Format Kotlin
+
+# Runs ktlintFormat on Blacksmith and commits the result back, so formatting never
+# needs a local Gradle run. Trigger it by pushing a commit whose message contains
+# [ktlint-format], or by dispatching it once this file is on the default branch.
+on:
+  push:
+    branches-ignore: [main]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch to format and push back to
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ktlint-format-${{ inputs.branch || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  format:
+    name: ktlintFormat
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[ktlint-format]')
+    runs-on: blacksmith-8vcpu-ubuntu-2604
+    timeout-minutes: 30
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.branch || github.ref_name }}
+          submodules: recursive
+
+      - name: Prepare CI Gradle
+        uses: ./.github/actions/prepare-ci-gradle
+        with:
+          cache-scope: ktlint-format
+          persist-configuration-cache: 'false'
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      - name: Format
+        run: ./gradlew --continue ktlintFormat
+
+      - name: Commit formatted sources
+        env:
+          BRANCH: ${{ inputs.branch || github.ref_name }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "Already formatted"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -u -- '*.kt' '*.kts'
+          git commit -m "style: apply ktlintFormat"
+          git push origin "HEAD:refs/heads/$BRANCH"
+
+      - name: Verify
+        run: ./gradlew ktlintCheck
