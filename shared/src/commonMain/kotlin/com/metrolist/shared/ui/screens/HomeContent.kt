@@ -319,6 +319,7 @@ fun HomeContent(
                         active = rootActive && !contentObscured,
                         onOpenItem = onItemClick,
                         onTogglePlayPause = onTogglePlayPause,
+                        hoverTilt = desktopHome,
                     )
                 }
             }
