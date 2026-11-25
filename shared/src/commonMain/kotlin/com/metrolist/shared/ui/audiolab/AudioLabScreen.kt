@@ -402,7 +402,8 @@ private fun SliderRow(
 }
 
 @Composable
-private fun percent(value: Float): String = stringResource(Res.string.audio_lab_percent, (value * 100f).roundToInt(), stringResource(Res.string.percent_symbol))
+private fun percent(value: Float): String =
+    stringResource(Res.string.audio_lab_percent, (value * 100f).roundToInt(), stringResource(Res.string.percent_symbol))
 
 @Composable
 private fun milliseconds(value: Float): String = stringResource(Res.string.audio_lab_ms, value.roundToInt())
