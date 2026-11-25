@@ -11,6 +11,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.metrolist.shared.api.lyrics.AiProviderPresets
+import com.metrolist.shared.audiolab.EightDSettings
+import com.metrolist.shared.audiolab.ReverbPresets
+import com.metrolist.shared.audiolab.ReverbSettings
 import com.metrolist.shared.backup.AutoBackupFrequency
 import com.metrolist.shared.constants.ActiveLyricsTextPositionKey
 import com.metrolist.shared.constants.AiSlopBlocklistCacheKey
@@ -77,6 +80,9 @@ import com.metrolist.shared.constants.DiscordPendingAuthSessionKey
 import com.metrolist.shared.constants.DownloadQueueJsonKey
 import com.metrolist.shared.constants.DownloadedCollectionSortDirectionKey
 import com.metrolist.shared.constants.DownloadedCollectionSortKey
+import com.metrolist.shared.constants.EightDDepthKey
+import com.metrolist.shared.constants.EightDEnabledKey
+import com.metrolist.shared.constants.EightDRotationSpeedHzKey
 import com.metrolist.shared.constants.EnableHapticFeedbackKey
 import com.metrolist.shared.constants.EnableLandscapeScalingKey
 import com.metrolist.shared.constants.EqualizerActiveProfileIdKey
@@ -171,6 +177,16 @@ import com.metrolist.shared.constants.PromptContinuePlaybackKey
 import com.metrolist.shared.constants.QueuedYouTubeHistoryJsonKey
 import com.metrolist.shared.constants.RecentPlayedSearchSongsJsonKey
 import com.metrolist.shared.constants.ResumeOnBluetoothConnectKey
+import com.metrolist.shared.constants.ReverbDampingKey
+import com.metrolist.shared.constants.ReverbDryKey
+import com.metrolist.shared.constants.ReverbEnabledKey
+import com.metrolist.shared.constants.ReverbLowCutHzKey
+import com.metrolist.shared.constants.ReverbMixKey
+import com.metrolist.shared.constants.ReverbPreDelayMsKey
+import com.metrolist.shared.constants.ReverbPresetIdKey
+import com.metrolist.shared.constants.ReverbRoomSizeKey
+import com.metrolist.shared.constants.ReverbWetKey
+import com.metrolist.shared.constants.ReverbWidthKey
 import com.metrolist.shared.constants.SeekDurationSecondsKey
 import com.metrolist.shared.constants.SentryEnabledKey
 import com.metrolist.shared.constants.ShowBottomNavHomeKey
@@ -446,6 +462,22 @@ class Settings(
     var equalizerActiveProfileId by preference(EqualizerActiveProfileIdKey, "")
     var equalizerEnabled by preference(EqualizerEnabledKey, false)
     var audioBoostDb by preference(AudioBoostDbKey, 0f)
+    private val reverbDefaults = ReverbSettings()
+    var reverbEnabled by preference(ReverbEnabledKey, reverbDefaults.enabled)
+    var reverbMix by preference(ReverbMixKey, reverbDefaults.mix)
+    var reverbRoomSize by preference(ReverbRoomSizeKey, reverbDefaults.roomSize)
+    var reverbDamping by preference(ReverbDampingKey, reverbDefaults.damping)
+    var reverbWet by preference(ReverbWetKey, reverbDefaults.wet)
+    var reverbDry by preference(ReverbDryKey, reverbDefaults.dry)
+    var reverbWidth by preference(ReverbWidthKey, reverbDefaults.width)
+    var reverbPreDelayMs by preference(ReverbPreDelayMsKey, reverbDefaults.preDelayMs)
+    var reverbLowCutHz by preference(ReverbLowCutHzKey, reverbDefaults.lowCutHz)
+    // the id of the room preset last picked; empty once a slider has changed it by hand
+    var reverbPresetId by preference(ReverbPresetIdKey, ReverbPresets.Default.id)
+    private val eightDDefaults = EightDSettings()
+    var eightDEnabled by preference(EightDEnabledKey, eightDDefaults.enabled)
+    var eightDRotationSpeedHz by preference(EightDRotationSpeedHzKey, eightDDefaults.rotationSpeedHz)
+    var eightDDepth by preference(EightDDepthKey, eightDDefaults.depth)
     var playerType by preference(PlayerType.MOCHY)
     var ipodTheme by preference(IpodTheme.SILVER)
     var ipodWheelColor by preference(IpodWheelColor.THEME)
