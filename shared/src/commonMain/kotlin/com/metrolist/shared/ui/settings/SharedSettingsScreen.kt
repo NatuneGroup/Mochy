@@ -11,6 +11,7 @@
 
 package com.metrolist.shared.ui.settings
 
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -401,6 +402,16 @@ private fun CompactSettingsHome(
     onSearchResultSelected: (SettingsPageId, String?) -> Unit,
 ) {
     val isTv = LocalIsTv.current
+    // phones and tablets in the dark theme get Mochy's own settings list
+    if (!isTv && host.platform != SettingsPlatform.DESKTOP && host.title == null && MaterialTheme.colorScheme.background.luminance() < 0.5f) {
+        MochySettingsHome(
+            registry = registry,
+            host = host,
+            onPageSelected = onPageSelected,
+            onSearchResultSelected = onSearchResultSelected,
+        )
+        return
+    }
     val contentFocusRequester = remember { FocusRequester() }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
@@ -514,7 +525,7 @@ private fun CompactSettingsDetail(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.settingsPageColor(),
         topBar = {
             LargeFlexibleTopAppBar(
                 title = {
@@ -539,8 +550,8 @@ private fun CompactSettingsDetail(
                 },
                 colors =
                     TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        containerColor = MaterialTheme.colorScheme.settingsPageColor(),
+                        scrolledContainerColor = MaterialTheme.colorScheme.settingsPageColor(),
                     ),
                 scrollBehavior = scrollBehavior,
             )
@@ -1136,7 +1147,7 @@ internal fun SettingsItemGroup(
                     fontFamily = mochyInterFontFamily(),
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = (-0.01).em,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = MaterialTheme.colorScheme.settingsHeadingColor(),
                     modifier = Modifier.semantics { heading() },
                 )
                 group.description?.let {
