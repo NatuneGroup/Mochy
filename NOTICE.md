@@ -7,3 +7,5 @@ Source code in this fork is available under the [GNU General Public License, ver
 The Stage room uses the MIT Media Lab KEMAR compact set of measured ear responses, by Bill Gardner and Keith Martin, bundled as `androidApp/src/main/assets/stage_hrtf.bin` (built by `tools/stage/make_hrtf.py`). Stage's native engine in `stageEngine/` is adapted from Mochy Music (GPL-3.0).
 
 Inter is distributed under the [SIL Open Font License 1.1](shared/src/commonMain/composeResources/files/licenses/inter.txt). The copies bundled here are Mochy's unmodified Inter font files from [the Inter Project](https://github.com/rsms/inter).
+
+The lyrics search-text and entity helpers in `shared/src/commonMain/kotlin/com/metrolist/shared/api/lyrics/LyricsSearchText.kt` are adapted from BitChord (GPL-3.0), https://github.com/kushagrasinghx/BitChord, through Natune (NatuneGroup). Their original notices are kept in that file.

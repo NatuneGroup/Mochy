@@ -1200,6 +1200,8 @@
     <string name="lyrics_provider_kugou_description">Line-synced LRC with duration matching, especially useful for Chinese and Asian music</string>
     <!-- Translators: Supporting text beneath the provider Paxsenix option in the lyrics. -->
     <string name="lyrics_provider_paxsenix_description">Paxsenix searches Apple Music and retrieves word-synced lyrics, background vocals and transliterations</string>
+    <!-- Translators: Supporting text beneath the provider Genius option in the lyrics. -->
+    <string name="lyrics_provider_genius_description">Unsynced plain-text lyrics taken from Genius song pages</string>
     <!-- Translators: Retired lyrics source description. Kept only so locale catalogs still match the base catalog; not shown in the app. -->
     <string name="lyrics_provider_lyrics_plus_description">Multi-backend source with word or line timing, singer roles, background vocals, and transliterations</string>
     <!-- Translators: Supporting text beneath the provider unknown option in the lyrics. -->
@@ -2007,6 +2009,8 @@
     <string name="brand_kugou" translatable="false">KuGou</string>
     <!-- Translators: Option or section label for Paxsenix in the settings. -->
     <string name="brand_paxsenix" translatable="false">Paxsenix</string>
+    <!-- Translators: Option or section label for Genius in the settings. -->
+    <string name="brand_genius" translatable="false">Genius</string>
     <!-- Translators: Option or section label for runtime in the AI lyrics translation settings. -->
     <string name="ai_runtime">Runtime</string>
     <!-- Translators: Option or section label for same provider default in the AI lyrics translation settings. -->
