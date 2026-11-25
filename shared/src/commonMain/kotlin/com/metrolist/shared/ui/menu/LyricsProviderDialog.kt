@@ -50,6 +50,7 @@ import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.apply
 import com.metrolist.shared.generated.resources.automatic
 import com.metrolist.shared.generated.resources.brand_better_lyrics
+import com.metrolist.shared.generated.resources.brand_binilyrics
 import com.metrolist.shared.generated.resources.brand_genius
 import com.metrolist.shared.generated.resources.brand_kugou
 import com.metrolist.shared.generated.resources.brand_lrclib
@@ -331,6 +332,7 @@ private fun providerName(provider: LyricsProvider): String =
             LyricsProvider.UNISON -> Res.string.brand_unison
             LyricsProvider.LRCLIB -> Res.string.brand_lrclib
             LyricsProvider.GENIUS -> Res.string.brand_genius
+            LyricsProvider.BINILYRICS -> Res.string.brand_binilyrics
             LyricsProvider.KUGOU -> Res.string.brand_kugou
             LyricsProvider.PAXSENIX -> Res.string.brand_paxsenix
             LyricsProvider.YOUTUBESUBTITLE -> Res.string.lyrics_youtube_captions

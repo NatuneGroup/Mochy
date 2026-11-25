@@ -48,6 +48,7 @@ class LyricsClient(
     private val kuGouLyricsProvider = KuGouLyricsProvider(httpClient)
     private val paxsenixLyricsProvider = PaxsenixLyricsProvider(httpClient)
     private val geniusLyricsProvider = GeniusLyricsProvider(httpClient)
+    private val biniLyricsProvider = BiniLyricsProvider(httpClient)
     private val youtubeLyricsProvider = YouTubeLyricsProvider(youtubeLyricsApi)
     private val youtubeSubtitleLyricsProvider = YouTubeSubtitleLyricsProvider(youtubeLyricsApi)
 
@@ -109,6 +110,10 @@ class LyricsClient(
 
             LyricsProvider.GENIUS -> {
                 result("Genius") { geniusLyricsProvider.getLyrics(title, artist) }
+            }
+
+            LyricsProvider.BINILYRICS -> {
+                result("BiniLyrics") { biniLyricsProvider.getLyrics(title, artist, album, durationSec.toInt()) }
             }
 
             LyricsProvider.YOUTUBESUBTITLE -> {

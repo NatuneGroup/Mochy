@@ -272,6 +272,7 @@ private fun lyricsProviderLabel(provider: LyricsProvider): String =
         LyricsProvider.KUGOU -> stringResource(Res.string.brand_kugou)
         LyricsProvider.PAXSENIX -> stringResource(Res.string.brand_paxsenix)
         LyricsProvider.GENIUS -> stringResource(Res.string.brand_genius)
+        LyricsProvider.BINILYRICS -> stringResource(Res.string.brand_binilyrics)
         else -> provider.name
     }
 
@@ -286,6 +287,7 @@ private fun lyricsProviderDescription(provider: LyricsProvider): String =
             LyricsProvider.KUGOU -> Res.string.lyrics_provider_kugou_description
             LyricsProvider.PAXSENIX -> Res.string.lyrics_provider_paxsenix_description
             LyricsProvider.GENIUS -> Res.string.lyrics_provider_genius_description
+            LyricsProvider.BINILYRICS -> Res.string.lyrics_provider_binilyrics_description
             else -> Res.string.lyrics_provider_unknown_description
         },
     )
