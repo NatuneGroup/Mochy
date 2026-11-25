@@ -94,7 +94,7 @@ private val SideButtonsRoom = ButtonSize + 30.dp
 private val EvenShade = Color.Black.copy(alpha = 0.38f)
 
 // the lyrics page tucks the seek bar and transport away after this long without a touch
-private const val LandscapeTransportIdleMs = 3_500L
+private const val LANDSCAPE_TRANSPORT_IDLE_MS = 3_500L
 
 private enum class FlagshipLandscapePanel {
     INFO,
@@ -177,7 +177,7 @@ internal fun FlagshipLandscapePlayer(
     LaunchedEffect(lyricsShowing, touchTick) {
         transportRevealed = true
         if (lyricsShowing) {
-            delay(LandscapeTransportIdleMs)
+            delay(LANDSCAPE_TRANSPORT_IDLE_MS)
             transportRevealed = false
         }
     }
@@ -466,13 +466,13 @@ internal fun FlagshipLandscapePlayer(
                 }
             }
 
-            Column(modifier = Modifier.padding(horizontal = PanelGutter - 12.dp)) {
-                AnimatedVisibility(
-                    visible = transportShown,
-                    enter = expandVertically() + fadeIn(),
-                    exit = shrinkVertically() + fadeOut(),
-                ) {
-                    Column {
+            AnimatedVisibility(
+                visible = transportShown,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut(),
+            ) {
+                Column {
+                    Column(modifier = Modifier.padding(horizontal = PanelGutter - 12.dp)) {
                         PlayerProgressSlider(
                             viewModel = viewModel,
                             duration = duration,
@@ -501,9 +501,9 @@ internal fun FlagshipLandscapePlayer(
                     } else {
                         Spacer(Modifier.height(6.dp))
                     }
-
-                    }
                 }
+            }
+
             FlagshipBottomControls(
                 volume = volume,
                 lyricsVisible = uiState.isLyricsVisible,
