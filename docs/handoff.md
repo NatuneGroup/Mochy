@@ -22,7 +22,7 @@ Read first: [mochy-port.md](mochy-port.md), [../CLAUDE.md](../CLAUDE.md) and
 Snapshot updated 2026-11-25.
 
 - PR #1 is open and not a draft. `AI usage:` is disclosed in the PR body.
-- Last full CI on `6941dae5` passed: Select checks and repository checks, Android / APK,
+- Last full CI on `674080bf` passed: Select checks and repository checks, Android / APK,
   Desktop / Linux x64 and iOS / Validate iOS.
 - The signed release from `eb2e7514` (`build-android.yml`, `variant=release`, run
   45550453298) produced `Mochy.apk` at 16,935,941 bytes. It has v2 and v3 signatures,
@@ -60,6 +60,7 @@ Snapshot updated 2026-11-25.
 | Review round (PR #1) | `e8fa57e8`, `80c9b777`, `c8bf80a7`, `4f3db510` | Desktop data under `mochy/`, iOS bundle ID `com.natune.mochy`, profile name clamp, offline desktop hero fallback. |
 | Wave 3: Audio Lab | `a4bf6592`…`605985b4` | Spatial (crossfeed/virtual speakers), Freeverb-style reverb with presets, and 8D. Shared DSP cores are in `shared/.../audiolab/dsp` and run on Android (Media3 wrappers), desktop (`AudioRenderer`) and iOS (audio tap; HLS bypasses it). The settings page is reached from Playback. See [audiolab.md](audiolab.md). |
 | Wave 4: share and profile | `906f387a`, `ff0cb673`, `03394cca`, `14011c10` | ID card back face with tap flip. The song share card (cover/wide) is in the player menu on Android and iOS. Recap is the existing Wrapped feature, so it was not duplicated. |
+| Audio Lab Stage | `a83da2e0`…`674080bf` | Native `stageEngine` module, built like `opusDecoder` and ordered after it so the two NDK installs don't run at once. Stage settings, presets and card are included. |
 | CI formatting | `edaaf448` | `[ktlint-format]` workflow (see Current state). |
 
 ### Android release details
@@ -82,12 +83,8 @@ Snapshot updated 2026-11-25.
 
 Waves 1 to 4 have landed (see Completed work). Still open:
 
-- **Stage (3D room) effect.** The reference engine is native C++ (`app/src/main/cpp/stage/`,
-  CMake, the `mochystage` JNI library and `assets/stage_hrtf.bin`). Porting it needs an NDK
-  build in `androidApp` (see how `opusDecoder` builds JNI) and a licence check of the HRTF
-  asset. Desktop and iOS need a shared fallback or nothing at all; do not claim parity.
-- **Flagship landscape parity.** Landscape still uses the generic tablet layout around the
-  Flagship controls, not the reference's cover, queue and lyrics treatment.
+- **Stage follow-ups.** The Stage room (native `stageEngine` module, `libmochystage.so`, KEMAR HRTF asset) runs on Android in stereo PCM16 with the headphone model. Not yet ported: the room and scene drawing, editing objects one by one, speaker-output detection and surround downmix. Desktop and iOS show the card disabled.
+- **Flagship landscape extras.** The layout already matches the reference: cover on the left, with the info, lyrics and queue panel on the right. Still missing are the reference's cover looks (full-bleed, disc, record, TV), which need a cover-style setting first, plus the lyrics band, frost, reflection and auto-hiding control deck.
 - **Share Studio extras.** Video/karaoke export (`share/song/export/**`, Android GL) is not
   ported. The lyrics share card keeps the Metrolist look. The desktop player has its own UI
   and no song card entry; `desktopApp/.../utils/ImageSharing.kt` `saveImage` is ready to reuse.
@@ -176,8 +173,8 @@ workflow tests and Android collector test do not.
 
 1. Install `Mochy.apk` from the latest release run on a phone. Check Audio Lab (Spatial,
    Reverb, 8D), the song share card and the ID card flip.
-2. Stage effect: audit the reference C++ and the HRTF asset licence, then add the NDK build.
-3. Flagship landscape parity against the reference.
+2. On a phone, check that Stage loads (the card is enabled) and test a preset with headphones.
+3. Flagship cover looks and lyrics band (needs a cover-style setting).
 4. Answer any new review comments on PR #1.
 
 Do not bump `appVersion`, rewrite history, change Blacksmith runners, add paywalls,
