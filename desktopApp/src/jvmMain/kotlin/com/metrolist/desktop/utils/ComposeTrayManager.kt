@@ -194,7 +194,7 @@ object ComposeTrayManager {
                 } else {
                     stringResource(Res.string.tray_tooltip_paused, title, artistStr)
                 }
-            } ?: "Metrolist"
+            } ?: "Mochy"
 
         val currentArtistLabel =
             currentTrack?.let { track ->
