@@ -14,7 +14,7 @@ enum class StageWalls(
     Concrete(0.08f, 0.15f),
 }
 
-/** The kinds of sound a song is split into; each one can be placed in the room up to [StageLayout.Copies] times. */
+/** The kinds of sound a song is split into; each one can be placed in the room up to [StageLayout.COPIES] times. */
 enum class StageSource { Vocal, Center, Left, Right, Ambience, Sub }
 
 /**
@@ -76,54 +76,54 @@ data class StageSettings(
 
 /** Layout of the float array the native room reads. Must match stageEngine/src/main/cpp/stage/engine.h. */
 object StageLayout {
-    const val Enabled = 0
-    const val Mode = 1
-    const val RoomWidth = 2
-    const val RoomDepth = 3
-    const val RoomHeight = 4
-    const val Absorption = 5
-    const val Damping = 6
-    const val RoomAmount = 7
-    const val ListenerX = 8
-    const val ListenerY = 9
-    const val ListenerZ = 10
-    const val ListenerYaw = 11
-    const val Master = 12
-    const val Objects = 13
-    const val ObjectStride = 5
-    const val Copies = 4
-    const val Kinds = 6
-    const val ObjectCount = Kinds * Copies
-    const val ParamCount = Objects + ObjectCount * ObjectStride
+    const val ENABLED = 0
+    const val MODE = 1
+    const val ROOM_WIDTH = 2
+    const val ROOM_DEPTH = 3
+    const val ROOM_HEIGHT = 4
+    const val ABSORPTION = 5
+    const val DAMPING = 6
+    const val ROOM_AMOUNT = 7
+    const val LISTENER_X = 8
+    const val LISTENER_Y = 9
+    const val LISTENER_Z = 10
+    const val LISTENER_YAW = 11
+    const val MASTER = 12
+    const val OBJECTS = 13
+    const val OBJECT_STRIDE = 5
+    const val COPIES = 4
+    const val KINDS = 6
+    const val OBJECT_COUNT = KINDS * COPIES
+    const val PARAM_COUNT = OBJECTS + OBJECT_COUNT * OBJECT_STRIDE
 
     /** The room always plays the headphone model: speaker output is not detected on Android yet. */
-    const val ModeHeadphones = 0f
+    const val MODE_HEADPHONES = 0f
 }
 
 /** The float array the native room reads for these settings, using the preset's sound positions. */
 fun StageSettings.toStageParams(): FloatArray {
     val preset = StagePresets.byId(presetId)
     val room = box
-    val values = FloatArray(StageLayout.ParamCount)
-    values[StageLayout.Enabled] = if (enabled) 1f else 0f
-    values[StageLayout.Mode] = StageLayout.ModeHeadphones
-    values[StageLayout.RoomWidth] = room.width
-    values[StageLayout.RoomDepth] = room.depth
-    values[StageLayout.RoomHeight] = room.height
-    values[StageLayout.Absorption] = walls.absorption
-    values[StageLayout.Damping] = walls.damping
-    values[StageLayout.RoomAmount] = roomAmount
-    values[StageLayout.ListenerX] = preset.listener.x * room.width / 2
-    values[StageLayout.ListenerY] = preset.listener.y * room.height
-    values[StageLayout.ListenerZ] = preset.listener.z * room.depth / 2
-    values[StageLayout.ListenerYaw] = 0f
-    values[StageLayout.Master] = dbToGain(levelDb)
+    val values = FloatArray(StageLayout.PARAM_COUNT)
+    values[StageLayout.ENABLED] = if (enabled) 1f else 0f
+    values[StageLayout.MODE] = StageLayout.MODE_HEADPHONES
+    values[StageLayout.ROOM_WIDTH] = room.width
+    values[StageLayout.ROOM_DEPTH] = room.depth
+    values[StageLayout.ROOM_HEIGHT] = room.height
+    values[StageLayout.ABSORPTION] = walls.absorption
+    values[StageLayout.DAMPING] = walls.damping
+    values[StageLayout.ROOM_AMOUNT] = roomAmount
+    values[StageLayout.LISTENER_X] = preset.listener.x * room.width / 2
+    values[StageLayout.LISTENER_Y] = preset.listener.y * room.height
+    values[StageLayout.LISTENER_Z] = preset.listener.z * room.depth / 2
+    values[StageLayout.LISTENER_YAW] = 0f
+    values[StageLayout.MASTER] = dbToGain(levelDb)
 
     // every copy of a sound plays the same thing, so the copies together stay as loud as one
     StageSource.entries.forEach { source ->
-        val copies = preset.objects.filter { it.source == source }.take(StageLayout.Copies)
+        val copies = preset.objects.filter { it.source == source }.take(StageLayout.COPIES)
         copies.forEachIndexed { i, o ->
-            putObject(values, source.ordinal * StageLayout.Copies + i, o, room, dbToGain(levelDb) / copies.size)
+            putObject(values, source.ordinal * StageLayout.COPIES + i, o, room, dbToGain(levelDb) / copies.size)
         }
     }
     return values
@@ -136,7 +136,7 @@ private fun putObject(
     box: StageBox,
     gain: Float,
 ) {
-    val at = StageLayout.Objects + slot * StageLayout.ObjectStride
+    val at = StageLayout.OBJECTS + slot * StageLayout.OBJECT_STRIDE
     values[at] = o.x * box.width / 2
     values[at + 1] = o.y * box.height
     values[at + 2] = o.z * box.depth / 2
