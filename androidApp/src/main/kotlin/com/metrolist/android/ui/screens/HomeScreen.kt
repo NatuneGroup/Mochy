@@ -7,11 +7,6 @@
 
 package com.metrolist.android.ui.screens
 
-import com.metrolist.android.ui.component.LocalMochyHomeAccountButton
-import com.metrolist.shared.ui.mochy.MochyHomeTopBar
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.asPaddingValues
 import android.content.res.Configuration
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -26,9 +21,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -76,6 +74,7 @@ import com.metrolist.android.LocalMiniPlayerBottomInset
 import com.metrolist.android.LocalStartupPresentation
 import com.metrolist.android.playback.LocalPlayerConnection
 import com.metrolist.android.ui.component.AdaptiveModalBottomSheet
+import com.metrolist.android.ui.component.LocalMochyHomeAccountButton
 import com.metrolist.android.ui.component.tabContentTopPadding
 import com.metrolist.android.ui.components.ErrorBox
 import com.metrolist.android.ui.components.handleItemClick
@@ -107,6 +106,7 @@ import com.metrolist.shared.ui.components.HomeLoadingPlaceholder
 import com.metrolist.shared.ui.components.PopupVisibility
 import com.metrolist.shared.ui.components.RefreshIndicator
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.mochy.MochyHomeTopBar
 import com.metrolist.shared.ui.navigation.LocalRootContentActive
 import com.metrolist.shared.ui.screens.HomeContent
 import com.metrolist.shared.ui.screens.HomeShelf
@@ -360,10 +360,10 @@ fun HomeScreen(
                         if (!mochyTop) {
                             item {
                                 ChipShelf(
-                                options = uiState.chips,
-                                selectedOption = selectedChip,
-                                onSelectionChange = viewModel.shared::toggleChip,
-                                label = { it.title },
+                                    options = uiState.chips,
+                                    selectedOption = selectedChip,
+                                    onSelectionChange = viewModel.shared::toggleChip,
+                                    label = { it.title },
                                     modifier = Modifier.padding(top = 1.dp),
                                 )
                             }
