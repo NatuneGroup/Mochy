@@ -2,6 +2,10 @@
 
 package com.metrolist.desktop.ui.screens
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.luminance
+import com.metrolist.shared.ui.mochy.MochyHomeTopBar
+import com.metrolist.shared.ui.mochy.MochyHomeBones
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -108,8 +112,14 @@ fun HomeScreen() {
         contextMenu.dismiss()
     }
 
+    // the dark theme gets Mochy's Home: its mark over the hero, folding into a title as the page scrolls
+    val mochyHome = MaterialTheme.colorScheme.background.luminance() < 0.5f
     if (uiState.showLoadingPlaceholder) {
-        HomeLoadingPlaceholder(Modifier.fillMaxSize().padding(top = MdSpacing.sm))
+        if (mochyHome) {
+            MochyHomeBones(Modifier.fillMaxSize())
+        } else {
+            HomeLoadingPlaceholder(Modifier.fillMaxSize().padding(top = MdSpacing.sm))
+        }
         return
     }
 
@@ -180,9 +190,11 @@ fun HomeScreen() {
             isLandscape = true,
             listState = listState,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(top = MdSpacing.sm, bottom = 32.dp),
+            contentPadding = PaddingValues(top = if (mochyHome) 0.dp else MdSpacing.sm, bottom = 32.dp),
+            // the profile button stays in the window's own top bar
+            mochyTopBar = if (mochyHome) ({ progress -> MochyHomeTopBar(scrollProgress = progress) {} }) else null,
             header = {
-                if (uiState.chips.isNotEmpty()) {
+                if (uiState.chips.isNotEmpty() && !mochyHome) {
                     item(key = "chips") {
                         val scrollState = rememberScrollState()
                         DesktopHorizontalScrollControls(scrollState) {
@@ -198,7 +210,11 @@ fun HomeScreen() {
                 }
                 if (uiState.isContentLoading) {
                     item(key = "home_loading") {
-                        HomeLoadingPlaceholder(Modifier.fillMaxWidth().height(600.dp))
+                        if (mochyHome) {
+                            MochyHomeBones(Modifier.fillMaxWidth())
+                        } else {
+                            HomeLoadingPlaceholder(Modifier.fillMaxWidth().height(600.dp))
+                        }
                     }
                 } else if (!uiState.error.isNullOrBlank() && uiState.hasNoHomeContent()) {
                     item(key = "home_error") {

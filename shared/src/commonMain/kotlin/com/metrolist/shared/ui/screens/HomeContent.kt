@@ -301,7 +301,7 @@ fun HomeContent(
 
         // Mochy's bar collapses over the hero's height, or over the room left for the bar when there is no hero
         val collapseDistancePx =
-            with(LocalDensity.current) { (if (heroItems.isNotEmpty()) heroHeight ?: 284.dp else 140.dp).toPx() }
+            with(LocalDensity.current) { (if (heroItems.isNotEmpty() && fullBleedHero) heroHeight ?: 284.dp else 140.dp).toPx() }
         val heroScrollProgress =
             remember(listState, collapseDistancePx) {
                 {
@@ -328,7 +328,8 @@ fun HomeContent(
             // with Mochy's bar the hero sits at the very top, under the status bar, and the header follows it
             if (mochyTopBar == null) {
                 header?.invoke(this)
-            } else if (heroItems.isEmpty() && !uiState.showLoadingPlaceholder) {
+            } else if ((heroItems.isEmpty() || !fullBleedHero) && !uiState.showLoadingPlaceholder) {
+                // a hero card that doesn't run under the bar (desktop, tablets upright) starts below it
                 item(key = "mochy_top_room") { Spacer(Modifier.height(mochyTopRoom)) }
             }
 
@@ -380,7 +381,7 @@ fun HomeContent(
                 isLandscape = isLandscape,
                 speedDialSurpriseAtEndOfFirstPage = speedDialSurpriseAtEndOfFirstPage,
                 isWide = isWide,
-                useMochyMobileShelves = !desktopHome && !isTv,
+                useMochyMobileShelves = !isTv && (!desktopHome || mochyTopBar != null),
             )
 
             if (uiState.isContentLoading || uiState.isLoadingMore) {

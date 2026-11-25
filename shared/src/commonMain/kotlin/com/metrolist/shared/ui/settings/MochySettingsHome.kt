@@ -5,6 +5,10 @@
 
 package com.metrolist.shared.ui.settings
 
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -84,7 +88,11 @@ import org.jetbrains.compose.resources.stringResource
 
 internal object MochySettingsColors {
     val Page = Color.Black
+
+    // the open page beside the desktop pane: a step up from the black so the two read apart
+    val Pane = Color(0xFF0C0C0D)
     val Bubble = Color(0xFF1C1C1E)
+    val BubbleSelected = Color(0xFF2E2E31)
     val IconBackground = Color(0xFF333338)
     val Field = Color(0xFF141416)
     val FieldFocused = Color(0xFF1E1E21)
@@ -136,61 +144,7 @@ internal fun MochySettingsHome(
                 enter = fadeIn(tween(160, easing = FastOutSlowInEasing)) + slideInVertically(tween(160, easing = FastOutSlowInEasing)) { 20 },
                 exit = fadeOut(tween(120, easing = FastOutSlowInEasing)),
             ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    if (results.isEmpty()) {
-                        Text(
-                            text = stringResource(Res.string.settings_search_no_results),
-                            fontFamily = font,
-                            fontSize = 15.sp,
-                            color = Color.White.copy(alpha = 0.6f),
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 12.dp),
-                        )
-                    } else {
-                        results.forEach { result ->
-                            Row(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(20.dp))
-                                        .background(MochySettingsColors.Bubble)
-                                        .clickable {
-                                            focusManager.clearFocus()
-                                            onSearchResultSelected(result.page.id, result.item?.id)
-                                        }.padding(horizontal = 16.dp, vertical = 14.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Box(
-                                    modifier = Modifier.size(38.dp).clip(CircleShape).background(MochySettingsColors.IconBackground),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Icon(result.page.icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
-                                }
-                                Spacer(Modifier.width(11.dp))
-                                Column {
-                                    Text(
-                                        text = result.item?.title ?: result.page.title,
-                                        fontFamily = font,
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 16.sp,
-                                        color = Color.White,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                    Text(
-                                        text = result.page.title,
-                                        fontFamily = font,
-                                        fontSize = 12.sp,
-                                        color = Color.White.copy(alpha = 0.55f),
-                                        maxLines = 1,
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
+                MochySearchResults(results, onSearchResultSelected, Modifier.padding(horizontal = 20.dp))
             }
 
             if (showContent) {
@@ -432,14 +386,21 @@ private fun MochyCategoryBubble(
     title: String,
     icon: @Composable (Color) -> Unit,
     onClick: () -> Unit,
+    selected: Boolean = false,
 ) {
+    // the desktop pane marks the open page by lifting its bubble a shade
+    val background by animateColorAsState(
+        if (selected) MochySettingsColors.BubbleSelected else MochySettingsColors.Bubble,
+        tween(180, easing = FastOutSlowInEasing),
+        label = "mochyBubble",
+    )
     Row(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .height(64.dp)
                 .clip(RoundedCornerShape(22.dp))
-                .background(MochySettingsColors.Bubble)
+                .background(background)
                 .clickable(onClick = onClick)
                 .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -488,4 +449,159 @@ private fun rememberMochyCollapse(scrollState: ScrollState): State<Float> {
         animationSpec = tween(COLLAPSE_MILLIS, easing = CollapseEasing),
         label = "mochySettingsCollapse",
     )
+}
+
+@Composable
+private fun MochySearchResults(
+    results: List<SettingsSearchResult>,
+    onSearchResultSelected: (SettingsPageId, String?) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val focusManager = LocalFocusManager.current
+    val font = mochyInterFontFamily()
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        if (results.isEmpty()) {
+            Text(
+                text = stringResource(Res.string.settings_search_no_results),
+                fontFamily = font,
+                fontSize = 15.sp,
+                color = Color.White.copy(alpha = 0.6f),
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 12.dp),
+            )
+        } else {
+            results.forEach { result ->
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(MochySettingsColors.Bubble)
+                            .clickable {
+                                focusManager.clearFocus()
+                                onSearchResultSelected(result.page.id, result.item?.id)
+                            }.padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(
+                        modifier = Modifier.size(38.dp).clip(CircleShape).background(MochySettingsColors.IconBackground),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(result.page.icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                    }
+                    Spacer(Modifier.width(11.dp))
+                    Column {
+                        Text(
+                            text = result.item?.title ?: result.page.title,
+                            fontFamily = font,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 16.sp,
+                            color = Color.White,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            text = result.page.title,
+                            fontFamily = font,
+                            fontSize = 12.sp,
+                            color = Color.White.copy(alpha = 0.55f),
+                            maxLines = 1,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Settings on a desktop window, Mochy's way: the mark over a big title, the round search and one bubble per
+ * page in a side pane, the open page lifted a shade. The page itself fills the space beside it.
+ */
+@Composable
+internal fun MochySettingsNavigationPane(
+    registry: SettingsUiRegistry,
+    host: SharedSettingsHost,
+    selectedPageId: SettingsPageId?,
+    onPageSelected: (SettingsPageId) -> Unit,
+    onSearchResultSelected: (SettingsPageId, String?) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var query by rememberSaveable { mutableStateOf("") }
+    var searchFocused by remember { mutableStateOf(false) }
+    val results = rememberSettingsSearchResults(registry, query)
+    val listState = rememberLazyListState()
+    Column(modifier.background(MochySettingsColors.Page).padding(top = TopClearance)) {
+        Column(
+            modifier = Modifier.padding(horizontal = SidePadding).height(TitleBlockHeight),
+            verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
+        ) {
+            Icon(
+                painter = painterResource(Res.drawable.mochy_mark),
+                contentDescription = stringResource(Res.string.app_name),
+                tint = Color.White,
+                modifier = Modifier.size(MarkSize),
+            )
+            Text(
+                text = stringResource(Res.string.settings),
+                fontFamily = mochyInterFontFamily(),
+                fontWeight = FontWeight.Bold,
+                fontSize = 34.sp,
+                lineHeight = 40.sp,
+                color = Color.White,
+                maxLines = 1,
+            )
+        }
+        Box(Modifier.padding(horizontal = SidePadding)) {
+            MochySearchField(
+                value = query,
+                onValueChange = { query = it },
+                placeholder = stringResource(Res.string.settings_search_placeholder),
+                focused = searchFocused,
+                onFocusChanged = { searchFocused = it },
+            )
+        }
+        Spacer(Modifier.height(20.dp))
+        if (query.isNotBlank()) {
+            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                MochySearchResults(results, onSearchResultSelected, Modifier.padding(horizontal = 16.dp))
+                Spacer(Modifier.height(24.dp + host.bottomContentPadding))
+            }
+        } else {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp + host.bottomContentPadding),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                registry.rootGroups.filter { it.pages.isNotEmpty() }.forEachIndexed { groupIndex, group ->
+                    if (groupIndex > 0) {
+                        item("divider:" + group.title) {
+                            Box(Modifier.fillMaxWidth().padding(vertical = 6.dp).height(0.8.dp).background(MochySettingsColors.Divider))
+                        }
+                    }
+                    items(group.pages.size, key = { group.pages[it].name }) { index ->
+                        val pageId = group.pages[index]
+                        registry[pageId]?.let { page ->
+                            MochyCategoryBubble(
+                                title = page.title,
+                                selected = pageId == selectedPageId,
+                                icon = { tint ->
+                                    val custom = host.customPageIcons[pageId]
+                                    if (custom != null) {
+                                        custom(tint)
+                                    } else {
+                                        Icon(page.icon, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
+                                    }
+                                },
+                                onClick = { onPageSelected(pageId) },
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

@@ -13,6 +13,9 @@
 
 package com.metrolist.desktop.ui.layouts
 
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -233,7 +236,8 @@ private fun DesktopNavigationScaffold(
             NavigationSuiteDefaults.colors(
                 wideNavigationRailColors =
                     WideNavigationRailDefaults.colors(
-                        containerColor = colorScheme.surfaceContainer,
+                        // Mochy's dark look: the rail sits on the window's own colour instead of a tinted strip
+                        containerColor = if (colorScheme.isMochyDark()) colorScheme.background else colorScheme.surfaceContainer,
                     ),
             ),
         containerColor = colorScheme.background,
@@ -674,10 +678,13 @@ private fun StandardContentSurface(
     onLibraryScrollStateChange: (LazyGridState) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val mochyDark = colorScheme.isMochyDark()
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(20.dp),
-        color = colorScheme.surface,
+        // in the dark theme the page is the window's black like Mochy's, a hairline keeps the pane's edge
+        color = if (mochyDark) colorScheme.background else colorScheme.surface,
+        border = if (mochyDark) BorderStroke(0.75.dp, Color.White.copy(alpha = 0.07f)) else null,
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             AppContentHost(
@@ -698,3 +705,5 @@ private fun StandardContentSurface(
         }
     }
 }
+
+private fun ColorScheme.isMochyDark(): Boolean = background.luminance() < 0.5f

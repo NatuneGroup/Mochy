@@ -4,6 +4,10 @@
 
 package com.metrolist.shared
 
+import androidx.compose.runtime.CompositionLocalProvider
+import com.metrolist.shared.ui.mochy.rememberMochyLaunchIntroState
+import com.metrolist.shared.ui.mochy.MochyLaunchIntroOverlay
+import com.metrolist.shared.ui.mochy.LocalMochyLaunchIntro
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -465,6 +469,9 @@ fun MetrolistIOSApp() {
         return PlaylistImportFile(name, bytes)
     }
 
+    // a cold start straight into the app (not out of setup) plays Mochy's launch intro in the dark theme
+    val iosLaunchIntro =
+        rememberMochyLaunchIntroState(plays = !showOnboarding && Settings.shared.getCurrentThemeIsDark())
     Box(Modifier.fillMaxSize()) {
         if (showOnboarding) {
             Settings.shared.systemInDarkTheme = isSystemInDarkTheme()
@@ -493,6 +500,7 @@ fun MetrolistIOSApp() {
             DisposableEffect(Unit) {
                 onDispose { latestPendingDispose?.complete(Unit) }
             }
+            CompositionLocalProvider(LocalMochyLaunchIntro provides iosLaunchIntro) {
             key(appGeneration) {
                 MobileApp(
                     onExportStatistics = { IosNativeFiles.shareImage(presenter, it, "mochy-statistics-") },
@@ -617,6 +625,9 @@ fun MetrolistIOSApp() {
                     },
                 )
             }
+            }
+            MochyLaunchIntroOverlay(iosLaunchIntro)
+
             IosUpdateNotice()
         }
         IosPageBoundTokenHost()

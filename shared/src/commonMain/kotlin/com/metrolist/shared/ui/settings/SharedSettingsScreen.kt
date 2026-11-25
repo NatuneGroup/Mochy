@@ -257,23 +257,39 @@ internal fun SharedSettingsRegistryScreen(
         val previousPageId = pageStack.dropLast(1).lastOrNull()?.let { runCatching { SettingsPageId.valueOf(it) }.getOrNull() }
         if (expanded) {
             val detailPageId = selectedPageId ?: registry.pages.firstOrNull { !it.custom }?.id
+            // wide windows in the dark theme keep the two panes but take Mochy's black page and bubbles
+            val mochyLook = !LocalIsTv.current && MaterialTheme.colorScheme.background.luminance() < 0.5f
             Row(
                 modifier =
                     Modifier
                         .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surface)
+                        .background(if (mochyLook) MochySettingsColors.Page else MaterialTheme.colorScheme.surface)
                         .windowInsetsPadding(WindowInsets.safeDrawing),
             ) {
-                SettingsNavigationPane(
-                    registry = registry,
-                    selectedPageId = registry.pages.firstOrNull { it.id.name == pageStack.firstOrNull() }?.id ?: detailPageId,
-                    bottomContentPadding = host.bottomContentPadding,
-                    onPageSelected = { openPage(it) },
-                    onSearchResultSelected = { pageId, itemId ->
-                        openPage(pageId, highlightedId = itemId)
-                    },
-                    modifier = Modifier.width(360.dp).fillMaxHeight(),
-                )
+                val paneSelection = registry.pages.firstOrNull { it.id.name == pageStack.firstOrNull() }?.id ?: detailPageId
+                if (mochyLook) {
+                    MochySettingsNavigationPane(
+                        registry = registry,
+                        host = host,
+                        selectedPageId = paneSelection,
+                        onPageSelected = { openPage(it) },
+                        onSearchResultSelected = { pageId, itemId ->
+                            openPage(pageId, highlightedId = itemId)
+                        },
+                        modifier = Modifier.width(360.dp).fillMaxHeight(),
+                    )
+                } else {
+                    SettingsNavigationPane(
+                        registry = registry,
+                        selectedPageId = paneSelection,
+                        bottomContentPadding = host.bottomContentPadding,
+                        onPageSelected = { openPage(it) },
+                        onSearchResultSelected = { pageId, itemId ->
+                            openPage(pageId, highlightedId = itemId)
+                        },
+                        modifier = Modifier.width(360.dp).fillMaxHeight(),
+                    )
+                }
                 Column(
                     modifier = Modifier.weight(1f).fillMaxHeight().padding(end = 12.dp, bottom = 12.dp),
                 ) {
@@ -310,7 +326,7 @@ internal fun SharedSettingsRegistryScreen(
                     Surface(
                         modifier = Modifier.fillMaxWidth().weight(1f),
                         shape = RoundedCornerShape(28.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerLow,
+                        color = if (mochyLook) MochySettingsColors.Pane else MaterialTheme.colorScheme.surfaceContainerLow,
                     ) {
                         PredictiveNavigationContent(
                             targetState = detailPageId,
@@ -402,8 +418,8 @@ private fun CompactSettingsHome(
     onSearchResultSelected: (SettingsPageId, String?) -> Unit,
 ) {
     val isTv = LocalIsTv.current
-    // phones and tablets in the dark theme get Mochy's own settings list
-    if (!isTv && host.platform != SettingsPlatform.DESKTOP && host.title == null && MaterialTheme.colorScheme.background.luminance() < 0.5f) {
+    // the dark theme gets Mochy's own settings list, on narrow desktop windows too
+    if (!isTv && host.title == null && MaterialTheme.colorScheme.background.luminance() < 0.5f) {
         MochySettingsHome(
             registry = registry,
             host = host,

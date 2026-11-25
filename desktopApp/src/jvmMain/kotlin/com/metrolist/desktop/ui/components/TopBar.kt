@@ -7,6 +7,7 @@
 
 package com.metrolist.desktop.ui.components
 
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
@@ -233,7 +234,7 @@ fun DesktopWindowScope.CustomTitleBar(
                 Modifier
                     .fillMaxWidth()
                     .height(DesktopTitleBarHeight)
-                    .background(colorScheme.surfaceContainer)
+                    .background(colorScheme.titleBarColor())
                     .windowInsetsPadding(LocalCaptionBarInsets.current.only(WindowInsetsSides.Right))
                     .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -290,7 +291,7 @@ fun DesktopWindowScope.CustomTitleBar(
     if (isMacOS && !Settings.shared.enableSystemWindowFrame) {
         val trafficLightOffset = if (UiState.isNativeFullscreen) 0.dp else 78.dp
         Row(
-            modifier = Modifier.fillMaxWidth().height(DesktopTitleBarHeight).background(colorScheme.surfaceContainer),
+            modifier = Modifier.fillMaxWidth().height(DesktopTitleBarHeight).background(colorScheme.titleBarColor()),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (trafficLightOffset > 0.dp) Spacer(Modifier.width(trafficLightOffset))
@@ -351,7 +352,7 @@ fun DesktopWindowScope.TopBarWithPlayer(
             },
         )
     val titlebarContent2: @Composable () -> Unit = {
-        val bgColor = colorScheme.surfaceContainer
+        val bgColor = colorScheme.titleBarColor()
         Row(
             modifier =
                 Modifier
@@ -733,7 +734,7 @@ fun DesktopWindowScope.TopBarWithPlayer(
     if (isMacOS && !Settings.shared.enableSystemWindowFrame) {
         val trafficLightOffset = if (UiState.isNativeFullscreen) 0.dp else 78.dp
         Row(
-            modifier = Modifier.fillMaxWidth().height(DesktopTitleBarHeight).background(colorScheme.surfaceContainer),
+            modifier = Modifier.fillMaxWidth().height(DesktopTitleBarHeight).background(colorScheme.titleBarColor()),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (trafficLightOffset > 0.dp) Spacer(Modifier.width(trafficLightOffset))
@@ -1342,7 +1343,7 @@ fun ExpressiveDownloadIndicatorPill(
                                     Modifier
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(8.dp))
-                                        .background(colorScheme.surfaceContainer)
+                                        .background(colorScheme.titleBarColor())
                                         .padding(8.dp),
                                 verticalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
@@ -1458,3 +1459,6 @@ private fun TopBarPlaybackProgress(color: Color) {
         )
     }
 }
+
+// the dark theme runs Mochy's black through the title bar too, so window, rail and bar read as one surface
+private fun ColorScheme.titleBarColor(): Color = if (background.luminance() < 0.5f) background else surfaceContainer

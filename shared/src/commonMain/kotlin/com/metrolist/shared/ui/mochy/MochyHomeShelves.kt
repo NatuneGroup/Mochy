@@ -2,6 +2,8 @@
 
 package com.metrolist.shared.ui.mochy
 
+import androidx.compose.foundation.lazy.rememberLazyListState
+import com.metrolist.shared.ui.components.DesktopHorizontalScrollControls
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -112,6 +114,8 @@ internal fun MochyHomeTrackShelf(
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val twoColumnWidth = maxWidth * 0.475f
         val columnWidth = if (twoColumnWidth >= 320.dp) twoColumnWidth else maxWidth * 0.76f
+        // a mouse wheel can't move a sideways row, so desktop gets the arrow buttons other shelves have
+        DesktopHorizontalScrollControls(state) {
         LazyHorizontalGrid(
             rows = GridCells.Fixed(rows),
             state = state,
@@ -182,6 +186,7 @@ internal fun MochyHomeTrackShelf(
                 }
             }
         }
+        }
     }
 }
 
@@ -198,7 +203,13 @@ internal fun MochyHomeCoverShelf(
     val size = if (Settings.shared.gridItemSize == GridItemSize.BIG) 137.dp else 104.dp
     val seen = rememberRevealSeenState()
     val reveal = LocalRootContentActive.current && !LocalContentObscured.current && !rememberReducedMotion()
-    LazyRow(contentPadding = PaddingValues(horizontal = HomeInset), horizontalArrangement = Arrangement.spacedBy(15.dp)) {
+    val rowState = rememberLazyListState()
+    DesktopHorizontalScrollControls(rowState) {
+    LazyRow(
+        state = rowState,
+        contentPadding = PaddingValues(horizontal = HomeInset),
+        horizontalArrangement = Arrangement.spacedBy(15.dp),
+    ) {
         itemsIndexed(
             items,
             key = { index, item -> "$sectionKey/${canonicalHomeItemId(item)}/$index" },
@@ -248,6 +259,7 @@ internal fun MochyHomeCoverShelf(
                 }
             }
         }
+    }
     }
 }
 

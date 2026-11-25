@@ -14,6 +14,9 @@
 
 package com.metrolist.desktop
 
+import com.metrolist.shared.ui.mochy.rememberMochyLaunchIntroState
+import com.metrolist.shared.ui.mochy.MochyLaunchIntroOverlay
+import com.metrolist.shared.ui.mochy.LocalMochyLaunchIntro
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -309,7 +312,17 @@ fun DesktopWindowScope.App(
         LocalMouseScrollFactors provides desktopMouseScrollFactors(LocalDensity.current),
         desktopScrollConfig(),
     ) {
-        AppContent(navigator, onMaximized, toggleWindowFullscreen, checkDarkMode, isLinux)
+        // Mochy's launch intro: the mark flies into Home's logo as the window opens, in the dark theme it has a logo
+        val launchIntro =
+            rememberMochyLaunchIntroState(
+                plays = Settings.shared.desktopOnboardingComplete && Settings.shared.getCurrentThemeIsDark(),
+            )
+        CompositionLocalProvider(LocalMochyLaunchIntro provides launchIntro) {
+            Box(Modifier.fillMaxSize()) {
+                AppContent(navigator, onMaximized, toggleWindowFullscreen, checkDarkMode, isLinux)
+                MochyLaunchIntroOverlay(launchIntro)
+            }
+        }
     }
 }
 
