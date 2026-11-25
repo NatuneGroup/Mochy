@@ -70,10 +70,6 @@ on:
         required: false
       LASTFM_SECRET:
         required: false
-      LYPRIO_BASE_URL:
-        required: false
-      LYPRIO_HMAC_KEY:
-        required: false
 
 jobs:
   build:
@@ -104,8 +100,6 @@ jobs:
           UPLOAD_SENTRY: ${{ inputs.upload-sentry }}
           LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
           LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
-          LYPRIO_BASE_URL: ${{ secrets.LYPRIO_BASE_URL }}
-          LYPRIO_HMAC_KEY: ${{ secrets.LYPRIO_HMAC_KEY }}
         run: |
           set -euo pipefail
           if [[ "$BUILD_VARIANT" != "debug" && "$BUILD_VARIANT" != "release" && "$BUILD_VARIANT" != "izzy" ]]; then
@@ -137,11 +131,6 @@ jobs:
             # Mochy ships without Last.fm keys until the repository sets them; scrobbling is then unavailable.
             if [[ -z "$LASTFM_API_KEY" || -z "$LASTFM_SECRET" ]]; then
               echo "::warning::LASTFM_API_KEY or LASTFM_SECRET is not set; this build has no Last.fm scrobbling"
-            fi
-          fi
-          if [[ "$BUILD_VARIANT" == "release" && "$REQUIRE_SIGNING" == "true" ]]; then
-            if [[ -z "$LYPRIO_BASE_URL" || -z "$LYPRIO_HMAC_KEY" ]]; then
-              echo "::warning::LYPRIO_BASE_URL or LYPRIO_HMAC_KEY is not set; this build has no Lyprio lyrics"
             fi
           fi
 
@@ -195,8 +184,6 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
           LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
-          LYPRIO_BASE_URL: ${{ secrets.LYPRIO_BASE_URL }}
-          LYPRIO_HMAC_KEY: ${{ secrets.LYPRIO_HMAC_KEY }}
         run: |
           set -euo pipefail
           extra_args=()

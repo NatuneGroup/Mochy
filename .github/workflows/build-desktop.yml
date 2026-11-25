@@ -52,8 +52,6 @@ jobs:
       GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
       LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
       LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
-      LYPRIO_BASE_URL: ${{ secrets.LYPRIO_BASE_URL }}
-      LYPRIO_HMAC_KEY: ${{ secrets.LYPRIO_HMAC_KEY }}
 
   windows:
     name: Windows package
@@ -68,8 +66,6 @@ jobs:
     secrets:
       LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
       LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
-      LYPRIO_BASE_URL: ${{ secrets.LYPRIO_BASE_URL }}
-      LYPRIO_HMAC_KEY: ${{ secrets.LYPRIO_HMAC_KEY }}
 
   windows-manager:
     name: Verify Windows installer
@@ -95,5 +91,3 @@ jobs:
       GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
       LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
       LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
-      LYPRIO_BASE_URL: ${{ secrets.LYPRIO_BASE_URL }}
-      LYPRIO_HMAC_KEY: ${{ secrets.LYPRIO_HMAC_KEY }}

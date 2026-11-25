@@ -43,10 +43,6 @@ on:
         required: false
       GRADLE_ENCRYPTION_KEY:
         required: false
-      LYPRIO_BASE_URL:
-        required: false
-      LYPRIO_HMAC_KEY:
-        required: false
       LASTFM_API_KEY:
         required: false
       LASTFM_SECRET:
@@ -210,28 +206,19 @@ jobs:
 
       - name: Validate tester release credentials
         if: inputs.staging-release-tag != ''
-        env:
-          LYPRIO_BASE_URL: ${{ secrets.LYPRIO_BASE_URL }}
-          LYPRIO_HMAC_KEY: ${{ secrets.LYPRIO_HMAC_KEY }}
         run: |
           test -n "$LASTFM_API_KEY" || { echo "LASTFM_API_KEY is required for tester releases" >&2; exit 1; }
           test -n "$LASTFM_SECRET" || { echo "LASTFM_SECRET is required for tester releases" >&2; exit 1; }
-          test -n "$LYPRIO_BASE_URL" || { echo "LYPRIO_BASE_URL is required for tester releases" >&2; exit 1; }
-          test -n "$LYPRIO_HMAC_KEY" || { echo "LYPRIO_HMAC_KEY is required for tester releases" >&2; exit 1; }
 
       - name: Compile iOS release framework
         env:
           CONFIGURATION: Release
           ORG_GRADLE_PROJECT_metrolist.verifyPackaging: ${{ inputs.run-verification }}
-          LYPRIO_BASE_URL: ${{ secrets.LYPRIO_BASE_URL }}
-          LYPRIO_HMAC_KEY: ${{ secrets.LYPRIO_HMAC_KEY }}
         run: ./gradlew :shared:linkReleaseFrameworkIosArm64 --no-configuration-cache
 
       - name: Build iOS IPA
         env:
           ORG_GRADLE_PROJECT_metrolist.verifyPackaging: ${{ inputs.run-verification }}
-          LYPRIO_BASE_URL: ${{ secrets.LYPRIO_BASE_URL }}
-          LYPRIO_HMAC_KEY: ${{ secrets.LYPRIO_HMAC_KEY }}
         run: |
           ./scripts/build_ios.sh --ipa
 
