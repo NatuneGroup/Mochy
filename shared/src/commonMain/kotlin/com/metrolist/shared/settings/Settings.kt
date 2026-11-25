@@ -472,6 +472,7 @@ class Settings(
     var reverbWidth by preference(ReverbWidthKey, reverbDefaults.width)
     var reverbPreDelayMs by preference(ReverbPreDelayMsKey, reverbDefaults.preDelayMs)
     var reverbLowCutHz by preference(ReverbLowCutHzKey, reverbDefaults.lowCutHz)
+
     // the id of the room preset last picked; empty once a slider has changed it by hand
     var reverbPresetId by preference(ReverbPresetIdKey, ReverbPresets.Default.id)
     private val eightDDefaults = EightDSettings()

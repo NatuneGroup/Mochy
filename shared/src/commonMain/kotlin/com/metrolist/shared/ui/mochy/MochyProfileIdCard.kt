@@ -503,10 +503,11 @@ fun InteractiveProfileIdCard(
                 stats = backStats,
                 silver = silver,
                 sheen = { 0.5f + tiltY.value / 42f },
-                modifier = Modifier.graphicsLayer {
-                    rotationY = 180f
-                    cameraDistance = 14f * density
-                },
+                modifier =
+                    Modifier.graphicsLayer {
+                        rotationY = 180f
+                        cameraDistance = 14f * density
+                    },
             )
         }
     }
