@@ -26,14 +26,24 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.em
+import com.metrolist.shared.generated.resources.Res
+import com.metrolist.shared.generated.resources.menu
+import com.metrolist.shared.generated.resources.next
+import com.metrolist.shared.generated.resources.play_pause
+import com.metrolist.shared.generated.resources.previous
+import com.metrolist.shared.generated.resources.select
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.PI
 import kotlin.math.atan2
 
@@ -72,6 +82,11 @@ internal fun IpodClickWheel(
     var glowZone by remember { mutableStateOf<RingZone?>(null) }
     val measurer = rememberTextMeasurer()
     val inter = mochyInterFontFamily()
+    val playPauseLabel = stringResource(Res.string.play_pause)
+    val previousLabel = stringResource(Res.string.previous)
+    val nextLabel = stringResource(Res.string.next)
+    val menuLabel = stringResource(Res.string.menu)
+    val selectLabel = stringResource(Res.string.select)
     val light: (RingZone?) -> Unit = { zone ->
         glowZone = zone
         scope.launch { glow.snapTo(1f) }
@@ -82,6 +97,32 @@ internal fun IpodClickWheel(
         modifier =
             modifier
                 .graphicsLayer()
+                .semantics {
+                    customActions =
+                        listOf(
+                            CustomAccessibilityAction(playPauseLabel) {
+                                tap(RingZone.PLAY, haptics, current)
+                                true
+                            },
+                            CustomAccessibilityAction(previousLabel) {
+                                tap(RingZone.PREVIOUS, haptics, current)
+                                true
+                            },
+                            CustomAccessibilityAction(nextLabel) {
+                                tap(RingZone.NEXT, haptics, current)
+                                true
+                            },
+                            CustomAccessibilityAction(menuLabel) {
+                                tap(RingZone.MENU, haptics, current)
+                                true
+                            },
+                            CustomAccessibilityAction(selectLabel) {
+                                haptics.click()
+                                current.center()
+                                true
+                            },
+                        )
+                }
                 .pointerInput(enabled, haptics) {
                     if (!enabled) return@pointerInput
                     val spinner = Spinner()
