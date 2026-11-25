@@ -26,9 +26,11 @@ Read first: [mochy-port.md](mochy-port.md), [../CLAUDE.md](../CLAUDE.md) and
   `com.natune.mochy`, version 14.0.1, v2 and v3 APK signatures (v1 is not used at
   minSdk 24), 3 dex files, 18 native library entries. The previous debug APK was
   48 MB with 23 dex files.
-- No GitHub Actions secrets are configured in `NatuneGroup/Mochy`
-  (`total_count: 0`). CI therefore builds release with the published test key added
-  in this handoff commit.
+- Release signing secrets are set in `NatuneGroup/Mochy` (2026-11-25): `KEYSTORE_PATH`
+  (base64 PKCS12), `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`. Certificate
+  `CN=Mochy (NatuneGroup), O=NatuneGroup`, SHA-256
+  `B8:8C:3C:FE:9C:4A:F0:A0:D0:9F:70:30:E8:A7:A4:DD:7B:43:55:ED:86:07:3D:A3:03:0E:59:D5:11:13:1F:95`.
+  The keystore and its password are kept offline by the operator, never in the repo.
 - CI run history: `gh run list --repo NatuneGroup/Mochy --branch feat/mochy-multiplatform`.
 
 ## Completed work
@@ -50,10 +52,10 @@ Read first: [mochy-port.md](mochy-port.md), [../CLAUDE.md](../CLAUDE.md) and
   debug suffix `.debug`, label `Mochy` / `Mochy Debug`.
 - Launcher icon: Mochy play-triangle mark in `ic_launcher_foreground.xml` and
   `ic_launcher_monochrome.xml`, background `#FF1A1A1A`.
-- Signing order: `KEYSTORE_*` secrets, then `androidApp/keystore/mochy-test.p12`
-  (`CN=Mochy Test Build`, password `mochytest`, alias `mochy-test`), then the
-  runner debug keystore. The published test key keeps signatures stable across
-  ephemeral CI runners. See `androidApp/keystore/README.md`.
+- Signing order: `KEYSTORE_*` secrets (the real Mochy key), then the published
+  `androidApp/keystore/mochy-test.p12` (only for builds without secrets, such as forks),
+  then the runner debug keystore. An APK signed with the test key cannot update to a
+  secret-signed one. See `androidApp/keystore/README.md`.
 - `scripts/collect_android_apks.py` emits `Mochy.apk`, `Mochy-izzy.apk` and
   `mochy-android-<version>-debug.apk`.
 - `reusable-android-build.yml` verifies every collected APK with
@@ -224,10 +226,20 @@ workflow tests and Android collector test do not.
 
 ## Known caveats
 
-- The app ID changed from `com.metrolist.music` to `com.natune.mochy` and the signing
-  key changed, so an APK installed from an earlier build must be uninstalled once.
-  Data from the old package is not migrated automatically; use the app's backup and
-  restore.
+- `com.natune.mochy` is its own app. It installs next to the early
+  `com.metrolist.music` preview, Metrolist and original Mochy (`com.mochyy.mochymusic`),
+  so testers can keep the old app and compare. Only builds signed with the same key update
+  each other in place: test-key builds made before 2026-11-25 must be reinstalled once to
+  move to the real key. Export a backup from the old app and check the import in Mochy
+  before removing anything; data is not migrated between apps automatically.
+- iOS uses bundle ID `com.natune.mochy` and display name Mochy, with the background task
+  `com.natune.mochy.automatic-backup`. The `metrolist` and `metrolist-auth` URL schemes
+  are unchanged because the sign-in redirects registered with providers use them; with both
+  apps installed, iOS may open either one for those links.
+- Desktop keeps its settings, library, lock, backups, caches and logs under `mochy/` in
+  the XDG directories (`Mochy` for WebView data on Windows and macOS), so it runs beside
+  Metrolist. It no longer reads or clears Metrolist's java.util.prefs nodes. Importing a
+  Metrolist library is a manual backup and restore.
 - Intent actions remain `com.metrolist.music.action.*` on purpose. Shortcuts and
   internal receivers use them, and they are not package IDs.
 - Without Last.fm/Lyprio secrets the release APK ships empty keys. Those features

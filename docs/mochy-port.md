@@ -6,7 +6,7 @@ The separate integration checkout starts at Metrolist `af3d05339d74b342c0a49af30
 
 The Android app is `com.natune.mochy`, labelled Mochy, with the Mochy play-triangle launcher mark. Release builds enable R8 and resource shrinking and use the shipped `Mochy` branding; debug builds use the `.debug` suffix and the `Mochy Debug` label.
 
-CI collects `Mochy.apk`, `Mochy-izzy.apk` and `mochy-android-<version>-debug.apk`, then verifies every APK with `apksigner verify --verbose --print-certs`. Release signing uses the `KEYSTORE_*` secrets when configured and otherwise falls back to the published test key in `androidApp/keystore/mochy-test.p12`, so consecutive runs share one signature and update in place. See [handoff.md](handoff.md) for the current release evidence and remaining waves.
+CI collects `Mochy.apk`, `Mochy-izzy.apk` and `mochy-android-<version>-debug.apk`, then verifies every APK with `apksigner verify --verbose --print-certs`. Release signing uses the `KEYSTORE_*` secrets, which hold the real Mochy key in this repository; builds without them, such as forks, fall back to the published test key in `androidApp/keystore/mochy-test.p12`. See [handoff.md](handoff.md) for the current release evidence and remaining waves.
 
 ## Desktop design
 

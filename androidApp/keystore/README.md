@@ -2,7 +2,10 @@
 
 `mochy-test.p12` is a published, non-secret release key. Gradle uses it only when
 `KEYSTORE_PATH`, `KEYSTORE_PASSWORD`, `KEY_ALIAS` and `KEY_PASSWORD` are all absent,
-which is the case for this fork's GitHub Actions builds.
+which is only the case for builds without the repository secrets, such as forks.
+NatuneGroup/Mochy's own CI signs with the real Mochy key from the `KEYSTORE_*` secrets
+(certificate `CN=Mochy (NatuneGroup)`), and an APK signed with this test key cannot
+update to one signed with that key.
 
 The file exists so consecutive CI builds share one signature. Android refuses to
 install an update signed by a different key, and a fresh GitHub Actions runner has
