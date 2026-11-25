@@ -38,6 +38,17 @@ fun Settings.eightDSettings(): EightDSettings =
         depth = eightDDepth,
     )
 
+/** The saved Stage controls, as the Android player applies them. */
+fun Settings.stageSettings(): StageSettings =
+    StageSettings(
+        enabled = stageEnabled,
+        presetId = stagePresetId,
+        roomSize = stageRoomSize,
+        walls = stageWalls,
+        roomAmount = stageRoomAmount,
+        levelDb = stageLevelDb,
+    )
+
 /** Emits the current spatial controls, then again after each change. */
 fun Settings.spatialSettingsFlow(): Flow<SpatialSettings> = snapshotFlow { spatialSettings() }.distinctUntilChanged()
 
@@ -46,3 +57,6 @@ fun Settings.reverbSettingsFlow(): Flow<ReverbSettings> = snapshotFlow { reverbS
 
 /** Emits the current 8D controls, then again after each change. */
 fun Settings.eightDSettingsFlow(): Flow<EightDSettings> = snapshotFlow { eightDSettings() }.distinctUntilChanged()
+
+/** Emits the current Stage controls, then again after each change. */
+fun Settings.stageSettingsFlow(): Flow<StageSettings> = snapshotFlow { stageSettings() }.distinctUntilChanged()

@@ -16,6 +16,7 @@ import com.metrolist.shared.audiolab.ReverbPresets
 import com.metrolist.shared.audiolab.ReverbSettings
 import com.metrolist.shared.audiolab.SpatialMode
 import com.metrolist.shared.audiolab.SpatialSettings
+import com.metrolist.shared.audiolab.StageSettings
 import com.metrolist.shared.backup.AutoBackupFrequency
 import com.metrolist.shared.constants.ActiveLyricsTextPositionKey
 import com.metrolist.shared.constants.AiSlopBlocklistCacheKey
@@ -222,6 +223,12 @@ import com.metrolist.shared.constants.SpatialSpeakerAngleKey
 import com.metrolist.shared.constants.SpeedDialArtworkRefreshTimesKey
 import com.metrolist.shared.constants.SpeedDialSurprisePinnedKey
 import com.metrolist.shared.constants.SponsorBlockEnabledKey
+import com.metrolist.shared.constants.StageEnabledKey
+import com.metrolist.shared.constants.StageLevelDbKey
+import com.metrolist.shared.constants.StagePresetIdKey
+import com.metrolist.shared.constants.StageRoomAmountKey
+import com.metrolist.shared.constants.StageRoomSizeKey
+import com.metrolist.shared.constants.StageWallsKey
 import com.metrolist.shared.constants.SupportPromptDismissedKey
 import com.metrolist.shared.constants.SupportPromptLaunchThresholdKey
 import com.metrolist.shared.constants.SupportPromptLaunchesKey
@@ -494,6 +501,13 @@ class Settings(
     var eightDEnabled by preference(EightDEnabledKey, eightDDefaults.enabled)
     var eightDRotationSpeedHz by preference(EightDRotationSpeedHzKey, eightDDefaults.rotationSpeedHz)
     var eightDDepth by preference(EightDDepthKey, eightDDefaults.depth)
+    private val stageDefaults = StageSettings()
+    var stageEnabled by preference(StageEnabledKey, stageDefaults.enabled)
+    var stagePresetId by preference(StagePresetIdKey, stageDefaults.presetId)
+    var stageRoomSize by preference(StageRoomSizeKey, stageDefaults.roomSize)
+    var stageWalls by preference(StageWallsKey, stageDefaults.walls)
+    var stageRoomAmount by preference(StageRoomAmountKey, stageDefaults.roomAmount)
+    var stageLevelDb by preference(StageLevelDbKey, stageDefaults.levelDb)
     var playerType by preference(PlayerType.MOCHY)
     var ipodTheme by preference(IpodTheme.SILVER)
     var ipodWheelColor by preference(IpodWheelColor.THEME)
