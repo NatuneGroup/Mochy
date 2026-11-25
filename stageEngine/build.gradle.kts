@@ -129,6 +129,8 @@ abstract class BuildStageJni
 
 val buildStageJni =
     tasks.register<BuildStageJni>("buildStageJni") {
+        // both native builds may install the same NDK through sdkmanager, which fails when two run at once
+        mustRunAfter(":opusDecoder:buildOpusJni")
         jniDirectory.set(layout.projectDirectory.dir("src/main/cpp"))
         jniSources.from(
             fileTree("src/main/cpp") {
