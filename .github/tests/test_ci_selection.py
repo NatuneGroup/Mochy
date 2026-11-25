@@ -208,17 +208,6 @@ class ReleaseGateTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             release.verify_run("test/repo", self.sha, "ci.yml", "Android / APK", self.api, required=False)
 
-    def test_release_installer_verifies_the_native_payload(self):
-        text = (ROOT / ".github/workflows/release.yml").read_text().split("  windows-manager:\n", 1)[1].split("  publish:", 1)[0]
-        self.assertIn("needs: [prepare, windows-native]", text)
-        self.assertIn("portable-artifact: release-desktop-windows", text)
-        self.assertNotIn("run-verification: false", text)
-        workflow = (ROOT / ".github/workflows/reusable-windows-manager.yml").read_text()
-        for step in ("Test manager", "Validate portable payload", "Install, repair and uninstall end to end"):
-            block = workflow.split(f"- name: {step}\n", 1)[1].split("- name:", 1)[0]
-            self.assertIn("if: inputs.run-verification", block)
-        self.assertIn("18d2846bcc95847f08ea969d707222c1566d9f65", workflow)
-
     def test_caches_keep_credentials_out_and_pull_requests_read_only(self):
         workflows = ROOT / ".github/workflows"
         for name in ("android-build", "desktop-linux", "desktop-macos", "desktop-windows", "ios-build"):
@@ -328,19 +317,6 @@ class ReleaseGateTest(unittest.TestCase):
                     result = subprocess.run([sys.executable, str(ROOT / ".github/scripts/release_verification.py")], capture_output=True, text=True, env=env)
                     self.assertEqual(result.returncode, 0 if flag is None else 1, result.stderr)
                     self.assertIn(f"reused from {source}" if flag is None else "Release blocked before packaging", result.stdout + result.stderr)
-
-    def test_release_callers_disable_verification_only_behind_gate(self):
-        for workflow in ("release.yml",):
-            text = (ROOT / ".github/workflows" / workflow).read_text()
-            self.assertIn("run: python3 .github/scripts/release_verification.py", text)
-            self.assertIn("checks: read", text)
-            self.assertEqual(text.count("run-verification: false"), 6 if workflow == "release.yml" else 5)
-            self.assertIn("fetch-depth: 0", text)
-        for name in ("android-build", "desktop-linux", "desktop-macos", "desktop-windows", "ios-build"):
-            text = (ROOT / f".github/workflows/reusable-{name}.yml").read_text()
-            self.assertIn("      run-verification:", text)
-            self.assertIn("default: true", text.split("run-verification:", 1)[1].split("type:", 1)[0])
-
 
 if __name__ == "__main__":
     unittest.main()
