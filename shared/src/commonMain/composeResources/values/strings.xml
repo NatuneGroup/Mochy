@@ -6091,4 +6091,7 @@
     <string name="onb_welcome_to_mochy">welcome to mochy!</string>
     <!-- Translators: Line shown on the final onboarding page. -->
     <string name="onb_all_good">You’re good to go</string>
+    <!-- Mochy integrations -->
+    <!-- Translators: Time shown under the Discord preview when the track has no end time, the placeholder is the elapsed clock. -->
+    <string name="mochy_integrations_discord_time_elapsed">%1$s elapsed</string>
 </resources>
