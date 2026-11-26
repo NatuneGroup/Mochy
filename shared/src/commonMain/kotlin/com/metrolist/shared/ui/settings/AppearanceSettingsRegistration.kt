@@ -961,6 +961,7 @@ internal fun SettingsUiRegistryBuilder.registerAppearanceSettings(host: SharedSe
                 SettingsChoice(MiniPlayerType.EXPRESSIVE.name, stringResource(Res.string.player_type_expressive)),
                 SettingsChoice(MiniPlayerType.MODERN.name, stringResource(Res.string.player_type_modern)),
                 SettingsChoice(MiniPlayerType.VINTAGE.name, stringResource(Res.string.player_type_vintage)),
+                SettingsChoice(MiniPlayerType.MOCHY.name, stringResource(Res.string.mochy_mini_type_mochy)),
             )
         val miniPlayerBackgroundChoices =
             listOf(
@@ -987,7 +988,7 @@ internal fun SettingsUiRegistryBuilder.registerAppearanceSettings(host: SharedSe
                     choices = miniPlayerTypeChoices,
                     selectedChoiceId = settings.miniPlayerType.name,
                 ) { settings.miniPlayerType = MiniPlayerType.valueOf(it) }
-                if (settings.miniPlayerType != MiniPlayerType.EXPRESSIVE) {
+                if (settings.miniPlayerType != MiniPlayerType.EXPRESSIVE && settings.miniPlayerType != MiniPlayerType.MOCHY) {
                     choice(
                         id = "miniPlayerBackground",
                         title = stringResource(Res.string.player_background_style),
