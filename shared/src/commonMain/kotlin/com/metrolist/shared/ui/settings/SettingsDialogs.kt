@@ -62,7 +62,8 @@ internal fun SettingsDialogSurface(
         Surface(
             modifier = Modifier.widthIn(min = 280.dp, max = 560.dp),
             shape = MaterialTheme.shapes.extraLarge,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            // Mochy's sheets sit on its field colour, not the tonal surface
+            color = if (MaterialTheme.colorScheme.isDark) MochySettingsColors.Field else MaterialTheme.colorScheme.surfaceContainerHigh,
         ) {
             content()
         }
