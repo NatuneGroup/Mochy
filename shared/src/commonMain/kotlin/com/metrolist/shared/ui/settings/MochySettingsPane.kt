@@ -54,8 +54,9 @@ internal fun MochySettingsPane(
     modifier: Modifier = Modifier,
 ) {
     BoxWithConstraints(modifier.fillMaxSize().background(MochySettingsColors.Page)) {
+        val listWidth = settingsPaneListWidth(this.maxWidth)
         Row(Modifier.fillMaxSize()) {
-            Box(Modifier.width(settingsPaneListWidth(maxWidth)).fillMaxHeight()) {
+            Box(Modifier.width(listWidth).fillMaxHeight()) {
                 MochySettingsNavigationPane(
                     registry = registry,
                     host = host,

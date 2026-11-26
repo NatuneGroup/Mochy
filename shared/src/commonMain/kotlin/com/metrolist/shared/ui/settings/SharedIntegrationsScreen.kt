@@ -9,14 +9,19 @@
 package com.metrolist.shared.ui.settings
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldState
@@ -38,6 +43,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,6 +52,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
@@ -81,11 +90,11 @@ import com.metrolist.shared.ui.mobile.MobileListenTogetherScreen
 import com.metrolist.shared.ui.navigation.NavigationBackHandler
 import com.metrolist.shared.ui.playback.wholeSecondPosition
 import com.metrolist.shared.utils.MetrolistClock
+import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
-import kotlin.math.roundToInt
 
 data class SharedIntegrationsHost(
     val platform: SettingsPlatform,
@@ -121,6 +130,9 @@ private enum class ScrobbleLoginProvider {
     LAST_FM,
     LISTEN_BRAINZ,
 }
+
+// where the header of a settings page ends; the card floats in once it has scrolled under this
+private val DiscordHeaderHeight = 118.dp
 
 @Composable
 fun SharedIntegrationsScreen(
@@ -164,6 +176,33 @@ fun SharedIntegrationsScreen(
     }
 
     val discordPresenceStrings = rememberDiscordPresenceStrings()
+    // the status card on the discord page reports where it ends; once that is under the header a copy floats at the bottom
+    var discordPreviewBottomPx by remember { mutableFloatStateOf(Float.MAX_VALUE) }
+    // true only while the discord page is the one on screen, so the floating copy never outlives it
+    var discordPageShown by remember { mutableStateOf(false) }
+    DisposableEffect(Unit) {
+        onDispose {
+            discordPageShown = false
+            discordPreviewBottomPx = Float.MAX_VALUE
+        }
+    }
+    val density = LocalDensity.current
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val headerBottomPx = with(density) { (statusBarTop + DiscordHeaderHeight).toPx() }
+    val floatingPlayback = host.playback?.takeIf { it.isPlaying } ?: discordExamplePlayback()
+    val floatingPosition =
+        host.playbackPosition?.takeIf { host.playback?.isPlaying == true }?.let { source ->
+            remember(source) { source.wholeSecondPosition() }.collectAsState(source.value).value
+        } ?: floatingPlayback.positionMs
+    val floatingActivity =
+        buildDiscordActivity(
+            floatingPlayback.copy(positionMs = floatingPosition),
+            Settings.shared,
+            unknownArtist = discordPresenceStrings.unknownArtist,
+            unknownAlbum = discordPresenceStrings.unknownAlbum,
+            button1Default = discordPresenceStrings.button1Default,
+            button2Default = discordPresenceStrings.button2Default,
+        )
     val settingsHost =
         SharedSettingsHost(
             platform = host.platform,
@@ -180,6 +219,10 @@ fun SharedIntegrationsScreen(
                 }
             },
             refreshablePages = setOf(SettingsPageId.DISCORD),
+            onPageChanged = { pageId ->
+                discordPageShown = pageId == SettingsPageId.DISCORD
+                if (!discordPageShown) discordPreviewBottomPx = Float.MAX_VALUE
+            },
             onPageRefresh = { pageId ->
                 if (pageId == SettingsPageId.DISCORD) {
                     refreshDiscordPresence(host, discordPresenceStrings)
@@ -187,25 +230,44 @@ fun SharedIntegrationsScreen(
             },
         )
 
-    SharedSettingsRegistryScreen(
-        host = settingsHost,
-        modifier = modifier,
-    ) { settingsRevision ->
-        buildIntegrationsRegistry(
-            host = host,
-            revision = settingsRevision + accountRevision,
-            accessToken = accessToken,
-            connectionStatus = connectionStatus,
-            currentUser = currentUser,
-            discordError = discordError,
-            onOpenLogin = { loginProvider = it },
-            onAccountsChanged = { accountRevision++ },
-            onDisconnectScrobble = { provider ->
-                scope.launch {
-                    ScrobbleSessions.disconnect(provider)
-                    accountRevision++
-                }
+    Box(modifier.fillMaxSize()) {
+        SharedSettingsRegistryScreen(
+            host = settingsHost,
+            modifier = Modifier.fillMaxSize(),
+        ) { settingsRevision ->
+            buildIntegrationsRegistry(
+                host = host,
+                revision = settingsRevision + accountRevision,
+                onPreviewBottom = { discordPreviewBottomPx = it },
+            // the card left the list: if it had scrolled past the header that is a scroll, otherwise the page is changing and nothing should float
+            onPreviewDisposed = {
+                if (discordPreviewBottomPx >= headerBottomPx) discordPreviewBottomPx = Float.MAX_VALUE
             },
+                accessToken = accessToken,
+                connectionStatus = connectionStatus,
+                currentUser = currentUser,
+                discordError = discordError,
+                onOpenLogin = { loginProvider = it },
+                onAccountsChanged = { accountRevision++ },
+                onDisconnectScrobble = { provider ->
+                    scope.launch {
+                        ScrobbleSessions.disconnect(provider)
+                        accountRevision++
+                    }
+                },
+            )
+        }
+
+        DiscordFloatingPreview(
+            visible = Settings.shared.enableDiscordIntegration && discordPageShown && discordPreviewBottomPx < headerBottomPx,
+            activity = floatingActivity,
+            playback = floatingPlayback.copy(positionMs = floatingPosition),
+            onOpenUrl = host.onOpenUrl,
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = host.bottomContentPadding + 12.dp),
         )
     }
 
@@ -230,6 +292,8 @@ private fun buildIntegrationsRegistry(
     connectionStatus: DiscordRpcManager.Status,
     currentUser: DiscordUser?,
     discordError: DiscordErrorInfo?,
+    onPreviewBottom: (Float) -> Unit,
+    onPreviewDisposed: () -> Unit,
     onOpenLogin: (ScrobbleLoginProvider) -> Unit,
     onAccountsChanged: () -> Unit,
     onDisconnectScrobble: (ScrobbleProvider) -> Unit,
@@ -299,14 +363,22 @@ private fun buildIntegrationsRegistry(
         tone = SettingsTone.ORANGE,
     ) {
         group("discordMaster", "") {
-            mainSwitch(
+            custom(
                 id = "discordEnabled",
                 title = stringResource(Res.string.discord_enable_rich_presence),
-                checked = settings.enableDiscordIntegration,
                 description = stringResource(Res.string.discord_integration_description),
-            ) {
-                settings.enableDiscordIntegration = it
-                notifyDiscordChanged()
+            ) { onSettingValueChanged ->
+                DiscordToggleCard(
+                    checked = settings.enableDiscordIntegration,
+                    onCheckedChange = {
+                        settings.enableDiscordIntegration = it
+                        notifyDiscordChanged()
+                        onSettingValueChanged()
+                    },
+                    title = stringResource(Res.string.discord_enable_rich_presence),
+                    status = stringResource(Res.string.discord_integration_description),
+                    enabled = true,
+                )
             }
         }
         group("discordAccount", stringResource(Res.string.account), enabled = settings.enableDiscordIntegration) {
@@ -316,7 +388,7 @@ private fun buildIntegrationsRegistry(
                 }
             }
             if (discordLoggedIn) {
-                custom("discordAccountRow", discordUsername.ifBlank { stringResource(Res.string.discord_logged_in) }) {
+                if (!settings.enableDiscordIntegration) custom("discordAccountRow", discordUsername.ifBlank { stringResource(Res.string.discord_logged_in) }) {
                     DiscordAccountRow(
                         username = discordUsername.ifBlank { stringResource(Res.string.discord_logged_in) },
                         status = discordStatus,
@@ -352,6 +424,21 @@ private fun buildIntegrationsRegistry(
                             remember(source) { source.wholeSecondPosition() }.collectAsState(source.value).value
                         } ?: discordPreviewPlayback.positionMs
                     val previewPlayback = discordPreviewPlayback.copy(positionMs = position)
+                    Column(
+                        modifier = Modifier.fillMaxWidth().onGloballyPositioned { onPreviewBottom(it.boundsInWindow().bottom) },
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                    DisposableEffect(Unit) { onDispose { onPreviewDisposed() } }
+                    if (discordLoggedIn) {
+                        DiscordProfileCard(
+                            displayName = currentUser?.name?.ifBlank { null } ?: settings.discordName.ifBlank { discordUsername },
+                            username = discordUsername,
+                            avatarUrl = currentUser?.avatar ?: settings.discordAvatar.takeIf { it.isNotBlank() },
+                            enabled = settings.enableDiscordIntegration,
+                            onLogout = { confirmDiscordLogout = true },
+                        )
+                    }
                     DiscordPresenceCard(
                         activity =
                             buildDiscordActivity(
@@ -369,6 +456,7 @@ private fun buildIntegrationsRegistry(
                         onOpenUrl = host.onOpenUrl,
                         onEditField = { target -> discordEditTarget = target },
                     )
+                    }
                 }
             }
             action(

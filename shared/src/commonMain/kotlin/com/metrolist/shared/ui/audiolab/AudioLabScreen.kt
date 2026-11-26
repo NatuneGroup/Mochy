@@ -2,6 +2,7 @@
 
 package com.metrolist.shared.ui.audiolab
 
+import com.metrolist.shared.generated.resources.audio_lab_stage_kemar_credit
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -22,7 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.metrolist.shared.audiolab.EightDSettings
@@ -106,6 +107,7 @@ fun AudioLabScreen(
                     color = LabColors.Secondary,
                 )
             }
+            FxPresetsSection()
             if (wide) {
                 Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.Top) {
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(14.dp)) {

@@ -4,6 +4,7 @@ package com.metrolist.shared.ui.audiolab
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -22,7 +23,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.metrolist.shared.audiolab.StageBox
@@ -61,6 +62,20 @@ internal fun StageCard(support: AudioLabStageSupport) {
     val stage = Settings.shared.stageSettings()
     val usable = support == AudioLabStageSupport.Available
     val active = usable && stage.enabled
+    val unavailableText: String? = if (usable) {
+        null
+    } else {
+        stringResource(
+            if (support == AudioLabStageSupport.AndroidOnly) {
+                Res.string.audio_lab_stage_android_only
+            } else {
+                Res.string.audio_lab_stage_unavailable
+            },
+        )
+    }
+    val footer: (@Composable ColumnScope.() -> Unit)? = if (unavailableText == null) null else {
+        { StageNote(unavailableText) }
+    }
     EffectCard(
         picture = { StagePicture(stage) },
         header = {
@@ -111,26 +126,19 @@ internal fun StageCard(support: AudioLabStageSupport) {
                 )
             }
         },
-        footer = if (!usable) {
-            {
-                Text(
-                    text = stringResource(
-                        if (support == AudioLabStageSupport.AndroidOnly) {
-                            Res.string.audio_lab_stage_android_only
-                        } else {
-                            Res.string.audio_lab_stage_unavailable
-                        },
-                    ),
-                    fontFamily = mochyInterFontFamily(),
-                    fontSize = 12.sp,
-                    lineHeight = 16.sp,
-                    color = LabColors.Secondary,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
-            }
-        } else {
-            null
-        },
+        footer = footer,
+    )
+}
+
+@Composable
+private fun ColumnScope.StageNote(text: String) {
+    Text(
+        text = text,
+        fontFamily = mochyInterFontFamily(),
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+        color = LabColors.Secondary,
+        modifier = Modifier.padding(top = 4.dp),
     )
 }
 
@@ -200,10 +208,10 @@ private class StageView(size: Size, box: StageBox, yawDegrees: Float, pitchDegre
     private val halfY = box.height / 2 * unit
     private val halfZ = box.depth / 2 * unit
 
-    private val yawCos = cos(Math.toRadians(yawDegrees.toDouble())).toFloat()
-    private val yawSin = sin(Math.toRadians(yawDegrees.toDouble())).toFloat()
-    private val pitchCos = cos(Math.toRadians(pitchDegrees.toDouble())).toFloat()
-    private val pitchSin = sin(Math.toRadians(pitchDegrees.toDouble())).toFloat()
+    private val yawCos = cos(degreesToRadians(yawDegrees.toDouble())).toFloat()
+    private val yawSin = sin(degreesToRadians(yawDegrees.toDouble())).toFloat()
+    private val pitchCos = cos(degreesToRadians(pitchDegrees.toDouble())).toFloat()
+    private val pitchSin = sin(degreesToRadians(pitchDegrees.toDouble())).toFloat()
     private val center = Offset(size.width / 2, size.height / 2)
 
     // fitted to the box's bounding sphere, so it never grows or shrinks as the room turns
@@ -293,13 +301,13 @@ private fun DrawScope.drawRoomBox(view: StageView, on: Float) {
 
 // a soft wedge on the floor the way the head is facing
 private fun DrawScope.drawFacing(view: StageView, listener: StageListener, on: Float) {
-    val base = Math.toRadians(ListenerYaw.toDouble())
+    val base = degreesToRadians(ListenerYaw.toDouble())
     val reach = 0.55f
     val path = Path()
     val start = view.projectWorld(view.worldX(listener.x), view.worldY(0f), view.worldZ(listener.z)).point
     path.moveTo(start.x, start.y)
     for (step in -4..4) {
-        val angle = base + Math.toRadians(step * 6.0)
+        val angle = base + degreesToRadians(step * 6.0)
         val wx = view.worldX(listener.x) + sin(angle).toFloat() * reach
         val wz = view.worldZ(listener.z) + cos(angle).toFloat() * reach
         val p = view.projectWorld(wx, view.worldY(0f), wz).point
@@ -373,7 +381,7 @@ private fun DrawScope.drawHead(view: StageView, listener: StageListener, on: Flo
     val center = view.projectWorld(cx, cy, cz)
     val headSize = HeadSize * 0.8f
     val radius = max(view.pixels(center, headSize), 5.dp.toPx())
-    val yaw = Math.toRadians(ListenerYaw.toDouble())
+    val yaw = degreesToRadians(ListenerYaw.toDouble())
     val fx = sin(yaw).toFloat()
     val fz = cos(yaw).toFloat()
     // the head's right hand side, a quarter turn from where it faces

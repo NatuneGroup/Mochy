@@ -12,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.metrolist.shared.api.lyrics.AiProviderPresets
 import com.metrolist.shared.audiolab.EightDSettings
+import com.metrolist.shared.audiolab.FxPreset
 import com.metrolist.shared.audiolab.ReverbPresets
 import com.metrolist.shared.audiolab.ReverbSettings
 import com.metrolist.shared.audiolab.SpatialMode
@@ -100,6 +101,8 @@ import com.metrolist.shared.constants.ExpressiveMiniPlayerShapeMotionKey
 import com.metrolist.shared.constants.FloatingNavBarKey
 import com.metrolist.shared.constants.FloatingTopBarKey
 import com.metrolist.shared.constants.ForceBottomNavBarKey
+import com.metrolist.shared.constants.FxPresetIdKey
+import com.metrolist.shared.constants.FxPresetsJsonKey
 import com.metrolist.shared.constants.GitHubNTransformConfigUrlKey
 import com.metrolist.shared.constants.GitHubNTransformEnabledKey
 import com.metrolist.shared.constants.GlobalLyricsOffsetMsKey
@@ -238,6 +241,7 @@ import com.metrolist.shared.constants.SwipeToRemoveSongKey
 import com.metrolist.shared.constants.SwipeToSongKey
 import com.metrolist.shared.constants.TempoPitchPresetsJsonKey
 import com.metrolist.shared.constants.TokenLoginWarningDismissedKey
+import com.metrolist.shared.constants.HideSettingsDescriptionsKey
 import com.metrolist.shared.constants.TransportFadeEnabledKey
 import com.metrolist.shared.constants.TransportFadeSecondsKey
 import com.metrolist.shared.constants.UpdateInstallMethodKey
@@ -472,6 +476,40 @@ class Settings(
         tempoPitchPresetsJson = Json.encodeToString(tempoPitchPresets.filterNot { it.id == id })
     }
 
+    private var fxPresetsJson by preference(FxPresetsJsonKey, "[]")
+
+    /** Audio Lab effect snapshots, in the order they were saved. */
+    val fxPresets: List<FxPreset> by derivedStateOf { FxPreset.decode(fxPresetsJson) }
+
+    /** The snapshot currently applied; empty when none is picked. */
+    var fxPresetId by preference(FxPresetIdKey, "")
+
+    fun saveFxPreset(
+        name: String,
+        reverb: ReverbSettings,
+        spatial: SpatialSettings,
+        eightD: EightDSettings,
+        stage: StageSettings,
+    ) {
+        val preset = FxPreset(Uuid.random().toString(), name.trim(), reverb, spatial, eightD, stage)
+        if (!preset.isValid) return
+        fxPresetsJson = Json.encodeToString(fxPresets + preset)
+    }
+
+    fun renameFxPreset(
+        id: String,
+        name: String,
+    ) {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return
+        fxPresetsJson = Json.encodeToString(fxPresets.map { if (it.id == id) it.copy(name = trimmed) else it })
+    }
+
+    fun deleteFxPreset(id: String) {
+        if (fxPresetId == id) fxPresetId = ""
+        fxPresetsJson = Json.encodeToString(fxPresets.filterNot { it.id == id })
+    }
+
     var varispeed by preference(VarispeedKey, false)
     var audioTrackPlaybackParams by preference(AudioTrackPlaybackParamsKey, false)
     var equalizerProfilesJson by preference(EqualizerProfilesJsonKey, "")
@@ -573,6 +611,7 @@ class Settings(
         if (crossfadeDuration == AutoCrossfadeSeconds) CrossfadeStyle.AUTO else CrossfadeStyle.MANUAL,
     )
     var transportFadeEnabled by preference(TransportFadeEnabledKey, true)
+    var hideSettingsDescriptions by preference(HideSettingsDescriptionsKey, true)
     var transportFadeSeconds by preference(TransportFadeSecondsKey, 2.0f)
     var sponsorBlockEnabled by preference(SponsorBlockEnabledKey, false)
     var skipSilence by preference(false)

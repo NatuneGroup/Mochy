@@ -103,7 +103,7 @@ fun SpatialPicture(settings: SpatialSettings) {
         val ring = min(w * 0.36f, h * 0.55f)
         val crossfeedAmount = on * (1f - speakers)
         val speakerAmount = on * speakers
-        val rad = Math.toRadians(angle.toDouble())
+        val rad = degreesToRadians(angle.toDouble())
         val spL = Offset(head.x - (sin(rad) * ring).toFloat(), head.y - (cos(rad) * ring).toFloat())
         val spR = Offset(head.x + (sin(rad) * ring).toFloat(), head.y - (cos(rad) * ring).toFloat())
         if (speakerAmount > 0.01f) {

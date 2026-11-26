@@ -103,28 +103,43 @@ internal fun SettingsGroupRegistryBuilder.inlineSlider(
             detents.reset(value)
             val sliderState = remember(range, steps) { SliderState(value = value, trackRange = range, steps = steps) }
             sliderState.value = value
-            Slider(
-                state = sliderState,
-                onValueChange = {
-                    if (detents.moved(it)) haptics.perform(HapticEvent.SEGMENT_TICK)
-                    onValueChange(it)
-                    onSettingValueChanged()
-                },
-                enabled = enabled,
-                // Dense steps draw a row of touching dots; keep the snapping but hide the ticks.
-                colors =
-                    if (steps > MAX_VISIBLE_SLIDER_TICKS) {
-                        SliderDefaults.colors(activeTickColor = Color.Transparent, inactiveTickColor = Color.Transparent)
-                    } else {
-                        SliderDefaults.colors()
+            if (mochy) {
+                MochySettingsSlider(
+                    value = value,
+                    onValueChange = {
+                        onValueChange(it)
+                        onSettingValueChanged()
                     },
-                modifier =
-                    Modifier
-                        .retainPlaybackKeyFocus()
-                        .fillMaxWidth()
-                        .padding(top = if (mochy) 8.dp else 0.dp, end = if (mochy) 0.dp else 8.dp)
-                        .semantics { contentDescription = title },
-            )
+                    valueRange = range,
+                    steps = steps,
+                    enabled = enabled,
+                    label = title,
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                )
+            } else {
+                Slider(
+                    state = sliderState,
+                    onValueChange = {
+                        if (detents.moved(it)) haptics.perform(HapticEvent.SEGMENT_TICK)
+                        onValueChange(it)
+                        onSettingValueChanged()
+                    },
+                    enabled = enabled,
+                    // Dense steps draw a row of touching dots; keep the snapping but hide the ticks.
+                    colors =
+                        if (steps > MAX_VISIBLE_SLIDER_TICKS) {
+                            SliderDefaults.colors(activeTickColor = Color.Transparent, inactiveTickColor = Color.Transparent)
+                        } else {
+                            SliderDefaults.colors()
+                        },
+                    modifier =
+                        Modifier
+                            .retainPlaybackKeyFocus()
+                            .fillMaxWidth()
+                            .padding(top = if (mochy) 8.dp else 0.dp, end = if (mochy) 0.dp else 8.dp)
+                            .semantics { contentDescription = title },
+                )
+            }
         }
     }
 }
