@@ -6202,4 +6202,12 @@
     <!-- Mochy mini player -->
     <!-- Translators: Option in the mini player style list for Mochy's own frosted pill. -->
     <string name="mochy_mini_type_mochy">Mochy</string>
+    <!-- Mochy player menu -->
+    <string name="mochy_menu_player_style">Player style</string>
+    <string name="mochy_menu_style_flagship">Flagship</string>
+    <string name="mochy_menu_style_turntable">Turntable</string>
+    <string name="mochy_menu_style_ipod">iPod</string>
+    <string name="mochy_menu_style_modern">Modern</string>
+    <string name="mochy_menu_style_vintage">Vintage</string>
+    <string name="mochy_menu_style_classic">Classic</string>
 </resources>
