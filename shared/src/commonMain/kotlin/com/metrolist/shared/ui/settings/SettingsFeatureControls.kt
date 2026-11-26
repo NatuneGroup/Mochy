@@ -231,7 +231,7 @@ internal fun LyricsProviderOrderSetting() {
         isVisible = sheetOpen,
         containerColor = Color(0xFF0B0B0C),
     ) {
-        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, bottom = 12.dp)) {
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, bottom = 12.dp)) {
             LyricsProviderOrderContent()
         }
     }

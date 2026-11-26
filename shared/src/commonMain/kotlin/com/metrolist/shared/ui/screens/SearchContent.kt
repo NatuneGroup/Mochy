@@ -91,7 +91,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
@@ -568,17 +568,17 @@ private fun RecentSectionTitle(
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(start = SearchHorizontalPadding, end = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.headlineMediumEmphasized,
+                style = MaterialTheme.typography.titleLarge,
                 fontFamily = mochyInterFontFamily(),
                 fontWeight = FontWeight.Bold,
-                letterSpacing = (-0.03).em,
-                color = MaterialTheme.colorScheme.primary,
+                fontSize = 22.sp,
+                color = MochySearchColors.Primary,
                 modifier = Modifier.weight(1f),
             )
             if (clearing) {
@@ -597,9 +597,9 @@ private fun RecentSectionTitle(
             }
         }
         HorizontalDivider(
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier.padding(horizontal = SearchHorizontalPadding),
             thickness = 1.dp,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+            color = MochySearchColors.Divider,
         )
     }
 }
@@ -799,73 +799,56 @@ private fun SearchSuggestionRow(
     val isFocused by interactionSource.collectIsFocusedAsState()
     val reducedMotion = rememberReducedMotion()
 
-    Surface(
-        shape = shape,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        border = BorderStroke(0.75.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)),
+    Row(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp)
-                .pressBounce(interactionSource, if (reducedMotion) 1f else 0.985f),
+                .padding(horizontal = SearchHorizontalPadding, vertical = 4.dp)
+                .pressBounce(interactionSource, if (reducedMotion) 1f else 0.985f)
+                .clip(shape)
+                .background(MochySearchColors.Tile)
+                .focusOutline(shape)
+                .onPreviewKeyEvent { event ->
+                    if (isFocused &&
+                        event.type == KeyEventType.KeyUp &&
+                        (event.key == Key.Enter || event.key == Key.DirectionCenter)
+                    ) {
+                        onClick()
+                        true
+                    } else {
+                        false
+                    }
+                }.clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick,
+                ).padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 56.dp)
-                    .focusOutline(shape)
-                    .onPreviewKeyEvent { event ->
-                        if (isFocused &&
-                            event.type == KeyEventType.KeyUp &&
-                            (event.key == Key.Enter || event.key == Key.DirectionCenter)
-                        ) {
-                            onClick()
-                            true
-                        } else {
-                            false
-                        }
-                    }.clickable(
-                        interactionSource = interactionSource,
-                        indication = null,
-                        onClick = onClick,
-                    ).padding(horizontal = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        Text(
+            text = suggestion,
+            fontFamily = mochyInterFontFamily(),
+            fontWeight = FontWeight.Medium,
+            fontSize = 15.sp,
+            color = MochySearchColors.Primary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Box(
+            modifier = Modifier
+                .size(28.dp)
+                .clip(CircleShape)
+                .clickable(onClick = onInsertClick),
+            contentAlignment = Alignment.Center,
         ) {
-            Surface(
-                shape = RoundedCornerShape(100.dp),
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                modifier = Modifier.size(32.dp),
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        MetrolistIcons.Outlined.Search,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
-            }
-            Text(
-                text = suggestion,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
+            Icon(
+                imageVector = MetrolistIcons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = text.useSuggestion,
+                tint = MochySearchColors.Secondary,
+                modifier = Modifier.size(16.dp).rotate(45f),
             )
-            IconButton(
-                onClick = onInsertClick,
-                shapes = IconButtonDefaults.shapes(),
-            ) {
-                Icon(
-                    imageVector = MetrolistIcons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = text.useSuggestion,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(22.dp).rotate(45f),
-                )
-            }
         }
     }
 }
@@ -2128,10 +2111,10 @@ private fun SectionHeader(
     isWide: Boolean = false,
 ) {
     val titleStyle =
-        MaterialTheme.typography.headlineMediumEmphasized.copy(
+        MaterialTheme.typography.titleLarge.copy(
             fontFamily = mochyInterFontFamily(),
             fontWeight = FontWeight.Bold,
-            letterSpacing = (-0.03).em,
+            fontSize = 22.sp,
         )
     val rowHeight = 64.dp
 
@@ -2141,20 +2124,20 @@ private fun SectionHeader(
                 Modifier
                     .fillMaxWidth()
                     .heightIn(min = rowHeight)
-                    .padding(start = 16.dp, end = 16.dp, top = 8.dp),
+                    .padding(start = SearchHorizontalPadding, end = SearchHorizontalPadding, top = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = title,
                 style = titleStyle,
-                color = MaterialTheme.colorScheme.primary,
+                color = MochySearchColors.Primary,
                 maxLines = 1,
             )
         }
         HorizontalDivider(
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier.padding(horizontal = SearchHorizontalPadding),
             thickness = 1.dp,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+            color = MochySearchColors.Divider,
         )
     }
 }

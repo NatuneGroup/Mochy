@@ -8,6 +8,7 @@
 package com.metrolist.shared.ui.components.lyrics
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -42,6 +43,7 @@ import androidx.compose.runtime.structuralEqualityPolicy
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorProducer
@@ -865,24 +867,18 @@ internal fun InlineLyricsLine(
     // Word-by-word highlighting needs lower line opacity for readability.
     val unlitAlpha = if (isPlusLighter) 0.2f else 0.35f
     val targetFocusedAlpha = unlitAlpha
-    val targetAlpha = if (isActive) 1f else unlitAlpha
+    // the reference fades lines by distance from the one being sung: 65%, then 45%, then 35%
+    val distanceAlpha =
+        when (distance) {
+            1 -> 0.65f
+            2 -> 0.45f
+            else -> 0.35f
+        }
+    val targetAlpha = if (isActive) 1f else if (isLrcSynced && !isWordAnimEnabled) distanceAlpha else unlitAlpha
     val targetTranslationAlpha = if (isActive) 0.5f else unlitAlpha
 
-    val staggerDurationMs = (750 + staggerDelayMs).toInt()
-    val scaleStaggerDurationMs = (800 + staggerDelayMs * 2).toInt()
-    val targetScale =
-        if (isActive || !isAutoScrollEnabled || isSelectionMode) {
-            1.0f
-        } else if (isLrcSynced) {
-            when (distance) {
-                0, 1 -> 0.97f
-                2, 3 -> 0.93f
-                4 -> 0.90f
-                else -> 0.85f
-            }
-        } else {
-            0.92f
-        }
+    // the reference enlarges only the line being sung, and holds the rest at full size
+    val targetScale = if (isActive && !isSelectionMode) 1.05f else 1.0f
     val lineLookTarget =
         LineLook(
             alpha = targetAlpha,
@@ -893,8 +889,26 @@ internal fun InlineLyricsLine(
         )
     val lineLook = remember(entry) { LineLookState(lineLookTarget) }
     LaunchedEffect(lineLook, lineLookTarget) {
-        lineLook.animateTo(lineLookTarget, staggerDurationMs, scaleStaggerDurationMs)
+        // the reference's alpha and scale timings: 300 ms and 400 ms
+        lineLook.animateTo(lineLookTarget, 300, 400)
     }
+    // the reference blurs lines by distance from the one being sung, once they are not being scrolled by hand
+    val lineBlurTarget =
+        if (isLrcSynced && isAutoScrollEnabled && !isActive && !isSelectionMode) {
+            when {
+                distance <= 2 -> 0f
+                distance == 3 -> 2f
+                distance == 4 -> 4f
+                else -> 6f
+            }
+        } else {
+            0f
+        }
+    val lineBlur by animateFloatAsState(
+        targetValue = lineBlurTarget,
+        animationSpec = tween(durationMillis = 1000),
+        label = "lyricsLineBlur",
+    )
     val lineColor = remember(textColor, lineLook) { ColorProducer { textColor.copy(alpha = lineLook.alpha) } }
     val isWordSynced = isWordAnimEnabled && !mainWords.isNullOrEmpty()
     val isActiveNow by rememberUpdatedState(isActive)
@@ -1011,8 +1025,8 @@ internal fun InlineLyricsLine(
                         Modifier
                             .background(
                                 color = colorScheme.primary.copy(alpha = 0.15f),
-                                shape = RoundedCornerShape(12.dp),
-                            ).clip(RoundedCornerShape(12.dp))
+                                shape = RoundedCornerShape(16.dp),
+                            ).clip(RoundedCornerShape(16.dp))
                     } else {
                         Modifier
                     },
@@ -1027,7 +1041,8 @@ internal fun InlineLyricsLine(
                     } else {
                         Modifier
                     },
-                ).padding(horizontal = LYRICS_LINE_HORIZONTAL_PADDING, vertical = 12.dp),
+                ).padding(horizontal = 24.dp, vertical = (8f * lyricsLineSpacing).dp)
+                .blur(lineBlur.dp),
         contentAlignment =
             when (visualAlignment) {
                 TextAlign.Center -> Alignment.Center

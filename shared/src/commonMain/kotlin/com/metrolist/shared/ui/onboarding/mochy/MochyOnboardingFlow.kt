@@ -16,16 +16,19 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -41,8 +44,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.metrolist.shared.generated.resources.Res
@@ -60,6 +70,12 @@ private enum class Step { WELCOME, IMPORT_ASK, IMPORT_MODE, MIGRATING, PROFILE, 
 
 // pages that move on by themselves: the back gesture waits for them, and they fade in rather than slide
 private val AutoSteps = setOf(Step.MIGRATING, Step.HELLO, Step.DONE)
+
+// the pages with a main button Enter can press
+private val KeyboardSteps = setOf(Step.WELCOME, Step.IMPORT_ASK, Step.PROFILE, Step.LAST_ONE)
+
+// a phone's width: on a desktop window the sheet keeps this proportion and sits in the middle
+private val SheetMaxWidth = 430.dp
 
 /** what the person picked on the way: the app opens sign-in or backup restore after the sheet when asked to */
 data class MochyOnboardingResult(
@@ -146,7 +162,43 @@ fun MochyOnboarding(
         onComplete(MochyOnboardingResult(sendCrashReports && crashReportingAvailable, signIn = signIn, restoreBackup = restoreBackup))
     }
 
+    fun welcomeNext() {
+        // a second tap while she waves goodbye would skip a page
+        if (!isLeavingWelcome) {
+            isLeavingWelcome = true
+            scope.launch {
+                delay(400)
+                go(Step.IMPORT_ASK)
+                isLeavingWelcome = false
+            }
+        }
+    }
+
+    fun askYes() {
+        importError = null
+        go(Step.IMPORT_MODE)
+    }
+
+    fun profileNext() {
+        if (username.isNotBlank()) go(Step.HELLO)
+    }
+
+    // Enter takes the page's main button; pages that move on by themselves take no key
+    fun primaryAction() {
+        when (step) {
+            Step.WELCOME -> welcomeNext()
+            Step.IMPORT_ASK -> askYes()
+            Step.PROFILE -> profileNext()
+            Step.LAST_ONE -> go(Step.DONE)
+            else -> Unit
+        }
+    }
+
     NavigationBackHandler(enabled = history.size > 1 && step !in AutoSteps) { back() }
+
+    // desktop keyboard: Enter goes forward, Esc goes back. A focused button takes Enter itself, so this only sees keys nothing below used.
+    val focus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { focus.requestFocus() }
 
     // the sheet is dragged by its handle: it only rubber-bands, it never closes
     var dragOffset by remember { mutableFloatStateOf(0f) }
@@ -156,12 +208,37 @@ fun MochyOnboarding(
         modifier =
             Modifier
                 .fillMaxSize()
-                .background(Color.Black),
+                .background(Color.Black)
+                .focusRequester(focus)
+                .focusable()
+                .onKeyEvent { event ->
+                    if (event.type != KeyEventType.KeyDown) return@onKeyEvent false
+                    when (event.key) {
+                        Key.Escape -> if (history.size > 1 && step !in AutoSteps) {
+                            back()
+                            true
+                        } else {
+                            false
+                        }
+
+                        Key.Enter, Key.NumPadEnter -> if (step in KeyboardSteps) {
+                            primaryAction()
+                            true
+                        } else {
+                            false
+                        }
+
+                        else -> false
+                    }
+                },
     ) {
         Box(
             modifier =
                 Modifier
-                    .fillMaxSize()
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .widthIn(max = SheetMaxWidth)
+                    .fillMaxHeight()
                     .padding(top = topInset + 20.dp)
                     .graphicsLayer { translationY = dragOffset }
                     .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
@@ -195,26 +272,13 @@ fun MochyOnboarding(
                         WelcomeStep(
                             motionEnabled = motionEnabled,
                             isHiding = isLeavingWelcome,
-                            onNext = {
-                                // a second tap while she waves goodbye would skip a page
-                                if (!isLeavingWelcome) {
-                                    isLeavingWelcome = true
-                                    scope.launch {
-                                        delay(400)
-                                        go(Step.IMPORT_ASK)
-                                        isLeavingWelcome = false
-                                    }
-                                }
-                            },
+                            onNext = ::welcomeNext,
                         )
                     }
 
                     Step.IMPORT_ASK -> {
                         ImportAskPage(
-                            onYes = {
-                                importError = null
-                                go(Step.IMPORT_MODE)
-                            },
+                            onYes = ::askYes,
                             onSkip = {
                                 signIn = false
                                 restoreBackup = false
@@ -253,7 +317,7 @@ fun MochyOnboarding(
                             onPhotoClick = pickPhoto,
                             cardNumber = cardNumber,
                             joinedText = joinedText,
-                            onNext = { if (username.isNotBlank()) go(Step.HELLO) },
+                            onNext = ::profileNext,
                         )
                     }
 

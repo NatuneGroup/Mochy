@@ -11,6 +11,7 @@
 
 package com.metrolist.shared.ui.settings
 
+import com.metrolist.shared.generated.resources.mochy_pages_translate
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
@@ -100,6 +101,7 @@ internal fun SettingsUiRegistryBuilder.registerContentSettings(host: SharedSetti
                     choice(
                         id = "appLanguage",
                         title = stringResource(Res.string.app_language),
+                        icon = Res.drawable.mochy_pages_translate,
                         valueLabel = appLanguageChoices.firstOrNull { it.id == settings.appLanguage }?.label ?: settings.appLanguage,
                         choices = appLanguageChoices,
                         selectedChoiceId = settings.appLanguage,

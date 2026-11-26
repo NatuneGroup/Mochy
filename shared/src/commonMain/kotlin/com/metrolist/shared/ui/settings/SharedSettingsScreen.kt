@@ -19,6 +19,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
@@ -84,6 +85,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
@@ -103,6 +105,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.window.Popup
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
@@ -110,6 +113,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.sp
+import com.metrolist.shared.generated.resources.back
+import com.metrolist.shared.generated.resources.close
+import com.metrolist.shared.generated.resources.mochy_home_chevron
+import com.metrolist.shared.generated.resources.settings
 import com.metrolist.shared.generated.resources.*
 import com.metrolist.shared.ui.LocalIsTv
 import com.metrolist.shared.ui.audiolab.AudioLabScreen
@@ -1379,6 +1386,9 @@ private fun SettingsItemRow(
     }
     val interactive = item.enabled && item.control != SettingsControl.CUSTOM
     var choiceMenuExpanded by remember(item.id) { mutableStateOf(false) }
+    // holding a row whose description is hidden shows that description for a moment
+    var showDetail by remember(item.id) { mutableStateOf(false) }
+    val detailText = item.description
     var choiceMenuOffset by remember(item.id) { mutableStateOf(IntOffset.Zero) }
     Box(modifier = Modifier.fillMaxWidth().trackPressPosition { choiceMenuOffset = it.round() }) {
         Row(
@@ -1419,7 +1429,11 @@ private fun SettingsItemRow(
                                     },
                             )
                         },
-                    ).padding(horizontal = if (mochy) 20.dp else 16.dp, vertical = if (mochy) 14.dp else 16.dp),
+                    ).padding(horizontal = if (mochy) 20.dp else 16.dp, vertical = if (mochy) 14.dp else 16.dp)
+                    .pointerInput(hideDescriptions, detailText) {
+                        if (!hideDescriptions || detailText == null) return@pointerInput
+                        detectTapGestures(onLongPress = { showDetail = true })
+                    },
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (mochy) {
@@ -1542,6 +1556,28 @@ private fun SettingsItemRow(
                 }
 
                 SettingsControl.CUSTOM -> {}
+            }
+        }
+        if (showDetail && hideDescriptions && detailText != null) {
+            LaunchedEffect(showDetail) {
+                delay(2400)
+                showDetail = false
+            }
+            Popup(alignment = Alignment.TopCenter, onDismissRequest = { showDetail = false }) {
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color(0xFF1C1C1E),
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
+                ) {
+                    Text(
+                        text = detailText,
+                        fontFamily = mochyInterFontFamily(),
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp,
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    )
+                }
             }
         }
         if (item.control == SettingsControl.CHOICE) {
