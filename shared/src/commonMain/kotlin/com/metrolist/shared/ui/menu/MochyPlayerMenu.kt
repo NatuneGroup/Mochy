@@ -36,8 +36,34 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.metrolist.shared.generated.resources.Res
+import com.metrolist.shared.generated.resources.action_like
+import com.metrolist.shared.generated.resources.add_to_library
+import com.metrolist.shared.generated.resources.add_to_playlist
+import com.metrolist.shared.generated.resources.edit
+import com.metrolist.shared.generated.resources.edit_lyrics
+import com.metrolist.shared.generated.resources.equalizer
+import com.metrolist.shared.generated.resources.lyrics
+import com.metrolist.shared.generated.resources.mochy_menu_edit
+import com.metrolist.shared.generated.resources.mochy_menu_equalizer
+import com.metrolist.shared.generated.resources.mochy_menu_heart
+import com.metrolist.shared.generated.resources.mochy_menu_heart_outline
+import com.metrolist.shared.generated.resources.mochy_menu_library_add
+import com.metrolist.shared.generated.resources.mochy_menu_library_add_check
+import com.metrolist.shared.generated.resources.mochy_menu_lyrics
+import com.metrolist.shared.generated.resources.mochy_menu_playlist_add
+import com.metrolist.shared.generated.resources.mochy_menu_radio
+import com.metrolist.shared.generated.resources.mochy_menu_share
+import com.metrolist.shared.generated.resources.mochy_menu_sleep_timer
+import com.metrolist.shared.generated.resources.mochy_menu_speed
+import com.metrolist.shared.generated.resources.playback_speed
+import com.metrolist.shared.generated.resources.remove_from_library
+import com.metrolist.shared.generated.resources.share
 import com.metrolist.shared.generated.resources.show_less
 import com.metrolist.shared.generated.resources.show_more
+import com.metrolist.shared.generated.resources.sleep_timer
+import com.metrolist.shared.generated.resources.start_radio
+import com.metrolist.shared.generated.resources.tempo_and_pitch
+import com.metrolist.shared.generated.resources.unlike
 import com.metrolist.shared.ui.components.AutoPlaylistThumbnail
 import com.metrolist.shared.ui.components.ContainedLoadingIndicator
 import com.metrolist.shared.ui.components.ExpandableText
@@ -45,7 +71,29 @@ import com.metrolist.shared.ui.components.PlayerMenuAction
 import com.metrolist.shared.ui.components.images.AsyncImage
 import com.metrolist.shared.ui.components.isAutoPlaylistIcon
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+
+// the reference's icon for each player action, keyed by the action's title; an action not listed keeps its own icon
+internal val MochyMenuIcons: List<Pair<StringResource, DrawableResource>> =
+    listOf(
+        Res.string.start_radio to Res.drawable.mochy_menu_radio,
+        Res.string.add_to_playlist to Res.drawable.mochy_menu_playlist_add,
+        Res.string.share to Res.drawable.mochy_menu_share,
+        Res.string.add_to_library to Res.drawable.mochy_menu_library_add,
+        Res.string.remove_from_library to Res.drawable.mochy_menu_library_add_check,
+        Res.string.action_like to Res.drawable.mochy_menu_heart_outline,
+        Res.string.unlike to Res.drawable.mochy_menu_heart,
+        Res.string.edit_lyrics to Res.drawable.mochy_menu_edit,
+        Res.string.edit to Res.drawable.mochy_menu_edit,
+        Res.string.sleep_timer to Res.drawable.mochy_menu_sleep_timer,
+        Res.string.playback_speed to Res.drawable.mochy_menu_speed,
+        Res.string.tempo_and_pitch to Res.drawable.mochy_menu_speed,
+        Res.string.equalizer to Res.drawable.mochy_menu_equalizer,
+        Res.string.lyrics to Res.drawable.mochy_menu_lyrics,
+    )
 
 internal object MochyMenuColors {
     val Surface = Color(0xFF0B0B0C)
@@ -142,16 +190,21 @@ internal fun MochyMenuRows(
     modifier: Modifier = Modifier,
 ) {
     if (actions.isEmpty()) return
+    // titles are resolved in the current language, so the lookup is by the resolved text
+    val icons = MochyMenuIcons.associate { (title, icon) -> stringResource(title) to icon }
     Column(
         modifier = modifier.fillMaxWidth().padding(horizontal = MochyMenuGutter),
         verticalArrangement = Arrangement.spacedBy(MochyMenuRowGap),
     ) {
-        actions.forEach { action -> MochyMenuRow(action) }
+        actions.forEach { action -> MochyMenuRow(action, icons[action.title]) }
     }
 }
 
 @Composable
-private fun MochyMenuRow(action: PlayerMenuAction) {
+private fun MochyMenuRow(
+    action: PlayerMenuAction,
+    reference: DrawableResource?,
+) {
     val contentAlpha = if (action.enabled) 1f else 0.35f
     val font = mochyInterFontFamily()
     val iconTint =
@@ -171,7 +224,9 @@ private fun MochyMenuRow(action: PlayerMenuAction) {
                 .padding(horizontal = 14.dp, vertical = 14.dp),
     ) {
         if (action.isLoading) {
-            ContainedLoadingIndicator(Modifier.size(20.dp))
+            ContainedLoadingIndicator(Modifier.size(20.dp), label = action.title)
+        } else if (reference != null) {
+            Icon(painterResource(reference), contentDescription = null, tint = iconTint, modifier = Modifier.size(20.dp))
         } else {
             Icon(action.icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(20.dp))
         }
