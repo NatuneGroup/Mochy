@@ -11,6 +11,14 @@
 
 package com.metrolist.shared.ui.settings
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import org.jetbrains.compose.resources.painterResource
+import com.metrolist.shared.ui.theme.mochyInterFontFamily
+import com.metrolist.shared.ui.components.ModalBottomSheet
+import com.metrolist.shared.generated.resources.mochy_home_chevron
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -187,6 +195,50 @@ private fun canvasContentSourceLabel(source: CanvasContentSource): String =
 
 @Composable
 internal fun LyricsProviderOrderSetting() {
+    if (!MaterialTheme.colorScheme.isDark) {
+        LyricsProviderOrderContent()
+        return
+    }
+    // Mochy keeps the order list in a sheet, opened from a row
+    var sheetOpen by remember { mutableStateOf(false) }
+    Row(
+        modifier = Modifier.fillMaxWidth().clickable { sheetOpen = true }.padding(horizontal = 20.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                stringResource(Res.string.lyrics_provider_user),
+                style = MaterialTheme.typography.titleSmall,
+                fontFamily = mochyInterFontFamily(),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                stringResource(Res.string.lyrics_provider_user_description),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Spacer(Modifier.width(8.dp))
+        Icon(
+            painter = painterResource(Res.drawable.mochy_home_chevron),
+            contentDescription = null,
+            tint = Color.White.copy(alpha = 0.50f),
+            modifier = Modifier.size(20.dp),
+        )
+    }
+    ModalBottomSheet(
+        onDismissRequest = { sheetOpen = false },
+        isVisible = sheetOpen,
+        containerColor = Color(0xFF0B0B0C),
+    ) {
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, bottom = 12.dp)) {
+            LyricsProviderOrderContent()
+        }
+    }
+}
+
+@Composable
+private fun LyricsProviderOrderContent() {
     val settings = Settings.shared
     val haptics = rememberMetrolistHaptics()
     val providerOrder = LyricsProvider.parseUserOrderFromStoredCsv(settings.lyricsProviderOrder)

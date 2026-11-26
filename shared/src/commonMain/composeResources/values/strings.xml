@@ -6196,4 +6196,7 @@
     <string name="mochy_lab_preset_delete">Delete</string>
     <!-- Translators: Button that closes a dialog without saving. -->
     <string name="mochy_lab_cancel">Cancel</string>
+    <!-- Mochy settings pages -->
+    <string name="mochy_pages_hide_descriptions">Hide descriptions in settings</string>
+    <string name="mochy_pages_hide_descriptions_desc">Show titles only in settings lists.</string>
 </resources>

@@ -18,6 +18,8 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.metrolist.shared.generated.resources.*
+import com.metrolist.shared.generated.resources.mochy_pages_slow_motion_video
+import com.metrolist.shared.generated.resources.mochy_pages_sparks
 import com.metrolist.shared.settings.AnimatedCoverResolution
 import com.metrolist.shared.settings.AppLayout
 import com.metrolist.shared.settings.DensityScale
@@ -531,6 +533,12 @@ internal fun SettingsUiRegistryBuilder.registerAppearanceSettings(host: SharedSe
                     description = stringResource(Res.string.appearance_enable_haptic_feedback_description),
                     checked = settings.enableHapticFeedback,
                 ) { settings.enableHapticFeedback = it }
+                switch(
+                    id = "hideSettingsDescriptions",
+                    title = stringResource(Res.string.mochy_pages_hide_descriptions),
+                    description = stringResource(Res.string.mochy_pages_hide_descriptions_desc),
+                    checked = settings.hideSettingsDescriptions,
+                ) { settings.hideSettingsDescriptions = it }
             }
         }
     }
@@ -832,6 +840,7 @@ internal fun SettingsUiRegistryBuilder.registerAppearanceSettings(host: SharedSe
                 if (isAndroid) {
                     switch(
                         id = "playerCanvasEnabled",
+                        icon = Res.drawable.mochy_pages_sparks,
                         title = stringResource(Res.string.canvas),
                         description = stringResource(Res.string.player_canvas_desc),
                         checked = settings.playerCanvasEnabled,
@@ -1088,6 +1097,7 @@ private fun SettingsGroupRegistryBuilder.videoPlaybackSettings(host: SharedSetti
         }
     switch(
         id = "musicVideoPlaybackEnabled",
+        icon = Res.drawable.mochy_pages_slow_motion_video,
         title = stringResource(Res.string.play_music_videos),
         description = stringResource(Res.string.play_music_videos_description),
         checked = settings.musicVideoPlaybackEnabled,

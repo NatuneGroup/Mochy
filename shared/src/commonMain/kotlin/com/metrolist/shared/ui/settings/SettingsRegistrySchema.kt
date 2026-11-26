@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.DrawableResource
 
 enum class SettingsPlatform {
     ANDROID,
@@ -198,6 +199,8 @@ data class SettingsItemRegistration(
     val onSliderChanged: ((Float) -> Unit)? = null,
     val onTextChanged: ((String) -> Unit)? = null,
     val customContent: (@Composable (onSettingValueChanged: () -> Unit) -> Unit)? = null,
+    // Mochy's row icon, drawn in a 32dp circle; rows without one keep their plain look
+    val icon: DrawableResource? = null,
 )
 
 data class SettingsGroupRegistration(
@@ -281,6 +284,7 @@ class SettingsGroupRegistryBuilder internal constructor(
         checked: Boolean,
         enabled: Boolean = true,
         annotatedDescription: AnnotatedString? = null,
+        icon: DrawableResource? = null,
         onCheckedChange: (Boolean) -> Unit,
     ) {
         items +=
@@ -293,6 +297,7 @@ class SettingsGroupRegistryBuilder internal constructor(
                 checked = checked,
                 annotatedDescription = annotatedDescription,
                 onCheckedChange = onCheckedChange,
+                icon = icon,
             )
     }
 
