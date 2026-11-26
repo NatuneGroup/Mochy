@@ -7,6 +7,9 @@
 
 package com.metrolist.shared.ui.screens
 
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,7 +20,9 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,6 +30,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -45,6 +52,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,22 +62,33 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.BlurEffect
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onInterceptKeyBeforeSoftKeyboard
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
@@ -76,16 +96,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.remove_recent_search_action
+import com.metrolist.shared.generated.resources.search
 import com.metrolist.shared.model.AlbumItem
 import com.metrolist.shared.model.SearchFilter
 import com.metrolist.shared.model.SongItem
 import com.metrolist.shared.model.YTItem
+import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.LocalIsTv
+import com.metrolist.shared.ui.components.images.AsyncImage
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import com.metrolist.shared.ui.tv.tvFocusHighlight
+import com.metrolist.shared.ui.utils.supportsNativeBlur
+import com.metrolist.shared.viewmodels.HomeViewModel
 import com.metrolist.shared.viewmodels.SearchViewModel
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.roundToInt
 
 /** Mochy's search palette: the pill, the suggestion tiles and the section rules. */
 internal object MochySearchColors {
@@ -96,6 +122,7 @@ internal object MochySearchColors {
     val Primary = Color.White
     val Secondary = Color(0xFF9A9AA0)
     val Placeholder = Color(0xFF77777D)
+    val TileHigh = Color(0xFF1C1C1F)
 }
 
 data class SearchScreenText(
@@ -141,6 +168,8 @@ fun SearchScreen(
     showSearchBar: Boolean = true,
     searchBarEndPadding: Dp = 0.dp,
     onAlbumPlay: ((AlbumItem) -> Unit)? = null,
+    moodsAndGenres: List<HomeViewModel.Genre> = emptyList(),
+    onAvatarClick: (() -> Unit)? = null,
 ) {
     val query = uiState.query
     val isQuerySubmitted = uiState.isQuerySubmitted
@@ -163,32 +192,16 @@ fun SearchScreen(
         ) {
             val isWide = maxWidth > 600.dp
 
-            Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-                if (showSearchBar) {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().padding(end = searchBarEndPadding),
-                        contentAlignment = Alignment.TopCenter,
-                    ) {
-                        Box(modifier = if (isWide) Modifier.widthIn(max = 1400.dp).fillMaxWidth() else Modifier.fillMaxWidth()) {
-                            SearchBar(
-                                query = query,
-                                onQueryChange = onQueryChange,
-                                onSearch = onSearch,
-                                onClear = { onQueryChange("") },
-                                onBack = onBack,
-                                onMicrophoneClick = onMicrophoneClick,
-                                microphoneContentDescription = text.microphoneContentDescription,
-                                isQuerySubmitted = isQuerySubmitted,
-                                focusRequester = focusRequester,
-                                placeholder = text.searchPlaceholder,
-                                backLabel = text.back,
-                                clearLabel = text.clear,
-                            )
-                        }
-                    }
-                }
+            val listState = rememberLazyListState()
+            val collapseState = rememberSearchCollapse(listState)
+            val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+            val travelPx = with(LocalDensity.current) { HeaderTitleHeight.toPx() }
+            val headerLayout = if (showSearchBar) statusBar + HeaderClearance + HeaderTitleHeight + HeaderFieldRow + HeaderGap else 0.dp
 
-                SearchContent(
+            Box(modifier = Modifier.fillMaxSize()) {
+                Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Spacer(modifier = Modifier.height(headerLayout))
+                    SearchContent(
                     uiState = uiState,
                     text = text.contentText,
                     onItemClick = {
@@ -221,10 +234,202 @@ fun SearchScreen(
                     onMixClick = onMixClick,
                     itemContainer = itemContainer,
                     contentPadding = contentPadding,
-                    modifier = Modifier.weight(1f),
-                    onAlbumPlay = onAlbumPlay,
-                )
+                        listState = listState,
+                        moodsAndGenres = moodsAndGenres,
+                        modifier = Modifier.weight(1f).graphicsLayer {
+                            // the page rises under the folding header
+                            translationY = if (showSearchBar) -collapseState.value * travelPx else 0f
+                        },
+                        onAlbumPlay = onAlbumPlay,
+                    )
+                }
+
+                if (showSearchBar) {
+                    SearchHeader(
+                        collapse = { collapseState.value },
+                        statusBar = statusBar,
+                        onAvatarClick = onAvatarClick,
+                        field = {
+                            Box(
+                                modifier = Modifier.fillMaxWidth().padding(end = searchBarEndPadding),
+                                contentAlignment = Alignment.TopCenter,
+                            ) {
+                                Box(modifier = if (isWide) Modifier.widthIn(max = 1400.dp).fillMaxWidth() else Modifier.fillMaxWidth()) {
+                                    SearchBar(
+                                        query = query,
+                                        onQueryChange = onQueryChange,
+                                        onSearch = onSearch,
+                                        onClear = { onQueryChange("") },
+                                        onBack = onBack,
+                                        onMicrophoneClick = onMicrophoneClick,
+                                        microphoneContentDescription = text.microphoneContentDescription,
+                                        isQuerySubmitted = isQuerySubmitted,
+                                        focusRequester = focusRequester,
+                                        placeholder = text.searchPlaceholder,
+                                        backLabel = text.back,
+                                        clearLabel = text.clear,
+                                    )
+                                }
+                            }
+                        },
+                    )
+                }
             }
+        }
+    }
+}
+
+private val HeaderClearance = 18.dp
+private val HeaderTitleHeight = 62.dp
+private val HeaderFieldRow = 52.dp
+private val HeaderGap = 16.dp
+private val HeaderAvatarSize = 36.dp
+
+/** the title folds up and the field takes its place as the list scrolls, the same as the Mochy settings header */
+@Composable
+private fun rememberSearchCollapse(listState: LazyListState): State<Float> {
+    val density = LocalDensity.current
+    val enterPx = with(density) { 24.dp.toPx() }
+    val exitPx = with(density) { 6.dp.toPx() }
+    val latch = remember(listState) { booleanArrayOf(false) }
+    val collapsed by remember(listState, enterPx, exitPx) {
+        derivedStateOf {
+            val offset = listState.firstVisibleItemScrollOffset.toFloat()
+            val next =
+                when {
+                    listState.firstVisibleItemIndex > 0 -> true
+                    offset > enterPx -> true
+                    offset < exitPx -> false
+                    else -> latch[0]
+                }
+            latch[0] = next
+            next
+        }
+    }
+    return animateFloatAsState(
+        targetValue = if (collapsed) 1f else 0f,
+        animationSpec = tween(durationMillis = 900, easing = CubicBezierEasing(0.57f, 0.53f, 0f, 1f)),
+        label = "searchCollapse",
+    )
+}
+
+@Composable
+private fun SearchHeader(
+    collapse: () -> Float,
+    statusBar: Dp,
+    onAvatarClick: (() -> Unit)?,
+    field: @Composable () -> Unit,
+) {
+    val density = LocalDensity.current
+    val travel = with(density) { HeaderTitleHeight.toPx() }
+    val avatarDrop = with(density) { (HeaderFieldRow / 2 - HeaderTitleHeight / 2).toPx() }
+    val avatarReserve = with(density) { (HeaderAvatarSize + 12.dp).toPx() }
+    val blur = supportsNativeBlur()
+    Box(modifier = Modifier.fillMaxWidth()) {
+        // the page colour builds up under the bar once the title has folded away
+        Box(
+            modifier = Modifier.matchParentSize().drawWithCache {
+                onDrawBehind {
+                    val p = collapse().coerceIn(0f, 1f)
+                    if (p <= 0.01f) return@onDrawBehind
+                    drawRect(
+                        Brush.verticalGradient(
+                            0f to Color.Black.copy(alpha = p * 0.95f),
+                            0.45f to Color.Black.copy(alpha = p * 0.72f),
+                            0.78f to Color.Black.copy(alpha = p * 0.34f),
+                            1f to Color.Transparent,
+                        ),
+                    )
+                }
+            },
+        )
+        Column(modifier = Modifier.padding(top = statusBar + HeaderClearance)) {
+            Row(
+                modifier = Modifier
+                    .height(HeaderTitleHeight)
+                    .fillMaxWidth()
+                    .padding(horizontal = SearchHorizontalPadding),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(Res.string.search),
+                    fontFamily = mochyInterFontFamily(),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 34.sp,
+                    lineHeight = 40.sp,
+                    color = MochySearchColors.Primary,
+                    maxLines = 1,
+                    modifier = Modifier.weight(1f).graphicsLayer {
+                        val p = collapse().coerceIn(0f, 1f)
+                        alpha = (1f - p * 1.6f).coerceIn(0f, 1f)
+                        translationY = -p * travel
+                        val scale = 1f - p * 0.18f
+                        scaleX = scale
+                        scaleY = scale
+                        transformOrigin = TransformOrigin(0f, 0.5f)
+                        // the title blurs in 3px steps as it folds, clamped at the edges, where the platform can blur
+                        val blurPx = (((p * 14f) / 3f).toInt() * 3).toFloat()
+                        renderEffect = if (blur && blurPx > 0f) BlurEffect(blurPx, blurPx, TileMode.Clamp) else null
+                    },
+                )
+                if (onAvatarClick != null) {
+                    SearchHeaderAvatar(
+                        onClick = onAvatarClick,
+                        modifier = Modifier.graphicsLayer {
+                            // beside the title at rest, it drops to the field's middle as the header folds
+                            translationY = collapse().coerceIn(0f, 1f) * avatarDrop
+                        },
+                    )
+                }
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer { translationY = -collapse().coerceIn(0f, 1f) * travel }
+                    .layout { measurable, constraints ->
+                        // the field keeps the avatar's room once it rises beside it
+                        val reserve = if (onAvatarClick == null) 0 else (avatarReserve * collapse().coerceIn(0f, 1f)).roundToInt()
+                        val width = (constraints.maxWidth - reserve).coerceAtLeast(0)
+                        val placeable = measurable.measure(constraints.copy(minWidth = 0, maxWidth = width))
+                        layout(constraints.maxWidth, placeable.height) { placeable.place(0, 0) }
+                    },
+            ) {
+                field()
+            }
+        }
+    }
+}
+
+@Composable
+private fun SearchHeaderAvatar(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val settings = Settings.shared
+    val url = settings.mochyProfilePhotoUri.ifBlank { settings.accountThumbnail }.trim()
+    val model =
+        when {
+            url.isEmpty() -> null
+            url.contains("://") -> url
+            else -> "file://$url"
+        }
+    Box(
+        modifier = modifier
+            .size(HeaderAvatarSize)
+            .clip(CircleShape)
+            .background(MochySearchColors.TileHigh)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (model != null) {
+            AsyncImage(url = model, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        } else {
+            Icon(
+                imageVector = MetrolistIcons.Outlined.Person,
+                contentDescription = null,
+                tint = MochySearchColors.Secondary,
+                modifier = Modifier.size(HeaderAvatarSize * 0.5f),
+            )
         }
     }
 }

@@ -110,6 +110,7 @@ import com.metrolist.android.ui.menu.SongMenu
 import com.metrolist.android.ui.menu.rememberSpeedDialToggle
 import com.metrolist.android.ui.utils.playSong
 import com.metrolist.android.utils.startActivitySafely
+import com.metrolist.android.viewmodels.HomeViewModel
 import com.metrolist.android.viewmodels.SearchViewModel
 import com.metrolist.innertubex.utils.YouTubeUrlParser
 import com.metrolist.shared.api.playlistSongs
@@ -133,6 +134,7 @@ import com.metrolist.shared.generated.resources.youtube_music
 import com.metrolist.shared.model.AlbumItem
 import com.metrolist.shared.model.ArtistItem
 import com.metrolist.shared.model.ArtistTiny
+import com.metrolist.shared.model.BrowseItem
 import com.metrolist.shared.model.EpisodeItem
 import com.metrolist.shared.model.PlaylistItem
 import com.metrolist.shared.model.PodcastItem
@@ -171,6 +173,7 @@ fun SearchScreen(
     onInitialQueryConsumed: () -> Unit = {},
     onSearchResultsVisible: (Boolean) -> Unit = {},
     searchViewModel: SearchViewModel = koinViewModel(),
+    homeViewModel: HomeViewModel = koinViewModel(),
 ) {
     val voiceSearchPromptText = stringResource(Res.string.voice_search_prompt)
     val voiceSearchUnavailableText = stringResource(Res.string.voice_search_unavailable)
@@ -180,6 +183,7 @@ fun SearchScreen(
     val playlistLinkText = stringResource(Res.string.playlist_link)
 
     val searchUiState by searchViewModel.shared.uiState.collectAsState()
+    val homeUiState by homeViewModel.shared.uiState.collectAsState()
     val query = searchUiState.query
     val isQuerySubmitted = searchUiState.isQuerySubmitted
     var isResultsPage by rememberSaveable { mutableStateOf(isQuerySubmitted) }
@@ -512,8 +516,15 @@ fun SearchScreen(
                                     playSong(item.toSongItem(), playerConnection, scope)
                                 }
 
+                                is BrowseItem -> navigator.navigate(Screen.Browse(item.id, item.params, item.title))
+
                                 else -> {}
                             }
+                        },
+                        moodsAndGenres = homeUiState.moodsAndGenres,
+                        onAvatarClick = {
+                            dismissKeyboardAndFocus()
+                            navigator.navigate(Screen.Settings)
                         },
                         onAlbumPlay = { album ->
                             dismissKeyboardAndFocus()
