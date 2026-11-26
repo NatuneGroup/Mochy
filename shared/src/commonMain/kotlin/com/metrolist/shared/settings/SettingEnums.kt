@@ -40,7 +40,7 @@ enum class CrossfadeStyle {
 }
 
 // the length Auto Crossfade blends each song over, in seconds
-const val AutoCrossfadeSeconds = 5f
+const val AUTO_CROSSFADE_SECONDS = 5f
 
 enum class AppLayout {
     EXPRESS,
@@ -182,6 +182,7 @@ enum class PlayerCoverStyle {
     SQUARED,
     EDGE_TO_EDGE,
     DISC,
+
     // the reference's disc looks; appended so the saved ordinals above stay valid
     DISC_SMALL_FULL,
     DISC_SMALL_LABEL,

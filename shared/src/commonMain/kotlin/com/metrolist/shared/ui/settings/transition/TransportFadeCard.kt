@@ -38,7 +38,7 @@ import kotlin.math.roundToInt
 internal fun TransportFadeCard(onSettingValueChanged: () -> Unit) {
     val settings = Settings.shared
     val enabled = settings.transportFadeEnabled
-    val seconds = settings.transportFadeSeconds.coerceIn(TransportFadeMinSeconds, TransportFadeMaxSeconds)
+    val seconds = settings.transportFadeSeconds.coerceIn(TRANSPORT_FADE_MIN_SECONDS, TRANSPORT_FADE_MAX_SECONDS)
 
     Column(Modifier.fillMaxWidth().padding(14.dp)) {
         TransitionStage(height = 150.dp) {
@@ -65,20 +65,20 @@ internal fun TransportFadeCard(onSettingValueChanged: () -> Unit) {
                         settings.transportFadeSeconds = (it * 2f).roundToInt() / 2f
                         onSettingValueChanged()
                     },
-                    valueRange = TransportFadeMinSeconds..TransportFadeMaxSeconds,
-                    steps = ((TransportFadeMaxSeconds - TransportFadeMinSeconds) * 2f).toInt() - 1,
+                    valueRange = TRANSPORT_FADE_MIN_SECONDS..TRANSPORT_FADE_MAX_SECONDS,
+                    steps = ((TRANSPORT_FADE_MAX_SECONDS - TRANSPORT_FADE_MIN_SECONDS) * 2f).toInt() - 1,
                 )
             }
             Row(Modifier.fillMaxWidth().padding(horizontal = 6.dp)) {
                 Text(
-                    stringResource(Res.string.mochy_transition_fade_seconds, transportSecondsText(TransportFadeMinSeconds)),
+                    stringResource(Res.string.mochy_transition_fade_seconds, transportSecondsText(TRANSPORT_FADE_MIN_SECONDS)),
                     fontFamily = mochyInterFontFamily(),
                     fontSize = 11.sp,
                     color = TransitionColors.Secondary,
                     modifier = Modifier.weight(1f),
                 )
                 Text(
-                    stringResource(Res.string.mochy_transition_fade_seconds, transportSecondsText(TransportFadeMaxSeconds)),
+                    stringResource(Res.string.mochy_transition_fade_seconds, transportSecondsText(TRANSPORT_FADE_MAX_SECONDS)),
                     fontFamily = mochyInterFontFamily(),
                     fontSize = 11.sp,
                     color = TransitionColors.Secondary,

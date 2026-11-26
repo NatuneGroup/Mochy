@@ -56,7 +56,14 @@ internal fun MochySettingsSlider(
     )
     val fraction = if (end > start) ((value - start) / (end - start)).coerceIn(0f, 1f) else 0f
     val activeColor = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-    val inactiveColor = if (enabled) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.20f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+    val inactiveColor =
+        if (enabled) {
+            MaterialTheme.colorScheme.onSurface.copy(
+                alpha = 0.20f,
+            )
+        } else {
+            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+        }
 
     fun pick(x: Float) {
         val f = if (widthPx > 0f) (x / widthPx).coerceIn(0f, 1f) else 0f

@@ -7,12 +7,12 @@
 
 package com.metrolist.shared.ui.settings.transition
 
-import androidx.compose.runtime.getValue
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -26,15 +26,18 @@ import com.metrolist.shared.ui.audiolab.rememberOnScreen
 import com.metrolist.shared.ui.audiolab.rememberPicturesHeld
 
 // the transport fade's limits, as the Playback slider has always used them
-internal const val TransportFadeMinSeconds = 0.5f
-internal const val TransportFadeMaxSeconds = 10f
+internal const val TRANSPORT_FADE_MIN_SECONDS = 0.5f
+internal const val TRANSPORT_FADE_MAX_SECONDS = 10f
 
 /** the white line is the volume through a fade; off, the fade is a hard cut. A playhead rides the curve while it's enabled */
 @Composable
-internal fun TransportFadePicture(enabled: Boolean, seconds: Float) {
+internal fun TransportFadePicture(
+    enabled: Boolean,
+    seconds: Float,
+) {
     val softness by animateFloatAsState(if (enabled) 1f else 0f, spring(dampingRatio = 0.85f, stiffness = 260f), label = "softness")
     val span by animateFloatAsState(
-        0.12f + 0.5f * (seconds - TransportFadeMinSeconds) / (TransportFadeMaxSeconds - TransportFadeMinSeconds),
+        0.12f + 0.5f * (seconds - TRANSPORT_FADE_MIN_SECONDS) / (TRANSPORT_FADE_MAX_SECONDS - TRANSPORT_FADE_MIN_SECONDS),
         spring(dampingRatio = 0.85f, stiffness = 220f),
         label = "span",
     )
@@ -52,11 +55,13 @@ internal fun TransportFadePicture(enabled: Boolean, seconds: Float) {
         val fadeStart = left + (width - fadeWidth) * 0.48f
 
         fun u(x: Float) = (x - fadeStart) / fadeWidth
+
         fun white(x: Float): Float {
             val t = u(x).coerceIn(0f, 1f)
             val step = if (u(x) >= 0.5f) 1f else 0f
             return softness * smooth(t) + (1f - softness) * step
         }
+
         fun yOf(level: Float) = top + (bottom - top) * level
 
         drawCurve(left, right, Color.White, 1.6.dp.toPx()) { yOf(white(it)) }
@@ -72,7 +77,13 @@ internal fun TransportFadePicture(enabled: Boolean, seconds: Float) {
     }
 }
 
-private fun DrawScope.drawCurve(left: Float, right: Float, color: Color, width: Float, y: (Float) -> Float) {
+private fun DrawScope.drawCurve(
+    left: Float,
+    right: Float,
+    color: Color,
+    width: Float,
+    y: (Float) -> Float,
+) {
     val path = Path()
     var x = left
     path.moveTo(x, y(x))

@@ -679,11 +679,13 @@ fun LazyListScope.renderHomeShelves(
 
 private fun HomeShelf.usesMochyTrackRows(): Boolean =
     (style == HomeShelfStyle.SONG_GRID || style == HomeShelfStyle.SONG_LIST || key == "forgotten_favorites" || key == "recently_played") &&
-        items.isNotEmpty() && items.all { it is SongItem && !it.isPodcast && !it.isVideoSong }
+        items.isNotEmpty() &&
+        items.all { it is SongItem && !it.isPodcast && !it.isVideoSong }
 
 private fun HomeShelf.usesMochyCoverCards(): Boolean =
     (style == HomeShelfStyle.CAROUSEL || style == HomeShelfStyle.ALBUM_CAROUSEL || style == HomeShelfStyle.SIMILAR_TO) &&
-        items.isNotEmpty() && items.all { it is SongItem || it is AlbumItem || it is ArtistItem || it is PlaylistItem }
+        items.isNotEmpty() &&
+        items.all { it is SongItem || it is AlbumItem || it is ArtistItem || it is PlaylistItem }
 
 @Composable
 internal fun DefaultHomeShelf(

@@ -26,7 +26,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -45,6 +44,7 @@ import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import kotlinx.coroutines.flow.first
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -121,7 +121,11 @@ internal fun EightDAudioCard() {
 
 /** the turning dot: it turns at the real rotation speed and holds still while the page is off screen */
 @Composable
-private fun OrbitIndicator(settings: EightDSettings, held: State<Boolean>, modifier: Modifier) {
+private fun OrbitIndicator(
+    settings: EightDSettings,
+    held: State<Boolean>,
+    modifier: Modifier,
+) {
     val angle = remember { mutableFloatStateOf(0f) }
     val currentSettings by rememberUpdatedState(settings)
     LaunchedEffect(settings.enabled, settings.rotationSpeedHz) {
@@ -162,10 +166,11 @@ private fun OrbitIndicator(settings: EightDSettings, held: State<Boolean>, modif
 
         val radians = (angle.floatValue - 90f) * PI.toFloat() / 180f
         val orbitRadius = radius * (0.25f + settings.depth * 0.75f)
-        val source = Offset(
-            center.x + cos(radians) * orbitRadius,
-            center.y + sin(radians) * orbitRadius,
-        )
+        val source =
+            Offset(
+                center.x + cos(radians) * orbitRadius,
+                center.y + sin(radians) * orbitRadius,
+            )
         drawLine(
             color = Color.White.copy(alpha = if (settings.enabled) 0.32f else 0.12f),
             start = center,
@@ -201,8 +206,7 @@ private fun OrbitIndicator(settings: EightDSettings, held: State<Boolean>, modif
     }
 }
 
-private fun EightDSettings.matches(preset: EightDPreset): Boolean =
-    rotationSpeedHz == preset.rotationSpeedHz && depth == preset.depth
+private fun EightDSettings.matches(preset: EightDPreset): Boolean = rotationSpeedHz == preset.rotationSpeedHz && depth == preset.depth
 
 private class EightDPreset(
     val key: String,
@@ -211,8 +215,9 @@ private class EightDPreset(
     val depth: Float,
 )
 
-private val EightDPresets = listOf(
-    EightDPreset("chill", Res.string.audio_lab_eightd_preset_chill, 0.08f, 0.45f),
-    EightDPreset("balanced", Res.string.audio_lab_eightd_preset_balanced, 0.15f, 0.85f),
-    EightDPreset("extreme", Res.string.audio_lab_eightd_preset_extreme, 0.5f, 1f),
-)
+private val EightDPresets =
+    listOf(
+        EightDPreset("chill", Res.string.audio_lab_eightd_preset_chill, 0.08f, 0.45f),
+        EightDPreset("balanced", Res.string.audio_lab_eightd_preset_balanced, 0.15f, 0.85f),
+        EightDPreset("extreme", Res.string.audio_lab_eightd_preset_extreme, 0.5f, 1f),
+    )

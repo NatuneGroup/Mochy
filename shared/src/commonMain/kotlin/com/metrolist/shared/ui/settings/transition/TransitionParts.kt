@@ -7,7 +7,6 @@
 
 package com.metrolist.shared.ui.settings.transition
 
-import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -36,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
@@ -56,14 +56,18 @@ internal object TransitionColors {
 
 /** the dark box a live picture sits in, outlined and clipped so its animation repaints only itself */
 @Composable
-internal fun TransitionStage(height: Dp = 132.dp, content: @Composable BoxScope.() -> Unit) {
+internal fun TransitionStage(
+    height: Dp = 132.dp,
+    content: @Composable BoxScope.() -> Unit,
+) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(height)
-            .clip(RoundedCornerShape(18.dp))
-            .background(TransitionColors.Stage)
-            .border(1.dp, TransitionColors.StageLine, RoundedCornerShape(18.dp)),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(height)
+                .clip(RoundedCornerShape(18.dp))
+                .background(TransitionColors.Stage)
+                .border(1.dp, TransitionColors.StageLine, RoundedCornerShape(18.dp)),
     ) {
         content()
     }
@@ -109,7 +113,10 @@ internal fun TransitionSlider(
 
 /** options that fold away while their effect is off */
 @Composable
-internal fun TransitionCollapsible(visible: Boolean, content: @Composable ColumnScope.() -> Unit) {
+internal fun TransitionCollapsible(
+    visible: Boolean,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     AnimatedVisibility(
         visible = visible,
         enter = expandVertically(spring(dampingRatio = 0.9f, stiffness = Spring.StiffnessMediumLow)) + fadeIn(tween(220, 60)),
@@ -121,7 +128,10 @@ internal fun TransitionCollapsible(visible: Boolean, content: @Composable Column
 
 /** the soft heading over each group on the transition page */
 @Composable
-internal fun TransitionHeading(text: String, modifier: Modifier = Modifier) {
+internal fun TransitionHeading(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
     Text(
         text = text,
         fontFamily = mochyInterFontFamily(),
@@ -137,7 +147,9 @@ internal fun TransitionHeading(text: String, modifier: Modifier = Modifier) {
 /** flags when the picture's box is inside the window, so pictures stop moving once they scroll away */
 @Composable
 internal fun Modifier.trackPictureOnScreen(state: MutableState<Boolean>): Modifier {
-    val windowHeight = LocalWindowInfo.current.containerSize.height.toFloat()
+    val windowHeight =
+        LocalWindowInfo.current.containerSize.height
+            .toFloat()
     return onGloballyPositioned { coords ->
         val bounds: Rect = coords.boundsInWindow()
         val visible = bounds.height > 0f && bounds.bottom > 0f && bounds.top < windowHeight

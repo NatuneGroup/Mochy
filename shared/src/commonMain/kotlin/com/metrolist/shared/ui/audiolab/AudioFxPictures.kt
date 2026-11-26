@@ -126,28 +126,50 @@ fun SpatialPicture(settings: SpatialSettings) {
             val lift = r * 2.4f
             listOf(earL to earR to Color(0xFF6BBAF2), earR to earL to Color(0xFFF28BA8)).forEach { (pair, color) ->
                 val (from, to) = pair
-                val path = Path().apply {
-                    moveTo(from.x, from.y - 4.dp.toPx())
-                    cubicTo(from.x, from.y - lift, to.x, to.y - lift, to.x, to.y - 4.dp.toPx())
-                }
+                val path =
+                    Path().apply {
+                        moveTo(from.x, from.y - 4.dp.toPx())
+                        cubicTo(from.x, from.y - lift, to.x, to.y - lift, to.x, to.y - 4.dp.toPx())
+                    }
                 drawPath(
                     path,
                     color.copy(alpha = 0.55f * crossfeedAmount * strength),
-                    style = Stroke(
-                        1.8.dp.toPx(),
-                        cap = StrokeCap.Round,
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(5.dp.toPx(), 5.dp.toPx()), -t * 40.dp.toPx()),
-                    ),
+                    style =
+                        Stroke(
+                            1.8.dp.toPx(),
+                            cap = StrokeCap.Round,
+                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(5.dp.toPx(), 5.dp.toPx()), -t * 40.dp.toPx()),
+                        ),
                 )
             }
-            drawCircle(Color(0xFF6BBAF2).copy(alpha = 0.8f * crossfeedAmount), 5.dp.toPx() + 2.dp.toPx() * pulse, Offset(earL.x - 10.dp.toPx(), earL.y))
-            drawCircle(Color(0xFFF28BA8).copy(alpha = 0.8f * crossfeedAmount), 5.dp.toPx() + 2.dp.toPx() * pulse, Offset(earR.x + 10.dp.toPx(), earR.y))
+            drawCircle(
+                Color(0xFF6BBAF2).copy(alpha = 0.8f * crossfeedAmount),
+                5.dp.toPx() + 2.dp.toPx() * pulse,
+                Offset(
+                    earL.x - 10.dp.toPx(),
+                    earL.y,
+                ),
+            )
+            drawCircle(
+                Color(0xFFF28BA8).copy(alpha = 0.8f * crossfeedAmount),
+                5.dp.toPx() + 2.dp.toPx() * pulse,
+                Offset(
+                    earR.x + 10.dp.toPx(),
+                    earR.y,
+                ),
+            )
         }
     }
 }
 
 /** a line with dots running along it, from one point to the other */
-private fun DrawScope.flowLine(from: Offset, to: Offset, color: Color, t: Float, weight: Float) {
+private fun DrawScope.flowLine(
+    from: Offset,
+    to: Offset,
+    color: Color,
+    t: Float,
+    weight: Float,
+) {
     drawLine(color.copy(alpha = color.alpha * 0.35f), from, to, 1.2.dp.toPx() * weight)
     for (k in 0 until 3) {
         val p = ((t * 0.9f + k / 3f) % 1f)

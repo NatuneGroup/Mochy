@@ -218,7 +218,6 @@ import com.metrolist.shared.ui.components.VintagePlayerControls
 import com.metrolist.shared.ui.components.adjacentArtworkUrls
 import com.metrolist.shared.ui.components.focusOutline
 import com.metrolist.shared.ui.components.formatSleepTimerRemaining
-import com.metrolist.shared.ui.components.images.AsyncImage
 import com.metrolist.shared.ui.components.lyrics.LyricsContrastScrim
 import com.metrolist.shared.ui.components.lyrics.LyricsOffsetEditor
 import com.metrolist.shared.ui.components.playbackMarquee
@@ -236,13 +235,12 @@ import com.metrolist.shared.ui.mochy.LikeSlot
 import com.metrolist.shared.ui.navigation.NavigationBackHandler
 import com.metrolist.shared.ui.navigation.blockInput
 import com.metrolist.shared.ui.player.mochy.BedsideClock
-import com.metrolist.shared.ui.player.mochy.FlagshipDiscCover
-import com.metrolist.shared.ui.player.mochy.isDiscLook
 import com.metrolist.shared.ui.player.mochy.FlagshipActions
 import com.metrolist.shared.ui.player.mochy.FlagshipBarBottomGap
 import com.metrolist.shared.ui.player.mochy.FlagshipBarHeight
 import com.metrolist.shared.ui.player.mochy.FlagshipBottomControls
 import com.metrolist.shared.ui.player.mochy.FlagshipControlsShade
+import com.metrolist.shared.ui.player.mochy.FlagshipDiscCover
 import com.metrolist.shared.ui.player.mochy.FlagshipHandle
 import com.metrolist.shared.ui.player.mochy.FlagshipLandscapePlayer
 import com.metrolist.shared.ui.player.mochy.FlagshipSidePadding
@@ -253,8 +251,8 @@ import com.metrolist.shared.ui.player.mochy.flagshipFontFamily
 import com.metrolist.shared.ui.player.mochy.ipod.IpodPlayerStyle
 import com.metrolist.shared.ui.player.mochy.ipod.isIpodWholeDevice
 import com.metrolist.shared.ui.player.mochy.ipod.rememberIpodLook
+import com.metrolist.shared.ui.player.mochy.isDiscLook
 import com.metrolist.shared.ui.player.mochy.turntable.TurntableControls
-import com.metrolist.shared.ui.player.mochy.turntable.TurntablePills
 import com.metrolist.shared.ui.player.mochy.turntable.TurntableStage
 import com.metrolist.shared.ui.share.SongShareCardDialog
 import com.metrolist.shared.ui.theme.ComponentShapes
@@ -618,7 +616,8 @@ fun PlayerScreen(
     val isVideoModeResolving by playerConnection?.isVideoModeResolving?.collectWhilePlayerActive(isPlayerContentVisible && isScreenVisible)
         ?: remember { mutableStateOf(false) }
     val showVideoButton =
-        Settings.shared.showPlayerVideoButton && platform.supportsVideoPlayback &&
+        Settings.shared.showPlayerVideoButton &&
+            platform.supportsVideoPlayback &&
             shouldShowVideoButton(
                 isListenTogetherGuest = isListenTogetherGuest,
                 hideVideoSongs = Settings.shared.hideVideoSongs,
@@ -762,8 +761,10 @@ fun PlayerScreen(
         canvasLayers.failed =
             canvasLayers.failed
                 .filter {
-                    it.first == currentSong?.id || it.first == uiState.nextCanvasSongId ||
-                        it.first == uiState.previousCanvasSongId || it.first == CanvasContentSource.APPLE_MUSIC.name
+                    it.first == currentSong?.id ||
+                        it.first == uiState.nextCanvasSongId ||
+                        it.first == uiState.previousCanvasSongId ||
+                        it.first == CanvasContentSource.APPLE_MUSIC.name
                 }.toSet()
     }
     LaunchedEffect(currentSong?.id) {
@@ -804,7 +805,8 @@ fun PlayerScreen(
             presentationAllowed = playerContentState.isVisible,
         )
     val showVideoSurface =
-        shouldPresentMusicVideo && !uiState.isLyricsVisible &&
+        shouldPresentMusicVideo &&
+            !uiState.isLyricsVisible &&
             currentSong?.id == uiState.currentSong?.id
 
     val isCanvasBackdropVisible =
@@ -825,9 +827,13 @@ fun PlayerScreen(
                 isCanvasBackdropVisible ||
                 (usesMochyTurntable && !uiState.isLyricsVisible) ||
                 (
-                    usesFullscreenThumbnail && currentSong?.displayThumbnail != null && !uiState.isLyricsVisible &&
+                    usesFullscreenThumbnail &&
+                        currentSong?.displayThumbnail != null &&
+                        !uiState.isLyricsVisible &&
                         !(
-                            isLandscape && !showVideoSurface && playerBackground == PlayerBackgroundStyle.LIQUID &&
+                            isLandscape &&
+                                !showVideoSurface &&
+                                playerBackground == PlayerBackgroundStyle.LIQUID &&
                                 MaterialTheme.colorScheme.surface.luminance() >= 0.5f
                         )
                 )
@@ -1188,7 +1194,8 @@ fun PlayerScreen(
                                         isLyricsVisible = uiState.isLyricsVisible,
                                     )
                                 }
-                            } else if (playerBackground == PlayerBackgroundStyle.LIQUID && currentSong?.displayThumbnail != null &&
+                            } else if (playerBackground == PlayerBackgroundStyle.LIQUID &&
+                                currentSong?.displayThumbnail != null &&
                                 !(showFullscreenThumbnailBackground && !uiState.isLyricsVisible && !showVideoSurface)
                             ) {
                                 LiquidBackground(
@@ -1283,7 +1290,9 @@ fun PlayerScreen(
                                     }
                                 } else if (
                                     playerBackground != PlayerBackgroundStyle.BLURRED_ARTWORK &&
-                                    usesFullscreenThumbnail && showVideoSurface && currentSong?.displayThumbnail != null
+                                    usesFullscreenThumbnail &&
+                                    showVideoSurface &&
+                                    currentSong?.displayThumbnail != null
                                 ) {
                                     PlayerBackgroundArtwork(currentSong.displayThumbnail!!, artworkCrossfade) { backgroundUrl ->
                                         BlurredArtworkBackground(
@@ -2020,7 +2029,9 @@ fun PlayerScreen(
                                                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                                                             verticalAlignment = Alignment.CenterVertically,
                                                         ) {
-                                                            if (!isTv && !isListenTogetherGuest && platform.supportsCasting &&
+                                                            if (!isTv &&
+                                                                !isListenTogetherGuest &&
+                                                                platform.supportsCasting &&
                                                                 Settings.shared.isPlayerCastButtonVisible
                                                             ) {
                                                                 FilledIconButton(
@@ -2703,7 +2714,9 @@ fun PlayerScreen(
                                     }
                                     playerControlsTransition.AnimatedVisibility(
                                         visible = { (expanded, minimalUi) ->
-                                            expanded && playerType == PlayerType.CLASSIC && controlsVisible &&
+                                            expanded &&
+                                                playerType == PlayerType.CLASSIC &&
+                                                controlsVisible &&
                                                 !minimalUi
                                         },
                                         enter = canvasControlsEnter,

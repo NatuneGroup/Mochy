@@ -92,10 +92,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.metrolist.shared.generated.resources.Res
+import com.metrolist.shared.generated.resources.mochy_hero_view
 import com.metrolist.shared.generated.resources.mochy_home2_arrow_forward
 import com.metrolist.shared.generated.resources.mochy_home2_pause
 import com.metrolist.shared.generated.resources.mochy_home2_play
-import com.metrolist.shared.generated.resources.mochy_hero_view
 import com.metrolist.shared.generated.resources.next
 import com.metrolist.shared.generated.resources.now_playing
 import com.metrolist.shared.generated.resources.pause
@@ -642,7 +642,11 @@ private fun Modifier.heroScrollAway(progress: () -> Float): Modifier =
         }
     }
 
-private fun heroSmoothstep(from: Float, to: Float, x: Float): Float {
+private fun heroSmoothstep(
+    from: Float,
+    to: Float,
+    x: Float,
+): Float {
     val t = ((x - from) / (to - from)).coerceIn(0f, 1f)
     return t * t * (3f - 2f * t)
 }
@@ -702,7 +706,16 @@ private fun MochyHeroPill(
             ) {
                 if (!opensPage) {
                     Icon(
-                        painter = painterResource(if (action == HeroPillKind.PAUSE) Res.drawable.mochy_home2_pause else Res.drawable.mochy_home2_play),
+                        painter =
+                            painterResource(
+                                if (action ==
+                                    HeroPillKind.PAUSE
+                                ) {
+                                    Res.drawable.mochy_home2_pause
+                                } else {
+                                    Res.drawable.mochy_home2_play
+                                },
+                            ),
                         contentDescription = null,
                         tint = HeroPillContent,
                         modifier = Modifier.size(15.dp),

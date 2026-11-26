@@ -2,7 +2,6 @@
 
 package com.metrolist.shared.ui.audiolab
 
-import com.metrolist.shared.generated.resources.audio_lab_stage_kemar_credit
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -23,7 +22,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.metrolist.shared.audiolab.EightDSettings
@@ -41,9 +39,11 @@ import com.metrolist.shared.generated.resources.audio_lab_hls_note
 import com.metrolist.shared.generated.resources.audio_lab_hz
 import com.metrolist.shared.generated.resources.audio_lab_ms
 import com.metrolist.shared.generated.resources.audio_lab_percent
+import com.metrolist.shared.generated.resources.audio_lab_stage_kemar_credit
 import com.metrolist.shared.generated.resources.percent_symbol
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
 /** Whether the Stage room can run on this host: Android only, and only once its native library loads. */

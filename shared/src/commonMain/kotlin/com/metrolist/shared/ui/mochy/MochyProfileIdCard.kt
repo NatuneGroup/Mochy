@@ -110,13 +110,13 @@ import com.metrolist.shared.generated.resources.mochy_hello
 import com.metrolist.shared.generated.resources.mochy_profile_add
 import com.metrolist.shared.generated.resources.mochy_profile_change_photo
 import com.metrolist.shared.generated.resources.mochy_profile_choose_photo
+import com.metrolist.shared.generated.resources.mochy_profile_edit
 import com.metrolist.shared.generated.resources.mochy_profile_greeting_fallback
 import com.metrolist.shared.generated.resources.mochy_profile_greeting_format
 import com.metrolist.shared.generated.resources.mochy_profile_greeting_good_to_see_you
-import com.metrolist.shared.generated.resources.mochy_profile_greeting_hey
 import com.metrolist.shared.generated.resources.mochy_profile_greeting_hello_again
+import com.metrolist.shared.generated.resources.mochy_profile_greeting_hey
 import com.metrolist.shared.generated.resources.mochy_profile_greeting_welcome_back
-import com.metrolist.shared.generated.resources.mochy_profile_edit
 import com.metrolist.shared.generated.resources.mochy_profile_picture
 import com.metrolist.shared.generated.resources.mochy_profile_remove_photo
 import com.metrolist.shared.generated.resources.mochy_profile_total_listening_time
@@ -476,7 +476,15 @@ fun InteractiveProfileIdCard(
     LaunchedEffect(Unit) {
         snapshotFlow { tiltTarget }.collect { t ->
             val settle = t == Offset.Zero
-            val spec = if (settle) spring<Float>(dampingRatio = 0.42f, stiffness = Spring.StiffnessLow) else spring(stiffness = Spring.StiffnessMediumLow)
+            val spec =
+                if (settle) {
+                    spring<Float>(
+                        dampingRatio = 0.42f,
+                        stiffness = Spring.StiffnessLow,
+                    )
+                } else {
+                    spring(stiffness = Spring.StiffnessMediumLow)
+                }
             launch { tiltX.animateTo(t.y, spec) }
             launch { tiltY.animateTo(t.x, spec) }
         }
@@ -708,12 +716,13 @@ private val MochyPageMaxWidth = 1040.dp
 /** Wide windows put the greeting and card in one column and the listening card in the other. */
 private val MochyTwoColumnMinWidth = 720.dp
 
-private val MochyGreetingWords = listOf(
-    Res.string.mochy_profile_greeting_hello_again,
-    Res.string.mochy_profile_greeting_hey,
-    Res.string.mochy_profile_greeting_welcome_back,
-    Res.string.mochy_profile_greeting_good_to_see_you,
-)
+private val MochyGreetingWords =
+    listOf(
+        Res.string.mochy_profile_greeting_hello_again,
+        Res.string.mochy_profile_greeting_hey,
+        Res.string.mochy_profile_greeting_welcome_back,
+        Res.string.mochy_profile_greeting_good_to_see_you,
+    )
 
 /**
  * Mochy profile page, laid out as the reference's Mochy page: a greeting over the ID card and its
@@ -798,11 +807,22 @@ private fun MochyProfileHeader(
 }
 
 @Composable
-private fun MochyListeningTimeCard(totalMs: Long, figureScale: Float) {
+private fun MochyListeningTimeCard(
+    totalMs: Long,
+    figureScale: Float,
+) {
     val totalMinutes = (totalMs / 60_000L).coerceAtLeast(0L)
     val hours = totalMinutes / 60
     // long hour counts shrink the figures a step so the label keeps its room
-    val k = figureScale * if (hours >= 1000) 0.8f else if (hours >= 100) 0.9f else 1f
+    val k =
+        figureScale *
+            if (hours >= 1000) {
+                0.8f
+            } else if (hours >= 100) {
+                0.9f
+            } else {
+                1f
+            }
     Column(
         modifier =
             Modifier
@@ -825,7 +845,14 @@ private fun MochyListeningTimeCard(totalMs: Long, figureScale: Float) {
             Spacer(Modifier.width(10.dp))
             Text(
                 text = stringResource(Res.string.mochy_profile_total_listening_time),
-                style = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 14.sp, lineHeight = 18.sp, color = Color(0xFF8A8A8A), textAlign = TextAlign.End),
+                style =
+                    TextStyle(
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 14.sp,
+                        lineHeight = 18.sp,
+                        color = Color(0xFF8A8A8A),
+                        textAlign = TextAlign.End,
+                    ),
                 modifier = Modifier.weight(1f),
             )
         }
@@ -836,7 +863,11 @@ private fun MochyListeningTimeCard(totalMs: Long, figureScale: Float) {
 }
 
 @Composable
-private fun MochyTimeValue(value: String, unit: String, k: Float) {
+private fun MochyTimeValue(
+    value: String,
+    unit: String,
+    k: Float,
+) {
     val density = LocalDensity.current
     Row(verticalAlignment = Alignment.Bottom) {
         OdometerNumber(
@@ -849,7 +880,16 @@ private fun MochyTimeValue(value: String, unit: String, k: Float) {
         )
         Text(
             text = unit,
-            style = TextStyle(fontFamily = mochyInterFontFamily(), fontWeight = FontWeight.Bold, fontSize = with(density) { (18f * k).dp.toSp() }, color = Color.White),
+            style =
+                TextStyle(
+                    fontFamily = mochyInterFontFamily(),
+                    fontWeight = FontWeight.Bold,
+                    fontSize =
+                        with(density) {
+                            (18f * k).dp.toSp()
+                        },
+                    color = Color.White,
+                ),
             modifier = Modifier.padding(start = 1.dp, bottom = (6 * k).dp),
         )
     }

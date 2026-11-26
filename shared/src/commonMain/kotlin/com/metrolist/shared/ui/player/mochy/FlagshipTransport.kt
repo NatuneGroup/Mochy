@@ -70,11 +70,11 @@ import com.metrolist.shared.ui.haptics.rememberMetrolistHaptics
 import com.metrolist.shared.ui.player.LocalPlayerPositionActive
 import com.metrolist.shared.utils.formatPlaybackSpeed
 import com.metrolist.shared.utils.normalizePlaybackTempo
-import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.roundToInt
 
 private const val DESIGN_WIDTH = 1172f
 private val ButtonCentres = floatArrayOf(0.215f, 0.5f, 0.785f)
@@ -102,7 +102,8 @@ fun FlagshipTransport(
     val duration = session?.duration?.collectAsState()?.value ?: 0L
     val atEnd = remember(duration) { { position: Long -> duration > 0L && position >= duration } }
     val ended =
-        !playing && !loading &&
+        !playing &&
+            !loading &&
             (session?.currentPosition?.collectPlaybackDisplayState(active = positionActive, transform = atEnd)?.value == true)
     val haptics = rememberMetrolistHaptics()
     var holdInProgress by remember(session) { mutableStateOf(false) }
@@ -353,7 +354,14 @@ internal fun flagshipHoverState(
     val lit = enabled && hovered && !pressed
     val scale =
         animateFloatAsState(
-            targetValue = if (pressed) 0.86f else if (lit) 1.08f else 1f,
+            targetValue =
+                if (pressed) {
+                    0.86f
+                } else if (lit) {
+                    1.08f
+                } else {
+                    1f
+                },
             animationSpec = spring(dampingRatio = 0.54f, stiffness = 720f),
             label = "flagshipHover",
         )

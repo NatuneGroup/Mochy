@@ -61,10 +61,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
-import com.metrolist.shared.model.previewThumbnailUrl
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.more_options
 import com.metrolist.shared.model.SongItem
+import com.metrolist.shared.model.previewThumbnailUrl
 import com.metrolist.shared.state.SongMetadataState
 import com.metrolist.shared.ui.components.ArtistSubtitle
 import com.metrolist.shared.ui.components.ItemStatusBadges
@@ -245,7 +245,11 @@ private const val PHOTO_DIM = 0.22f
 private const val PHOTO_SOFT_BY = 0.55f
 private const val PHOTO_SOFT_RADIUS = 30f
 
-private fun photoSmoothStep(from: Float, to: Float, x: Float): Float {
+private fun photoSmoothStep(
+    from: Float,
+    to: Float,
+    x: Float,
+): Float {
     val t = ((x - from) / (to - from)).coerceIn(0f, 1f)
     return t * t * (3f - 2f * t)
 }
@@ -283,8 +287,7 @@ internal fun MochyDetailPhotoBackdrop(
                     transformOrigin = TransformOrigin(0.5f, 0.35f)
                     alpha = 1f - photoSmoothStep(PHOTO_FADE_FROM, PHOTO_FADE_TO, p)
                     compositingStrategy = if (p > 0f) CompositingStrategy.Offscreen else CompositingStrategy.Auto
-                }
-                .drawWithContent {
+                }.drawWithContent {
                     drawContent()
                     val p = progress()
                     if (p > 0f) {
@@ -388,8 +391,16 @@ internal fun MochyDetailTrackRow(
         modifier =
             modifier
                 .fillMaxWidth()
-                .then(if (selected) Modifier.background(MaterialTheme.colorScheme.primary.copy(alpha = 0.16f), RoundedCornerShape(9.dp)) else Modifier)
-                .alpha(if (enabled) 1f else 0.38f)
+                .then(
+                    if (selected) {
+                        Modifier.background(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
+                            RoundedCornerShape(9.dp),
+                        )
+                    } else {
+                        Modifier
+                    },
+                ).alpha(if (enabled) 1f else 0.38f)
                 .combinedClickable(
                     onClick = {
                         if (enabled) {
@@ -399,8 +410,7 @@ internal fun MochyDetailTrackRow(
                         }
                     },
                     onLongClick = onLongClick ?: onShowMenu,
-                )
-                .onSecondaryClick(onShowMenu)
+                ).onSecondaryClick(onShowMenu)
                 .padding(start = 36.dp, end = 24.dp, top = 9.dp, bottom = 9.dp),
     ) {
         Box(

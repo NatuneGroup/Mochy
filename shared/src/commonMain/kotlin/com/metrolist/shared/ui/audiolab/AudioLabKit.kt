@@ -2,7 +2,6 @@
 
 package com.metrolist.shared.ui.audiolab
 
-import androidx.compose.runtime.key
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
@@ -49,6 +48,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,7 +60,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -94,11 +93,12 @@ fun LabCard(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(26.dp))
-            .background(LabColors.Card)
-            .padding(padding),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(26.dp))
+                .background(LabColors.Card)
+                .padding(padding),
         content = content,
     )
 }
@@ -111,12 +111,13 @@ fun LabStage(
     content: @Composable BoxScope.() -> Unit,
 ) {
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(height)
-            .clip(RoundedCornerShape(18.dp))
-            .background(LabColors.Stage)
-            .border(1.dp, LabColors.StageLine, RoundedCornerShape(18.dp)),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(height)
+                .clip(RoundedCornerShape(18.dp))
+                .background(LabColors.Stage)
+                .border(1.dp, LabColors.StageLine, RoundedCornerShape(18.dp)),
     ) {
         content()
     }
@@ -139,11 +140,12 @@ fun LabToggleRow(
 ) {
     val font = mochyInterFontFamily()
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .clickable(enabled = enabled) { onCheckedChange(!checked) }
-            .padding(horizontal = 6.dp, vertical = 8.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .clickable(enabled = enabled) { onCheckedChange(!checked) }
+                .padding(horizontal = 6.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (leadingDot) {
@@ -211,25 +213,26 @@ internal fun LabSwitch(
         label = "thumbOffset",
     )
     Box(
-        modifier = modifier
-            .size(SwitchTrackWidth, SwitchTrackHeight)
-            .toggleable(
-                value = checked,
-                enabled = enabled && onCheckedChange != null,
-                role = Role.Switch,
-                onValueChange = { onCheckedChange?.invoke(it) },
-            )
-            .clip(RoundedCornerShape(50))
-            .background(trackColor)
-            .border(1.dp, borderColor, RoundedCornerShape(50)),
+        modifier =
+            modifier
+                .size(SwitchTrackWidth, SwitchTrackHeight)
+                .toggleable(
+                    value = checked,
+                    enabled = enabled && onCheckedChange != null,
+                    role = Role.Switch,
+                    onValueChange = { onCheckedChange?.invoke(it) },
+                ).clip(RoundedCornerShape(50))
+                .background(trackColor)
+                .border(1.dp, borderColor, RoundedCornerShape(50)),
     ) {
         Box(
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .offset(x = thumbOffset)
-                .size(SwitchThumbSize)
-                .clip(CircleShape)
-                .background(thumbColor),
+            modifier =
+                Modifier
+                    .align(Alignment.CenterStart)
+                    .offset(x = thumbOffset)
+                    .size(SwitchThumbSize)
+                    .clip(CircleShape)
+                    .background(thumbColor),
         )
     }
 }
@@ -272,27 +275,32 @@ fun LabSlider(
             valueRange = valueRange,
             steps = steps,
             enabled = enabled,
-            colors = SliderDefaults.colors(
-                thumbColor = Color.White,
-                activeTrackColor = Color.White,
-                inactiveTrackColor = LabColors.RowSelected,
-                disabledThumbColor = LabColors.Faint,
-                disabledActiveTrackColor = LabColors.Faint,
-                disabledInactiveTrackColor = LabColors.Row,
-            ),
+            colors =
+                SliderDefaults.colors(
+                    thumbColor = Color.White,
+                    activeTrackColor = Color.White,
+                    inactiveTrackColor = LabColors.RowSelected,
+                    disabledThumbColor = LabColors.Faint,
+                    disabledActiveTrackColor = LabColors.Faint,
+                    disabledInactiveTrackColor = LabColors.Row,
+                ),
         )
     }
 }
 
 /** the inner darker panel the sliders sit in */
 @Composable
-fun LabPanel(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+fun LabPanel(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .background(LabColors.Row)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(18.dp))
+                .background(LabColors.Row)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
         content = content,
     )
@@ -300,7 +308,10 @@ fun LabPanel(modifier: Modifier = Modifier, content: @Composable ColumnScope.() 
 
 /** options that fold away while their effect is off */
 @Composable
-fun LabCollapsible(visible: Boolean, content: @Composable ColumnScope.() -> Unit) {
+fun LabCollapsible(
+    visible: Boolean,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     AnimatedVisibility(
         visible = visible,
         enter = expandVertically(spring(dampingRatio = 0.9f, stiffness = Spring.StiffnessMediumLow)) + fadeIn(tween(220, 60)),
@@ -331,7 +342,11 @@ internal fun EffectCard(
     }
 }
 
-data class LabChip(val key: String, val label: String, val dot: Color? = null)
+data class LabChip(
+    val key: String,
+    val label: String,
+    val dot: Color? = null,
+)
 
 /** a scrolling row of pills; the picked one is white */
 @Composable
@@ -360,23 +375,28 @@ fun LabChips(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun LabChipPill(chip: LabChip, selected: Boolean, onSelect: (String) -> Unit, onLongPress: ((String) -> Unit)?) {
+private fun LabChipPill(
+    chip: LabChip,
+    selected: Boolean,
+    onSelect: (String) -> Unit,
+    onLongPress: ((String) -> Unit)?,
+) {
     val bg by animateColorAsState(if (selected) Color.White else LabColors.Chip, tween(180), label = "chipBg")
     val fg by animateColorAsState(if (selected) Color.Black else Color.White, tween(180), label = "chipFg")
     val interaction = remember { MutableInteractionSource() }
     val longClick: () -> Unit = { onLongPress?.invoke(chip.key) }
     Row(
-        modifier = Modifier
-            .height(38.dp)
-            .clip(RoundedCornerShape(19.dp))
-            .background(bg)
-            .combinedClickable(
-                interactionSource = interaction,
-                indication = null,
-                onClick = { onSelect(chip.key) },
-                onLongClick = if (onLongPress != null) longClick else null,
-            )
-            .padding(horizontal = 16.dp),
+        modifier =
+            Modifier
+                .height(38.dp)
+                .clip(RoundedCornerShape(19.dp))
+                .background(bg)
+                .combinedClickable(
+                    interactionSource = interaction,
+                    indication = null,
+                    onClick = { onSelect(chip.key) },
+                    onLongClick = if (onLongPress != null) longClick else null,
+                ).padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (chip.dot != null) {
@@ -396,13 +416,18 @@ private fun LabChipPill(chip: LabChip, selected: Boolean, onSelect: (String) -> 
 
 /** a text button in the section headers, such as Edit: dims while disabled */
 @Composable
-fun LabTextAction(text: String, enabled: Boolean = true, onClick: () -> Unit) {
+fun LabTextAction(
+    text: String,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
     val font = mochyInterFontFamily()
     Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 4.dp),
+        modifier =
+            Modifier
+                .clip(RoundedCornerShape(12.dp))
+                .clickable(enabled = enabled, onClick = onClick)
+                .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -426,13 +451,14 @@ fun LabSegmented(
 ) {
     val font = mochyInterFontFamily()
     BoxWithConstraints(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(height)
-            .clip(RoundedCornerShape(height / 2))
-            .background(LabColors.Card)
-            .border(1.dp, LabColors.StageLine, RoundedCornerShape(height / 2))
-            .padding(4.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(height)
+                .clip(RoundedCornerShape(height / 2))
+                .background(LabColors.Card)
+                .border(1.dp, LabColors.StageLine, RoundedCornerShape(height / 2))
+                .padding(4.dp),
     ) {
         val segment = maxWidth / options.size
         val offset by animateDpAsState(segment * selectedIndex, spring(dampingRatio = 0.82f, stiffness = 520f), label = "segment")
@@ -448,11 +474,12 @@ fun LabSegmented(
             options.forEachIndexed { index, label ->
                 val color by animateColorAsState(if (index == selectedIndex) Color.Black else Color.White, tween(160), label = "segText")
                 Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .clip(RoundedCornerShape(height / 2))
-                        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onSelect(index) },
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(height / 2))
+                            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onSelect(index) },
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -472,12 +499,14 @@ fun LabSegmented(
 
 /** whether pictures should move: not while they are scrolled out of view */
 @Composable
-fun rememberPicturesHeld(onScreen: State<Boolean>): State<Boolean> =
-    remember(onScreen) { derivedStateOf { !onScreen.value } }
+fun rememberPicturesHeld(onScreen: State<Boolean>): State<Boolean> = remember(onScreen) { derivedStateOf { !onScreen.value } }
 
 /** seconds, advancing every frame while the picture is free to move, or checking back a few times a second when moving says no */
 @Composable
-fun rememberLabTime(held: State<Boolean>, moving: () -> Boolean = { true }): State<Float> {
+fun rememberLabTime(
+    held: State<Boolean>,
+    moving: () -> Boolean = { true },
+): State<Float> {
     val time = remember { mutableFloatStateOf(0f) }
     val currentMoving by rememberUpdatedState(moving)
     LaunchedEffect(held) {

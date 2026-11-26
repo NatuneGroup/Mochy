@@ -13,7 +13,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -22,13 +21,13 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyListState
@@ -203,44 +202,45 @@ fun SearchScreen(
                 Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
                     Spacer(modifier = Modifier.height(headerLayout))
                     SearchContent(
-                    uiState = uiState,
-                    text = text.contentText,
-                    onItemClick = {
-                        dismissKeyboard()
-                        onItemClick(it)
-                    },
-                    onVideoItemClick = {
-                        dismissKeyboard()
-                        onVideoItemClick(it)
-                    },
-                    onItemLongClick = onItemLongClick,
-                    onSongSave = onSongSave,
-                    onHistoryItemClick = {
-                        dismissKeyboard()
-                        onHistoryItemClick(it)
-                    },
-                    onHistoryItemInsert = onHistoryItemInsert,
-                    onClearHistory = onClearHistory,
-                    onFilterSelected = onFilterSelected,
-                    onLoadMore = onLoadMore,
-                    onRetryLoadMore = onRetryLoadMore,
-                    onRemoveHistoryItem = onRemoveHistoryItem,
-                    onRemoveRecentItem = onRemoveRecentItem,
-                    onClearRecentItems = onClearRecentItems,
-                    currentSongId = currentSongId,
-                    isPlaying = isPlaying,
-                    onArtistClick = onArtistClick,
-                    onAlbumClick = onAlbumClick,
-                    onShuffleClick = onShuffleClick,
-                    onMixClick = onMixClick,
-                    itemContainer = itemContainer,
-                    contentPadding = contentPadding,
+                        uiState = uiState,
+                        text = text.contentText,
+                        onItemClick = {
+                            dismissKeyboard()
+                            onItemClick(it)
+                        },
+                        onVideoItemClick = {
+                            dismissKeyboard()
+                            onVideoItemClick(it)
+                        },
+                        onItemLongClick = onItemLongClick,
+                        onSongSave = onSongSave,
+                        onHistoryItemClick = {
+                            dismissKeyboard()
+                            onHistoryItemClick(it)
+                        },
+                        onHistoryItemInsert = onHistoryItemInsert,
+                        onClearHistory = onClearHistory,
+                        onFilterSelected = onFilterSelected,
+                        onLoadMore = onLoadMore,
+                        onRetryLoadMore = onRetryLoadMore,
+                        onRemoveHistoryItem = onRemoveHistoryItem,
+                        onRemoveRecentItem = onRemoveRecentItem,
+                        onClearRecentItems = onClearRecentItems,
+                        currentSongId = currentSongId,
+                        isPlaying = isPlaying,
+                        onArtistClick = onArtistClick,
+                        onAlbumClick = onAlbumClick,
+                        onShuffleClick = onShuffleClick,
+                        onMixClick = onMixClick,
+                        itemContainer = itemContainer,
+                        contentPadding = contentPadding,
                         listState = listState,
                         moodsAndGenres = moodsAndGenres,
-                        modifier = Modifier.weight(1f).graphicsLayer {
-                            // the page rises under the folding header
-                            translationY = if (showSearchBar) -collapseState.value * travelPx else 0f
-                        },
+                        modifier =
+                            Modifier.weight(1f).graphicsLayer {
+                                // the page rises under the folding header
+                                translationY = if (showSearchBar) -collapseState.value * travelPx else 0f
+                            },
                         onAlbumPlay = onAlbumPlay,
                     )
                 }
@@ -329,27 +329,29 @@ private fun SearchHeader(
     Box(modifier = Modifier.fillMaxWidth()) {
         // the page colour builds up under the bar once the title has folded away
         Box(
-            modifier = Modifier.matchParentSize().drawWithCache {
-                onDrawBehind {
-                    val p = collapse().coerceIn(0f, 1f)
-                    if (p <= 0.01f) return@onDrawBehind
-                    drawRect(
-                        Brush.verticalGradient(
-                            0f to Color.Black.copy(alpha = p * 0.95f),
-                            0.45f to Color.Black.copy(alpha = p * 0.72f),
-                            0.78f to Color.Black.copy(alpha = p * 0.34f),
-                            1f to Color.Transparent,
-                        ),
-                    )
-                }
-            },
+            modifier =
+                Modifier.matchParentSize().drawWithCache {
+                    onDrawBehind {
+                        val p = collapse().coerceIn(0f, 1f)
+                        if (p <= 0.01f) return@onDrawBehind
+                        drawRect(
+                            Brush.verticalGradient(
+                                0f to Color.Black.copy(alpha = p * 0.95f),
+                                0.45f to Color.Black.copy(alpha = p * 0.72f),
+                                0.78f to Color.Black.copy(alpha = p * 0.34f),
+                                1f to Color.Transparent,
+                            ),
+                        )
+                    }
+                },
         )
         Column(modifier = Modifier.padding(top = statusBar + HeaderClearance)) {
             Row(
-                modifier = Modifier
-                    .height(HeaderTitleHeight)
-                    .fillMaxWidth()
-                    .padding(horizontal = SearchHorizontalPadding),
+                modifier =
+                    Modifier
+                        .height(HeaderTitleHeight)
+                        .fillMaxWidth()
+                        .padding(horizontal = SearchHorizontalPadding),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
@@ -360,40 +362,43 @@ private fun SearchHeader(
                     lineHeight = 40.sp,
                     color = MochySearchColors.Primary,
                     maxLines = 1,
-                    modifier = Modifier.weight(1f).graphicsLayer {
-                        val p = collapse().coerceIn(0f, 1f)
-                        alpha = (1f - p * 1.6f).coerceIn(0f, 1f)
-                        translationY = -p * travel
-                        val scale = 1f - p * 0.18f
-                        scaleX = scale
-                        scaleY = scale
-                        transformOrigin = TransformOrigin(0f, 0.5f)
-                        // the title blurs in 3px steps as it folds, clamped at the edges, where the platform can blur
-                        val blurPx = (((p * 14f) / 3f).toInt() * 3).toFloat()
-                        renderEffect = if (blur && blurPx > 0f) BlurEffect(blurPx, blurPx, TileMode.Clamp) else null
-                    },
+                    modifier =
+                        Modifier.weight(1f).graphicsLayer {
+                            val p = collapse().coerceIn(0f, 1f)
+                            alpha = (1f - p * 1.6f).coerceIn(0f, 1f)
+                            translationY = -p * travel
+                            val scale = 1f - p * 0.18f
+                            scaleX = scale
+                            scaleY = scale
+                            transformOrigin = TransformOrigin(0f, 0.5f)
+                            // the title blurs in 3px steps as it folds, clamped at the edges, where the platform can blur
+                            val blurPx = (((p * 14f) / 3f).toInt() * 3).toFloat()
+                            renderEffect = if (blur && blurPx > 0f) BlurEffect(blurPx, blurPx, TileMode.Clamp) else null
+                        },
                 )
                 if (onAvatarClick != null) {
                     SearchHeaderAvatar(
                         onClick = onAvatarClick,
-                        modifier = Modifier.graphicsLayer {
-                            // beside the title at rest, it drops to the field's middle as the header folds
-                            translationY = collapse().coerceIn(0f, 1f) * avatarDrop
-                        },
+                        modifier =
+                            Modifier.graphicsLayer {
+                                // beside the title at rest, it drops to the field's middle as the header folds
+                                translationY = collapse().coerceIn(0f, 1f) * avatarDrop
+                            },
                     )
                 }
             }
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .graphicsLayer { translationY = -collapse().coerceIn(0f, 1f) * travel }
-                    .layout { measurable, constraints ->
-                        // the field keeps the avatar's room once it rises beside it
-                        val reserve = if (onAvatarClick == null) 0 else (avatarReserve * collapse().coerceIn(0f, 1f)).roundToInt()
-                        val width = (constraints.maxWidth - reserve).coerceAtLeast(0)
-                        val placeable = measurable.measure(constraints.copy(minWidth = 0, maxWidth = width))
-                        layout(constraints.maxWidth, placeable.height) { placeable.place(0, 0) }
-                    },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer { translationY = -collapse().coerceIn(0f, 1f) * travel }
+                        .layout { measurable, constraints ->
+                            // the field keeps the avatar's room once it rises beside it
+                            val reserve = if (onAvatarClick == null) 0 else (avatarReserve * collapse().coerceIn(0f, 1f)).roundToInt()
+                            val width = (constraints.maxWidth - reserve).coerceAtLeast(0)
+                            val placeable = measurable.measure(constraints.copy(minWidth = 0, maxWidth = width))
+                            layout(constraints.maxWidth, placeable.height) { placeable.place(0, 0) }
+                        },
             ) {
                 field()
             }
@@ -415,11 +420,12 @@ private fun SearchHeaderAvatar(
             else -> "file://$url"
         }
     Box(
-        modifier = modifier
-            .size(HeaderAvatarSize)
-            .clip(CircleShape)
-            .background(MochySearchColors.TileHigh)
-            .clickable(onClick = onClick),
+        modifier =
+            modifier
+                .size(HeaderAvatarSize)
+                .clip(CircleShape)
+                .background(MochySearchColors.TileHigh)
+                .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         if (model != null) {
@@ -487,7 +493,6 @@ fun SearchBar(
                 .padding(horizontal = 24.dp, vertical = 2.dp),
         contentAlignment = Alignment.Center,
     ) {
-
         run {
             val barHeight = 48.dp
             val iconSize = 20.dp

@@ -65,7 +65,10 @@ internal fun mochySmoothstep(t: Float): Float {
  * How far a word has been sung, 0 to 1, from the line's clock. A word with no length is sung
  * the moment the clock reaches it.
  */
-internal fun mochyWordProgress(lineRelMs: Long, word: MochyWordTiming): Float {
+internal fun mochyWordProgress(
+    lineRelMs: Long,
+    word: MochyWordTiming,
+): Float {
     val length = (word.endMs - word.startMs).coerceAtLeast(1L)
     return when {
         lineRelMs >= word.endMs -> 1f
@@ -75,8 +78,7 @@ internal fun mochyWordProgress(lineRelMs: Long, word: MochyWordTiming): Float {
 }
 
 /** The glow for a word at progress [p]: it swells as the word starts and fades as it ends. */
-internal fun mochyGlowStrength(p: Float): Float =
-    mochySmoothstep(p / MOCHY_GLOW_ATTACK) * mochySmoothstep((1f - p) / MOCHY_GLOW_RELEASE)
+internal fun mochyGlowStrength(p: Float): Float = mochySmoothstep(p / MOCHY_GLOW_ATTACK) * mochySmoothstep((1f - p) / MOCHY_GLOW_RELEASE)
 
 /**
  * The words of a word-timed [entry], in order, each placed against the line's start. Empty when
@@ -121,10 +123,11 @@ internal fun MochyGlowLine(
     val fontFamily = mochyInterFontFamily()
 
     FlowRow(
-        modifier = modifier.fillMaxWidth().graphicsLayer {
-            scaleX = MOCHY_GLOW_ACTIVE_SCALE
-            scaleY = MOCHY_GLOW_ACTIVE_SCALE
-        },
+        modifier =
+            modifier.fillMaxWidth().graphicsLayer {
+                scaleX = MOCHY_GLOW_ACTIVE_SCALE
+                scaleY = MOCHY_GLOW_ACTIVE_SCALE
+            },
         horizontalArrangement = arrangement,
     ) {
         words.forEach { word ->

@@ -573,10 +573,11 @@ private fun SearchEmptyState(
                                     )
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Box(
-                                        modifier = Modifier
-                                            .size(28.dp)
-                                            .clip(CircleShape)
-                                            .clickable(onClick = { onHistoryItemInsert(historyItem) }),
+                                        modifier =
+                                            Modifier
+                                                .size(28.dp)
+                                                .clip(CircleShape)
+                                                .clickable(onClick = { onHistoryItemInsert(historyItem) }),
                                         contentAlignment = Alignment.Center,
                                     ) {
                                         Icon(
@@ -887,10 +888,11 @@ private fun SearchSuggestionRow(
         )
         Spacer(modifier = Modifier.width(12.dp))
         Box(
-            modifier = Modifier
-                .size(28.dp)
-                .clip(CircleShape)
-                .clickable(onClick = onInsertClick),
+            modifier =
+                Modifier
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .clickable(onClick = onInsertClick),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -1052,7 +1054,9 @@ private fun SearchResultsList(
     val showingFilteredResults = selectedFilter != null && filteredResults != null
     val allResultsEmpty = summaries.all { it.items.isEmpty() }
     val showNoResults =
-        hasSearched && !isSearching && !uiState.searchFailed &&
+        hasSearched &&
+            !isSearching &&
+            !uiState.searchFailed &&
             if (showingFilteredResults) filteredItems.isEmpty() && filteredResults.continuation == null else allResultsEmpty
 
     LaunchedEffect(selectedFilter, filteredResults?.continuation, filteredItems.size, isLoadingMore, uiState.loadMoreFailed) {
@@ -2366,11 +2370,12 @@ private fun MochyMoodTile(
             ),
         )
     Box(
-        modifier = modifier
-            .height(76.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(brush = tileBrush)
-            .clickable(onClick = onClick),
+        modifier =
+            modifier
+                .height(76.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(brush = tileBrush)
+                .clickable(onClick = onClick),
         contentAlignment = Alignment.CenterStart,
     ) {
         Text(
@@ -2411,18 +2416,20 @@ private fun MochyResultRow(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .graphicsLayer { alpha = if (enabled) 1f else 0.5f }
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = SearchHorizontalPadding, vertical = 8.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .graphicsLayer { alpha = if (enabled) 1f else 0.5f }
+                .clickable(enabled = enabled, onClick = onClick)
+                .padding(horizontal = SearchHorizontalPadding, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            modifier = Modifier
-                .size(44.dp)
-                .clip(if (item is ArtistItem) CircleShape else RoundedCornerShape(6.dp))
-                .background(MochySearchColors.TileHigh),
+            modifier =
+                Modifier
+                    .size(44.dp)
+                    .clip(if (item is ArtistItem) CircleShape else RoundedCornerShape(6.dp))
+                    .background(MochySearchColors.TileHigh),
             contentAlignment = Alignment.Center,
         ) {
             if (item is PlaylistItem) {
@@ -2459,10 +2466,11 @@ private fun MochyResultRow(
         }
         Spacer(modifier = Modifier.width(8.dp))
         Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .clickable(onClick = onMenuClick),
+            modifier =
+                Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .clickable(onClick = onMenuClick),
             contentAlignment = Alignment.Center,
         ) {
             Icon(

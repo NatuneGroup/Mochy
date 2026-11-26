@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.mochy_settings_cast_connected
 import com.metrolist.shared.generated.resources.mochy_settings_crumb
+import com.metrolist.shared.generated.resources.mochy_settings_equalizer
 import com.metrolist.shared.generated.resources.mochy_settings_rec_bluetooth
 import com.metrolist.shared.generated.resources.mochy_settings_rec_canvas
 import com.metrolist.shared.generated.resources.mochy_settings_rec_crossfade
@@ -40,15 +41,14 @@ import com.metrolist.shared.generated.resources.mochy_settings_rec_devices
 import com.metrolist.shared.generated.resources.mochy_settings_rec_discord
 import com.metrolist.shared.generated.resources.mochy_settings_rec_equalizer
 import com.metrolist.shared.generated.resources.mochy_settings_rec_lastfm
-import com.metrolist.shared.generated.resources.mochy_settings_rec_pause_muted
-import com.metrolist.shared.generated.resources.mochy_settings_rec_spatial
-import com.metrolist.shared.generated.resources.mochy_settings_equalizer
-import com.metrolist.shared.generated.resources.mochy_settings_recommended_item
 import com.metrolist.shared.generated.resources.mochy_settings_rec_linear_scale
 import com.metrolist.shared.generated.resources.mochy_settings_rec_music_history
+import com.metrolist.shared.generated.resources.mochy_settings_rec_pause_muted
 import com.metrolist.shared.generated.resources.mochy_settings_rec_sparks
+import com.metrolist.shared.generated.resources.mochy_settings_rec_spatial
 import com.metrolist.shared.generated.resources.mochy_settings_rec_spatial_tracking_apple
 import com.metrolist.shared.generated.resources.mochy_settings_rec_volume_off_pause
+import com.metrolist.shared.generated.resources.mochy_settings_recommended_item
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import org.jetbrains.compose.resources.DrawableResource
@@ -67,36 +67,68 @@ internal class MochyRecommendation(
     val applies: () -> Boolean = { true },
 )
 
-private val MochyRecommendations = listOf(
-    MochyRecommendation(Res.string.mochy_settings_rec_equalizer, SettingsPageId.EQUALIZER, Res.drawable.mochy_settings_equalizer) {
-        !Settings.shared.equalizerEnabled
-    },
-    MochyRecommendation(Res.string.mochy_settings_rec_spatial, SettingsPageId.AUDIO_LAB, Res.drawable.mochy_settings_rec_spatial_tracking_apple) {
-        !Settings.shared.spatialEnabled
-    },
-    MochyRecommendation(Res.string.mochy_settings_rec_crossfade, SettingsPageId.PLAYER, Res.drawable.mochy_settings_rec_linear_scale, "crossfadeEnabled") {
-        !Settings.shared.crossfadeEnabled
-    },
-    MochyRecommendation(Res.string.mochy_settings_rec_bluetooth, SettingsPageId.PLAYER, Res.drawable.mochy_settings_rec_bluetooth, "resumeOnBluetoothConnect") {
-        !Settings.shared.resumeOnBluetoothConnect
-    },
-    MochyRecommendation(Res.string.mochy_settings_rec_pause_muted, SettingsPageId.PLAYER, Res.drawable.mochy_settings_rec_volume_off_pause, "pauseOnMute") {
-        !Settings.shared.pauseOnMute
-    },
-    MochyRecommendation(Res.string.mochy_settings_rec_canvas, SettingsPageId.PLAYER_ARTWORK, Res.drawable.mochy_settings_rec_sparks, "playerCanvasEnabled") {
-        !Settings.shared.playerCanvasEnabled
-    },
-    MochyRecommendation(Res.string.mochy_settings_rec_lastfm, SettingsPageId.LAST_FM, Res.drawable.mochy_settings_rec_music_history) {
-        Settings.shared.lastFmSession.isBlank()
-    },
-    MochyRecommendation(Res.string.mochy_settings_rec_discord, SettingsPageId.DISCORD, Res.drawable.mochy_settings_rec_discord) {
-        !Settings.shared.enableDiscordIntegration
-    },
-    MochyRecommendation(Res.string.mochy_settings_rec_devices, SettingsPageId.DEVICE_CONNECT, Res.drawable.mochy_settings_cast_connected),
-)
+private val MochyRecommendations =
+    listOf(
+        MochyRecommendation(Res.string.mochy_settings_rec_equalizer, SettingsPageId.EQUALIZER, Res.drawable.mochy_settings_equalizer) {
+            !Settings.shared.equalizerEnabled
+        },
+        MochyRecommendation(
+            Res.string.mochy_settings_rec_spatial,
+            SettingsPageId.AUDIO_LAB,
+            Res.drawable.mochy_settings_rec_spatial_tracking_apple,
+        ) {
+            !Settings.shared.spatialEnabled
+        },
+        MochyRecommendation(
+            Res.string.mochy_settings_rec_crossfade,
+            SettingsPageId.PLAYER,
+            Res.drawable.mochy_settings_rec_linear_scale,
+            "crossfadeEnabled",
+        ) {
+            !Settings.shared.crossfadeEnabled
+        },
+        MochyRecommendation(
+            Res.string.mochy_settings_rec_bluetooth,
+            SettingsPageId.PLAYER,
+            Res.drawable.mochy_settings_rec_bluetooth,
+            "resumeOnBluetoothConnect",
+        ) {
+            !Settings.shared.resumeOnBluetoothConnect
+        },
+        MochyRecommendation(
+            Res.string.mochy_settings_rec_pause_muted,
+            SettingsPageId.PLAYER,
+            Res.drawable.mochy_settings_rec_volume_off_pause,
+            "pauseOnMute",
+        ) {
+            !Settings.shared.pauseOnMute
+        },
+        MochyRecommendation(
+            Res.string.mochy_settings_rec_canvas,
+            SettingsPageId.PLAYER_ARTWORK,
+            Res.drawable.mochy_settings_rec_sparks,
+            "playerCanvasEnabled",
+        ) {
+            !Settings.shared.playerCanvasEnabled
+        },
+        MochyRecommendation(Res.string.mochy_settings_rec_lastfm, SettingsPageId.LAST_FM, Res.drawable.mochy_settings_rec_music_history) {
+            Settings.shared.lastFmSession.isBlank()
+        },
+        MochyRecommendation(Res.string.mochy_settings_rec_discord, SettingsPageId.DISCORD, Res.drawable.mochy_settings_rec_discord) {
+            !Settings.shared.enableDiscordIntegration
+        },
+        MochyRecommendation(
+            Res.string.mochy_settings_rec_devices,
+            SettingsPageId.DEVICE_CONNECT,
+            Res.drawable.mochy_settings_cast_connected,
+        ),
+    )
 
 // two tips at a time, never two for the same page so the card stays varied
-internal fun pickMochyRecommendations(registry: SettingsUiRegistry, count: Int = 2): List<MochyRecommendation> =
+internal fun pickMochyRecommendations(
+    registry: SettingsUiRegistry,
+    count: Int = 2,
+): List<MochyRecommendation> =
     MochyRecommendations
         .filter { registry[it.pageId] != null && it.applies() }
         .shuffled()

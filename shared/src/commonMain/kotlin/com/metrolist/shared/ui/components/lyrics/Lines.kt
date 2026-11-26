@@ -8,17 +8,17 @@
 package com.metrolist.shared.ui.components.lyrics
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -892,7 +892,14 @@ internal fun InlineLyricsLine(
             2 -> 0.45f
             else -> 0.35f
         }
-    val targetAlpha = if (isActive) 1f else if (isLrcSynced && !isWordAnimEnabled) distanceAlpha else unlitAlpha
+    val targetAlpha =
+        if (isActive) {
+            1f
+        } else if (isLrcSynced && !isWordAnimEnabled) {
+            distanceAlpha
+        } else {
+            unlitAlpha
+        }
     val targetTranslationAlpha = if (isActive) 0.5f else unlitAlpha
 
     // the reference enlarges only the line being sung, and holds the rest at full size
@@ -1153,8 +1160,10 @@ internal fun InlineLyricsLine(
             val backgroundTranslated =
                 remember(entry.backgroundTranslatedText, bgText, romanBgText, showTranslations) {
                     entry.backgroundTranslatedText?.replace('\u00A0', ' ')?.trim()?.takeIf {
-                        showTranslations && it.isNotBlank() &&
-                            !isSameLyricsText(it, bgText) && !isSameLyricsText(it, romanBgText)
+                        showTranslations &&
+                            it.isNotBlank() &&
+                            !isSameLyricsText(it, bgText) &&
+                            !isSameLyricsText(it, romanBgText)
                     }
                 }
             val backgroundTranslationStyle =

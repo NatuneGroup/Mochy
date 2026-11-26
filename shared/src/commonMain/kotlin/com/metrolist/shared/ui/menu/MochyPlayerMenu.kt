@@ -113,7 +113,9 @@ internal val MochyMenuSheetCorner = 30.dp
 
 // the reference's open and close: 440ms on its own ease curve
 private val MochyMenuEasing = CubicBezierEasing(0.57f, 0.53f, 0f, 1f)
+
 internal fun mochyMenuMotion(): AnimationSpec<Float> = tween(440, easing = MochyMenuEasing)
+
 internal val MochyMenuHandleRow = 38.dp
 
 @Composable

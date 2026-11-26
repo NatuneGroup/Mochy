@@ -2,19 +2,10 @@
 
 package com.metrolist.shared.ui.player.mochy
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.layout.offset
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.unit.Dp
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -37,19 +28,21 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,19 +50,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.runtime.mutableFloatStateOf
 import com.metrolist.shared.cast.CastState
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.album_art
@@ -109,6 +109,7 @@ private val EvenShade = Color.Black.copy(alpha = 0.38f)
 // the lyrics page tucks the seek bar and transport away after this long without a touch
 private const val LANDSCAPE_TRANSPORT_IDLE_MS = 3_500L
 private const val RETRACT_MS = 420
+
 // the title and artist rest just above the seek bar and glide this far down and to the left as the controls retract
 private val LandscapeCoverGutter = 20.dp
 private val RetractEasing = CubicBezierEasing(0.4f, 0f, 0.2f, 1f)
@@ -342,10 +343,17 @@ internal fun FlagshipLandscapePlayer(
             // the cover mirrored past its right seam, the frost on lyrics or queue, then the lyrics band
             LandscapeCoverReflection(url = coverThumb, coverWidth = coverWidth, modifier = Modifier.align(Alignment.TopStart))
             if (uiState.isLyricsVisible || isQueueVisible) {
-                LandscapeCoverFrost(url = coverThumb, coverWidth = coverWidth, retract = { controlsRetract }, modifier = Modifier.align(Alignment.TopStart))
+                LandscapeCoverFrost(
+                    url = coverThumb,
+                    coverWidth = coverWidth,
+                    retract = { controlsRetract },
+                    modifier = Modifier.align(Alignment.TopStart),
+                )
             }
             if (uiState.isLyricsVisible) {
-                LandscapeLyricsBand(url = coverThumb, coverWidth = coverWidth, retract = { controlsRetract }, modifier = Modifier.align(Alignment.BottomStart))
+                LandscapeLyricsBand(url = coverThumb, coverWidth = coverWidth, retract = {
+                    controlsRetract
+                }, modifier = Modifier.align(Alignment.BottomStart))
             }
         }
 
@@ -662,7 +670,11 @@ private fun Modifier.maskedBy(mask: Brush): Modifier =
 
 // the cover flipped across its right seam, fading into the backdrop past it
 @Composable
-private fun LandscapeCoverReflection(url: String, coverWidth: Dp, modifier: Modifier) {
+private fun LandscapeCoverReflection(
+    url: String,
+    coverWidth: Dp,
+    modifier: Modifier,
+) {
     val blurPx = with(LocalDensity.current) { 40.dp.toPx() }
     Box(
         modifier =
@@ -694,7 +706,12 @@ private fun LandscapeCoverReflection(url: String, coverWidth: Dp, modifier: Modi
 
 // a blurred frost over the cover's right edge while lyrics or the queue are open
 @Composable
-private fun LandscapeCoverFrost(url: String, coverWidth: Dp, retract: () -> Float, modifier: Modifier) {
+private fun LandscapeCoverFrost(
+    url: String,
+    coverWidth: Dp,
+    retract: () -> Float,
+    modifier: Modifier,
+) {
     val blurPx = with(LocalDensity.current) { 40.dp.toPx() }
     Box(
         modifier =
@@ -712,7 +729,12 @@ private fun LandscapeCoverFrost(url: String, coverWidth: Dp, retract: () -> Floa
 
 // the lower-left band the lyrics sit on: a blurred strip under a dark shade that fades toward the cover's middle
 @Composable
-private fun LandscapeLyricsBand(url: String, coverWidth: Dp, retract: () -> Float, modifier: Modifier) {
+private fun LandscapeLyricsBand(
+    url: String,
+    coverWidth: Dp,
+    retract: () -> Float,
+    modifier: Modifier,
+) {
     val blurPx = 30f
     Box(
         modifier =

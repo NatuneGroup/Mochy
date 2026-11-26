@@ -9,12 +9,9 @@ import android.content.res.Configuration
 import android.nfc.NfcAdapter
 import android.os.Build
 import android.provider.MediaStore
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.LocalOverscrollFactory
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -125,7 +122,6 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.customActions
-import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
@@ -260,7 +256,6 @@ import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.action_login
 import com.metrolist.shared.generated.resources.action_not_now
 import com.metrolist.shared.generated.resources.added_songs_to_playlist
-import com.metrolist.shared.generated.resources.back
 import com.metrolist.shared.generated.resources.cancel
 import com.metrolist.shared.generated.resources.continue_playback_message
 import com.metrolist.shared.generated.resources.continue_playback_title
@@ -294,7 +289,6 @@ import com.metrolist.shared.generated.resources.youtube_music
 import com.metrolist.shared.generated.resources.youtube_session_expired_message
 import com.metrolist.shared.generated.resources.youtube_session_expired_title
 import com.metrolist.shared.listentogether.parseListenTogetherInvitation
-import com.metrolist.shared.model.ArtistTiny
 import com.metrolist.shared.model.BuiltinPlaylist
 import com.metrolist.shared.model.SearchFilter
 import com.metrolist.shared.model.SongItem
@@ -389,7 +383,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -635,7 +628,9 @@ fun MetrolistApp(
                     AppUpdateManager.pendingReleaseForInstalledVersion()
                         ?: AppUpdateManager.releaseForInstalledVersion()
             }
-            if (!BuildConfig.UPDATER_ENABLED || !wasUpdated || installedReleaseNotes != null ||
+            if (!BuildConfig.UPDATER_ENABLED ||
+                !wasUpdated ||
+                installedReleaseNotes != null ||
                 AppUpdateManager.releases.value.isNotEmpty()
             ) {
                 Settings.shared.lastRunAppVersion = BuildConfig.VERSION_NAME
@@ -718,7 +713,8 @@ fun MetrolistApp(
             mutableStateOf(AndroidListenTogetherManager.currentManager)
         }
         LaunchedEffect(playerConnection, currentRoute) {
-            if (listenTogetherManager != null || Settings.shared.listenTogetherDesktopSession.isNotBlank() ||
+            if (listenTogetherManager != null ||
+                Settings.shared.listenTogetherDesktopSession.isNotBlank() ||
                 currentRoute in
                 setOf(
                     Screen.ListenTogether,
@@ -819,8 +815,10 @@ fun MetrolistApp(
         val usesDirectionalNavigation = isAndroidTv || isAutomotive
         val navigationSuiteType =
             when {
-                adaptiveFormFactor == AdaptiveFormFactor.TOUCH && isLandscape &&
-                    adaptiveLayout.widthBreakpoint >= AdaptiveWidthBreakpoint.MEDIUM && !Settings.shared.forceBottomNavBar -> {
+                adaptiveFormFactor == AdaptiveFormFactor.TOUCH &&
+                    isLandscape &&
+                    adaptiveLayout.widthBreakpoint >= AdaptiveWidthBreakpoint.MEDIUM &&
+                    !Settings.shared.forceBottomNavBar -> {
                     NavigationSuiteType.WideNavigationRailCollapsed
                 }
 
@@ -835,7 +833,9 @@ fun MetrolistApp(
         val useNavigationRail = !navigationSuiteType.isNavigationBar
         // Hiding navigation must not move the retained lookahead tree between scaffolds.
         val useFloatingNavBar =
-            rememberMochyLook().floatingNavBar && !useDesktopUi && !usesDirectionalNavigation &&
+            rememberMochyLook().floatingNavBar &&
+                !useDesktopUi &&
+                !usesDirectionalNavigation &&
                 navigationSuiteType.isNavigationBar
         val isImeVisible = WindowInsets.ime.asPaddingValues().calculateBottomPadding() > 0.dp
         val shouldHideMiniPlayerForIme = isLandscape && isImeVisible
@@ -847,7 +847,8 @@ fun MetrolistApp(
         // phones and tablets get Mochy's home top bar, drawn by Home itself over its hero
         val mochyHomeTop = !isAndroidTv && !useDesktopUi && !hasDesktopCaption
         val shouldShowTopBar =
-            navigationState.topLevelRoute in topLevelScreens && currentRoute in topLevelScreens &&
+            navigationState.topLevelRoute in topLevelScreens &&
+                currentRoute in topLevelScreens &&
                 !(mochyHomeTop && navigationState.topLevelRoute == Screen.Home)
 
         val useFloatingTopBar = Settings.shared.floatingTopBar && !hasDesktopCaption
@@ -980,7 +981,8 @@ fun MetrolistApp(
             miniPlayerContentInset,
             LocalTvAppHasFocus provides { tvAppHasFocus },
             LocalTvNavigationFocusFallback provides {
-                shouldShowNavigationBar && useNavigationRail &&
+                shouldShowNavigationBar &&
+                    useNavigationRail &&
                     runCatching { selectedRailFocusRequester.requestFocus() }.getOrDefault(false)
             },
             LocalOverscrollFactory provides overscrollFactory,
@@ -1235,8 +1237,10 @@ fun MetrolistApp(
                         if (destination != null && destination !is IncomingDestination.Search) {
                             pendingSearchQuery = null
                         }
-                        if (destination != null && destination !is IncomingDestination.Player &&
-                            destination !is IncomingDestination.PlayVideo && destination !is IncomingDestination.PlaySearch
+                        if (destination != null &&
+                            destination !is IncomingDestination.Player &&
+                            destination !is IncomingDestination.PlayVideo &&
+                            destination !is IncomingDestination.PlaySearch
                         ) {
                             pendingOpenPlayer = false
                             if (hasMedia) playerBottomSheetState.collapseSoft()
@@ -1372,7 +1376,8 @@ fun MetrolistApp(
                     }
 
                     LaunchedEffect(miniPlayerCollapsedBound) {
-                        if (shouldShowMiniPlayer && !playerBottomSheetState.isExpanded &&
+                        if (shouldShowMiniPlayer &&
+                            !playerBottomSheetState.isExpanded &&
                             playerBottomSheetState.targetAnchor != EXPANDED_ANCHOR
                         ) {
                             playerBottomSheetState.collapse(
@@ -1388,7 +1393,8 @@ fun MetrolistApp(
                             }
 
                             else -> {
-                                if (hasMedia && !playerBottomSheetState.isExpanded &&
+                                if (hasMedia &&
+                                    !playerBottomSheetState.isExpanded &&
                                     playerBottomSheetState.targetAnchor != EXPANDED_ANCHOR
                                 ) {
                                     playerBottomSheetState.collapseSoft()

@@ -19,10 +19,10 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -85,7 +85,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
@@ -95,6 +94,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
@@ -105,7 +105,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.window.Popup
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
@@ -113,11 +112,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
+import com.metrolist.shared.generated.resources.*
 import com.metrolist.shared.generated.resources.back
 import com.metrolist.shared.generated.resources.close
 import com.metrolist.shared.generated.resources.mochy_home_chevron
 import com.metrolist.shared.generated.resources.settings
-import com.metrolist.shared.generated.resources.*
+import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.LocalIsTv
 import com.metrolist.shared.ui.audiolab.AudioLabScreen
 import com.metrolist.shared.ui.audiolab.AudioLabStageSupport
@@ -134,11 +135,10 @@ import com.metrolist.shared.ui.menu.trackPressPosition
 import com.metrolist.shared.ui.mochy.MochyModulesScreen
 import com.metrolist.shared.ui.mochy.MochyProfileSettingsScreen
 import com.metrolist.shared.ui.mochy.pressBounce
-import com.metrolist.shared.ui.settings.transition.TransitionSettingsScreen
 import com.metrolist.shared.ui.navigation.PredictiveNavigationContent
 import com.metrolist.shared.ui.navigation.rememberNavigationMotion
-import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.onboarding.mochy.AppSwitch
+import com.metrolist.shared.ui.settings.transition.TransitionSettingsScreen
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import com.metrolist.shared.ui.theme.rememberReducedMotion
 import com.metrolist.shared.ui.utils.DragScrollableColumn
@@ -149,8 +149,6 @@ import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import kotlin.math.absoluteValue
-import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
@@ -1303,7 +1301,10 @@ internal fun SettingsItemGroup(
 
 // Mochy's row icon: the reference drawable in a 32dp light circle, dimmed while the row is off
 @Composable
-private fun MochyRowIcon(icon: DrawableResource, enabled: Boolean) {
+private fun MochyRowIcon(
+    icon: DrawableResource,
+    enabled: Boolean,
+) {
     Box(
         modifier = Modifier.size(32.dp).clip(CircleShape).background(Color(0xFFE5E5EA)),
         contentAlignment = Alignment.Center,
@@ -1345,7 +1346,17 @@ private fun SettingsItemRow(
     if (item.control == SettingsControl.CUSTOM) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = if (mochy) connectedShape(first, last, outer = 28.dp, inner = 0.dp) else connectedShape(first, last, outer = 20.dp, inner = 5.dp),
+            shape =
+                if (mochy) {
+                    connectedShape(
+                        first,
+                        last,
+                        outer = 28.dp,
+                        inner = 0.dp,
+                    )
+                } else {
+                    connectedShape(first, last, outer = 20.dp, inner = 5.dp)
+                },
             color = MaterialTheme.colorScheme.settingsRowContainerColor(),
         ) {
             Box(Modifier.alpha(if (item.enabled) 1f else 0.38f)) {

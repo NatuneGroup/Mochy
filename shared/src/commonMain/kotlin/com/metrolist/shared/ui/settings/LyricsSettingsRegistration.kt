@@ -469,7 +469,8 @@ internal fun SettingsUiRegistryBuilder.registerLyricsSettings(host: SharedSettin
                         ),
                     value = settings.lyricsAiSystemPrompt,
                     enabled =
-                        preset.isAi && !directProvider &&
+                        preset.isAi &&
+                            !directProvider &&
                             (
                                 oauthConnected ||
                                     settings.lyricsAiApiKeyFor(provider).isNotBlank() ||

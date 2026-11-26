@@ -36,7 +36,7 @@ import com.metrolist.shared.generated.resources.mochy_transition_music_heading
 import com.metrolist.shared.generated.resources.mochy_transition_off
 import com.metrolist.shared.generated.resources.mochy_transition_off_desc
 import com.metrolist.shared.generated.resources.mochy_transition_seconds
-import com.metrolist.shared.settings.AutoCrossfadeSeconds
+import com.metrolist.shared.settings.AUTO_CROSSFADE_SECONDS
 import com.metrolist.shared.settings.CrossfadeStyle
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.audiolab.LabCard
@@ -45,8 +45,8 @@ import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
-private const val ManualMinSeconds = 1f
-private const val ManualMaxSeconds = 20f
+private const val MANUAL_MIN_SECONDS = 1f
+private const val MANUAL_MAX_SECONDS = 20f
 private val MaxContentWidth = 720.dp
 
 /**
@@ -61,20 +61,21 @@ internal fun TransitionSettingsScreen(
     val settings = Settings.shared
     // null means crossfade is off, and the remembered style is kept for when it's turned back on
     val selected: CrossfadeStyle? = if (settings.crossfadeEnabled) settings.crossfadeStyle else null
-    val manualSeconds = settings.crossfadeDuration.coerceIn(ManualMinSeconds, ManualMaxSeconds)
+    val manualSeconds = settings.crossfadeDuration.coerceIn(MANUAL_MIN_SECONDS, MANUAL_MAX_SECONDS)
 
     fun choose(style: CrossfadeStyle) {
         settings.crossfadeStyle = style
         settings.crossfadeEnabled = true
-        if (style == CrossfadeStyle.AUTO) settings.crossfadeDuration = AutoCrossfadeSeconds
+        if (style == CrossfadeStyle.AUTO) settings.crossfadeDuration = AUTO_CROSSFADE_SECONDS
         onAudioChanged()
     }
 
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Column(Modifier.widthIn(max = MaxContentWidth).fillMaxWidth()) {
@@ -100,34 +101,37 @@ internal fun TransitionSettingsScreen(
             TransitionModeGrid(selected = selected) { style, opened ->
                 val picked = style == selected
                 when (style) {
-                    CrossfadeStyle.AUTO -> TransitionModeCard(
-                        title = stringResource(Res.string.mochy_transition_auto),
-                        selected = picked,
-                        opened = opened,
-                        onSelect = { choose(style) },
-                        picture = { TransitionPicture(CrossfadeStyle.AUTO, overlap = 0.3f, active = picked) },
-                    ) {
-                        CardNote(stringResource(Res.string.mochy_transition_auto_desc, AutoCrossfadeSeconds.toInt()))
-                    }
-                    CrossfadeStyle.MANUAL -> TransitionModeCard(
-                        title = stringResource(Res.string.mochy_transition_manual),
-                        selected = picked,
-                        opened = opened,
-                        onSelect = { choose(style) },
-                        picture = {
-                            TransitionPicture(
-                                CrossfadeStyle.MANUAL,
-                                overlap = 0.08f + 0.42f * (manualSeconds - ManualMinSeconds) / (ManualMaxSeconds - ManualMinSeconds),
-                                active = picked,
-                            )
-                        },
-                    ) {
-                        CardNote(stringResource(Res.string.mochy_transition_manual_desc))
-                        ManualLength(manualSeconds) {
-                            settings.crossfadeDuration = it
-                            onAudioChanged()
+                    CrossfadeStyle.AUTO ->
+                        TransitionModeCard(
+                            title = stringResource(Res.string.mochy_transition_auto),
+                            selected = picked,
+                            opened = opened,
+                            onSelect = { choose(style) },
+                            picture = { TransitionPicture(CrossfadeStyle.AUTO, overlap = 0.3f, active = picked) },
+                        ) {
+                            CardNote(stringResource(Res.string.mochy_transition_auto_desc, AUTO_CROSSFADE_SECONDS.toInt()))
                         }
-                    }
+                    CrossfadeStyle.MANUAL ->
+                        TransitionModeCard(
+                            title = stringResource(Res.string.mochy_transition_manual),
+                            selected = picked,
+                            opened = opened,
+                            onSelect = { choose(style) },
+                            picture = {
+                                TransitionPicture(
+                                    CrossfadeStyle.MANUAL,
+                                    overlap =
+                                        0.08f + 0.42f * (manualSeconds - MANUAL_MIN_SECONDS) / (MANUAL_MAX_SECONDS - MANUAL_MIN_SECONDS),
+                                    active = picked,
+                                )
+                            },
+                        ) {
+                            CardNote(stringResource(Res.string.mochy_transition_manual_desc))
+                            ManualLength(manualSeconds) {
+                                settings.crossfadeDuration = it
+                                onAudioChanged()
+                            }
+                        }
                 }
             }
             Spacer(Modifier.height(12.dp))
@@ -165,7 +169,10 @@ private fun CardNote(text: String) {
 
 // the manual blend's length, from a quick one-second cut to a long twenty-second wash
 @Composable
-private fun ManualLength(seconds: Float, onSecondsChange: (Float) -> Unit) {
+private fun ManualLength(
+    seconds: Float,
+    onSecondsChange: (Float) -> Unit,
+) {
     Column(Modifier.padding(start = 6.dp, end = 6.dp, top = 10.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
@@ -187,19 +194,19 @@ private fun ManualLength(seconds: Float, onSecondsChange: (Float) -> Unit) {
         Slider(
             value = seconds,
             onValueChange = { onSecondsChange(it.roundToInt().toFloat()) },
-            valueRange = ManualMinSeconds..ManualMaxSeconds,
-            steps = (ManualMaxSeconds - ManualMinSeconds).toInt() - 1,
+            valueRange = MANUAL_MIN_SECONDS..MANUAL_MAX_SECONDS,
+            steps = (MANUAL_MAX_SECONDS - MANUAL_MIN_SECONDS).toInt() - 1,
         )
         Row(Modifier.fillMaxWidth()) {
             Text(
-                stringResource(Res.string.mochy_transition_seconds, ManualMinSeconds.toInt()),
+                stringResource(Res.string.mochy_transition_seconds, MANUAL_MIN_SECONDS.toInt()),
                 fontFamily = mochyInterFontFamily(),
                 fontSize = 11.sp,
                 color = TransitionColors.Secondary,
                 modifier = Modifier.weight(1f),
             )
             Text(
-                stringResource(Res.string.mochy_transition_seconds, ManualMaxSeconds.toInt()),
+                stringResource(Res.string.mochy_transition_seconds, MANUAL_MAX_SECONDS.toInt()),
                 fontFamily = mochyInterFontFamily(),
                 fontSize = 11.sp,
                 color = TransitionColors.Secondary,

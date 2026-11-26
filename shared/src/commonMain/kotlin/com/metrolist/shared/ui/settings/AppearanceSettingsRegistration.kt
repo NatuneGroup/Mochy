@@ -11,23 +11,20 @@
 
 package com.metrolist.shared.ui.settings
 
-import com.metrolist.shared.generated.resources.mochy_menu_customize_player
-import com.metrolist.shared.generated.resources.mochy_pages_hide_descriptions
-import com.metrolist.shared.ui.player.mochy.MochyStylePicker
-import com.metrolist.shared.generated.resources.mochy_pages_hide_descriptions_desc
-import com.metrolist.shared.generated.resources.mochy_pages_info
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import com.metrolist.shared.generated.resources.*
-import com.metrolist.shared.generated.resources.mochy_pages_cover_disc_small_full
-import com.metrolist.shared.generated.resources.mochy_pages_cover_disc_small_label
+import com.metrolist.shared.generated.resources.mochy_menu_customize_player
+import com.metrolist.shared.generated.resources.mochy_pages_cover_disc_album
 import com.metrolist.shared.generated.resources.mochy_pages_cover_disc_big_full
 import com.metrolist.shared.generated.resources.mochy_pages_cover_disc_big_label
-import com.metrolist.shared.generated.resources.mochy_pages_cover_disc_album
+import com.metrolist.shared.generated.resources.mochy_pages_cover_disc_small_full
+import com.metrolist.shared.generated.resources.mochy_pages_cover_disc_small_label
+import com.metrolist.shared.generated.resources.mochy_pages_hide_descriptions
+import com.metrolist.shared.generated.resources.mochy_pages_hide_descriptions_desc
+import com.metrolist.shared.generated.resources.mochy_pages_info
 import com.metrolist.shared.generated.resources.mochy_pages_slow_motion_video
 import com.metrolist.shared.generated.resources.mochy_pages_sparks
 import com.metrolist.shared.settings.AnimatedCoverResolution
@@ -53,6 +50,7 @@ import com.metrolist.shared.settings.isDesktopMac
 import com.metrolist.shared.settings.normalizeDefaultOpenTab
 import com.metrolist.shared.settings.updateDefaultOpenTab
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.player.mochy.MochyStylePicker
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 

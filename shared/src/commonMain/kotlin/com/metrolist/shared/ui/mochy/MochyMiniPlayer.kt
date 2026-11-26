@@ -48,7 +48,9 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -79,9 +81,9 @@ private val MochyMiniEndInset = 12.dp
 private val MochyMiniGlyph = 19.dp
 
 // the chrome's tint and hairline, the same values the nav bar's glass uses
-private const val MochyMiniTintAlpha = 0.78f
-private const val MochyMiniBackdropAlpha = 0.6f
-private const val MochyMiniBlurPx = 24f
+private const val MOCHY_MINI_TINT_ALPHA = 0.78f
+private const val MOCHY_MINI_BACKDROP_ALPHA = 0.6f
+private const val MOCHY_MINI_BLUR_PX = 24f
 private val MochyMiniHairline = Color.White.copy(alpha = 0.05f)
 
 /**
@@ -130,7 +132,7 @@ fun MochyMiniPlayer(
                     ambientColor = Color.Black.copy(alpha = 0.12f),
                     spotColor = Color.Black.copy(alpha = 0.12f),
                 ).clip(shape)
-                .background(MaterialTheme.colorScheme.surfaceContainer.copy(alpha = MochyMiniTintAlpha))
+                .background(MaterialTheme.colorScheme.surfaceContainer.copy(alpha = MOCHY_MINI_TINT_ALPHA))
                 .border(1.dp, MochyMiniHairline, shape)
                 .onFocusChanged { isFocused = it.isFocused }
                 .onPreviewKeyEvent { event ->
@@ -140,48 +142,53 @@ fun MochyMiniPlayer(
                     } else {
                         false
                     }
-                }
-                .then(if (swipeEnabled) Modifier.pointerInput(canSkipNext, canSkipPrevious, layoutDirection, swipeThresholdPx) {
-                    detectHorizontalDragGestures(
-                        onDragStart = {
-                            returnAnimation?.cancel()
-                            dragOffsetX = 0f
-                        },
-                        onDragEnd = {
-                            val logicalOffset = if (layoutDirection == LayoutDirection.Rtl) -dragOffsetX else dragOffsetX
-                            if (logicalOffset < -swipeThresholdPx && canSkipNext) {
-                                onSkipNext()
-                            } else if (logicalOffset > swipeThresholdPx && canSkipPrevious) {
-                                onSkipPrevious()
-                            }
-                            returnAnimation?.cancel()
-                            returnAnimation =
-                                scope.launch {
-                                    Animatable(dragOffsetX).animateTo(
-                                        targetValue = 0f,
-                                        animationSpec =
-                                            spring(
-                                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                                stiffness = Spring.StiffnessLow,
-                                            ),
-                                    ) {
-                                        dragOffsetX = value
+                }.then(
+                    if (swipeEnabled) {
+                        Modifier.pointerInput(canSkipNext, canSkipPrevious, layoutDirection, swipeThresholdPx) {
+                            detectHorizontalDragGestures(
+                                onDragStart = {
+                                    returnAnimation?.cancel()
+                                    dragOffsetX = 0f
+                                },
+                                onDragEnd = {
+                                    val logicalOffset = if (layoutDirection == LayoutDirection.Rtl) -dragOffsetX else dragOffsetX
+                                    if (logicalOffset < -swipeThresholdPx && canSkipNext) {
+                                        onSkipNext()
+                                    } else if (logicalOffset > swipeThresholdPx && canSkipPrevious) {
+                                        onSkipPrevious()
                                     }
-                                }
-                        },
-                        onDragCancel = {
-                            returnAnimation?.cancel()
-                            returnAnimation =
-                                scope.launch {
-                                    Animatable(dragOffsetX).animateTo(0f) { dragOffsetX = value }
-                                }
-                        },
-                        onHorizontalDrag = { change, dragAmount ->
-                            dragOffsetX += dragAmount
-                            change.consume()
-                        },
-                    )
-                } else { Modifier }).clickable(onClick = onExpand),
+                                    returnAnimation?.cancel()
+                                    returnAnimation =
+                                        scope.launch {
+                                            Animatable(dragOffsetX).animateTo(
+                                                targetValue = 0f,
+                                                animationSpec =
+                                                    spring(
+                                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                        stiffness = Spring.StiffnessLow,
+                                                    ),
+                                            ) {
+                                                dragOffsetX = value
+                                            }
+                                        }
+                                },
+                                onDragCancel = {
+                                    returnAnimation?.cancel()
+                                    returnAnimation =
+                                        scope.launch {
+                                            Animatable(dragOffsetX).animateTo(0f) { dragOffsetX = value }
+                                        }
+                                },
+                                onHorizontalDrag = { change, dragAmount ->
+                                    dragOffsetX += dragAmount
+                                    change.consume()
+                                },
+                            )
+                        }
+                    } else {
+                        Modifier
+                    },
+                ).clickable(onClick = onExpand),
     ) {
         // the cover, blurred and under the tint, is what makes the pill frosted; without blur the tint stands alone
         if (blur && artwork != null) {
@@ -191,8 +198,8 @@ fun MochyMiniPlayer(
                 modifier =
                     Modifier
                         .fillMaxSize()
-                        .graphicsLayer { alpha = MochyMiniBackdropAlpha }
-                        .nativeBlurCompat(MochyMiniBlurPx, offscreen = true),
+                        .graphicsLayer { alpha = MOCHY_MINI_BACKDROP_ALPHA }
+                        .nativeBlurCompat(MOCHY_MINI_BLUR_PX, offscreen = true),
                 contentScale = ContentScale.Crop,
             )
         }

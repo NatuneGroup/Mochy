@@ -6,10 +6,8 @@ package com.metrolist.shared.ui.mobile
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
@@ -145,7 +143,6 @@ import com.metrolist.shared.generated.resources.lastfm_session_expired_title
 import com.metrolist.shared.generated.resources.library
 import com.metrolist.shared.generated.resources.liked_songs
 import com.metrolist.shared.generated.resources.listen_together
-import com.metrolist.shared.generated.resources.loading
 import com.metrolist.shared.generated.resources.logo
 import com.metrolist.shared.generated.resources.mysterious_fourth_tab
 import com.metrolist.shared.generated.resources.mysterious_fourth_tab_description
@@ -207,7 +204,6 @@ import com.metrolist.shared.ui.components.HomeLoadingPlaceholder
 import com.metrolist.shared.ui.components.MiniPlayer
 import com.metrolist.shared.ui.components.PopupContent
 import com.metrolist.shared.ui.components.PopupVisibility
-import com.metrolist.shared.ui.player.mochy.MochyStylePickerHost
 import com.metrolist.shared.ui.components.RefreshIndicator
 import com.metrolist.shared.ui.components.SongSwipeActions
 import com.metrolist.shared.ui.components.SwipeBackLayout
@@ -240,10 +236,10 @@ import com.metrolist.shared.ui.navigation.rememberNavigationMotion
 import com.metrolist.shared.ui.playback.LocalPlaybackController
 import com.metrolist.shared.ui.playback.PlaybackController
 import com.metrolist.shared.ui.playback.PlaybackControllerPlayerSession
-import com.metrolist.shared.ui.playback.PlaybackUiState
 import com.metrolist.shared.ui.player.LocalPlayerPlatform
 import com.metrolist.shared.ui.player.PlayerScreen
 import com.metrolist.shared.ui.player.collectWhilePlayerActive
+import com.metrolist.shared.ui.player.mochy.MochyStylePickerHost
 import com.metrolist.shared.ui.screens.AboutScreen
 import com.metrolist.shared.ui.screens.HomeContent
 import com.metrolist.shared.ui.screens.SearchScreen

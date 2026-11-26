@@ -36,7 +36,11 @@ import kotlin.math.sin
 
 /** the old song's waveform narrows into the crossing while the next one opens out of it */
 @Composable
-internal fun TransitionPicture(style: CrossfadeStyle, overlap: Float, active: Boolean) {
+internal fun TransitionPicture(
+    style: CrossfadeStyle,
+    overlap: Float,
+    active: Boolean,
+) {
     val span by animateFloatAsState(overlap, spring(dampingRatio = 0.85f, stiffness = 200f), label = "overlap")
     val on by animateFloatAsState(if (active) 1f else 0f, tween(500), label = "active")
     val onScreen = rememberOnScreen()
@@ -51,15 +55,16 @@ internal fun TransitionPicture(style: CrossfadeStyle, overlap: Float, active: Bo
         val left = (size.width * 0.06f).coerceIn(10.dp.toPx(), 22.dp.toPx())
         val right = size.width - left
         val wide = right - left
-        val shape = PictureShape(
-            left = left,
-            right = right,
-            cy = size.height / 2f,
-            half = size.height * 0.3f,
-            fadeStart = left + wide * (1f - span) / 2f,
-            fade = (wide * span).coerceAtLeast(1f),
-            manual = style == CrossfadeStyle.MANUAL,
-        )
+        val shape =
+            PictureShape(
+                left = left,
+                right = right,
+                cy = size.height / 2f,
+                half = size.height * 0.3f,
+                fadeStart = left + wide * (1f - span) / 2f,
+                fade = (wide * span).coerceAtLeast(1f),
+                manual = style == CrossfadeStyle.MANUAL,
+            )
         // a soft light drifts along the songs while this blend is the one picked
         val sweep = left + ((time.value * 0.16f) % 1f * 1.3f - 0.15f) * wide
         val breath = 0.94f + 0.1f * level.level * on
@@ -108,7 +113,12 @@ private class PictureTools {
 }
 
 // the two songs as rounded bars filling the bow tie, dimmer and shorter as each one fades
-private fun DrawScope.drawWaveBars(shape: PictureShape, sweep: Float, glow: Float, breath: Float) {
+private fun DrawScope.drawWaveBars(
+    shape: PictureShape,
+    sweep: Float,
+    glow: Float,
+    breath: Float,
+) {
     val step = 4.5.dp.toPx()
     val barWidth = 1.8.dp.toPx()
     val wide = shape.right - shape.left
@@ -131,12 +141,22 @@ private fun DrawScope.drawWaveBars(shape: PictureShape, sweep: Float, glow: Floa
 }
 
 // the volume as two smooth lines crossing in the middle, with a faint haze under each so they read soft
-private fun DrawScope.drawCrossLines(tools: PictureTools, shape: PictureShape, alpha: Float) {
+private fun DrawScope.drawCrossLines(
+    tools: PictureTools,
+    shape: PictureShape,
+    alpha: Float,
+) {
     drawCrossLine(tools, tools.upper, shape, sign = 1f, alpha = alpha)
     drawCrossLine(tools, tools.lower, shape, sign = -1f, alpha = alpha)
 }
 
-private fun DrawScope.drawCrossLine(tools: PictureTools, path: Path, shape: PictureShape, sign: Float, alpha: Float) {
+private fun DrawScope.drawCrossLine(
+    tools: PictureTools,
+    path: Path,
+    shape: PictureShape,
+    sign: Float,
+    alpha: Float,
+) {
     val step = 1.5.dp.toPx()
     path.reset()
     var x = shape.left
@@ -150,7 +170,10 @@ private fun DrawScope.drawCrossLine(tools: PictureTools, path: Path, shape: Pict
 }
 
 // a made-up but steady song shape: a slow swell, a gentler ripple and a little grain so no two bars match
-private fun barLevel(index: Int, seed: Float): Float {
+private fun barLevel(
+    index: Int,
+    seed: Float,
+): Float {
     val swell = 0.5f + 0.5f * sin(index * 0.31f + seed)
     val ripple = 0.5f + 0.5f * sin(index * 0.83f + seed * 1.7f)
     return 0.38f + 0.36f * swell + 0.16f * ripple + 0.1f * grain(index + (seed * 100f).toInt())

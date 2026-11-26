@@ -15,11 +15,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
@@ -58,6 +61,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -144,16 +148,12 @@ import com.metrolist.shared.ui.mochy.MochyLibraryIndexRail
 import com.metrolist.shared.ui.mochy.MochyLibraryListRow
 import com.metrolist.shared.ui.mochy.MochyLibraryPillButton
 import com.metrolist.shared.ui.mochy.MochyLibraryRoundButton
+import com.metrolist.shared.ui.mochy.MochyLibrarySectionDivider
 import com.metrolist.shared.ui.mochy.MochyLibraryTitleBlockHeight
 import com.metrolist.shared.ui.mochy.MochyLibraryTopBar
-import com.metrolist.shared.ui.mochy.rememberMochyLibraryCollapse
-import com.metrolist.shared.ui.mochy.MochyLibrarySectionDivider
 import com.metrolist.shared.ui.mochy.buildLibraryIndex
+import com.metrolist.shared.ui.mochy.rememberMochyLibraryCollapse
 import com.metrolist.shared.ui.navigation.LocalRootContentActive
-import androidx.compose.ui.graphics.luminance
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.statusBars
 import com.metrolist.shared.ui.navigation.LocalUseDesktopUi
 import com.metrolist.shared.ui.navigation.blockInput
 import com.metrolist.shared.ui.player.staticConnectedLeadingButtonShapes
@@ -356,7 +356,10 @@ fun LibraryContent(
         effectiveFilter,
     ) {
         val searchesSongs = effectiveFilter == null || effectiveFilter == LibraryFilter.TRACKS
-        if (!rootActive || !searchesSongs || searchQuery.trim().length < 2 || !contentSearchHasMore ||
+        if (!rootActive ||
+            !searchesSongs ||
+            searchQuery.trim().length < 2 ||
+            !contentSearchHasMore ||
             preparedItems == null
         ) {
             return@LaunchedEffect
@@ -454,9 +457,21 @@ fun LibraryContent(
             val sidePadding = if (mochyLook) 24.dp else 16.dp
             val gridTopPadding = if (mochyLook) statusBarTop + MochyLibraryTitleBlockHeight else topPadding
             val horizontalGap =
-                if (mochyLook) (if (isGridView) MochyLibraryGridGap else 0.dp) else if (sizedGrid) GridTileSpacing else gridGap
+                if (mochyLook) {
+                    (if (isGridView) MochyLibraryGridGap else 0.dp)
+                } else if (sizedGrid) {
+                    GridTileSpacing
+                } else {
+                    gridGap
+                }
             val verticalGap =
-                if (mochyLook) (if (isGridView) MochyLibraryGridRowGap else 0.dp) else if (sizedGrid) GridRowSpacing else gridGap
+                if (mochyLook) {
+                    (if (isGridView) MochyLibraryGridRowGap else 0.dp)
+                } else if (sizedGrid) {
+                    GridRowSpacing
+                } else {
+                    gridGap
+                }
             key(isGridView) {
                 val scope = rememberCoroutineScope()
                 val showIndexRail =
@@ -836,189 +851,195 @@ private fun LibraryHeader(
                 )
             }
         }
-        if (!mochyLook) Row(
-            // LazyVerticalGrid supplies unbounded height, which can inflate expressive buttons under release optimizations.
-            Modifier.fillMaxWidth().height(SplitButtonDefaults.MediumContainerHeight),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        if (!mochyLook) {
             Row(
-                modifier = Modifier.weight(1f),
+                // LazyVerticalGrid supplies unbounded height, which can inflate expressive buttons under release optimizations.
+                Modifier.fillMaxWidth().height(SplitButtonDefaults.MediumContainerHeight),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(Modifier.weight(1f, fill = false).trackPressPosition { sortMenuOffset = it.round() }) {
-                    SplitButtonLayout(
-                        leadingButton = {
-                            SplitButtonDefaults.TonalLeadingButton(
-                                onClick = { sortExpanded = true },
-                                modifier =
-                                    Modifier
-                                        .tvFocusHighlight(
-                                            RoundedCornerShape(
-                                                topStart = 24.dp,
-                                                bottomStart = 24.dp,
-                                                topEnd = 4.dp,
-                                                bottomEnd = 4.dp,
-                                            ),
-                                        ).menuAnchorSemantics(sortExpanded),
-                            ) {
-                                Text(
-                                    text = text.sortLabels.getValue(sortType),
-                                    fontFamily = mochyInterFontFamily(),
-                                    fontWeight = FontWeight.SemiBold,
-                                    letterSpacing = (-0.01).em,
-                                    maxLines = 1,
-                                    softWrap = false,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-                        },
-                        trailingButton = {
-                            SplitButtonDefaults.TrailingButton(
-                                colors = ButtonDefaults.filledTonalButtonColors(),
-                                elevation = ButtonDefaults.filledTonalButtonElevation(),
-                                onClick = {
-                                    Settings.shared.setLibrarySorting(
-                                        sortingFilter,
-                                        sorting.copy(direction = if (ascending) SortDirection.DESCENDING else SortDirection.ASCENDING),
-                                    )
-                                },
-                                enabled = sortType != LibrarySortType.MANUAL,
-                                modifier =
-                                    Modifier
-                                        .tvFocusHighlight(
-                                            RoundedCornerShape(
-                                                topStart = 4.dp,
-                                                bottomStart = 4.dp,
-                                                topEnd = 24.dp,
-                                                bottomEnd = 24.dp,
-                                            ),
-                                        ).clip(
-                                            RoundedCornerShape(
-                                                topStart = 4.dp,
-                                                bottomStart = 4.dp,
-                                                topEnd = 24.dp,
-                                                bottomEnd = 24.dp,
-                                            ),
-                                        ),
-                                shapes = SplitButtonDefaults.trailingButtonShapesFor(SplitButtonDefaults.MediumContainerHeight),
-                            ) {
-                                val rotation by animateFloatAsState(
-                                    if (ascending) {
-                                        180f
-                                    } else {
-                                        0f
-                                    },
-                                )
-                                Icon(
-                                    MetrolistIcons.Outlined.KeyboardArrowDown,
-                                    contentDescription =
-                                        stringResource(
-                                            if (ascending) {
-                                                Res.string.playlist_direction_descending
-                                            } else {
-                                                Res.string.playlist_direction_ascending
-                                            },
-                                        ),
-                                    modifier = Modifier.size(SplitButtonDefaults.TrailingIconSize).graphicsLayer { rotationZ = rotation },
-                                )
-                            }
-                        },
-                    )
-                    ExpressiveSelectionMenu(
-                        expanded = sortExpanded,
-                        onDismissRequest = { sortExpanded = false },
-                        anchorOffset = sortMenuOffset,
-                        options = LibrarySortType.entries.filter { it.isAvailableFor(selectedFilter) },
-                        selectedOption = sortType,
-                        optionLabel = { text.sortLabels.getValue(it) },
-                        onOptionSelected = { option ->
-                            Settings.shared.setLibrarySorting(
-                                sortingFilter,
-                                LibrarySorting(LibraryContentSort.valueOf(option.name), option.defaultDirection),
-                            )
-                        },
-                    )
-                }
-                FilledTonalIconButton(
-                    onClick = onSearchToggle,
-                    modifier = Modifier.size(40.dp).tvFocusHighlight(CircleShape),
-                    colors =
-                        IconButtonDefaults.filledTonalIconButtonColors(
-                            containerColor =
-                                if (isSearchOpen) {
-                                    MaterialTheme.colorScheme.primaryContainer
-                                } else {
-                                    MaterialTheme.colorScheme.secondaryContainer
-                                },
-                            contentColor =
-                                if (isSearchOpen) {
-                                    MaterialTheme.colorScheme.onPrimaryContainer
-                                } else {
-                                    MaterialTheme.colorScheme.onSecondaryContainer
-                                },
-                        ),
-                    shapes = IconButtonDefaults.shapes(),
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(
-                        if (isSearchOpen) MetrolistIcons.Default.Close else MetrolistIcons.Default.Search,
-                        contentDescription = text.search,
-                    )
-                }
-            }
-            if (isDesktop && isGridView) {
-                Box(Modifier.trackPressPosition { gridSizeMenuOffset = it.round() }) {
+                    Box(Modifier.weight(1f, fill = false).trackPressPosition { sortMenuOffset = it.round() }) {
+                        SplitButtonLayout(
+                            leadingButton = {
+                                SplitButtonDefaults.TonalLeadingButton(
+                                    onClick = { sortExpanded = true },
+                                    modifier =
+                                        Modifier
+                                            .tvFocusHighlight(
+                                                RoundedCornerShape(
+                                                    topStart = 24.dp,
+                                                    bottomStart = 24.dp,
+                                                    topEnd = 4.dp,
+                                                    bottomEnd = 4.dp,
+                                                ),
+                                            ).menuAnchorSemantics(sortExpanded),
+                                ) {
+                                    Text(
+                                        text = text.sortLabels.getValue(sortType),
+                                        fontFamily = mochyInterFontFamily(),
+                                        fontWeight = FontWeight.SemiBold,
+                                        letterSpacing = (-0.01).em,
+                                        maxLines = 1,
+                                        softWrap = false,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+                            },
+                            trailingButton = {
+                                SplitButtonDefaults.TrailingButton(
+                                    colors = ButtonDefaults.filledTonalButtonColors(),
+                                    elevation = ButtonDefaults.filledTonalButtonElevation(),
+                                    onClick = {
+                                        Settings.shared.setLibrarySorting(
+                                            sortingFilter,
+                                            sorting.copy(direction = if (ascending) SortDirection.DESCENDING else SortDirection.ASCENDING),
+                                        )
+                                    },
+                                    enabled = sortType != LibrarySortType.MANUAL,
+                                    modifier =
+                                        Modifier
+                                            .tvFocusHighlight(
+                                                RoundedCornerShape(
+                                                    topStart = 4.dp,
+                                                    bottomStart = 4.dp,
+                                                    topEnd = 24.dp,
+                                                    bottomEnd = 24.dp,
+                                                ),
+                                            ).clip(
+                                                RoundedCornerShape(
+                                                    topStart = 4.dp,
+                                                    bottomStart = 4.dp,
+                                                    topEnd = 24.dp,
+                                                    bottomEnd = 24.dp,
+                                                ),
+                                            ),
+                                    shapes = SplitButtonDefaults.trailingButtonShapesFor(SplitButtonDefaults.MediumContainerHeight),
+                                ) {
+                                    val rotation by animateFloatAsState(
+                                        if (ascending) {
+                                            180f
+                                        } else {
+                                            0f
+                                        },
+                                    )
+                                    Icon(
+                                        MetrolistIcons.Outlined.KeyboardArrowDown,
+                                        contentDescription =
+                                            stringResource(
+                                                if (ascending) {
+                                                    Res.string.playlist_direction_descending
+                                                } else {
+                                                    Res.string.playlist_direction_ascending
+                                                },
+                                            ),
+                                        modifier =
+                                            Modifier
+                                                .size(
+                                                    SplitButtonDefaults.TrailingIconSize,
+                                                ).graphicsLayer { rotationZ = rotation },
+                                    )
+                                }
+                            },
+                        )
+                        ExpressiveSelectionMenu(
+                            expanded = sortExpanded,
+                            onDismissRequest = { sortExpanded = false },
+                            anchorOffset = sortMenuOffset,
+                            options = LibrarySortType.entries.filter { it.isAvailableFor(selectedFilter) },
+                            selectedOption = sortType,
+                            optionLabel = { text.sortLabels.getValue(it) },
+                            onOptionSelected = { option ->
+                                Settings.shared.setLibrarySorting(
+                                    sortingFilter,
+                                    LibrarySorting(LibraryContentSort.valueOf(option.name), option.defaultDirection),
+                                )
+                            },
+                        )
+                    }
                     FilledTonalIconButton(
-                        onClick = { gridSizeExpanded = true },
-                        modifier = Modifier.size(40.dp).tvFocusHighlight(CircleShape).menuAnchorSemantics(gridSizeExpanded),
+                        onClick = onSearchToggle,
+                        modifier = Modifier.size(40.dp).tvFocusHighlight(CircleShape),
+                        colors =
+                            IconButtonDefaults.filledTonalIconButtonColors(
+                                containerColor =
+                                    if (isSearchOpen) {
+                                        MaterialTheme.colorScheme.primaryContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.secondaryContainer
+                                    },
+                                contentColor =
+                                    if (isSearchOpen) {
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.onSecondaryContainer
+                                    },
+                            ),
                         shapes = IconButtonDefaults.shapes(),
                     ) {
-                        Icon(MetrolistIcons.Outlined.Tune, contentDescription = stringResource(Res.string.display_density))
+                        Icon(
+                            if (isSearchOpen) MetrolistIcons.Default.Close else MetrolistIcons.Default.Search,
+                            contentDescription = text.search,
+                        )
                     }
-                    ExpressiveSelectionMenu(
-                        expanded = gridSizeExpanded,
-                        onDismissRequest = { gridSizeExpanded = false },
-                        anchorOffset = gridSizeMenuOffset,
-                        options = LibraryGridColumnsRange.toList(),
-                        selectedOption = Settings.shared.libraryGridColumns,
-                        optionLabel = { it.toString() },
-                        onOptionSelected = { Settings.shared.libraryGridColumns = it },
-                    )
                 }
-            }
-            ButtonGroup(
-                overflowIndicator = { menuState -> ButtonGroupDefaults.OverflowIndicator(menuState) },
-                horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
-            ) {
-                listOf(false, true).forEachIndexed { index, grid ->
-                    val icon = if (grid) MetrolistIcons.Default.GridView else MetrolistIcons.AutoMirrored.Outlined.List
-                    val label = if (grid) text.grid else text.list
-                    customItem(
-                        buttonGroupContent = {
-                            val interactionSource = remember { MutableInteractionSource() }
-                            val shapes = if (index == 0) staticConnectedLeadingButtonShapes() else staticConnectedTrailingButtonShapes()
-                            ToggleButton(
-                                checked = isGridView == grid,
-                                interactionSource = interactionSource,
-                                onCheckedChange = { onGridViewChange(grid) },
-                                modifier = Modifier.size(40.dp).animateWidth(interactionSource, 12.dp).tvFocusHighlight(shapes.shape),
-                                shapes = shapes,
-                                contentPadding = PaddingValues(0.dp),
-                            ) {
-                                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                    Icon(icon, contentDescription = label, modifier = Modifier.size(20.dp))
+                if (isDesktop && isGridView) {
+                    Box(Modifier.trackPressPosition { gridSizeMenuOffset = it.round() }) {
+                        FilledTonalIconButton(
+                            onClick = { gridSizeExpanded = true },
+                            modifier = Modifier.size(40.dp).tvFocusHighlight(CircleShape).menuAnchorSemantics(gridSizeExpanded),
+                            shapes = IconButtonDefaults.shapes(),
+                        ) {
+                            Icon(MetrolistIcons.Outlined.Tune, contentDescription = stringResource(Res.string.display_density))
+                        }
+                        ExpressiveSelectionMenu(
+                            expanded = gridSizeExpanded,
+                            onDismissRequest = { gridSizeExpanded = false },
+                            anchorOffset = gridSizeMenuOffset,
+                            options = LibraryGridColumnsRange.toList(),
+                            selectedOption = Settings.shared.libraryGridColumns,
+                            optionLabel = { it.toString() },
+                            onOptionSelected = { Settings.shared.libraryGridColumns = it },
+                        )
+                    }
+                }
+                ButtonGroup(
+                    overflowIndicator = { menuState -> ButtonGroupDefaults.OverflowIndicator(menuState) },
+                    horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+                ) {
+                    listOf(false, true).forEachIndexed { index, grid ->
+                        val icon = if (grid) MetrolistIcons.Default.GridView else MetrolistIcons.AutoMirrored.Outlined.List
+                        val label = if (grid) text.grid else text.list
+                        customItem(
+                            buttonGroupContent = {
+                                val interactionSource = remember { MutableInteractionSource() }
+                                val shapes = if (index == 0) staticConnectedLeadingButtonShapes() else staticConnectedTrailingButtonShapes()
+                                ToggleButton(
+                                    checked = isGridView == grid,
+                                    interactionSource = interactionSource,
+                                    onCheckedChange = { onGridViewChange(grid) },
+                                    modifier = Modifier.size(40.dp).animateWidth(interactionSource, 12.dp).tvFocusHighlight(shapes.shape),
+                                    shapes = shapes,
+                                    contentPadding = PaddingValues(0.dp),
+                                ) {
+                                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                        Icon(icon, contentDescription = label, modifier = Modifier.size(20.dp))
+                                    }
                                 }
-                            }
-                        },
-                        menuContent = {
-                            DropdownMenuItem(
-                                leadingIcon = { Icon(icon, contentDescription = null) },
-                                text = { Text(label) },
-                                onClick = { onGridViewChange(grid) },
-                            )
-                        },
-                    )
+                            },
+                            menuContent = {
+                                DropdownMenuItem(
+                                    leadingIcon = { Icon(icon, contentDescription = null) },
+                                    text = { Text(label) },
+                                    onClick = { onGridViewChange(grid) },
+                                )
+                            },
+                        )
+                    }
                 }
             }
         }

@@ -51,7 +51,12 @@ private val CardShape = RoundedCornerShape(26.dp)
 private val CardSpring = spring<Float>(dampingRatio = 0.86f, stiffness = 360f)
 
 // where a card is heading, read only in layout and draw so the move never recomposes the page
-private class CardMotion(val x: State<Float>, val width: State<Float>, val row: State<Float>, val opened: State<Float>)
+private class CardMotion(
+    val x: State<Float>,
+    val width: State<Float>,
+    val row: State<Float>,
+    val opened: State<Float>,
+)
 
 /**
  * The two blends side by side as small cards. The picked one opens out full width underneath, and the other
@@ -65,15 +70,16 @@ internal fun TransitionModeGrid(
 ) {
     val side = GridStyles.filter { it != selected }
     val sideWidth = 1f / side.size.coerceAtLeast(1)
-    val motions = GridStyles.map { style ->
-        val isWide = style == selected
-        CardMotion(
-            x = animateFloatAsState(if (isWide) 0f else side.indexOf(style) * sideWidth, CardSpring, label = "cardX"),
-            width = animateFloatAsState(if (isWide) 1f else sideWidth, CardSpring, label = "cardWidth"),
-            row = animateFloatAsState(if (isWide) 1f else 0f, CardSpring, label = "cardRow"),
-            opened = animateFloatAsState(if (isWide) 1f else 0f, CardSpring, label = "cardOpen"),
-        )
-    }
+    val motions =
+        GridStyles.map { style ->
+            val isWide = style == selected
+            CardMotion(
+                x = animateFloatAsState(if (isWide) 0f else side.indexOf(style) * sideWidth, CardSpring, label = "cardX"),
+                width = animateFloatAsState(if (isWide) 1f else sideWidth, CardSpring, label = "cardWidth"),
+                row = animateFloatAsState(if (isWide) 1f else 0f, CardSpring, label = "cardRow"),
+                opened = animateFloatAsState(if (isWide) 1f else 0f, CardSpring, label = "cardOpen"),
+            )
+        }
 
     Layout(
         content = { GridStyles.forEachIndexed { i, style -> card(style, motions[i].opened) } },
@@ -82,10 +88,11 @@ internal fun TransitionModeGrid(
         val total = constraints.maxWidth
         val gap = CardGap.roundToPx()
         val rowStep = (SmallCardHeight + CardGap).toPx()
-        val placeables = measurables.mapIndexed { i, measurable ->
-            val width = (motions[i].width.value * (total + gap) - gap).roundToInt().coerceIn(1, total)
-            measurable.measure(Constraints.fixedWidth(width))
-        }
+        val placeables =
+            measurables.mapIndexed { i, measurable ->
+                val width = (motions[i].width.value * (total + gap) - gap).roundToInt().coerceIn(1, total)
+                measurable.measure(Constraints.fixedWidth(width))
+            }
         val tops = motions.map { (it.row.value * rowStep).roundToInt() }
         val height = placeables.indices.maxOf { tops[it] + placeables[it].height }
         layout(total, height) {
@@ -114,23 +121,25 @@ internal fun TransitionModeCard(
     val interaction = remember { MutableInteractionSource() }
     val selectedLabel = stringResource(Res.string.mochy_transition_selected).uppercase()
     Layout(
-        contents = listOf(
-            { CardHeader(title, selectedLabel, opened) },
-            { TransitionStage { picture() } },
-            { Column { TransitionCollapsible(selected) { options() } } },
-        ),
-        modifier = Modifier
-            .pressBounce(interaction, pressedScale = 0.96f)
-            .clip(CardShape)
-            .background(TransitionColors.Card)
-            .selectable(
-                selected = selected,
-                interactionSource = interaction,
-                indication = null,
-                enabled = !selected,
-                role = Role.RadioButton,
-                onClick = onSelect,
+        contents =
+            listOf(
+                { CardHeader(title, selectedLabel, opened) },
+                { TransitionStage { picture() } },
+                { Column { TransitionCollapsible(selected) { options() } } },
             ),
+        modifier =
+            Modifier
+                .pressBounce(interaction, pressedScale = 0.96f)
+                .clip(CardShape)
+                .background(TransitionColors.Card)
+                .selectable(
+                    selected = selected,
+                    interactionSource = interaction,
+                    indication = null,
+                    enabled = !selected,
+                    role = Role.RadioButton,
+                    onClick = onSelect,
+                ),
     ) { (header, stage, extras), constraints ->
         val pad = CardPadding.roundToPx()
         val space = 10.dp.roundToPx()
@@ -154,7 +163,11 @@ internal fun TransitionModeCard(
 
 // the blend's name, with "selected" fading in at the other end as the card opens
 @Composable
-private fun CardHeader(title: String, selectedLabel: String, opened: State<Float>) {
+private fun CardHeader(
+    title: String,
+    selectedLabel: String,
+    opened: State<Float>,
+) {
     Box(Modifier.fillMaxWidth().padding(horizontal = 2.dp)) {
         Text(
             text = title,
@@ -174,9 +187,10 @@ private fun CardHeader(title: String, selectedLabel: String, opened: State<Float
             letterSpacing = 0.8.sp,
             color = TransitionColors.Secondary,
             maxLines = 1,
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .graphicsLayer { alpha = opened.value.coerceIn(0f, 1f) },
+            modifier =
+                Modifier
+                    .align(Alignment.CenterEnd)
+                    .graphicsLayer { alpha = opened.value.coerceIn(0f, 1f) },
         )
     }
 }

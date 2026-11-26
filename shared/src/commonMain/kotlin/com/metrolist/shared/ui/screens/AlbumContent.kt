@@ -363,7 +363,13 @@ fun AlbumContent(
                                                         onLongClick = onTrackLongClick?.let { { it(song) } },
                                                         trailingContent = trackTrailingContent?.let { { it(song, index) } },
                                                         selected = isTrackSelected(song),
-                                                        modifier = Modifier.revealOnAppear(key = "track_${song.id}", seenState = revealSeen, delayMillis = minOf(index, 8) * 28),
+                                                        modifier =
+                                                            Modifier.revealOnAppear(
+                                                                key = "track_${song.id}",
+                                                                seenState = revealSeen,
+                                                                delayMillis =
+                                                                    minOf(index, 8) * 28,
+                                                            ),
                                                     )
                                                 }
                                             }
@@ -522,7 +528,13 @@ fun AlbumContent(
                                             onLongClick = onTrackLongClick?.let { { it(song) } },
                                             trailingContent = trackTrailingContent?.let { { it(song, index) } },
                                             selected = isTrackSelected(song),
-                                            modifier = Modifier.revealOnAppear(key = "track_${song.id}", seenState = revealSeen, delayMillis = minOf(index, 8) * 28),
+                                            modifier =
+                                                Modifier.revealOnAppear(
+                                                    key = "track_${song.id}",
+                                                    seenState = revealSeen,
+                                                    delayMillis =
+                                                        minOf(index, 8) * 28,
+                                                ),
                                         )
                                     }
                                 }

@@ -55,14 +55,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.BlurEffect
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.TileMode
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
@@ -79,11 +79,6 @@ import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.app_name
 import com.metrolist.shared.generated.resources.back
 import com.metrolist.shared.generated.resources.mochy_mark
-import com.metrolist.shared.generated.resources.settings
-import com.metrolist.shared.generated.resources.settings_search_no_results
-import com.metrolist.shared.generated.resources.settings_search_placeholder
-import com.metrolist.shared.settings.Settings
-import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.generated.resources.mochy_settings_cast_connected
 import com.metrolist.shared.generated.resources.mochy_settings_equalizer
 import com.metrolist.shared.generated.resources.mochy_settings_integration
@@ -93,6 +88,11 @@ import com.metrolist.shared.generated.resources.mochy_settings_palette
 import com.metrolist.shared.generated.resources.mochy_settings_play
 import com.metrolist.shared.generated.resources.mochy_settings_settings
 import com.metrolist.shared.generated.resources.mochy_settings_storage
+import com.metrolist.shared.generated.resources.settings
+import com.metrolist.shared.generated.resources.settings_search_no_results
+import com.metrolist.shared.generated.resources.settings_search_placeholder
+import com.metrolist.shared.settings.Settings
+import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import com.metrolist.shared.ui.utils.supportsNativeBlur
 import org.jetbrains.compose.resources.DrawableResource
@@ -417,20 +417,21 @@ private fun MochySearchField(
 }
 
 // the reference's order for the bubbles it has; pages it doesn't name follow in the registry's order
-private val MochyHomePageOrder = listOf(
-    SettingsPageId.AUDIO_LAB,
-    SettingsPageId.PLAYER,
-    SettingsPageId.LYRICS,
-    SettingsPageId.CONTENT,
-    SettingsPageId.APPEARANCE,
-    SettingsPageId.STORAGE,
-    SettingsPageId.DISCORD,
-    SettingsPageId.LAST_FM,
-    SettingsPageId.LISTEN_BRAINZ,
-    SettingsPageId.LISTEN_TOGETHER,
-    SettingsPageId.DEVICE_CONNECT,
-    SettingsPageId.MOCHY_MODULES,
-)
+private val MochyHomePageOrder =
+    listOf(
+        SettingsPageId.AUDIO_LAB,
+        SettingsPageId.PLAYER,
+        SettingsPageId.LYRICS,
+        SettingsPageId.CONTENT,
+        SettingsPageId.APPEARANCE,
+        SettingsPageId.STORAGE,
+        SettingsPageId.DISCORD,
+        SettingsPageId.LAST_FM,
+        SettingsPageId.LISTEN_BRAINZ,
+        SettingsPageId.LISTEN_TOGETHER,
+        SettingsPageId.DEVICE_CONNECT,
+        SettingsPageId.MOCHY_MODULES,
+    )
 
 // the pages on Mochy's list: the registry's root groups, plus the reference's own bubbles that live outside them
 internal fun mochyHomePages(
@@ -469,7 +470,13 @@ private fun MochyPageIcon(
     val drawable = mochyPageDrawable(pageId)
     when {
         custom != null -> custom(tint)
-        drawable != null -> Icon(painter = painterResource(drawable), contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
+        drawable != null ->
+            Icon(
+                painter = painterResource(drawable),
+                contentDescription = null,
+                tint = tint,
+                modifier = Modifier.size(20.dp),
+            )
         else -> Icon(fallback, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
     }
 }
@@ -578,7 +585,12 @@ private fun MochySearchResults(
                         contentAlignment = Alignment.Center,
                     ) {
                         // the reference uses the gear for every result, whatever page it lands on
-                        Icon(MetrolistIcons.Outlined.Settings, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                        Icon(
+                            MetrolistIcons.Outlined.Settings,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp),
+                        )
                     }
                     Spacer(Modifier.width(11.dp))
                     Column {

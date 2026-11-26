@@ -142,7 +142,14 @@ fun FlagshipCoverActionButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    FlagshipActionButton(icon = icon, description = description, tint = tint, background = background, onClick = onClick, modifier = modifier)
+    FlagshipActionButton(
+        icon = icon,
+        description = description,
+        tint = tint,
+        background = background,
+        onClick = onClick,
+        modifier = modifier,
+    )
 }
 
 @Composable

@@ -3,6 +3,7 @@
 package com.metrolist.shared.audiolab
 
 import kotlinx.serialization.Serializable
+
 /** Reverb controls. Every value is 0..1 except preDelayMs and lowCutHz. Off until the user turns it on. */
 @Serializable
 data class ReverbSettings(

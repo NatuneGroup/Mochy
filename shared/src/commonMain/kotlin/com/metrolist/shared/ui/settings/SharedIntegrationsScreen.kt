@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -91,11 +90,11 @@ import com.metrolist.shared.ui.mobile.MobileListenTogetherScreen
 import com.metrolist.shared.ui.navigation.NavigationBackHandler
 import com.metrolist.shared.ui.playback.wholeSecondPosition
 import com.metrolist.shared.utils.MetrolistClock
-import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.roundToInt
 
 data class SharedIntegrationsHost(
     val platform: SettingsPlatform,
@@ -240,10 +239,10 @@ fun SharedIntegrationsScreen(
                 host = host,
                 revision = settingsRevision + accountRevision,
                 onPreviewBottom = { discordPreviewBottomPx = it },
-            // the card left the list: if it had scrolled past the header that is a scroll, otherwise the page is changing and nothing should float
-            onPreviewDisposed = {
-                if (discordPreviewBottomPx >= headerBottomPx) discordPreviewBottomPx = Float.MAX_VALUE
-            },
+                // the card left the list: if it had scrolled past the header that is a scroll, otherwise the page is changing and nothing should float
+                onPreviewDisposed = {
+                    if (discordPreviewBottomPx >= headerBottomPx) discordPreviewBottomPx = Float.MAX_VALUE
+                },
                 accessToken = accessToken,
                 connectionStatus = connectionStatus,
                 currentUser = currentUser,
@@ -389,14 +388,16 @@ private fun buildIntegrationsRegistry(
                 }
             }
             if (discordLoggedIn) {
-                if (!settings.enableDiscordIntegration) custom("discordAccountRow", discordUsername.ifBlank { stringResource(Res.string.discord_logged_in) }) {
-                    DiscordAccountRow(
-                        username = discordUsername.ifBlank { stringResource(Res.string.discord_logged_in) },
-                        status = discordStatus,
-                        avatarUrl = currentUser?.avatar ?: settings.discordAvatar.takeIf { it.isNotBlank() },
-                        enabled = settings.enableDiscordIntegration,
-                        onLogout = { confirmDiscordLogout = true },
-                    )
+                if (!settings.enableDiscordIntegration) {
+                    custom("discordAccountRow", discordUsername.ifBlank { stringResource(Res.string.discord_logged_in) }) {
+                        DiscordAccountRow(
+                            username = discordUsername.ifBlank { stringResource(Res.string.discord_logged_in) },
+                            status = discordStatus,
+                            avatarUrl = currentUser?.avatar ?: settings.discordAvatar.takeIf { it.isNotBlank() },
+                            enabled = settings.enableDiscordIntegration,
+                            onLogout = { confirmDiscordLogout = true },
+                        )
+                    }
                 }
             } else {
                 action(
@@ -430,33 +431,33 @@ private fun buildIntegrationsRegistry(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                    DisposableEffect(Unit) { onDispose { onPreviewDisposed() } }
-                    if (discordLoggedIn) {
-                        DiscordProfileCard(
-                            displayName = currentUser?.name?.ifBlank { null } ?: settings.discordName.ifBlank { discordUsername },
-                            username = discordUsername,
-                            avatarUrl = currentUser?.avatar ?: settings.discordAvatar.takeIf { it.isNotBlank() },
-                            enabled = settings.enableDiscordIntegration,
-                            onLogout = { confirmDiscordLogout = true },
+                        DisposableEffect(Unit) { onDispose { onPreviewDisposed() } }
+                        if (discordLoggedIn) {
+                            DiscordProfileCard(
+                                displayName = currentUser?.name?.ifBlank { null } ?: settings.discordName.ifBlank { discordUsername },
+                                username = discordUsername,
+                                avatarUrl = currentUser?.avatar ?: settings.discordAvatar.takeIf { it.isNotBlank() },
+                                enabled = settings.enableDiscordIntegration,
+                                onLogout = { confirmDiscordLogout = true },
+                            )
+                        }
+                        DiscordPresenceCard(
+                            activity =
+                                buildDiscordActivity(
+                                    previewPlayback,
+                                    settings,
+                                    unknownArtist = presenceStrings.unknownArtist,
+                                    unknownAlbum = presenceStrings.unknownAlbum,
+                                    button1Default = presenceStrings.button1Default,
+                                    button2Default = presenceStrings.button2Default,
+                                ),
+                            playback = previewPlayback,
+                            enabled = discordSettingsEnabled,
+                            editMode = discordEditMode,
+                            onToggleEditMode = { discordEditMode = it },
+                            onOpenUrl = host.onOpenUrl,
+                            onEditField = { target -> discordEditTarget = target },
                         )
-                    }
-                    DiscordPresenceCard(
-                        activity =
-                            buildDiscordActivity(
-                                previewPlayback,
-                                settings,
-                                unknownArtist = presenceStrings.unknownArtist,
-                                unknownAlbum = presenceStrings.unknownAlbum,
-                                button1Default = presenceStrings.button1Default,
-                                button2Default = presenceStrings.button2Default,
-                            ),
-                        playback = previewPlayback,
-                        enabled = discordSettingsEnabled,
-                        editMode = discordEditMode,
-                        onToggleEditMode = { discordEditMode = it },
-                        onOpenUrl = host.onOpenUrl,
-                        onEditField = { target -> discordEditTarget = target },
-                    )
                     }
                 }
             }

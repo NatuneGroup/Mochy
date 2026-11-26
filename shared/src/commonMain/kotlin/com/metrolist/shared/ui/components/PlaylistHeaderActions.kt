@@ -164,8 +164,7 @@ private fun MochyCircleAction(
                         }
                     }
                     onClick()
-                }
-                .tvFocusHighlight(CircleShape),
+                }.tvFocusHighlight(CircleShape),
     ) {
         Icon(
             imageVector = icon,

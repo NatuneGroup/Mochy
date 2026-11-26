@@ -59,16 +59,16 @@ import com.metrolist.shared.ui.menu.MediaMenuSheetContent
 import com.metrolist.shared.ui.menu.MochyMenuColors
 import com.metrolist.shared.ui.menu.MochyMenuGrabber
 import com.metrolist.shared.ui.menu.MochyMenuSheetCorner
+import com.metrolist.shared.ui.menu.equalizerMenuAction
 import com.metrolist.shared.ui.menu.mochyMenuMotion
 import com.metrolist.shared.ui.menu.mochyPlayerStyleMenuAction
-import com.metrolist.shared.ui.player.mochy.MochyStylePicker
-import com.metrolist.shared.ui.menu.equalizerMenuAction
 import com.metrolist.shared.ui.menu.rememberDeleteUploadAction
 import com.metrolist.shared.ui.menu.songMediaMenuModel
 import com.metrolist.shared.ui.menu.tempoPitchMenuAction
 import com.metrolist.shared.ui.playback.LocalPlaybackController
 import com.metrolist.shared.ui.player.PlayerArtworkCrossfade
 import com.metrolist.shared.ui.player.PlayerPlatform
+import com.metrolist.shared.ui.player.mochy.MochyStylePicker
 import com.metrolist.shared.ui.theme.ComponentShapes
 import com.metrolist.shared.viewmodels.LyricsUiState
 import com.metrolist.shared.viewmodels.PlayerViewModel
@@ -272,71 +272,72 @@ internal class MobilePlayerPlatform(
         MenuSheet(onDismiss, sheetState = menuSheetState, mochyLook = mochyLook) {
             MediaMenuSheetContent(
                 mochyLook = mochyLook,
-                model = songMediaMenuModel(
-                    song = song,
-                    deleteUploadAction = deleteUploadAction,
-                    isLiked = uiState.isLiked,
-                    isDisliked = SongLikeState.isDisliked(song.id),
-                    isGuest = isGuest,
-                    onSuggestToHost = { listenTogether.suggestTrack(song) },
-                    onDismiss = onDismiss,
-                    onLike = viewModel::toggleLike,
-                    onDislike = playerSession?.let { { it.toggleDislike(song) } },
-                    onBlockArtist =
-                        song.artists.firstOrNull { it.id != null }?.let { artist ->
-                            { BlockedContent.blockArtist(artist) }
-                        },
-                    onStartRadio = { viewModel.startRadio(song) },
-                    onAddToPlaylist = { onAddToPlaylist(listOf(song)) },
-                    downloadState = downloadState(isDownloaded),
-                    onDownload = { if (isDownloaded) onRemoveDownloads(listOf(song.id)) else onDownloadSongs(listOf(song)) },
-                    onGoToArtist = onNavigateToArtist,
-                    onGoToAlbum = song.album?.id?.let { albumId -> { onNavigateToAlbum(albumId) } },
-                    onShare = viewModel::shareSong,
-                    onAltShare = { viewModel.copySongLink() },
-                    isPlayerMenu = true,
-                    onShowDetails = onShowSongDetails,
-                    additionalActions =
-                        extraActions +
-                            listOfNotNull(
-                                equalizerMenuAction(
-                                    onOpen = {
-                                        scope.launch {
-                                            if (menuSheetState.hide()) showEqualizer = true
-                                        }
-                                    },
-                                    showDescription = false,
-                                ),
-                                tempoPitchMenuAction(varispeed = Settings.shared.varispeed) { showTempoPitch = true },
-                                if (mochyLook) {
-                                    mochyPlayerStyleMenuAction(onOpen = {
-                                        scope.launch {
-                                            if (menuSheetState.hide()) {
-                                                MochyStylePicker.show()
-                                                onDismiss()
+                model =
+                    songMediaMenuModel(
+                        song = song,
+                        deleteUploadAction = deleteUploadAction,
+                        isLiked = uiState.isLiked,
+                        isDisliked = SongLikeState.isDisliked(song.id),
+                        isGuest = isGuest,
+                        onSuggestToHost = { listenTogether.suggestTrack(song) },
+                        onDismiss = onDismiss,
+                        onLike = viewModel::toggleLike,
+                        onDislike = playerSession?.let { { it.toggleDislike(song) } },
+                        onBlockArtist =
+                            song.artists.firstOrNull { it.id != null }?.let { artist ->
+                                { BlockedContent.blockArtist(artist) }
+                            },
+                        onStartRadio = { viewModel.startRadio(song) },
+                        onAddToPlaylist = { onAddToPlaylist(listOf(song)) },
+                        downloadState = downloadState(isDownloaded),
+                        onDownload = { if (isDownloaded) onRemoveDownloads(listOf(song.id)) else onDownloadSongs(listOf(song)) },
+                        onGoToArtist = onNavigateToArtist,
+                        onGoToAlbum = song.album?.id?.let { albumId -> { onNavigateToAlbum(albumId) } },
+                        onShare = viewModel::shareSong,
+                        onAltShare = { viewModel.copySongLink() },
+                        isPlayerMenu = true,
+                        onShowDetails = onShowSongDetails,
+                        additionalActions =
+                            extraActions +
+                                listOfNotNull(
+                                    equalizerMenuAction(
+                                        onOpen = {
+                                            scope.launch {
+                                                if (menuSheetState.hide()) showEqualizer = true
                                             }
-                                        }
-                                    })
-                                } else {
-                                    null
-                                },
-                                playerSession?.takeUnless { isGuest }?.let {
-                                    PlayerMenuAction(
-                                        icon = MetrolistIcons.Outlined.Bedtime,
-                                        title = stringResource(Res.string.sleep_timer),
-                                        onClick = { showSleepTimer = true },
-                                    )
-                                },
-                                PlayerMenuAction(
-                                    icon = MetrolistIcons.Outlined.Group,
-                                    title = stringResource(Res.string.listen_together),
-                                    onClick = {
-                                        onDismiss()
-                                        onNavigateToListenTogether()
+                                        },
+                                        showDescription = false,
+                                    ),
+                                    tempoPitchMenuAction(varispeed = Settings.shared.varispeed) { showTempoPitch = true },
+                                    if (mochyLook) {
+                                        mochyPlayerStyleMenuAction(onOpen = {
+                                            scope.launch {
+                                                if (menuSheetState.hide()) {
+                                                    MochyStylePicker.show()
+                                                    onDismiss()
+                                                }
+                                            }
+                                        })
+                                    } else {
+                                        null
                                     },
-                                ).takeIf { Settings.shared.listenTogetherEnabled },
-                            ),
-                ),
+                                    playerSession?.takeUnless { isGuest }?.let {
+                                        PlayerMenuAction(
+                                            icon = MetrolistIcons.Outlined.Bedtime,
+                                            title = stringResource(Res.string.sleep_timer),
+                                            onClick = { showSleepTimer = true },
+                                        )
+                                    },
+                                    PlayerMenuAction(
+                                        icon = MetrolistIcons.Outlined.Group,
+                                        title = stringResource(Res.string.listen_together),
+                                        onClick = {
+                                            onDismiss()
+                                            onNavigateToListenTogether()
+                                        },
+                                    ).takeIf { Settings.shared.listenTogetherEnabled },
+                                ),
+                    ),
             )
         }
     }
@@ -535,7 +536,15 @@ internal class MobilePlayerPlatform(
         ModalBottomSheet(
             onDismissRequest = onDismiss,
             sheetState = sheetState,
-            shape = if (mochyLook) RoundedCornerShape(topStart = MochyMenuSheetCorner, topEnd = MochyMenuSheetCorner) else ComponentShapes.BottomSheetShape,
+            shape =
+                if (mochyLook) {
+                    RoundedCornerShape(
+                        topStart = MochyMenuSheetCorner,
+                        topEnd = MochyMenuSheetCorner,
+                    )
+                } else {
+                    ComponentShapes.BottomSheetShape
+                },
             containerColor = if (mochyLook) MochyMenuColors.Surface else MaterialTheme.colorScheme.surfaceContainerLow,
             dragHandle = dragHandle,
         ) {

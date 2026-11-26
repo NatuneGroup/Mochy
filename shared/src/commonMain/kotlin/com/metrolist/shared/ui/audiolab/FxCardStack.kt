@@ -49,7 +49,10 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 /** an effect that's on, as the header's cards name it */
-class ActiveEffect(val key: String, val label: String)
+class ActiveEffect(
+    val key: String,
+    val label: String,
+)
 
 /** the effects on in KMP's Audio Lab; the Stage counts only where the native room can run ([stageOn]) */
 internal fun activeEffects(
@@ -57,28 +60,33 @@ internal fun activeEffects(
     spatial: SpatialSettings,
     eightD: EightDSettings,
     stageOn: Boolean,
-): List<ActiveEffect> = buildList {
-    if (stageOn) add(ActiveEffect("stage", "3D Sims"))
-    if (reverb.enabled) add(ActiveEffect("reverb", "Reverb"))
-    if (spatial.enabled) add(ActiveEffect("spatial", "Spatial"))
-    if (eightD.enabled) add(ActiveEffect("eight_d", "8D Audio"))
-}
+): List<ActiveEffect> =
+    buildList {
+        if (stageOn) add(ActiveEffect("stage", "3D Sims"))
+        if (reverb.enabled) add(ActiveEffect("reverb", "Reverb"))
+        if (spatial.enabled) add(ActiveEffect("spatial", "Spatial"))
+        if (eightD.enabled) add(ActiveEffect("eight_d", "8D Audio"))
+    }
 
-private fun effectLabelRes(key: String): StringResource = when (key) {
-    "reverb" -> Res.string.mochy_lab_effect_reverb
-    "spatial" -> Res.string.mochy_lab_effect_spatial
-    "eight_d" -> Res.string.mochy_lab_effect_eight_d
-    else -> Res.string.mochy_lab_effect_stage
-}
+private fun effectLabelRes(key: String): StringResource =
+    when (key) {
+        "reverb" -> Res.string.mochy_lab_effect_reverb
+        "spatial" -> Res.string.mochy_lab_effect_spatial
+        "eight_d" -> Res.string.mochy_lab_effect_eight_d
+        else -> Res.string.mochy_lab_effect_stage
+    }
 
-private const val ShownCards = 3
-private const val FrontSeconds = 3_200L
+private const val SHOWN_CARDS = 3
+private const val FRONT_SECONDS = 3_200L
 
 /** the plain card shown while no effect is on */
-private const val IdleKey = "idle"
+private const val IDLE_KEY = "idle"
 
 /** one card in the stack, it stays after its effect goes off until it has slid away */
-private class StackCard(val key: String, val label: String?) {
+private class StackCard(
+    val key: String,
+    val label: String?,
+) {
     var leaving by mutableStateOf(false)
 
     /** where it last stood in the fan, so it slides out from there */
@@ -86,14 +94,18 @@ private class StackCard(val key: String, val label: String?) {
 }
 
 @Composable
-fun BoxScope.FxCardStack(effects: List<ActiveEffect>, hidden: State<Boolean>) {
+fun BoxScope.FxCardStack(
+    effects: List<ActiveEffect>,
+    hidden: State<Boolean>,
+) {
     val cards = remember { mutableStateListOf<StackCard>() }
-    val wanted = if (effects.isEmpty()) listOf(IdleKey) else effects.map { it.key }
+    val wanted = if (effects.isEmpty()) listOf(IDLE_KEY) else effects.map { it.key }
     LaunchedEffect(wanted) {
         val labels = effects.associate { it.key to it.label }
-        val staying = wanted.map { key ->
-            cards.firstOrNull { it.key == key }?.also { it.leaving = false } ?: StackCard(key, labels[key])
-        }
+        val staying =
+            wanted.map { key ->
+                cards.firstOrNull { it.key == key }?.also { it.leaving = false } ?: StackCard(key, labels[key])
+            }
         val going = cards.filter { it.key !in wanted }.onEach { it.leaving = true }
         cards.clear()
         cards.addAll(staying + going)
@@ -104,7 +116,7 @@ fun BoxScope.FxCardStack(effects: List<ActiveEffect>, hidden: State<Boolean>) {
     var front by remember { mutableIntStateOf(0) }
     LaunchedEffect(count) {
         while (count > 1) {
-            delay(FrontSeconds)
+            delay(FRONT_SECONDS)
             // not while the page is scrolled past it: nobody would see it turn
             snapshotFlow { hidden.value }.first { !it }
             front++
@@ -112,13 +124,14 @@ fun BoxScope.FxCardStack(effects: List<ActiveEffect>, hidden: State<Boolean>) {
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .clickable(enabled = count > 1) { front++ },
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .clickable(enabled = count > 1) { front++ },
     ) {
-        if (count > ShownCards) {
+        if (count > SHOWN_CARDS) {
             Text(
-                stringResource(Res.string.mochy_lab_fx_and_other, count - ShownCards),
+                stringResource(Res.string.mochy_lab_fx_and_other, count - SHOWN_CARDS),
                 fontFamily = FontFamily.Monospace,
                 fontSize = 10.sp,
                 color = LabCardInk,
@@ -160,22 +173,23 @@ private fun BoxScope.StackedCard(
     }
 
     LabHeaderCardFrame(
-        modifier = Modifier
-            .align(Alignment.BottomStart)
-            .padding(start = LabCardStart, bottom = LabCardBottom)
-            .zIndex(-place)
-            .graphicsLayer {
-                translationX = 20.dp.toPx() * place
-                translationY = -10.dp.toPx() * place + rise.value * (LabCardHeight + 80.dp).toPx()
-                rotationZ = -10f + 5f * place
-                val scale = 1f - 0.04f * place
-                scaleX = scale
-                scaleY = scale
-                // past the third it slips away behind the others
-                alpha = (ShownCards - place).coerceIn(0f, 1f)
-            },
+        modifier =
+            Modifier
+                .align(Alignment.BottomStart)
+                .padding(start = LabCardStart, bottom = LabCardBottom)
+                .zIndex(-place)
+                .graphicsLayer {
+                    translationX = 20.dp.toPx() * place
+                    translationY = -10.dp.toPx() * place + rise.value * (LabCardHeight + 80.dp).toPx()
+                    rotationZ = -10f + 5f * place
+                    val scale = 1f - 0.04f * place
+                    scaleX = scale
+                    scaleY = scale
+                    // past the third it slips away behind the others
+                    alpha = (SHOWN_CARDS - place).coerceIn(0f, 1f)
+                },
     ) {
-        if (depth >= ShownCards && place >= ShownCards - 0.01f) return@LabHeaderCardFrame
+        if (depth >= SHOWN_CARDS && place >= SHOWN_CARDS - 0.01f) return@LabHeaderCardFrame
         val label = card.label?.let { stringResource(effectLabelRes(card.key)) }
         LabCardFace(
             // the front card shows everything; further back it fades to its name down the edge
@@ -194,23 +208,25 @@ private fun BoxScope.StackedCard(
                 color = LabCardInk,
                 maxLines = 1,
                 softWrap = false,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 18.dp, end = 6.dp)
-                    .graphicsLayer { alpha = place.coerceIn(0f, 1f) }
-                    .readingDown(),
+                modifier =
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 18.dp, end = 6.dp)
+                        .graphicsLayer { alpha = place.coerceIn(0f, 1f) }
+                        .readingDown(),
             )
         }
     }
 }
 
 /** turns a line of text a quarter turn to read top to bottom and lays it out that way round */
-private fun Modifier.readingDown(): Modifier = layout { measurable, _ ->
-    val text = measurable.measure(Constraints())
-    layout(text.height, text.width) {
-        text.placeWithLayer(
-            x = -(text.width - text.height) / 2,
-            y = (text.width - text.height) / 2,
-        ) { rotationZ = 90f }
+private fun Modifier.readingDown(): Modifier =
+    layout { measurable, _ ->
+        val text = measurable.measure(Constraints())
+        layout(text.height, text.width) {
+            text.placeWithLayer(
+                x = -(text.width - text.height) / 2,
+                y = (text.width - text.height) / 2,
+            ) { rotationZ = 90f }
+        }
     }
-}

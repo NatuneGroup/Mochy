@@ -110,26 +110,26 @@ fun MochyLyricsPage(
         }
 
         CompositionLocalProvider(LocalMochyLyricsLook provides true) {
-        lyrics(
-            Modifier
-                .fillMaxSize()
-                .padding(top = statusTop + MochyLyricsArtTop + MochyLyricsArtSize + MochyLyricsArtGap)
-                .padding(bottom = contentBottomInset * (1f - immersion))
-                .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
-                .drawWithCache {
-                    val fade =
-                        Brush.verticalGradient(
-                            0f to Color.Transparent,
-                            MOCHY_LYRICS_TOP_FADE to Color.Black,
-                            MOCHY_LYRICS_BOTTOM_FADE to Color.Black,
-                            1f to Color.Transparent,
-                        )
-                    onDrawWithContent {
-                        drawContent()
-                        drawRect(brush = fade, blendMode = BlendMode.DstIn)
-                    }
-                },
-        )
+            lyrics(
+                Modifier
+                    .fillMaxSize()
+                    .padding(top = statusTop + MochyLyricsArtTop + MochyLyricsArtSize + MochyLyricsArtGap)
+                    .padding(bottom = contentBottomInset * (1f - immersion))
+                    .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                    .drawWithCache {
+                        val fade =
+                            Brush.verticalGradient(
+                                0f to Color.Transparent,
+                                MOCHY_LYRICS_TOP_FADE to Color.Black,
+                                MOCHY_LYRICS_BOTTOM_FADE to Color.Black,
+                                1f to Color.Transparent,
+                            )
+                        onDrawWithContent {
+                            drawContent()
+                            drawRect(brush = fade, blendMode = BlendMode.DstIn)
+                        }
+                    },
+            )
         }
     }
 }

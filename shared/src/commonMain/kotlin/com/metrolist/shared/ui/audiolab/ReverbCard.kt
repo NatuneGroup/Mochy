@@ -19,7 +19,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
 import com.metrolist.shared.audiolab.ReverbPresets
 import com.metrolist.shared.audiolab.ReverbSettings
@@ -46,6 +45,7 @@ import com.metrolist.shared.generated.resources.audio_lab_wet
 import com.metrolist.shared.generated.resources.audio_lab_width
 import com.metrolist.shared.settings.Settings
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.exp
 import kotlin.math.log10
 import kotlin.math.max
@@ -141,7 +141,10 @@ private class RoomWaves {
     var next = 0
     var nextEmit = 0f
 
-    fun emit(t: Float, s: Float) {
+    fun emit(
+        t: Float,
+        s: Float,
+    ) {
         born[next] = t
         strength[next] = s
         next = (next + 1) % born.size
@@ -209,30 +212,43 @@ private fun ReverbPicture(settings: ReverbSettings) {
     }
 }
 
-private fun DrawScope.drawWave(x: Float, cy: Float, h: Float, travelled: Float, alpha: Float, rightward: Boolean, softness: Float) {
+private fun DrawScope.drawWave(
+    x: Float,
+    cy: Float,
+    h: Float,
+    travelled: Float,
+    alpha: Float,
+    rightward: Boolean,
+    softness: Float,
+) {
     if (alpha <= 0.005f) return
     val reach = min(h * 0.42f, 14.dp.toPx() + travelled * 0.18f)
     val bulge = reach * 0.42f * if (rightward) 1f else -1f
-    val path = Path().apply {
-        moveTo(x - bulge * 0.2f, cy - reach)
-        quadraticTo(x + bulge, cy, x - bulge * 0.2f, cy + reach)
-    }
+    val path =
+        Path().apply {
+            moveTo(x - bulge * 0.2f, cy - reach)
+            quadraticTo(x + bulge, cy, x - bulge * 0.2f, cy + reach)
+        }
     if (softness > 0.15f) {
         drawPath(path, Color.White.copy(alpha = alpha * 0.25f * softness), style = Stroke(7.dp.toPx() * softness, cap = StrokeCap.Round))
     }
     drawPath(path, Color.White.copy(alpha = alpha.coerceAtMost(1f)), style = Stroke((2.2f - softness).dp.toPx(), cap = StrokeCap.Round))
 }
 
-private fun DrawScope.drawSpeaker(center: Offset, scale: Float) {
+private fun DrawScope.drawSpeaker(
+    center: Offset,
+    scale: Float,
+) {
     val s = 9.dp.toPx() * scale
-    val body = Path().apply {
-        moveTo(center.x - s * 1.1f, center.y - s * 0.45f)
-        lineTo(center.x - s * 0.4f, center.y - s * 0.45f)
-        lineTo(center.x + s * 0.5f, center.y - s * 1.1f)
-        lineTo(center.x + s * 0.5f, center.y + s * 1.1f)
-        lineTo(center.x - s * 0.4f, center.y + s * 0.45f)
-        lineTo(center.x - s * 1.1f, center.y + s * 0.45f)
-        close()
-    }
+    val body =
+        Path().apply {
+            moveTo(center.x - s * 1.1f, center.y - s * 0.45f)
+            lineTo(center.x - s * 0.4f, center.y - s * 0.45f)
+            lineTo(center.x + s * 0.5f, center.y - s * 1.1f)
+            lineTo(center.x + s * 0.5f, center.y + s * 1.1f)
+            lineTo(center.x - s * 0.4f, center.y + s * 0.45f)
+            lineTo(center.x - s * 1.1f, center.y + s * 0.45f)
+            close()
+        }
     drawPath(body, Color.White.copy(alpha = 0.92f), style = Stroke(1.6.dp.toPx()))
 }

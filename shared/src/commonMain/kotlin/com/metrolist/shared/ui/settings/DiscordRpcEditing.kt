@@ -7,8 +7,6 @@
 
 package com.metrolist.shared.ui.settings
 
-import androidx.compose.foundation.layout.height
-import androidx.compose.ui.unit.sp
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -30,6 +28,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -79,17 +78,16 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.metrolist.shared.discord.DiscordActivity
 import com.metrolist.shared.discord.DiscordDefaults
 import com.metrolist.shared.discord.DiscordPresence
 import com.metrolist.shared.discord.DiscordTemplateRenderer
 import com.metrolist.shared.discord.resolveDiscordButtonLabel
 import com.metrolist.shared.generated.resources.Res
-import com.metrolist.shared.generated.resources.mochy_integrations_discord
 import com.metrolist.shared.generated.resources.album
 import com.metrolist.shared.generated.resources.cancel
 import com.metrolist.shared.generated.resources.details
-import com.metrolist.shared.generated.resources.discord_activity_competing
 import com.metrolist.shared.generated.resources.discord_activity_name
 import com.metrolist.shared.generated.resources.discord_activity_playing
 import com.metrolist.shared.generated.resources.discord_activity_watching
@@ -116,6 +114,7 @@ import com.metrolist.shared.generated.resources.discord_token_song_url
 import com.metrolist.shared.generated.resources.discord_token_video_id
 import com.metrolist.shared.generated.resources.done
 import com.metrolist.shared.generated.resources.edit
+import com.metrolist.shared.generated.resources.mochy_integrations_discord
 import com.metrolist.shared.generated.resources.mochy_integrations_discord_time_elapsed
 import com.metrolist.shared.generated.resources.preview
 import com.metrolist.shared.model.AlbumTiny
@@ -394,7 +393,9 @@ private val ProfileAvatarSize = 72.dp
 private val ProfileAvatarRing = 5.dp
 
 /** the buttons the card shows, next to the same list before validation so the card can say which were adjusted */
-private fun discordPreviewButtons(activity: DiscordActivity): Pair<List<Pair<DiscordEditTarget, Pair<String, String>>>, List<Pair<DiscordEditTarget, Pair<String, String>>>> {
+private fun discordPreviewButtons(
+    activity: DiscordActivity,
+): Pair<List<Pair<DiscordEditTarget, Pair<String, String>>>, List<Pair<DiscordEditTarget, Pair<String, String>>>> {
     // validate each configured button separately so its slot survives label truncation
     val configuredButtons =
         listOfNotNull(
@@ -939,7 +940,12 @@ internal fun DiscordToggleCard(
         Image(
             painter = painterResource(Res.drawable.mochy_integrations_discord),
             contentDescription = null,
-            modifier = Modifier.size(22.dp).clip(CircleShape).background(DiscordColors.Blurple).padding(4.dp),
+            modifier =
+                Modifier
+                    .size(22.dp)
+                    .clip(CircleShape)
+                    .background(DiscordColors.Blurple)
+                    .padding(4.dp),
         )
         Column(
             Modifier

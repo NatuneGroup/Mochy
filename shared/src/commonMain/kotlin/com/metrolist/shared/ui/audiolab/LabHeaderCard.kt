@@ -45,13 +45,17 @@ private val PanelColor = Color(0xFF141416)
 
 /** the card itself, before what's on it */
 @Composable
-internal fun LabHeaderCardFrame(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
+internal fun LabHeaderCardFrame(
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit,
+) {
     Box(
-        modifier = modifier
-            .size(LabCardWidth, LabCardHeight)
-            .clip(CardShape)
-            .background(CardColor)
-            .border(1.5.dp, CardEdge, CardShape),
+        modifier =
+            modifier
+                .size(LabCardWidth, LabCardHeight)
+                .clip(CardShape)
+                .background(CardColor)
+                .border(1.5.dp, CardEdge, CardShape),
         content = content,
     )
 }

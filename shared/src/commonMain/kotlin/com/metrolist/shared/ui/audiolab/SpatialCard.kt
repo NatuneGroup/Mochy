@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
 import com.metrolist.shared.audiolab.SpatialMode
 import com.metrolist.shared.audiolab.spatialSettings
@@ -24,6 +23,7 @@ import com.metrolist.shared.generated.resources.mochy_lab_xf_natural
 import com.metrolist.shared.generated.resources.mochy_lab_xf_strong
 import com.metrolist.shared.settings.Settings
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
 @Composable
@@ -42,10 +42,11 @@ internal fun SpatialCard() {
         expanded = spatial.enabled,
         options = {
             LabSegmented(
-                options = listOf(
-                    stringResource(Res.string.audio_lab_spatial_mode_crossfeed),
-                    stringResource(Res.string.audio_lab_spatial_mode_speakers),
-                ),
+                options =
+                    listOf(
+                        stringResource(Res.string.audio_lab_spatial_mode_crossfeed),
+                        stringResource(Res.string.audio_lab_spatial_mode_speakers),
+                    ),
                 selectedIndex = if (spatial.mode == SpatialMode.Crossfeed) 0 else 1,
                 onSelect = { i ->
                     saveSpatial(spatial.copy(mode = if (i == 0) SpatialMode.Crossfeed else SpatialMode.Speakers))
@@ -111,10 +112,16 @@ internal fun SpatialCard() {
 }
 
 /** the crossfeed presets: how far the head shadow sits and how much quieter the other ear is */
-private class CrossfeedLevel(val key: String, val label: StringResource, val cutoff: Float, val feed: Float)
-
-private val CrossfeedLevels = listOf(
-    CrossfeedLevel("light", Res.string.mochy_lab_xf_light, 700f, 4.5f),
-    CrossfeedLevel("natural", Res.string.mochy_lab_xf_natural, 700f, 6f),
-    CrossfeedLevel("strong", Res.string.mochy_lab_xf_strong, 650f, 9.5f),
+private class CrossfeedLevel(
+    val key: String,
+    val label: StringResource,
+    val cutoff: Float,
+    val feed: Float,
 )
+
+private val CrossfeedLevels =
+    listOf(
+        CrossfeedLevel("light", Res.string.mochy_lab_xf_light, 700f, 4.5f),
+        CrossfeedLevel("natural", Res.string.mochy_lab_xf_natural, 700f, 6f),
+        CrossfeedLevel("strong", Res.string.mochy_lab_xf_strong, 650f, 9.5f),
+    )

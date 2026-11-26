@@ -10,12 +10,10 @@ package com.metrolist.shared.ui.player
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -89,10 +87,10 @@ import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -116,8 +114,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import com.metrolist.shared.generated.resources.Res
-import com.metrolist.shared.generated.resources.mochy_queue_drag_handle
-import org.jetbrains.compose.resources.painterResource
 import com.metrolist.shared.generated.resources.action_download
 import com.metrolist.shared.generated.resources.action_like
 import com.metrolist.shared.generated.resources.add_to_playlist
@@ -130,6 +126,7 @@ import com.metrolist.shared.generated.resources.explicit
 import com.metrolist.shared.generated.resources.filter_downloaded
 import com.metrolist.shared.generated.resources.liked
 import com.metrolist.shared.generated.resources.lock_queue
+import com.metrolist.shared.generated.resources.mochy_queue_drag_handle
 import com.metrolist.shared.generated.resources.more_options
 import com.metrolist.shared.generated.resources.n_selected
 import com.metrolist.shared.generated.resources.pause_track_by_artist
@@ -159,7 +156,6 @@ import com.metrolist.shared.playback.QueueRemoval
 import com.metrolist.shared.playback.SleepTimerState
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.LocalIsTv
-import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import com.metrolist.shared.ui.components.ChipShelf
 import com.metrolist.shared.ui.components.ContainedLoadingIndicator
 import com.metrolist.shared.ui.components.PlayerMenuAction
@@ -179,6 +175,7 @@ import com.metrolist.shared.ui.menu.cursorContextMenu
 import com.metrolist.shared.ui.menu.rememberCursorContextMenuState
 import com.metrolist.shared.ui.navigation.NavigationBackHandler
 import com.metrolist.shared.ui.navigation.navigationPopupSource
+import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import com.metrolist.shared.ui.theme.rememberReducedMotion
 import com.metrolist.shared.ui.tv.TvReorderScrollTarget
 import com.metrolist.shared.ui.tv.tvFocusHighlight
@@ -190,6 +187,7 @@ import com.metrolist.shared.viewmodels.PlayerViewModel
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.getPluralString
 import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import sh.calvin.reorderable.ReorderableItem
@@ -345,7 +343,8 @@ internal fun QueueTrack.isReorderTarget(
     draggingEntryKey: Long?,
     selectedEntryKeys: Set<Long>,
 ): Boolean =
-    canRemove && entryKey != draggingEntryKey &&
+    canRemove &&
+        entryKey != draggingEntryKey &&
         (draggingEntryKey !in selectedEntryKeys || entryKey !in selectedEntryKeys)
 
 internal fun reconcileReorderedTracks(
@@ -472,7 +471,9 @@ fun QueueScreen(
         val layout = lazyListState.layoutInfo
         val visible =
             layout.visibleItemsInfo.any {
-                it.key == target.key && it.index == index && it.offset >= layout.viewportStartOffset &&
+                it.key == target.key &&
+                    it.index == index &&
+                    it.offset >= layout.viewportStartOffset &&
                     it.offset + it.size <= layout.viewportEndOffset
             }
         if (!visible) lazyListState.animateScrollToItem(index)
@@ -1377,19 +1378,23 @@ private fun TrackItem(
             label = "queueCurrentShape",
         ).value.coerceIn(0f, 1f)
     val shape =
-        if (mochyLook) RoundedCornerShape(14.dp) else RoundedCornerShape(
-            object : CornerSize {
-                override fun toPx(
-                    shapeSize: Size,
-                    density: Density,
-                ): Float =
-                    lerp(
-                        queueItemShape.topStart.toPx(shapeSize, density),
-                        CircleShape.topStart.toPx(shapeSize, density),
-                        highlightProgress,
-                    )
-            },
-        )
+        if (mochyLook) {
+            RoundedCornerShape(14.dp)
+        } else {
+            RoundedCornerShape(
+                object : CornerSize {
+                    override fun toPx(
+                        shapeSize: Size,
+                        density: Density,
+                    ): Float =
+                        lerp(
+                            queueItemShape.topStart.toPx(shapeSize, density),
+                            CircleShape.topStart.toPx(shapeSize, density),
+                            highlightProgress,
+                        )
+                },
+            )
+        }
     val artworkShape = animatedCurrentSongArtworkShape(isActive, RoundedCornerShape(if (mochyLook) 8.dp else 6.dp))
     val motionScale = rememberCoroutineScope().coroutineContext[MotionDurationScale]?.scaleFactor ?: 1f
     val motionEnabled = isActive && motionScale > 0f && !rememberReducedMotion()
@@ -1460,8 +1465,7 @@ private fun TrackItem(
                     } else {
                         Modifier
                     },
-                )
-                .tvFocusHighlight(shape)
+                ).tvFocusHighlight(shape)
                 .currentSongSemantics(isActive, isPlaying)
                 .cursorContextMenu(contextMenu)
                 .combinedClickable(
@@ -1629,7 +1633,10 @@ private val MochyQueueRemoveRed = Color(0xFFFF453A)
 private val MochyQueueCard = Color(0xFF1C1C1E)
 
 // the reference's queue row: the song playing gets a light highlight, a row being dragged a brighter one
-private fun mochyQueueRowColor(isMoving: Boolean, isActive: Boolean): Color =
+private fun mochyQueueRowColor(
+    isMoving: Boolean,
+    isActive: Boolean,
+): Color =
     when {
         isMoving -> Color.White.copy(alpha = 0.12f)
         isActive -> Color.White.copy(alpha = 0.07f)
@@ -1866,7 +1873,9 @@ fun QueueScreen(
         onEvent = { event ->
             if (!canControlPlayback &&
                 (
-                    event is QueueEvent.PlayTrack || event is QueueEvent.SelectChip || event is QueueEvent.ReorderTrack ||
+                    event is QueueEvent.PlayTrack ||
+                        event is QueueEvent.SelectChip ||
+                        event is QueueEvent.ReorderTrack ||
                         event is QueueEvent.RemoveTrack ||
                         event == QueueEvent.CommitReorder ||
                         event == QueueEvent.DeleteSelected ||

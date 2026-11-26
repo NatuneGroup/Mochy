@@ -30,8 +30,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -59,9 +57,10 @@ import com.metrolist.shared.generated.resources.mochy_lab_preset_taken
 import com.metrolist.shared.generated.resources.mochy_lab_presets
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
+import org.jetbrains.compose.resources.stringResource
 
 // long enough for a real name, short enough that its chip still fits on a phone
-private const val MaxNameLength = 32
+private const val MAX_NAME_LENGTH = 32
 
 /** the presets row on the Audio Lab page: saved effect snapshots, a tap applies one, a long press renames it */
 @Composable
@@ -154,17 +153,17 @@ private fun AddPresetButton(onClick: () -> Unit) {
     val label = stringResource(Res.string.mochy_lab_preset_add)
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .size(38.dp)
-            .clip(CircleShape)
-            .background(LabColors.Chip)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                role = Role.Button,
-                onClick = onClick,
-            )
-            .semantics { contentDescription = label },
+        modifier =
+            Modifier
+                .size(38.dp)
+                .clip(CircleShape)
+                .background(LabColors.Chip)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    role = Role.Button,
+                    onClick = onClick,
+                ).semantics { contentDescription = label },
     ) {
         Canvas(Modifier.size(18.dp)) {
             val stroke = 2.dp.toPx()
@@ -187,8 +186,10 @@ private fun FxPresetNameDialog(
     var field by remember { mutableStateOf(TextFieldValue(initialName, TextRange(initialName.length))) }
     val typed = field.text.trim()
     // keeping its own name while editing is fine, wearing another preset's isn't
-    val taken = typed.isNotEmpty() && !typed.equals(initialName.trim(), ignoreCase = true) &&
-        takenNames.any { it.trim().equals(typed, ignoreCase = true) }
+    val taken =
+        typed.isNotEmpty() &&
+            !typed.equals(initialName.trim(), ignoreCase = true) &&
+            takenNames.any { it.trim().equals(typed, ignoreCase = true) }
     val canSave = typed.isNotEmpty() && !taken
 
     AlertDialog(
@@ -198,7 +199,7 @@ private fun FxPresetNameDialog(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = field,
-                    onValueChange = { if (it.text.length <= MaxNameLength) field = it },
+                    onValueChange = { if (it.text.length <= MAX_NAME_LENGTH) field = it },
                     singleLine = true,
                     isError = taken,
                     placeholder = { Text(stringResource(Res.string.mochy_lab_preset_name_hint)) },

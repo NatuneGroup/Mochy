@@ -176,8 +176,7 @@ internal fun MochyLyricsInterludeDots(
                                 alpha = (DOT_REST_ALPHA + (1f - DOT_REST_ALPHA) * fills[index].floatValue) * pop.coerceIn(0f, 1f)
                                 val phase = clockMs.longValue / DOT_BOB_PERIOD_MS * 2f * PI.toFloat() - index * DOT_BOB_PHASE_STEP
                                 translationY = sin(phase) * DOT_BOB_HEIGHT.toPx()
-                            }
-                            .drawBehind {
+                            }.drawBehind {
                                 drawDotGlow(glows[index].floatValue)
                                 drawCircle(Color.White.copy(alpha = 0.75f + 0.25f * fills[index].floatValue), size.minDimension / 2f)
                             },

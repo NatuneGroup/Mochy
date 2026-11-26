@@ -3,22 +3,20 @@
 package com.metrolist.shared.ui.mochy
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -26,15 +24,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
@@ -56,44 +56,44 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.em
-import androidx.compose.ui.util.lerp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.util.lerp
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.mochy_library_index_scrubber
 import com.metrolist.shared.model.YTItem
 import com.metrolist.shared.ui.components.Artwork
 import com.metrolist.shared.ui.components.squareArtworkSlot
-import com.metrolist.shared.ui.icons.MetrolistIcons
-import com.metrolist.shared.ui.utils.artistArtworkShape
 import com.metrolist.shared.ui.haptics.HapticEvent
 import com.metrolist.shared.ui.haptics.rememberMetrolistHaptics
+import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
+import com.metrolist.shared.ui.utils.artistArtworkShape
 import com.metrolist.shared.ui.utils.supportsNativeBlur
-import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.DrawableResource
-import kotlin.math.roundToInt
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.PI
+import kotlin.math.roundToInt
 import kotlin.math.sin
 
 private const val SYMBOL_BUCKET = "#"
@@ -362,17 +362,19 @@ internal fun <T> MochyLibraryChipRow(
     contentPadding: PaddingValues = PaddingValues(horizontal = 16.dp),
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .padding(contentPadding),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(contentPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
-            modifier = Modifier
-                .clip(RoundedCornerShape(percent = 50))
-                .background(MochyLibraryChipTrack)
-                .padding(3.dp),
+            modifier =
+                Modifier
+                    .clip(RoundedCornerShape(percent = 50))
+                    .background(MochyLibraryChipTrack)
+                    .padding(3.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -389,7 +391,11 @@ internal fun <T> MochyLibraryChipRow(
 }
 
 @Composable
-private fun MochyLibraryChipPill(text: String, selected: Boolean, onClick: () -> Unit) {
+private fun MochyLibraryChipPill(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
     val background by animateColorAsState(
         targetValue = if (selected) MochyLibraryChipSelected else MochyLibraryChip,
         animationSpec = tween(220),
@@ -397,12 +403,13 @@ private fun MochyLibraryChipPill(text: String, selected: Boolean, onClick: () ->
     )
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .clip(RoundedCornerShape(percent = 50))
-            .background(background)
-            .clickable(role = Role.Tab, onClick = onClick)
-            .heightIn(min = 28.dp)
-            .padding(horizontal = 14.dp, vertical = 5.dp),
+        modifier =
+            Modifier
+                .clip(RoundedCornerShape(percent = 50))
+                .background(background)
+                .clickable(role = Role.Tab, onClick = onClick)
+                .heightIn(min = 28.dp)
+                .padding(horizontal = 14.dp, vertical = 5.dp),
     ) {
         Text(
             text = text,
@@ -560,12 +567,13 @@ internal fun MochyLibraryPillButton(
 ) {
     Box(
         contentAlignment = Alignment.Center,
-        modifier = modifier
-            .clip(RoundedCornerShape(percent = 50))
-            .background(MochyLibraryControl)
-            .clickable(role = Role.Button, onClick = onClick)
-            .heightIn(min = 40.dp)
-            .padding(horizontal = 18.dp, vertical = 6.dp),
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(percent = 50))
+                .background(MochyLibraryControl)
+                .clickable(role = Role.Button, onClick = onClick)
+                .heightIn(min = 40.dp)
+                .padding(horizontal = 18.dp, vertical = 6.dp),
     ) {
         Text(
             text = text,
@@ -590,11 +598,12 @@ internal fun MochyLibraryRoundButton(
 ) {
     Box(
         contentAlignment = Alignment.Center,
-        modifier = modifier
-            .size(40.dp)
-            .clip(CircleShape)
-            .background(if (picked) MochyLibraryControlPicked else MochyLibraryControl)
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
+        modifier =
+            modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(if (picked) MochyLibraryControlPicked else MochyLibraryControl)
+                .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
     ) {
         Icon(
             imageVector = icon,
@@ -693,33 +702,35 @@ internal fun MochyLibraryTopBar(
             lineHeight = 40.sp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier
-                .padding(top = statusBar + MochyLibraryTitleTop, start = MochyLibrarySidePadding, end = MochyLibrarySidePadding)
-                .graphicsLayer {
-                    val p = collapse
-                    transformOrigin = TransformOrigin(0f, 0f)
-                    val scale = lerp(1f, MOCHY_LIBRARY_COLLAPSED_TITLE_SCALE, p)
-                    scaleX = scale
-                    scaleY = scale
-                    translationY = lerp(0f, (-6).dp.toPx(), p)
-                    val radius = sin(p.coerceIn(0f, 1f) * PI.toFloat()) * MOCHY_LIBRARY_TITLE_MAX_BLUR_PX
-                    renderEffect = if (blur && radius > 0.5f) BlurEffect(radius, radius, TileMode.Decal) else null
-                },
+            modifier =
+                Modifier
+                    .padding(top = statusBar + MochyLibraryTitleTop, start = MochyLibrarySidePadding, end = MochyLibrarySidePadding)
+                    .graphicsLayer {
+                        val p = collapse
+                        transformOrigin = TransformOrigin(0f, 0f)
+                        val scale = lerp(1f, MOCHY_LIBRARY_COLLAPSED_TITLE_SCALE, p)
+                        scaleX = scale
+                        scaleY = scale
+                        translationY = lerp(0f, (-6).dp.toPx(), p)
+                        val radius = sin(p.coerceIn(0f, 1f) * PI.toFloat()) * MOCHY_LIBRARY_TITLE_MAX_BLUR_PX
+                        renderEffect = if (blur && radius > 0.5f) BlurEffect(radius, radius, TileMode.Decal) else null
+                    },
         )
         // the search pill: tapping it opens the library search; it fades out as the title folds away
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(top = statusBar + MochyLibraryFieldTop, start = MochyLibrarySidePadding, end = MochyLibrarySidePadding)
-                .fillMaxWidth()
-                .height(MochyLibraryFieldHeight)
-                .graphicsLayer { alpha = 1f - collapse }
-                .clip(RoundedCornerShape(percent = 50))
-                .background(MochyLibraryField)
-                .clickable(enabled = collapse < 0.5f, role = Role.Button, onClick = onSearchClick)
-                .padding(horizontal = 16.dp),
+            modifier =
+                Modifier
+                    .align(Alignment.TopStart)
+                    .padding(top = statusBar + MochyLibraryFieldTop, start = MochyLibrarySidePadding, end = MochyLibrarySidePadding)
+                    .fillMaxWidth()
+                    .height(MochyLibraryFieldHeight)
+                    .graphicsLayer { alpha = 1f - collapse }
+                    .clip(RoundedCornerShape(percent = 50))
+                    .background(MochyLibraryField)
+                    .clickable(enabled = collapse < 0.5f, role = Role.Button, onClick = onSearchClick)
+                    .padding(horizontal = 16.dp),
         ) {
             Icon(
                 imageVector = MetrolistIcons.Default.Search,

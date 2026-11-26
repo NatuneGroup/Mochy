@@ -73,12 +73,12 @@ import com.metrolist.shared.ui.mochy.press3D
 import com.metrolist.shared.ui.mochy.pressBounce
 import com.metrolist.shared.ui.mochy.smoothFrames
 import com.metrolist.shared.ui.theme.rememberReducedMotion
-import kotlin.math.abs
-import kotlin.math.floor
-import kotlin.math.roundToInt
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.abs
+import kotlin.math.floor
+import kotlin.math.roundToInt
 
 val LocalFloatingNavBar = compositionLocalOf { false }
 
@@ -511,7 +511,7 @@ private fun <T> FloatingNavigationItem(
                 Modifier
                     .size(iconSize)
                     .graphicsLayer {
-                        alpha = UnlitTabAlpha * (1f - lit)
+                        alpha = UNLIT_TAB_ALPHA * (1f - lit)
                         compositingStrategy = CompositingStrategy.ModulateAlpha
                     },
         )
@@ -534,4 +534,4 @@ private fun <T> FloatingNavigationItem(
 private val SmallerTabKeys = setOf("Home", "Search")
 
 // the tab that is not lit shows at 70%, as the reference's tabs do
-private const val UnlitTabAlpha = 0.7f
+private const val UNLIT_TAB_ALPHA = 0.7f

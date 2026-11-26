@@ -73,7 +73,6 @@ import com.metrolist.shared.ui.components.InlineSearchRow
 import com.metrolist.shared.ui.components.LazyListScrollbar
 import com.metrolist.shared.ui.components.PlaylistHeader
 import com.metrolist.shared.ui.components.PlaylistHeaderActions
-import com.metrolist.shared.ui.components.ReorderMenu
 import com.metrolist.shared.ui.components.ScrollingAddButton
 import com.metrolist.shared.ui.components.SongListItem
 import com.metrolist.shared.ui.components.mediumCollectionArtworkSize
@@ -346,7 +345,9 @@ fun PlaylistContent(
                     val layout = activeListState.layoutInfo
                     val visible =
                         layout.visibleItemsInfo.any {
-                            it.key == target.key && it.index == index && it.offset >= layout.viewportStartOffset &&
+                            it.key == target.key &&
+                                it.index == index &&
+                                it.offset >= layout.viewportStartOffset &&
                                 it.offset + it.size <= layout.viewportEndOffset
                         }
                     if (!visible) activeListState.animateScrollToItem(index)
@@ -511,7 +512,13 @@ fun PlaylistContent(
                                                     count = displayedSongs.size,
                                                     sourceIndex = displayedIndices?.get(index) ?: index,
                                                     itemKey = songKeys[index],
-                                                    modifier = Modifier.revealOnAppear(key = "track_${song.id}", seenState = revealSeen, delayMillis = minOf(index, 8) * 28),
+                                                    modifier =
+                                                        Modifier.revealOnAppear(
+                                                            key = "track_${song.id}",
+                                                            seenState = revealSeen,
+                                                            delayMillis =
+                                                                minOf(index, 8) * 28,
+                                                        ),
                                                     currentSongId = currentSongIdState,
                                                     currentQueueItemId = currentQueueItemIdState,
                                                     preferQueueItemId = preferQueueItemIdState,
@@ -714,7 +721,13 @@ fun PlaylistContent(
                                         count = displayedSongs.size,
                                         sourceIndex = displayedIndices?.get(index) ?: index,
                                         itemKey = songKeys[index],
-                                        modifier = itemModifier.revealOnAppear(key = "track_${song.id}", seenState = revealSeen, delayMillis = minOf(index, 8) * 28),
+                                        modifier =
+                                            itemModifier.revealOnAppear(
+                                                key = "track_${song.id}",
+                                                seenState = revealSeen,
+                                                delayMillis =
+                                                    minOf(index, 8) * 28,
+                                            ),
                                         currentSongId = currentSongIdState,
                                         currentQueueItemId = currentQueueItemIdState,
                                         preferQueueItemId = preferQueueItemIdState,

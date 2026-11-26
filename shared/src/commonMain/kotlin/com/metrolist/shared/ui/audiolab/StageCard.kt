@@ -23,7 +23,6 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.metrolist.shared.audiolab.StageBox
@@ -49,6 +48,7 @@ import com.metrolist.shared.generated.resources.audio_lab_stage_unavailable
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.max
@@ -62,20 +62,24 @@ internal fun StageCard(support: AudioLabStageSupport) {
     val stage = Settings.shared.stageSettings()
     val usable = support == AudioLabStageSupport.Available
     val active = usable && stage.enabled
-    val unavailableText: String? = if (usable) {
-        null
-    } else {
-        stringResource(
-            if (support == AudioLabStageSupport.AndroidOnly) {
-                Res.string.audio_lab_stage_android_only
-            } else {
-                Res.string.audio_lab_stage_unavailable
-            },
-        )
-    }
-    val footer: (@Composable ColumnScope.() -> Unit)? = if (unavailableText == null) null else {
-        { StageNote(unavailableText) }
-    }
+    val unavailableText: String? =
+        if (usable) {
+            null
+        } else {
+            stringResource(
+                if (support == AudioLabStageSupport.AndroidOnly) {
+                    Res.string.audio_lab_stage_android_only
+                } else {
+                    Res.string.audio_lab_stage_unavailable
+                },
+            )
+        }
+    val footer: (@Composable ColumnScope.() -> Unit)? =
+        if (unavailableText == null) {
+            null
+        } else {
+            { StageNote(unavailableText) }
+        }
     EffectCard(
         picture = { StagePicture(stage) },
         header = {
@@ -148,21 +152,22 @@ private fun StagePicture(settings: StageSettings) {
     val preset = remember(settings.presetId) { StagePresets.byId(settings.presetId) }
     PictureCanvas { t, _ ->
         // a slow sway rather than a spin, so it still reads as the same room
-        val yaw = DefaultCameraYaw + sin(t * 0.35f) * 22f * (0.4f + 0.6f * on)
-        val view = StageView(size, settings.box, yaw, DefaultCameraPitch + 6f)
+        val yaw = DEFAULT_CAMERA_YAW + sin(t * 0.35f) * 22f * (0.4f + 0.6f * on)
+        val view = StageView(size, settings.box, yaw, DEFAULT_CAMERA_PITCH + 6f)
         val box = settings.box
-        val marks = preset.objects.map { o ->
-            StageMark(
-                key = o.id,
-                source = o.source,
-                x = o.x,
-                y = o.y,
-                z = o.z,
-                // no music tap yet, so nothing lights up
-                level = 0f,
-                spread = if (o.source == StageSource.Ambience) o.width * min(3f, box.width * 0.35f) / (box.width / 2) else 0f,
-            )
-        }
+        val marks =
+            preset.objects.map { o ->
+                StageMark(
+                    key = o.id,
+                    source = o.source,
+                    x = o.x,
+                    y = o.y,
+                    z = o.z,
+                    // no music tap yet, so nothing lights up
+                    level = 0f,
+                    spread = if (o.source == StageSource.Ambience) o.width * min(3f, box.width * 0.35f) / (box.width / 2) else 0f,
+                )
+            }
         drawStage(view, marks, preset.listener, on)
     }
 }
@@ -180,28 +185,38 @@ private fun stagePresetName(id: String): StringResource =
 
 // ---- the 3D room: a wire box, every sound as a dot, and the listener's head -------------------
 
-private const val DefaultCameraYaw = -28f
-private const val DefaultCameraPitch = 24f
-private const val CameraDistance = 3.4f
-private const val HeadSize = 0.068f
+private const val DEFAULT_CAMERA_YAW = -28f
+private const val DEFAULT_CAMERA_PITCH = 24f
+private const val CAMERA_DISTANCE = 3.4f
+private const val HEAD_SIZE = 0.068f
 
 // the presets don't store a head turn, so the listener faces straight ahead, down the room's z axis
-private const val ListenerYaw = 0f
+private const val LISTENER_YAW = 0f
 
-private fun sourceColor(source: StageSource): Color = when (source) {
-    StageSource.Vocal -> Color(0xFFF2D46B)
-    StageSource.Center -> Color(0xFFF2A46B)
-    StageSource.Left -> Color(0xFF6BBAF2)
-    StageSource.Right -> Color(0xFFF28BA8)
-    StageSource.Ambience -> Color(0xFF6BD9C4)
-    StageSource.Sub -> Color(0xFFB98CF2)
-}
+private fun sourceColor(source: StageSource): Color =
+    when (source) {
+        StageSource.Vocal -> Color(0xFFF2D46B)
+        StageSource.Center -> Color(0xFFF2A46B)
+        StageSource.Left -> Color(0xFF6BBAF2)
+        StageSource.Right -> Color(0xFFF28BA8)
+        StageSource.Ambience -> Color(0xFF6BD9C4)
+        StageSource.Sub -> Color(0xFFB98CF2)
+    }
 
 /** a point on screen with how far it is from the camera (bigger is further) and how much nearness scales it */
-private class Projected(val point: Offset, val depth: Float, val scale: Float)
+private class Projected(
+    val point: Offset,
+    val depth: Float,
+    val scale: Float,
+)
 
 /** the room fitted to the canvas, seen from the camera's angle; positions go in as the settings keep them (x, z -1..1, y 0..1) */
-private class StageView(size: Size, box: StageBox, yawDegrees: Float, pitchDegrees: Float) {
+private class StageView(
+    size: Size,
+    box: StageBox,
+    yawDegrees: Float,
+    pitchDegrees: Float,
+) {
     // the room scaled so its longest side is 2 units, centred on the origin
     private val unit = 1f / max(box.width, max(box.depth, box.height)) * 2f
     private val halfX = box.width / 2 * unit
@@ -215,31 +230,45 @@ private class StageView(size: Size, box: StageBox, yawDegrees: Float, pitchDegre
     private val center = Offset(size.width / 2, size.height / 2)
 
     // fitted to the box's bounding sphere, so it never grows or shrinks as the room turns
-    private val focal: Float = run {
-        val radius = sqrt(halfX * halfX + halfY * halfY + halfZ * halfZ)
-        min(size.width, size.height) / 2 * 1.08f * sqrt(CameraDistance * CameraDistance - radius * radius) / radius
-    }
+    private val focal: Float =
+        run {
+            val radius = sqrt(halfX * halfX + halfY * halfY + halfZ * halfZ)
+            min(size.width, size.height) / 2 * 1.08f * sqrt(CAMERA_DISTANCE * CAMERA_DISTANCE - radius * radius) / radius
+        }
 
     /** how flat the floor looks from up here, 0 edge-on .. 1 straight down */
     val floorSquash = abs(pitchSin)
 
     /** a size in room units as pixels at a projected point */
-    fun pixels(at: Projected, worldSize: Float) = focal * worldSize / at.depth
+    fun pixels(
+        at: Projected,
+        worldSize: Float,
+    ) = focal * worldSize / at.depth
 
     fun worldX(x: Float) = x * halfX
+
     fun worldY(y: Float) = (y - 0.5f) * 2 * halfY
+
     fun worldZ(z: Float) = z * halfZ
 
-    fun project(x: Float, y: Float, z: Float): Projected = projectWorld(worldX(x), worldY(y), worldZ(z))
+    fun project(
+        x: Float,
+        y: Float,
+        z: Float,
+    ): Projected = projectWorld(worldX(x), worldY(y), worldZ(z))
 
-    fun projectWorld(wx: Float, wy: Float, wz: Float): Projected {
+    fun projectWorld(
+        wx: Float,
+        wy: Float,
+        wz: Float,
+    ): Projected {
         val x1 = wx * yawCos + wz * yawSin
         val z1 = -wx * yawSin + wz * yawCos
         val y2 = wy * pitchCos + z1 * pitchSin
         val z2 = -wy * pitchSin + z1 * pitchCos
-        val depth = z2 + CameraDistance
+        val depth = z2 + CAMERA_DISTANCE
         val k = focal / depth
-        return Projected(Offset(center.x + x1 * k, center.y - y2 * k), depth, CameraDistance / depth)
+        return Projected(Offset(center.x + x1 * k, center.y - y2 * k), depth, CAMERA_DISTANCE / depth)
     }
 }
 
@@ -256,13 +285,28 @@ private class StageMark(
     val spread: Float,
 )
 
-private val Edges = arrayOf(
-    intArrayOf(0, 1), intArrayOf(1, 3), intArrayOf(3, 2), intArrayOf(2, 0),
-    intArrayOf(4, 5), intArrayOf(5, 7), intArrayOf(7, 6), intArrayOf(6, 4),
-    intArrayOf(0, 4), intArrayOf(1, 5), intArrayOf(2, 6), intArrayOf(3, 7),
-)
+private val Edges =
+    arrayOf(
+        intArrayOf(0, 1),
+        intArrayOf(1, 3),
+        intArrayOf(3, 2),
+        intArrayOf(2, 0),
+        intArrayOf(4, 5),
+        intArrayOf(5, 7),
+        intArrayOf(7, 6),
+        intArrayOf(6, 4),
+        intArrayOf(0, 4),
+        intArrayOf(1, 5),
+        intArrayOf(2, 6),
+        intArrayOf(3, 7),
+    )
 
-private fun DrawScope.drawStage(view: StageView, marks: List<StageMark>, listener: StageListener, on: Float) {
+private fun DrawScope.drawStage(
+    view: StageView,
+    marks: List<StageMark>,
+    listener: StageListener,
+    on: Float,
+) {
     drawRoomBox(view, on)
     drawFacing(view, listener, on)
 
@@ -280,16 +324,20 @@ private fun DrawScope.drawStage(view: StageView, marks: List<StageMark>, listene
     if (!headDrawn) drawHead(view, listener, on)
 }
 
-private fun DrawScope.drawRoomBox(view: StageView, on: Float) {
+private fun DrawScope.drawRoomBox(
+    view: StageView,
+    on: Float,
+) {
     val grid = Color.White.copy(alpha = 0.035f + 0.03f * on)
     for (i in 0..4) {
         val t = -1f + i * 0.5f
         drawLine(grid, view.project(t, 0f, -1f).point, view.project(t, 0f, 1f).point, 1.dp.toPx())
         drawLine(grid, view.project(-1f, 0f, t).point, view.project(1f, 0f, t).point, 1.dp.toPx())
     }
-    val corners = Array(8) { i ->
-        view.project(if (i and 1 == 0) -1f else 1f, if (i and 4 == 0) 0f else 1f, if (i and 2 == 0) -1f else 1f)
-    }
+    val corners =
+        Array(8) { i ->
+            view.project(if (i and 1 == 0) -1f else 1f, if (i and 4 == 0) 0f else 1f, if (i and 2 == 0) -1f else 1f)
+        }
     val farthest = corners.maxOf { it.depth }
     for ((a, b) in Edges) {
         // the edges round the back sit a little dimmer, which is most of what reads as depth in a wire box
@@ -300,8 +348,12 @@ private fun DrawScope.drawRoomBox(view: StageView, on: Float) {
 }
 
 // a soft wedge on the floor the way the head is facing
-private fun DrawScope.drawFacing(view: StageView, listener: StageListener, on: Float) {
-    val base = degreesToRadians(ListenerYaw.toDouble())
+private fun DrawScope.drawFacing(
+    view: StageView,
+    listener: StageListener,
+    on: Float,
+) {
+    val base = degreesToRadians(LISTENER_YAW.toDouble())
     val reach = 0.55f
     val path = Path()
     val start = view.projectWorld(view.worldX(listener.x), view.worldY(0f), view.worldZ(listener.z)).point
@@ -324,7 +376,14 @@ private fun DrawScope.drawFacing(view: StageView, listener: StageListener, on: F
     )
 }
 
-private fun DrawScope.drawStem(view: StageView, x: Float, y: Float, z: Float, color: Color, alpha: Float) {
+private fun DrawScope.drawStem(
+    view: StageView,
+    x: Float,
+    y: Float,
+    z: Float,
+    color: Color,
+    alpha: Float,
+) {
     val top = view.project(x, y, z)
     val floor = view.project(x, 0f, z)
     val rx = 8.dp.toPx() * floor.scale
@@ -339,7 +398,11 @@ private fun DrawScope.drawStem(view: StageView, x: Float, y: Float, z: Float, co
     )
 }
 
-private fun DrawScope.drawMark(view: StageView, mark: StageMark, on: Float) {
+private fun DrawScope.drawMark(
+    view: StageView,
+    mark: StageMark,
+    on: Float,
+) {
     val color = sourceColor(mark.source)
     val alpha = 0.55f + 0.45f * on
     val p = view.project(mark.x, mark.y, mark.z)
@@ -372,16 +435,20 @@ private fun DrawScope.drawMark(view: StageView, mark: StageMark, on: Float) {
 }
 
 // a little head in headphones: ears for cups and a nose showing where it looks, turning with the room
-private fun DrawScope.drawHead(view: StageView, listener: StageListener, on: Float) {
+private fun DrawScope.drawHead(
+    view: StageView,
+    listener: StageListener,
+    on: Float,
+) {
     val alpha = 0.7f + 0.3f * on
     drawStem(view, listener.x, listener.y, listener.z, Color.White, alpha)
     val cx = view.worldX(listener.x)
     val cy = view.worldY(listener.y)
     val cz = view.worldZ(listener.z)
     val center = view.projectWorld(cx, cy, cz)
-    val headSize = HeadSize * 0.8f
+    val headSize = HEAD_SIZE * 0.8f
     val radius = max(view.pixels(center, headSize), 5.dp.toPx())
-    val yaw = degreesToRadians(ListenerYaw.toDouble())
+    val yaw = degreesToRadians(LISTENER_YAW.toDouble())
     val fx = sin(yaw).toFloat()
     val fz = cos(yaw).toFloat()
     // the head's right hand side, a quarter turn from where it faces
@@ -393,11 +460,12 @@ private fun DrawScope.drawHead(view: StageView, listener: StageListener, on: Flo
     val cupRight = view.projectWorld(cx + rx * 1.02f * headSize, cy, cz + rz * 1.02f * headSize)
     val nose = view.projectWorld(cx + fx * headSize * 1.02f, cy - 0.05f * headSize, cz + fz * headSize * 1.02f)
 
-    val parts = listOf(
-        Triple(cupLeft.depth, cupLeft.point, radius * 0.36f to cup),
-        Triple(cupRight.depth, cupRight.point, radius * 0.36f to cup),
-        Triple(nose.depth, nose.point, radius * 0.2f to Color(0xFFF2C6B4).copy(alpha = alpha)),
-    )
+    val parts =
+        listOf(
+            Triple(cupLeft.depth, cupLeft.point, radius * 0.36f to cup),
+            Triple(cupRight.depth, cupRight.point, radius * 0.36f to cup),
+            Triple(nose.depth, nose.point, radius * 0.2f to Color(0xFFF2C6B4).copy(alpha = alpha)),
+        )
     val (behind, front) = parts.partition { it.first > center.depth }
     behind.forEach { drawCircle(it.third.second, it.third.first, it.second) }
     drawCircle(

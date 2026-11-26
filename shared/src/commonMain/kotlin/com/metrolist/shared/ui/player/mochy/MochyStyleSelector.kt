@@ -21,7 +21,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -35,8 +34,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -75,14 +72,14 @@ import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.components.PopupVisibility
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
-import kotlin.math.PI
-import kotlin.math.abs
-import kotlin.math.cos
-import kotlin.math.sin
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
 
 // the styles KMP has, stacked the way the reference's picker stacks its own: each column is one page, and the styles in it
 // sit one behind another with the chosen one in front
@@ -119,7 +116,11 @@ fun MochyStyleSelector(
     val startColumn = MochyStyleColumns.indexOfFirst { column -> column.any { it.first == selected } }.coerceAtLeast(0)
     val pagerState = rememberPagerState(initialPage = startColumn) { MochyStyleColumns.size }
     Column(
-        modifier = Modifier.fillMaxSize().background(Color.Black).padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 18.dp),
+        modifier =
+            Modifier.fillMaxSize().background(Color.Black).padding(
+                top =
+                    WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 18.dp,
+            ),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
@@ -136,10 +137,20 @@ fun MochyStyleSelector(
                 modifier = Modifier.weight(1f),
             )
             Box(
-                modifier = Modifier.size(36.dp).clip(CircleShape).background(CardFill).clickable(onClick = onDismiss),
+                modifier =
+                    Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(CardFill)
+                        .clickable(onClick = onDismiss),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(MetrolistIcons.Default.Close, contentDescription = null, tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(18.dp))
+                Icon(
+                    MetrolistIcons.Default.Close,
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.7f),
+                    modifier = Modifier.size(18.dp),
+                )
             }
         }
         Spacer(Modifier.height(24.dp))

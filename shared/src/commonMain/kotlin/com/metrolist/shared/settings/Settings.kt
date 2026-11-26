@@ -15,7 +15,6 @@ import com.metrolist.shared.audiolab.EightDSettings
 import com.metrolist.shared.audiolab.FxPreset
 import com.metrolist.shared.audiolab.ReverbPresets
 import com.metrolist.shared.audiolab.ReverbSettings
-import com.metrolist.shared.audiolab.SpatialMode
 import com.metrolist.shared.audiolab.SpatialSettings
 import com.metrolist.shared.audiolab.StageSettings
 import com.metrolist.shared.backup.AutoBackupFrequency
@@ -113,6 +112,7 @@ import com.metrolist.shared.constants.HiddenHomeUndoHintShownKey
 import com.metrolist.shared.constants.HiddenLibraryUndoHintShownKey
 import com.metrolist.shared.constants.HideNonMusicalVideosKey
 import com.metrolist.shared.constants.HideRecentSearchesKey
+import com.metrolist.shared.constants.HideSettingsDescriptionsKey
 import com.metrolist.shared.constants.HideShortSongsKey
 import com.metrolist.shared.constants.HistoryPlaylistsEnabledKey
 import com.metrolist.shared.constants.IosCustomFontFileKey
@@ -241,7 +241,6 @@ import com.metrolist.shared.constants.SwipeToRemoveSongKey
 import com.metrolist.shared.constants.SwipeToSongKey
 import com.metrolist.shared.constants.TempoPitchPresetsJsonKey
 import com.metrolist.shared.constants.TokenLoginWarningDismissedKey
-import com.metrolist.shared.constants.HideSettingsDescriptionsKey
 import com.metrolist.shared.constants.TransportFadeEnabledKey
 import com.metrolist.shared.constants.TransportFadeSecondsKey
 import com.metrolist.shared.constants.UpdateInstallMethodKey
@@ -549,6 +548,7 @@ class Settings(
     var stageRoomAmount by preference(StageRoomAmountKey, stageDefaults.roomAmount)
     var stageLevelDb by preference(StageLevelDbKey, stageDefaults.levelDb)
     var playerType by preference(PlayerType.MOCHY)
+
     // the reference defaults to the full-bleed cover (it falls back to squared only below Android 12)
     var playerCoverStyle by preference(PlayerCoverStyleKey, PlayerCoverStyle.EDGE_TO_EDGE)
     var ipodTheme by preference(IpodTheme.SILVER)
@@ -606,10 +606,11 @@ class Settings(
     var crossfadeEnabled by preference(false)
     var crossfadeDuration by preference(10f)
     var crossfadeGapless by preference(true)
+
     // which blend the Transition page keeps when crossfade is on; an upgrade with a 5 s crossfade counts as Auto, anything else keeps its length as Manual
     var crossfadeStyle by preference(
         CrossfadeStyleKey,
-        if (crossfadeDuration == AutoCrossfadeSeconds) CrossfadeStyle.AUTO else CrossfadeStyle.MANUAL,
+        if (crossfadeDuration == AUTO_CROSSFADE_SECONDS) CrossfadeStyle.AUTO else CrossfadeStyle.MANUAL,
     )
     var transportFadeEnabled by preference(TransportFadeEnabledKey, true)
     var hideSettingsDescriptions by preference(HideSettingsDescriptionsKey, true)
