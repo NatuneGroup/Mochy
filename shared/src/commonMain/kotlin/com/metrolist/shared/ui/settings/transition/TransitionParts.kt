@@ -7,6 +7,7 @@
 
 package com.metrolist.shared.ui.settings.transition
 
+import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring

@@ -7,6 +7,7 @@
 
 package com.metrolist.shared.ui.settings.transition
 
+import androidx.compose.runtime.getValue
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
