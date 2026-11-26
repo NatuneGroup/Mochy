@@ -17,6 +17,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,25 +30,37 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.metrolist.desktop.state.app.AppState
 import com.metrolist.desktop.state.app.UiState
 import com.metrolist.desktop.state.content.ArtistState
 import com.metrolist.desktop.state.playback.ListenTogetherState
 import com.metrolist.desktop.state.playback.LyricsState
 import com.metrolist.desktop.state.playback.PlayerState
 import com.metrolist.shared.generated.resources.Res
+import com.metrolist.shared.generated.resources.action_like
 import com.metrolist.shared.generated.resources.album_art
+import com.metrolist.shared.generated.resources.cast
+import com.metrolist.shared.generated.resources.mochy_heart
+import com.metrolist.shared.generated.resources.mochy_heart_outline
+import com.metrolist.shared.generated.resources.mochy_player_cast
+import com.metrolist.shared.generated.resources.mochy_player_share
 import com.metrolist.shared.generated.resources.not_playing
+import com.metrolist.shared.generated.resources.share
+import com.metrolist.shared.generated.resources.unlike
 import com.metrolist.shared.model.SongItem
 import com.metrolist.shared.settings.PlayerCoverStyle
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.components.PlayerConnectedButtonGroup
+import com.metrolist.shared.ui.components.PopupVisibility
 import com.metrolist.shared.ui.player.PlayerArtistLine
 import com.metrolist.shared.ui.player.mochy.FLAGSHIP_DISC_CENTER
 import com.metrolist.shared.ui.player.mochy.FLAGSHIP_DISC_DIAMETER
+import com.metrolist.shared.ui.player.mochy.FlagshipCoverActionButton
 import com.metrolist.shared.ui.player.mochy.FlagshipTransport
 import com.metrolist.shared.ui.player.mochy.coverFadeToBottom
 import com.metrolist.shared.ui.player.mochy.flagshipFontFamily
 import com.metrolist.shared.ui.player.mochy.turntable.VinylDisc
+import com.metrolist.shared.utils.ShareUrls
 import org.jetbrains.compose.resources.stringResource
 
 // The desktop fullscreen player's wide layout when the Mochy Flagship player is selected:
@@ -58,6 +74,7 @@ internal fun FlagshipFullscreenContent(
     modifier: Modifier = Modifier,
 ) {
     val isListenTogetherGuest = ListenTogetherState.isListenTogetherGuest()
+    var showCastDialog by remember { mutableStateOf(false) }
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
@@ -90,6 +107,40 @@ internal fun FlagshipFullscreenContent(
                 modifier = Modifier.fillMaxWidth(),
             )
 
+            // the phone's cover action buttons: like, share and, off a guest session, cast
+            if (currentTrack != null) {
+                Spacer(Modifier.height(16.dp * scale))
+                val liked = PlayerState.isLiked(currentTrack.id)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(7.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    FlagshipCoverActionButton(
+                        icon = if (liked) Res.drawable.mochy_heart else Res.drawable.mochy_heart_outline,
+                        description = stringResource(if (liked) Res.string.unlike else Res.string.action_like),
+                        tint = Color.White.copy(alpha = if (liked) 1f else 0.85f),
+                        background = Color.White.copy(alpha = if (liked) 0.30f else 0.15f),
+                        onClick = { PlayerState.toggleLike(currentTrack) },
+                    )
+                    FlagshipCoverActionButton(
+                        icon = Res.drawable.mochy_player_share,
+                        description = stringResource(Res.string.share),
+                        tint = Color.White.copy(alpha = 0.90f),
+                        background = Color.White.copy(alpha = 0.15f),
+                        onClick = { AppState.shareLink(ShareUrls.song(currentTrack.id), currentTrack.title) },
+                    )
+                    if (!isListenTogetherGuest) {
+                        FlagshipCoverActionButton(
+                            icon = Res.drawable.mochy_player_cast,
+                            description = stringResource(Res.string.cast),
+                            tint = Color.White.copy(alpha = 0.90f),
+                            background = Color.White.copy(alpha = 0.15f),
+                            onClick = { showCastDialog = true },
+                        )
+                    }
+                }
+            }
+
             Spacer(Modifier.height(32.dp * scale))
             PlayerProgressSection(flagshipTrack = true)
 
@@ -102,6 +153,7 @@ internal fun FlagshipFullscreenContent(
                 onNext = { PlayerState.skipNext() },
                 modifier = Modifier.fillMaxWidth(),
                 contentColor = Color.White,
+                hoverFeedback = true,
             )
 
             if (!isListenTogetherGuest) {
@@ -145,6 +197,9 @@ internal fun FlagshipFullscreenContent(
                 )
             }
         }
+    }
+    PopupVisibility(visible = showCastDialog) {
+        DesktopCastDialog(onDismiss = { showCastDialog = false })
     }
 }
 

@@ -994,6 +994,7 @@ private fun CarouselItem(
             contentPadding = 0.dp,
             largeText = isWide,
             clickableMetadata = isWide && !LocalIsTv.current,
+            desktopHover = isWide && !LocalIsTv.current,
         )
     }
 }

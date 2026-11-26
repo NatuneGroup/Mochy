@@ -132,6 +132,19 @@ internal fun FlagshipCoverButtons(
     }
 }
 
+// one of the phone's cover action buttons, for the desktop fullscreen player
+@Composable
+fun FlagshipCoverActionButton(
+    icon: DrawableResource,
+    description: String,
+    tint: Color,
+    background: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    FlagshipActionButton(icon = icon, description = description, tint = tint, background = background, onClick = onClick, modifier = modifier)
+}
+
 @Composable
 internal fun FlagshipActionButton(
     icon: DrawableResource,

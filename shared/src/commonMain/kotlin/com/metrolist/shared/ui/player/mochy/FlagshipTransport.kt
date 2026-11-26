@@ -8,8 +8,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -18,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,6 +41,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.semantics.Role
@@ -65,11 +70,11 @@ import com.metrolist.shared.ui.haptics.rememberMetrolistHaptics
 import com.metrolist.shared.ui.player.LocalPlayerPositionActive
 import com.metrolist.shared.utils.formatPlaybackSpeed
 import com.metrolist.shared.utils.normalizePlaybackTempo
+import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import kotlin.math.roundToInt
 
 private const val DESIGN_WIDTH = 1172f
 private val ButtonCentres = floatArrayOf(0.215f, 0.5f, 0.785f)
@@ -89,6 +94,8 @@ fun FlagshipTransport(
     modifier: Modifier = Modifier,
     compact: Boolean = false,
     contentColor: Color = Color.White,
+    // the desktop pointer: a hovered button swells and lights a disc behind it, and the cursor becomes a hand
+    hoverFeedback: Boolean = false,
 ) {
     val session = LocalPlayerSession.current
     val positionActive = LocalPlayerPositionActive.current
@@ -133,10 +140,11 @@ fun FlagshipTransport(
                         haptics.perform(HapticEvent.PRESS)
                         onPrevious()
                     },
+                    hoverFeedback = hoverFeedback,
                     startHold = { beginHold(0.5f) },
                 )
                 val interaction = remember { MutableInteractionSource() }
-                val scale = flagshipPressScale(interaction)
+                val hover = flagshipHoverState(interaction, hoverFeedback)
                 val glyph = rememberPlayGlyph(playing)
                 val description = stringResource(if (playing) Res.string.pause else Res.string.play)
                 Box(
@@ -144,8 +152,9 @@ fun FlagshipTransport(
                     modifier =
                         Modifier
                             .size(touch)
+                            .flagshipHoverFeedback(interaction, hoverFeedback, hover.hovered, contentColor)
                             .graphicsLayer {
-                                scaleX = scale()
+                                scaleX = hover.scale()
                                 scaleY = scaleX
                             }.clickable(
                                 interactionSource = interaction,
@@ -180,6 +189,7 @@ fun FlagshipTransport(
                         haptics.perform(HapticEvent.PRESS)
                         onNext()
                     },
+                    hoverFeedback = hoverFeedback,
                     startHold = { beginHold(2f) },
                 )
             },
@@ -207,12 +217,13 @@ private fun FlagshipSkip(
     contentColor: Color,
     onSkip: () -> Unit,
     startHold: () -> ActiveSpeedHold?,
+    hoverFeedback: Boolean,
 ) {
     val haptics = rememberMetrolistHaptics()
     val scope = rememberCoroutineScope()
     val cycle = remember { SkipCycleState() }
     val interaction = remember { MutableInteractionSource() }
-    val scale = flagshipPressScale(interaction)
+    val hover = flagshipHoverState(interaction, hoverFeedback)
     val latestStart by rememberUpdatedState(startHold)
     val tap by rememberUpdatedState {
         scope.launch { cycle.step() }
@@ -240,8 +251,9 @@ private fun FlagshipSkip(
         modifier =
             Modifier
                 .size(touch)
+                .flagshipHoverFeedback(interaction, hoverFeedback, hover.hovered, contentColor)
                 .graphicsLayer {
-                    scaleX = scale()
+                    scaleX = hover.scale()
                     scaleY = scaleX
                 }.pointerInput(interaction) {
                     detectTapGestures(
@@ -324,3 +336,42 @@ internal fun flagshipPressScale(source: MutableInteractionSource): () -> Float {
         )
     return { scale.value }
 }
+
+// a press still swells the button to 0.86; a pointer that hovers it swells it to 1.08 instead
+internal class FlagshipHoverState(
+    val scale: () -> Float,
+    val hovered: Boolean,
+)
+
+@Composable
+internal fun flagshipHoverState(
+    source: MutableInteractionSource,
+    enabled: Boolean,
+): FlagshipHoverState {
+    val pressed by source.collectIsPressedAsState()
+    val hovered by source.collectIsHoveredAsState()
+    val lit = enabled && hovered && !pressed
+    val scale =
+        animateFloatAsState(
+            targetValue = if (pressed) 0.86f else if (lit) 1.08f else 1f,
+            animationSpec = spring(dampingRatio = 0.54f, stiffness = 720f),
+            label = "flagshipHover",
+        )
+    return FlagshipHoverState({ scale.value }, lit)
+}
+
+private fun Modifier.flagshipHoverFeedback(
+    source: MutableInteractionSource,
+    enabled: Boolean,
+    hovered: Boolean,
+    contentColor: Color,
+): Modifier =
+    if (!enabled) {
+        this
+    } else {
+        this
+            .clip(CircleShape)
+            .background(if (hovered) contentColor.copy(alpha = 0.14f) else Color.Transparent)
+            .hoverable(source)
+            .pointerHoverIcon(PointerIcon.Hand)
+    }

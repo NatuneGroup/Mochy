@@ -64,6 +64,7 @@ Snapshot updated 2026-11-25.
 | Wiring and share | `c733578f`…`b50a283c` | ID card back stats come from listening history. iOS share files are named `mochy-statistics-` and `mochy-song-`. The desktop player menu has a song card option. The lyrics card cover uses the reference rounding. |
 | Flagship cover looks | `7b37ed23`…`9ac6a6b3` | `PlayerCoverStyle` (Square, Full bleed, Disc) applies to portrait, landscape and desktop fullscreen. Landscape hides the seek bar and transport after 3.5 s on the lyrics page. |
 | Desktop Mochy UI | `556e0d28`…`3d2a162e` | Sidebar with the Mochy pill, hover and font. The bottom bar uses the Flagship transport and seek track. The wide fullscreen player uses the Flagship layout. Home hero cards tilt on hover. |
+| Desktop polish | this commit | The wide fullscreen Flagship has like, share and cast buttons in the phone's cover-button style. The bottom-bar and fullscreen transports swell and light up under the pointer, with a hand cursor. Home carousel cards swell on hover with no ripple. |
 | CI formatting | `edaaf448` | `[ktlint-format]` workflow (see Current state). |
 
 ### Android release details
@@ -85,7 +86,6 @@ Snapshot updated 2026-11-25.
 ## Remaining work
 
 - **Release channels (branch `ci/natune-release-flow`, not pushed).** Nightlies come from `dev` and stable releases from `main`, numbered by `.github/scripts/next-version.py` (Natune's model). The in-app "Nightly builds" switch already exists on Android and desktop. Ten `.github/tests` checks compare against the old Metrolist workflow text, and they have to be removed or rewritten before this lands; that needs the operator's OK.
-- **Desktop polish.** The fullscreen Flagship has no like, share or cast buttons. The bottom-bar transport has no hover state. Shelf cards keep the default press feedback.
 - **Lyrics share card.** Only the cover rounding matches the reference. Its "Cinematic" layout (`ShareCanvas.kt`) is not ported.
 
 Waves 1 to 4 have landed (see Completed work). Still open:
