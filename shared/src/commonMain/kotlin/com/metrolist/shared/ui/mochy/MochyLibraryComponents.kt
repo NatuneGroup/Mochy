@@ -8,12 +8,15 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
@@ -40,6 +43,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -50,7 +55,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.BlurEffect
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
@@ -65,6 +75,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.em
+import androidx.compose.ui.util.lerp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -73,13 +84,17 @@ import com.metrolist.shared.generated.resources.mochy_library_index_scrubber
 import com.metrolist.shared.model.YTItem
 import com.metrolist.shared.ui.components.Artwork
 import com.metrolist.shared.ui.components.squareArtworkSlot
+import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.utils.artistArtworkShape
 import com.metrolist.shared.ui.haptics.HapticEvent
 import com.metrolist.shared.ui.haptics.rememberMetrolistHaptics
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
+import com.metrolist.shared.ui.utils.supportsNativeBlur
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.DrawableResource
 import kotlin.math.roundToInt
+import kotlin.math.PI
+import kotlin.math.sin
 
 private const val SYMBOL_BUCKET = "#"
 private const val MAX_RAIL_LABELS = 22
@@ -587,5 +602,140 @@ internal fun MochyLibraryRoundButton(
             tint = Color.White.copy(alpha = if (enabled) 1f else 0.38f),
             modifier = Modifier.size(20.dp).graphicsLayer { rotationZ = rotation },
         )
+    }
+}
+
+// The Library's title bar: the big title and a search pill over the list, folding into a black bar as the list scrolls.
+// Thresholds, easing and the blur come from MochySubSettingsScaffold.
+internal val MochyLibraryTitleBlockHeight = 134.dp
+private val MochyLibraryBarCollapsedHeight = 52.dp
+private val MochyLibraryTitleTop = 18.dp
+private val MochyLibraryFieldTop = 70.dp
+private val MochyLibraryFieldHeight = 48.dp
+private val MochyLibrarySidePadding = 24.dp
+private val MochyLibraryField = Color(0xFF141416)
+private val MochyLibraryPlaceholder = Color(0xFF77777D)
+private val MochyLibraryCollapseEasing = CubicBezierEasing(0.57f, 0.53f, 0f, 1f)
+private const val MOCHY_LIBRARY_COLLAPSE_MILLIS = 900
+private const val MOCHY_LIBRARY_COLLAPSED_TITLE_SCALE = 0.62f
+private const val MOCHY_LIBRARY_TITLE_MAX_BLUR_PX = 26f
+
+// 0 while the list is at its top, 1 once it has scrolled past the threshold; latched so it doesn't flicker at the edge
+@Composable
+internal fun rememberMochyLibraryCollapse(listState: LazyGridState): State<Float> {
+    val density = LocalDensity.current
+    val enterPx = with(density) { 24.dp.toPx() }
+    val exitPx = with(density) { 6.dp.toPx() }
+    val latch = remember { booleanArrayOf(false) }
+    val collapsed by remember(listState, enterPx, exitPx) {
+        derivedStateOf {
+            val offset =
+                if (listState.firstVisibleItemIndex > 0) Float.MAX_VALUE else listState.firstVisibleItemScrollOffset.toFloat()
+            val next =
+                when {
+                    offset > enterPx -> true
+                    offset < exitPx -> false
+                    else -> latch[0]
+                }
+            latch[0] = next
+            next
+        }
+    }
+    return animateFloatAsState(
+        targetValue = if (collapsed) 1f else 0f,
+        animationSpec = tween(MOCHY_LIBRARY_COLLAPSE_MILLIS, easing = MochyLibraryCollapseEasing),
+        label = "mochyLibraryCollapse",
+    )
+}
+
+@Composable
+internal fun MochyLibraryTopBar(
+    collapse: Float,
+    statusBar: Dp,
+    title: String,
+    searchPlaceholder: String,
+    onSearchClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val density = LocalDensity.current
+    val blur = remember { supportsNativeBlur() }
+    val barHeight =
+        with(density) {
+            lerp(
+                (statusBar + MochyLibraryTitleBlockHeight).toPx(),
+                (statusBar + MochyLibraryBarCollapsedHeight).toPx(),
+                collapse,
+            ).toDp()
+        }
+    Box(modifier.fillMaxWidth().height(barHeight)) {
+        // the black under the bar, only once the title has folded into it
+        Box(
+            Modifier
+                .matchParentSize()
+                .graphicsLayer { alpha = collapse }
+                .drawWithCache {
+                    val scrim =
+                        Brush.verticalGradient(
+                            0f to Color.Black.copy(alpha = 0.95f),
+                            0.45f to Color.Black.copy(alpha = 0.7f),
+                            0.75f to Color.Black.copy(alpha = 0.3f),
+                            1f to Color.Transparent,
+                        )
+                    onDrawBehind { drawRect(scrim) }
+                },
+        )
+        Text(
+            text = title,
+            color = Color.White,
+            fontFamily = mochyInterFontFamily(),
+            fontWeight = FontWeight.Bold,
+            fontSize = 34.sp,
+            lineHeight = 40.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .padding(top = statusBar + MochyLibraryTitleTop, start = MochyLibrarySidePadding, end = MochyLibrarySidePadding)
+                .graphicsLayer {
+                    val p = collapse
+                    transformOrigin = TransformOrigin(0f, 0f)
+                    val scale = lerp(1f, MOCHY_LIBRARY_COLLAPSED_TITLE_SCALE, p)
+                    scaleX = scale
+                    scaleY = scale
+                    translationY = lerp(0f, (-6).dp.toPx(), p)
+                    val radius = sin(p.coerceIn(0f, 1f) * PI.toFloat()) * MOCHY_LIBRARY_TITLE_MAX_BLUR_PX
+                    renderEffect = if (blur && radius > 0.5f) BlurEffect(radius, radius, TileMode.Decal) else null
+                },
+        )
+        // the search pill: tapping it opens the library search; it fades out as the title folds away
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(top = statusBar + MochyLibraryFieldTop, start = MochyLibrarySidePadding, end = MochyLibrarySidePadding)
+                .fillMaxWidth()
+                .height(MochyLibraryFieldHeight)
+                .graphicsLayer { alpha = 1f - collapse }
+                .clip(RoundedCornerShape(percent = 50))
+                .background(MochyLibraryField)
+                .clickable(enabled = collapse < 0.5f, role = Role.Button, onClick = onSearchClick)
+                .padding(horizontal = 16.dp),
+        ) {
+            Icon(
+                imageVector = MetrolistIcons.Default.Search,
+                contentDescription = null,
+                tint = MochyLibraryPlaceholder,
+                modifier = Modifier.size(20.dp),
+            )
+            Text(
+                text = searchPlaceholder,
+                color = MochyLibraryPlaceholder,
+                fontFamily = mochyInterFontFamily(),
+                fontWeight = FontWeight.Medium,
+                fontSize = 15.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }

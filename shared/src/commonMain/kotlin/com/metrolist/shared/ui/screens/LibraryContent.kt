@@ -83,6 +83,7 @@ import com.metrolist.shared.constants.gridTileColumns
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.display_density
 import com.metrolist.shared.generated.resources.filter_downloaded
+import com.metrolist.shared.generated.resources.library
 import com.metrolist.shared.generated.resources.library_load_failed
 import com.metrolist.shared.generated.resources.playlist_direction_ascending
 import com.metrolist.shared.generated.resources.playlist_direction_descending
@@ -143,14 +144,16 @@ import com.metrolist.shared.ui.mochy.MochyLibraryIndexRail
 import com.metrolist.shared.ui.mochy.MochyLibraryListRow
 import com.metrolist.shared.ui.mochy.MochyLibraryPillButton
 import com.metrolist.shared.ui.mochy.MochyLibraryRoundButton
-import com.metrolist.shared.ui.mochy.rememberRevealSeenState
-import com.metrolist.shared.ui.mochy.revealOnAppear
+import com.metrolist.shared.ui.mochy.MochyLibraryTitleBlockHeight
+import com.metrolist.shared.ui.mochy.MochyLibraryTopBar
+import com.metrolist.shared.ui.mochy.rememberMochyLibraryCollapse
 import com.metrolist.shared.ui.mochy.MochyLibrarySectionDivider
 import com.metrolist.shared.ui.mochy.buildLibraryIndex
-import com.metrolist.shared.ui.navigation.LocalContentObscured
 import com.metrolist.shared.ui.navigation.LocalRootContentActive
-import com.metrolist.shared.ui.theme.rememberReducedMotion
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
 import com.metrolist.shared.ui.navigation.LocalUseDesktopUi
 import com.metrolist.shared.ui.navigation.blockInput
 import com.metrolist.shared.ui.player.staticConnectedLeadingButtonShapes
@@ -279,8 +282,8 @@ fun LibraryContent(
     val rootActive = LocalRootContentActive.current
     // the Mochy look is the dark theme's, as on Mochy's home; TV keeps its own
     val mochyLook = !LocalIsTv.current && MaterialTheme.colorScheme.background.luminance() < 0.5f
-    val revealSeen = rememberRevealSeenState()
-    val revealItems = mochyLook && rootActive && !LocalContentObscured.current && !rememberReducedMotion()
+    val mochyCollapse by rememberMochyLibraryCollapse(scrollState)
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
     val sortingFilter = selectedFilter?.let { LibraryFilterType.valueOf(it.name) } ?: LibraryFilterType.ALL
     val sorting = Settings.shared.librarySorting(sortingFilter)
@@ -390,10 +393,22 @@ fun LibraryContent(
         if (isSearchOpen) onSearchQueryChange?.invoke("")
         onSearchToggle()
     }
+    val mochyTopBar: @Composable () -> Unit = {
+        if (mochyLook) {
+            MochyLibraryTopBar(
+                collapse = mochyCollapse,
+                statusBar = statusBarTop,
+                title = stringResource(Res.string.library),
+                searchPlaceholder = text.searchPlaceholder,
+                onSearchClick = { if (!isSearchOpen) toggleSearch() },
+            )
+        }
+    }
     Box(modifier.fillMaxSize()) {
         val prepared = preparedItems
         if (prepared == null) {
             ContainedLoadingIndicator(Modifier.align(Alignment.Center))
+            mochyTopBar()
             return@Box
         }
         val searchedItems =
@@ -437,6 +452,7 @@ fun LibraryContent(
             val sizedGrid = isGridView && useGridItemSize && pinchColumns == 0
             val gridGap = if (isGridView) (14 - (if (pinchColumns > 0) pinchColumns else gridColumns) * 2).dp else 8.dp
             val sidePadding = if (mochyLook) 24.dp else 16.dp
+            val gridTopPadding = if (mochyLook) statusBarTop + MochyLibraryTitleBlockHeight else topPadding
             val horizontalGap =
                 if (mochyLook) (if (isGridView) MochyLibraryGridGap else 0.dp) else if (sizedGrid) GridTileSpacing else gridGap
             val verticalGap =
@@ -504,7 +520,7 @@ fun LibraryContent(
                                 .libraryGridPinch(isGridView && !useDesktopUi, useGridItemSize),
                         contentPadding =
                             PaddingValues(
-                                top = topPadding,
+                                top = gridTopPadding,
                                 start = sidePadding,
                                 end = if (indexEntries.size >= 4) 36.dp else sidePadding,
                                 bottom = bottomPadding + extraBottomPadding,
@@ -556,14 +572,7 @@ fun LibraryContent(
                             span = { GridItemSpan(if (isGridView) 1 else maxLineSpan) },
                         ) { index ->
                             val playlist = searchedAutoPlaylists[index]
-                            Box(
-                                Modifier.animateItem().revealOnAppear(
-                                    key = "library/auto/${playlist.type}",
-                                    seenState = revealSeen,
-                                    enabled = revealItems,
-                                    delayMillis = minOf(index, 4) * 60,
-                                ),
-                            ) {
+                            Box(Modifier.animateItem()) {
                                 itemContainer(
                                     HiddenLibraryItem(
                                         HiddenLibraryItemType.AUTO,
@@ -638,13 +647,6 @@ fun LibraryContent(
                                         LibraryItem(
                                             artistLabel = text.artist,
                                             mochyLook = mochyLook,
-                                            revealModifier =
-                                                Modifier.revealOnAppear(
-                                                    key = "library/${item.libraryReorderKey}",
-                                                    seenState = revealSeen,
-                                                    enabled = revealItems,
-                                                    delayMillis = minOf(index, 4) * 60,
-                                                ),
                                             item = item,
                                             isGridView = isGridView,
                                             isCurrent = item is SongItem && playback.isCurrent,
@@ -682,13 +684,14 @@ fun LibraryContent(
                         onJumpToItem = { targetIndex ->
                             scope.launch { scrollState.scrollToItem(targetIndex) }
                         },
-                        topPadding = topPadding,
+                        topPadding = gridTopPadding,
                         bottomPadding = bottomPadding + extraBottomPadding,
                         modifier = Modifier.align(Alignment.CenterEnd),
                     )
                 }
             }
         }
+        mochyTopBar()
     }
 }
 
@@ -1149,7 +1152,6 @@ private fun LibraryItem(
     isCurrent: Boolean,
     isPlaying: Boolean,
     mochyLook: Boolean = false,
-    revealModifier: Modifier = Modifier,
 ) {
     val artworkOverlay: (@Composable BoxScope.() -> Unit)? =
         if (item is SongItem) {
@@ -1197,7 +1199,7 @@ private fun LibraryItem(
             ?.takeIf { it.isLocal && it.customThumbnail.isNullOrBlank() }
             ?.artworkThumbnails
     if (isGridView) {
-        Box(revealModifier) {
+        Box {
             val thumbnail =
                 (item as? PlaylistItem)?.let { libraryArtwork(it.id, it.thumbnail, it.customThumbnail) } ?: item.displayThumbnailUrl
             if (mochyLook) {
@@ -1235,7 +1237,7 @@ private fun LibraryItem(
             reorderHandle?.invoke(Modifier.align(Alignment.TopStart))
         }
     } else {
-        Row(modifier = revealModifier, verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             val thumbnail =
                 (item as? PlaylistItem)?.let { libraryArtwork(it.id, it.thumbnail, it.customThumbnail) } ?: item.displayThumbnailUrl
             Box(Modifier.weight(1f)) {
