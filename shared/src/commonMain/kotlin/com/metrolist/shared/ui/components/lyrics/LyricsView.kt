@@ -1020,7 +1020,7 @@ fun LyricsView(
                                 withContext(FixedMotionDurationScale) {
                                     lazyListState.animateScrollBy(
                                         leadPx,
-                                        tween(LYRICS_FORCED_SCROLL_MS, easing = LyPlusScrollEasing),
+                                        tween(LYRICS_FORCED_SCROLL_MS, easing = LYRICS_RECENTER_EASING),
                                     )
                                 }
                             }

@@ -44,8 +44,11 @@ import kotlin.time.TimeSource
 
 internal val LyPlusScrollEasing = CubicBezierEasing(0.41f, 0f, 0.12f, 0.99f)
 
+// the reference's recentre curve: the line being sung glides to the middle over 950 ms
+internal val LYRICS_RECENTER_EASING = CubicBezierEasing(0.5f, 0.45f, 0f, 1f)
+
 internal const val LYRICS_SCROLL_LOCK_MS = 400L
-internal const val LYRICS_FORCED_SCROLL_MS = 500
+internal const val LYRICS_FORCED_SCROLL_MS = 950
 internal const val LYRICS_FAR_JUMP_VIEWPORTS = 2f
 
 private const val MAX_STAGGER_STEPS = 12
