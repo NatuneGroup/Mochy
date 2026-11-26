@@ -235,7 +235,6 @@ fun AlbumContent(
                                 onShuffle = { onShuffle(displayedSongs) },
                                 playLabel = text.play,
                                 shuffleLabel = text.shuffle,
-                                buttonHeight = if (isWide) 48.dp else 40.dp,
                                 showPlayback = showPlayback,
                                 isFavorite = isFavorite,
                                 onFavorite = onFavorite,
