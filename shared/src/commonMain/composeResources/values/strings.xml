@@ -6091,4 +6091,25 @@
     <string name="onb_welcome_to_mochy">welcome to mochy!</string>
     <!-- Translators: Line shown on the final onboarding page. -->
     <string name="onb_all_good">You’re good to go</string>
+    <!-- Mochy Audio Lab cards -->
+    <!-- Translators: Name of the Stage effect on the card stack. -->
+    <string name="mochy_lab_effect_stage">3D Sims</string>
+    <!-- Translators: Name of the Reverb effect on the card stack. -->
+    <string name="mochy_lab_effect_reverb">Reverb</string>
+    <!-- Translators: Name of the Spatial effect on the card stack. -->
+    <string name="mochy_lab_effect_spatial">Spatial</string>
+    <!-- Translators: Name of the 8D audio effect on the card stack. -->
+    <string name="mochy_lab_effect_eight_d">8D Audio</string>
+    <!-- Translators: Small tag on a card in the stack while its effect is on. -->
+    <string name="mochy_lab_fx_on">ON</string>
+    <!-- Translators: Position of a card in the stack, for example 1 of 3. -->
+    <string name="mochy_lab_fx_position">%1$d of %2$d</string>
+    <!-- Translators: Count of effects hidden behind the stack, for example and 2 other. -->
+    <string name="mochy_lab_fx_and_other">and %1$d other</string>
+    <!-- Translators: Crossfeed level name: the gentlest. -->
+    <string name="mochy_lab_xf_light">Light</string>
+    <!-- Translators: Crossfeed level name: the middle one. -->
+    <string name="mochy_lab_xf_natural">Natural</string>
+    <!-- Translators: Crossfeed level name: the strongest. -->
+    <string name="mochy_lab_xf_strong">Strong</string>
 </resources>
