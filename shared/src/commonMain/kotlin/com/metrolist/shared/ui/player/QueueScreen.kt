@@ -516,6 +516,7 @@ fun QueueScreen(
         }
     }
 
+    val mochyLook = !LocalIsTv.current && MaterialTheme.colorScheme.background.luminance() < 0.5f
     Box(modifier = modifier.fillMaxSize()) {
         Scaffold(
             containerColor = Color.Transparent,
@@ -539,6 +540,7 @@ fun QueueScreen(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 PlaylistHeader(
+                    mochyLook = mochyLook,
                     playlist = state.playlist,
                     shape =
                         if (isDesktopPanel) {
@@ -1120,10 +1122,12 @@ private fun PlaylistHeader(
     onUnlockedChange: (Boolean) -> Unit,
     actions: @Composable RowScope.() -> Unit,
     modifier: Modifier = Modifier,
+    // the Mochy look: the reference's dark card with white type
+    mochyLook: Boolean = false,
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        shape = shape,
+        color = if (mochyLook) MochyQueueCard else MaterialTheme.colorScheme.surfaceContainer,
+        shape = if (mochyLook) RoundedCornerShape(16.dp) else shape,
         modifier =
             modifier
                 .padding(horizontal = queueHorizontalInset)
@@ -1154,7 +1158,9 @@ private fun PlaylistHeader(
                                 lineHeight = 28.sp,
                                 letterSpacing = 0.sp,
                             ),
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = if (mochyLook) Color.White else MaterialTheme.colorScheme.onSurface,
+                        fontFamily = if (mochyLook) mochyInterFontFamily() else null,
+                        fontWeight = if (mochyLook) FontWeight.Bold else null,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -1178,7 +1184,8 @@ private fun PlaylistHeader(
                                     lineHeight = 16.sp,
                                     letterSpacing = 0.5.sp,
                                 ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = if (mochyLook) Color.White.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontFamily = if (mochyLook) mochyInterFontFamily() else null,
                             maxLines = 2,
                         )
                     }
@@ -1619,6 +1626,7 @@ private fun TrackItem(
 }
 
 private val MochyQueueRemoveRed = Color(0xFFFF453A)
+private val MochyQueueCard = Color(0xFF1C1C1E)
 
 // the reference's queue row: the song playing gets a light highlight, a row being dragged a brighter one
 private fun mochyQueueRowColor(isMoving: Boolean, isActive: Boolean): Color =
