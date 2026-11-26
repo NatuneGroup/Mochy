@@ -102,7 +102,7 @@ internal fun ReverbCard() {
                     stringResource(Res.string.audio_lab_pre_delay),
                     milliseconds(reverb.preDelayMs),
                     reverb.preDelayMs,
-                    0f..150f,
+                    0f..120f,
                 ) {
                     saveReverb(reverb.copy(preDelayMs = it.roundToInt().toFloat()))
                 }
