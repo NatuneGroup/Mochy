@@ -883,6 +883,7 @@ internal fun SettingsUiRegistryBuilder.registerAppearanceSettings(host: SharedSe
                 custom(
                     id = "canvasContentOrder",
                     title = stringResource(Res.string.canvas_content_order),
+                    icon = Res.drawable.mochy_pages_sparks,
                 ) {
                     CanvasContentOrderSetting(host.platform, canvasEnabled, settings.enableAnimatedCovers)
                 }

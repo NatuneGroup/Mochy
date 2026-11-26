@@ -458,11 +458,13 @@ class SettingsGroupRegistryBuilder internal constructor(
         title: String,
         description: String? = null,
         enabled: Boolean = true,
+        icon: DrawableResource? = null,
         content: @Composable (onSettingValueChanged: () -> Unit) -> Unit,
     ) {
         items +=
             SettingsItemRegistration(
                 id = id,
+                icon = icon,
                 title = title,
                 description = description,
                 control = SettingsControl.CUSTOM,
