@@ -278,6 +278,7 @@ private fun StylePreview(
                 drawCircle(Color(0xFFE8A33D), r * 0.28f, c)
                 drawLine(Color.White.copy(alpha = 0.7f), Offset(w * 0.82f, h * 0.08f), Offset(w * 0.6f, h * 0.36f), strokeWidth = 3f)
             }
+
             PlayerType.IPOD -> {
                 // the screen on top, the click wheel below pulsing with the phase
                 drawRoundRect(Color(0xFF2C2C30), Offset(w * 0.1f, h * 0.06f), Size(w * 0.8f, h * 0.42f), CornerRadius(8f))
@@ -287,6 +288,7 @@ private fun StylePreview(
                 drawCircle(Color(0xFF222222), w * 0.14f, wheelCenter)
                 drawCircle(Color(0xFF4FA3FF).copy(alpha = 0.25f + 0.2f * pulse(phase)), w * 0.33f, wheelCenter, style = Stroke(width = 4f))
             }
+
             PlayerType.VINTAGE -> {
                 // warm tones with scan lines rolling down
                 drawRect(Brush.verticalGradient(listOf(Color(0xFF6B3E1E), Color(0xFF2B1A10))))
@@ -299,6 +301,7 @@ private fun StylePreview(
                 }
                 drawCircle(Color(0xFFE9C58C), w * 0.26f, Offset(w / 2f, h * 0.42f))
             }
+
             PlayerType.CLASSIC -> {
                 // a square cover, title lines and a progress bar that runs across
                 drawRect(Color(0xFF3A3F55), Offset(w * 0.12f, h * 0.12f), Size(w * 0.76f, w * 0.76f))
@@ -307,6 +310,7 @@ private fun StylePreview(
                 drawRect(Color.White.copy(alpha = 0.25f), Offset(w * 0.12f, h * 0.8f), Size(w * 0.76f, 4f))
                 drawRect(Color.White, Offset(w * 0.12f, h * 0.8f), Size(w * 0.76f * phase, 4f))
             }
+
             PlayerType.MODERN -> {
                 // a cover that breathes, and a bar that fills and rewinds
                 val breath = 0.94f + 0.06f * pulse(phase)
@@ -315,6 +319,7 @@ private fun StylePreview(
                 drawRect(Color.White.copy(alpha = 0.25f), Offset(w * 0.15f, h * 0.8f), Size(w * 0.7f, 4f))
                 drawRect(Color.White, Offset(w * 0.15f, h * 0.8f), Size(w * 0.7f * phase, 4f))
             }
+
             else -> {
                 // Flagship and anything else: a frosted cover fade over the bottom bar
                 drawRect(Brush.verticalGradient(listOf(Color(0xFF3C2A55), Color(0xFF0E0E10))))

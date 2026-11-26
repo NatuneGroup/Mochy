@@ -496,7 +496,9 @@ fun SearchScreen(
                                     playSong(item.toSongItem(), playerConnection, scope)
                                 }
 
-                                is BrowseItem -> navigator.navigate(Screen.Browse(item.id, item.params, item.title))
+                                is BrowseItem -> {
+                                    navigator.navigate(Screen.Browse(item.id, item.params, item.title))
+                                }
 
                                 else -> {}
                             }

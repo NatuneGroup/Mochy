@@ -446,17 +446,45 @@ internal fun mochyHomePages(
 // the reference's drawable for each bubble it has one for; other pages keep the registry icon
 private fun mochyPageDrawable(pageId: SettingsPageId): DrawableResource? =
     when (pageId) {
-        SettingsPageId.AUDIO_LAB -> Res.drawable.mochy_settings_equalizer
-        SettingsPageId.PLAYER -> Res.drawable.mochy_settings_play
-        SettingsPageId.LYRICS -> Res.drawable.mochy_settings_lyrics
-        SettingsPageId.CONTENT -> Res.drawable.mochy_settings_settings
-        SettingsPageId.APPEARANCE -> Res.drawable.mochy_settings_palette
-        SettingsPageId.STORAGE -> Res.drawable.mochy_settings_storage
-        SettingsPageId.DISCORD, SettingsPageId.LAST_FM, SettingsPageId.LISTEN_BRAINZ, SettingsPageId.LISTEN_TOGETHER ->
+        SettingsPageId.AUDIO_LAB -> {
+            Res.drawable.mochy_settings_equalizer
+        }
+
+        SettingsPageId.PLAYER -> {
+            Res.drawable.mochy_settings_play
+        }
+
+        SettingsPageId.LYRICS -> {
+            Res.drawable.mochy_settings_lyrics
+        }
+
+        SettingsPageId.CONTENT -> {
+            Res.drawable.mochy_settings_settings
+        }
+
+        SettingsPageId.APPEARANCE -> {
+            Res.drawable.mochy_settings_palette
+        }
+
+        SettingsPageId.STORAGE -> {
+            Res.drawable.mochy_settings_storage
+        }
+
+        SettingsPageId.DISCORD, SettingsPageId.LAST_FM, SettingsPageId.LISTEN_BRAINZ, SettingsPageId.LISTEN_TOGETHER -> {
             Res.drawable.mochy_settings_integration
-        SettingsPageId.DEVICE_CONNECT -> Res.drawable.mochy_settings_cast_connected
-        SettingsPageId.MOCHY_MODULES -> Res.drawable.mochy_settings_library_add
-        else -> null
+        }
+
+        SettingsPageId.DEVICE_CONNECT -> {
+            Res.drawable.mochy_settings_cast_connected
+        }
+
+        SettingsPageId.MOCHY_MODULES -> {
+            Res.drawable.mochy_settings_library_add
+        }
+
+        else -> {
+            null
+        }
     }
 
 @Composable
@@ -469,15 +497,22 @@ private fun MochyPageIcon(
     val custom = host.customPageIcons[pageId]
     val drawable = mochyPageDrawable(pageId)
     when {
-        custom != null -> custom(tint)
-        drawable != null ->
+        custom != null -> {
+            custom(tint)
+        }
+
+        drawable != null -> {
             Icon(
                 painter = painterResource(drawable),
                 contentDescription = null,
                 tint = tint,
                 modifier = Modifier.size(20.dp),
             )
-        else -> Icon(fallback, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
+        }
+
+        else -> {
+            Icon(fallback, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
+        }
     }
 }
 

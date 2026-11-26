@@ -214,23 +214,27 @@ fun MochyOnboarding(
                 .onKeyEvent { event ->
                     if (event.type != KeyEventType.KeyDown) return@onKeyEvent false
                     when (event.key) {
-                        Key.Escape ->
+                        Key.Escape -> {
                             if (history.size > 1 && step !in AutoSteps) {
                                 back()
                                 true
                             } else {
                                 false
                             }
+                        }
 
-                        Key.Enter, Key.NumPadEnter ->
+                        Key.Enter, Key.NumPadEnter -> {
                             if (step in KeyboardSteps) {
                                 primaryAction()
                                 true
                             } else {
                                 false
                             }
+                        }
 
-                        else -> false
+                        else -> {
+                            false
+                        }
                     }
                 },
     ) {

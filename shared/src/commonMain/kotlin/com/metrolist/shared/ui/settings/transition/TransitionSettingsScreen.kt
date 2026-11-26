@@ -101,7 +101,7 @@ internal fun TransitionSettingsScreen(
             TransitionModeGrid(selected = selected) { style, opened ->
                 val picked = style == selected
                 when (style) {
-                    CrossfadeStyle.AUTO ->
+                    CrossfadeStyle.AUTO -> {
                         TransitionModeCard(
                             title = stringResource(Res.string.mochy_transition_auto),
                             selected = picked,
@@ -111,7 +111,9 @@ internal fun TransitionSettingsScreen(
                         ) {
                             CardNote(stringResource(Res.string.mochy_transition_auto_desc, AUTO_CROSSFADE_SECONDS.toInt()))
                         }
-                    CrossfadeStyle.MANUAL ->
+                    }
+
+                    CrossfadeStyle.MANUAL -> {
                         TransitionModeCard(
                             title = stringResource(Res.string.mochy_transition_manual),
                             selected = picked,
@@ -132,6 +134,7 @@ internal fun TransitionSettingsScreen(
                                 onAudioChanged()
                             }
                         }
+                    }
                 }
             }
             Spacer(Modifier.height(12.dp))
