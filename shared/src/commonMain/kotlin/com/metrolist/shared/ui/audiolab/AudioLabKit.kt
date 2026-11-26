@@ -69,6 +69,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -161,7 +162,7 @@ fun LabToggleRow(
                 fontSize = 15.sp,
                 color = if (enabled) LabColors.Primary else LabColors.Faint,
             )
-            if (subtitle != null) {
+            if (subtitle != null && !Settings.shared.hideSettingsDescriptions) {
                 Text(
                     text = subtitle,
                     fontFamily = font,

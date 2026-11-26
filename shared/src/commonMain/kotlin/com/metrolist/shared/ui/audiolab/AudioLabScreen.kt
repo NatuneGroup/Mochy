@@ -116,14 +116,14 @@ fun AudioLabScreen(
                     }
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                         ReverbCard()
-                        SpatialCard()
+                        SpatialCard(stageOn)
                     }
                 }
             } else {
                 StageGroup(stageSupport)
                 ReverbCard()
                 EightDAudioCard()
-                SpatialCard()
+                SpatialCard(stageOn)
             }
         }
     }
@@ -132,13 +132,6 @@ fun AudioLabScreen(
 @Composable
 private fun StageGroup(stageSupport: AudioLabStageSupport) {
     StageCard(stageSupport)
-    Text(
-        text = stringResource(Res.string.audio_lab_stage_kemar_credit),
-        fontFamily = mochyInterFontFamily(),
-        fontSize = 12.sp,
-        lineHeight = 16.sp,
-        color = LabColors.Secondary,
-    )
 }
 
 /** Writes every reverb control. Any change made by hand clears the preset id, so the chip stops being lit. */

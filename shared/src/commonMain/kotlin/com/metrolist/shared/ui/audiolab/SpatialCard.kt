@@ -2,11 +2,15 @@
 
 package com.metrolist.shared.ui.audiolab
 
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.metrolist.shared.audiolab.SpatialMode
 import com.metrolist.shared.audiolab.spatialSettings
 import com.metrolist.shared.generated.resources.Res
@@ -18,17 +22,26 @@ import com.metrolist.shared.generated.resources.audio_lab_spatial_description
 import com.metrolist.shared.generated.resources.audio_lab_spatial_feed
 import com.metrolist.shared.generated.resources.audio_lab_spatial_mode_crossfeed
 import com.metrolist.shared.generated.resources.audio_lab_spatial_mode_speakers
+import com.metrolist.shared.generated.resources.mochy_lab_spatial_speakers_note
+import com.metrolist.shared.generated.resources.mochy_lab_stage_spatial_note
 import com.metrolist.shared.generated.resources.mochy_lab_xf_light
 import com.metrolist.shared.generated.resources.mochy_lab_xf_natural
 import com.metrolist.shared.generated.resources.mochy_lab_xf_strong
 import com.metrolist.shared.settings.Settings
+import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
 @Composable
-internal fun SpatialCard() {
+internal fun SpatialCard(stageOn: Boolean) {
     val spatial = Settings.shared.spatialSettings()
+    val footer: (@Composable ColumnScope.() -> Unit)? =
+        if (stageOn && spatial.enabled) {
+            { SpatialNote(stringResource(Res.string.mochy_lab_stage_spatial_note)) }
+        } else {
+            null
+        }
     EffectCard(
         picture = { SpatialPicture(spatial) },
         header = {
@@ -105,9 +118,23 @@ internal fun SpatialCard() {
                         valueRange = 0f..1f,
                         onValueChange = { saveSpatial(spatial.copy(amount = it)) },
                     )
+                    SpatialNote(stringResource(Res.string.mochy_lab_spatial_speakers_note))
                 }
             }
         },
+        footer = footer,
+    )
+}
+
+@Composable
+private fun SpatialNote(text: String) {
+    Text(
+        text = text,
+        fontFamily = mochyInterFontFamily(),
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+        color = LabColors.Secondary,
+        modifier = Modifier.padding(top = 4.dp),
     )
 }
 

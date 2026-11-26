@@ -7,6 +7,8 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -19,7 +21,9 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.metrolist.shared.audiolab.ReverbPresets
 import com.metrolist.shared.audiolab.ReverbSettings
 import com.metrolist.shared.audiolab.reverbSettings
@@ -43,7 +47,10 @@ import com.metrolist.shared.generated.resources.audio_lab_reverb_description
 import com.metrolist.shared.generated.resources.audio_lab_room_size
 import com.metrolist.shared.generated.resources.audio_lab_wet
 import com.metrolist.shared.generated.resources.audio_lab_width
+import com.metrolist.shared.generated.resources.mochy_lab_fine_tune
+import com.metrolist.shared.generated.resources.mochy_lab_reverb_custom
 import com.metrolist.shared.settings.Settings
+import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.exp
@@ -57,6 +64,8 @@ import kotlin.math.roundToInt
 internal fun ReverbCard() {
     val reverb = Settings.shared.reverbSettings()
     val presetId = Settings.shared.reverbPresetId
+    // any hand-made slider change stores no preset, which lights the Custom chip
+    val isCustom = ReverbPresets.All.none { it.id == presetId }
     EffectCard(
         picture = { ReverbPicture(reverb) },
         header = {
@@ -70,8 +79,9 @@ internal fun ReverbCard() {
         expanded = reverb.enabled,
         options = {
             LabChips(
-                chips = ReverbPresets.All.map { LabChip(it.id, stringResource(reverbPresetName(it.id))) },
-                selectedKey = presetId,
+                chips = ReverbPresets.All.map { LabChip(it.id, stringResource(reverbPresetName(it.id))) } +
+                    (if (isCustom) listOf(LabChip(CustomChipKey, stringResource(Res.string.mochy_lab_reverb_custom))) else emptyList()),
+                selectedKey = if (isCustom) CustomChipKey else presetId,
                 onSelect = { id ->
                     ReverbPresets.All.firstOrNull { it.id == id }?.let { preset ->
                         saveReverb(reverb.withPreset(preset), preset.id)
@@ -92,6 +102,7 @@ internal fun ReverbCard() {
                 LabSlider(stringResource(Res.string.audio_lab_wet), percent(reverb.wet), reverb.wet, 0f..1f) {
                     saveReverb(reverb.copy(wet = it))
                 }
+                FineTuneLabel()
                 LabSlider(stringResource(Res.string.audio_lab_dry), percent(reverb.dry), reverb.dry, 0f..1f) {
                     saveReverb(reverb.copy(dry = it))
                 }
@@ -102,7 +113,7 @@ internal fun ReverbCard() {
                     stringResource(Res.string.audio_lab_pre_delay),
                     milliseconds(reverb.preDelayMs),
                     reverb.preDelayMs,
-                    0f..150f,
+                    0f..120f,
                 ) {
                     saveReverb(reverb.copy(preDelayMs = it.roundToInt().toFloat()))
                 }
@@ -120,6 +131,8 @@ internal fun ReverbCard() {
     )
 }
 
+private const val CustomChipKey = "custom"
+
 private fun reverbPresetName(id: String): StringResource =
     when (id) {
         "room" -> Res.string.audio_lab_preset_room
@@ -132,6 +145,20 @@ private fun reverbPresetName(id: String): StringResource =
         "dream" -> Res.string.audio_lab_preset_dream
         else -> error("Unknown reverb preset: $id")
     }
+
+/** the small caps label that splits the main sliders from the fine-tune ones */
+@Composable
+private fun FineTuneLabel() {
+    Text(
+        stringResource(Res.string.mochy_lab_fine_tune),
+        fontFamily = mochyInterFontFamily(),
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 11.sp,
+        letterSpacing = 1.3.sp,
+        color = LabColors.Secondary,
+        modifier = Modifier.padding(top = 8.dp, bottom = 2.dp),
+    )
+}
 
 // ---- the picture: waves leave the speaker, bounce between the walls and die away -----------
 

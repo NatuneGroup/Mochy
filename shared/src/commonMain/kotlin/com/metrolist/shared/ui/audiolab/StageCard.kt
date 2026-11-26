@@ -37,6 +37,7 @@ import com.metrolist.shared.generated.resources.audio_lab_stage
 import com.metrolist.shared.generated.resources.audio_lab_stage_android_only
 import com.metrolist.shared.generated.resources.audio_lab_stage_description
 import com.metrolist.shared.generated.resources.audio_lab_stage_echo
+import com.metrolist.shared.generated.resources.audio_lab_stage_kemar_credit
 import com.metrolist.shared.generated.resources.audio_lab_stage_level
 import com.metrolist.shared.generated.resources.audio_lab_stage_preset_around
 import com.metrolist.shared.generated.resources.audio_lab_stage_preset_front_row
@@ -74,12 +75,11 @@ internal fun StageCard(support: AudioLabStageSupport) {
                 },
             )
         }
-    val footer: (@Composable ColumnScope.() -> Unit)? =
-        if (unavailableText == null) {
-            null
-        } else {
-            { StageNote(unavailableText) }
-        }
+    val credit = stringResource(Res.string.audio_lab_stage_kemar_credit)
+    val footer: @Composable ColumnScope.() -> Unit = {
+        if (unavailableText != null) StageNote(unavailableText)
+        StageNote(credit)
+    }
     EffectCard(
         picture = { StagePicture(stage) },
         header = {
