@@ -116,6 +116,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import com.metrolist.shared.generated.resources.Res
+import com.metrolist.shared.generated.resources.mochy_queue_drag_handle
+import org.jetbrains.compose.resources.painterResource
 import com.metrolist.shared.generated.resources.action_download
 import com.metrolist.shared.generated.resources.action_like
 import com.metrolist.shared.generated.resources.add_to_playlist
@@ -514,6 +516,7 @@ fun QueueScreen(
         }
     }
 
+    val mochyLook = !LocalIsTv.current && MaterialTheme.colorScheme.background.luminance() < 0.5f
     Box(modifier = modifier.fillMaxSize()) {
         Scaffold(
             containerColor = Color.Transparent,
@@ -537,6 +540,7 @@ fun QueueScreen(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 PlaylistHeader(
+                    mochyLook = mochyLook,
                     playlist = state.playlist,
                     shape =
                         if (isDesktopPanel) {
@@ -1118,10 +1122,12 @@ private fun PlaylistHeader(
     onUnlockedChange: (Boolean) -> Unit,
     actions: @Composable RowScope.() -> Unit,
     modifier: Modifier = Modifier,
+    // the Mochy look: the reference's dark card with white type
+    mochyLook: Boolean = false,
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        shape = shape,
+        color = if (mochyLook) MochyQueueCard else MaterialTheme.colorScheme.surfaceContainer,
+        shape = if (mochyLook) RoundedCornerShape(16.dp) else shape,
         modifier =
             modifier
                 .padding(horizontal = queueHorizontalInset)
@@ -1152,7 +1158,9 @@ private fun PlaylistHeader(
                                 lineHeight = 28.sp,
                                 letterSpacing = 0.sp,
                             ),
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = if (mochyLook) Color.White else MaterialTheme.colorScheme.onSurface,
+                        fontFamily = if (mochyLook) mochyInterFontFamily() else null,
+                        fontWeight = if (mochyLook) FontWeight.Bold else null,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -1176,7 +1184,8 @@ private fun PlaylistHeader(
                                     lineHeight = 16.sp,
                                     letterSpacing = 0.5.sp,
                                 ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = if (mochyLook) Color.White.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontFamily = if (mochyLook) mochyInterFontFamily() else null,
                             maxLines = 2,
                         )
                     }
@@ -1487,8 +1496,11 @@ private fun TrackItem(
                             onMoveDown = onMoveDown,
                             onMoveToTop = onMoveToTop,
                             onMoveToBottom = onMoveToBottom,
-                            modifier = Modifier.size(36.dp),
+                            modifier = Modifier.size(if (mochyLook) 44.dp else 36.dp),
                             dragHandleModifier = if (LocalIsTv.current) Modifier else dragHandleModifier,
+                            // the reference's three-bar grip, brighter while the row is being dragged
+                            handleIcon = if (mochyLook) painterResource(Res.drawable.mochy_queue_drag_handle) else null,
+                            handleTint = Color.White.copy(alpha = if (isMoving) 0.9f else 0.5f),
                         )
                     } else {
                         Spacer(modifier = Modifier.size(36.dp))
@@ -1614,6 +1626,7 @@ private fun TrackItem(
 }
 
 private val MochyQueueRemoveRed = Color(0xFFFF453A)
+private val MochyQueueCard = Color(0xFF1C1C1E)
 
 // the reference's queue row: the song playing gets a light highlight, a row being dragged a brighter one
 private fun mochyQueueRowColor(isMoving: Boolean, isActive: Boolean): Color =

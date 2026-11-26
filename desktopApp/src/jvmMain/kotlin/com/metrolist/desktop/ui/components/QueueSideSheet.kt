@@ -13,6 +13,8 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -149,7 +151,8 @@ internal fun DesktopQueueContent(
     Surface(
         modifier = modifier.fillMaxHeight(),
         shape = RoundedCornerShape(16.dp),
-        color = colorScheme.surface,
+        // the Mochy look: the dark page's black, the same surface the queue rows sit on
+        color = if (colorScheme.background.luminance() < 0.5f) Color.Black else colorScheme.surface,
         tonalElevation = 1.dp,
     ) {
         Box(Modifier.fillMaxSize()) {

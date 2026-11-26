@@ -3,6 +3,7 @@
 package com.metrolist.shared.ui.components
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.DropdownMenuGroup
 import androidx.compose.material3.DropdownMenuItem
@@ -21,6 +22,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.unit.dp
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.move_down
 import com.metrolist.shared.generated.resources.move_to_bottom
@@ -41,6 +45,9 @@ internal fun ReorderMenu(
     onMoveToTop: (() -> Unit)? = null,
     onMoveToBottom: (() -> Unit)? = null,
     onArtwork: Boolean = false,
+    // a custom grip for the handle; the default is the Material drag indicator
+    handleIcon: Painter? = null,
+    handleTint: Color = Color.Unspecified,
     expandedState: MutableState<Boolean> = remember { mutableStateOf(false) },
 ) {
     var expanded by expandedState
@@ -59,10 +66,19 @@ internal fun ReorderMenu(
                     IconButtonDefaults.iconButtonColors()
                 },
         ) {
-            Icon(
-                MetrolistIcons.Outlined.DragIndicator,
-                stringResource(Res.string.playlist_reorder),
-            )
+            if (handleIcon != null) {
+                Icon(
+                    painter = handleIcon,
+                    contentDescription = stringResource(Res.string.playlist_reorder),
+                    tint = handleTint,
+                    modifier = Modifier.size(22.dp),
+                )
+            } else {
+                Icon(
+                    MetrolistIcons.Outlined.DragIndicator,
+                    stringResource(Res.string.playlist_reorder),
+                )
+            }
         }
         DropdownMenuPopup(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuGroup(shapes = MenuDefaults.groupShape(0, 1)) {
