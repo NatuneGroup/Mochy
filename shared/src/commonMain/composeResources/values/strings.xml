@@ -6199,6 +6199,11 @@
     <!-- Mochy settings pages -->
     <string name="mochy_pages_hide_descriptions">Hide descriptions in settings</string>
     <string name="mochy_pages_hide_descriptions_desc">Show titles only in settings lists.</string>
+    <string name="mochy_pages_cover_disc_small_full">Disc Music - inside - small</string>
+    <string name="mochy_pages_cover_disc_small_label">Disc Music - label - small</string>
+    <string name="mochy_pages_cover_disc_big_full">Disc Music - inside - big</string>
+    <string name="mochy_pages_cover_disc_big_label">Disc Music - label - big</string>
+    <string name="mochy_pages_cover_disc_album">Disc + album Music</string>
     <!-- Mochy mini player -->
     <!-- Translators: Option in the mini player style list for Mochy's own frosted pill. -->
     <string name="mochy_mini_type_mochy">Mochy</string>

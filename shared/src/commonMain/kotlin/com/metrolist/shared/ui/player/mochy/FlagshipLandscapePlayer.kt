@@ -2,6 +2,7 @@
 
 package com.metrolist.shared.ui.player.mochy
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.graphics.Brush
@@ -89,7 +90,6 @@ import com.metrolist.shared.ui.player.QueueSession
 import com.metrolist.shared.ui.player.artworkSeekGestures
 import com.metrolist.shared.ui.player.artworkSwipe
 import com.metrolist.shared.ui.player.mochy.turntable.TurntableStage
-import com.metrolist.shared.ui.player.mochy.turntable.VinylDisc
 import com.metrolist.shared.viewmodels.PlayerViewModel
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
@@ -107,6 +107,9 @@ private val EvenShade = Color.Black.copy(alpha = 0.38f)
 // the lyrics page tucks the seek bar and transport away after this long without a touch
 private const val LANDSCAPE_TRANSPORT_IDLE_MS = 3_500L
 private const val RETRACT_MS = 420
+// the title and artist rest just above the seek bar and glide this far down and to the left as the controls retract
+private val RetractTitleBottom = 150.dp
+private val RetractDrop = 120.dp
 private val RetractEasing = CubicBezierEasing(0.4f, 0f, 0.2f, 1f)
 
 private enum class FlagshipLandscapePanel {
@@ -195,6 +198,12 @@ internal fun FlagshipLandscapePlayer(
         }
     }
     val transportShown = transportRevealed || !lyricsShowing
+    // 0 with the controls up, 1 with them tucked away on the lyrics page: the title, the frost and the band follow it
+    val controlsRetract by animateFloatAsState(
+        targetValue = if (lyricsShowing && !transportShown) 1f else 0f,
+        animationSpec = tween(RETRACT_MS, easing = RetractEasing),
+        label = "flagshipLandscapeRetract",
+    )
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val squareSide = minOf(maxHeight * SQUARE_HEIGHT_SHARE, maxWidth * SQUARE_WIDTH_SHARE)
@@ -207,16 +216,16 @@ internal fun FlagshipLandscapePlayer(
                     Modifier.size(width = coverWidth, height = maxHeight)
                 }
 
-                PlayerCoverStyle.DISC -> {
-                    Modifier.padding(start = squareStart).size(squareSide)
-                }
-
                 PlayerCoverStyle.SQUARED -> {
                     Modifier
                         .padding(start = squareStart)
                         .size(squareSide)
                         .shadow(24.dp, SquareShape)
                         .clip(SquareShape)
+                }
+
+                else -> {
+                    Modifier.padding(start = squareStart).size(squareSide)
                 }
             }
 
@@ -295,8 +304,9 @@ internal fun FlagshipLandscapePlayer(
                         },
                         modifier = Modifier.fillMaxSize(),
                     )
-                } else if (coverStyle == PlayerCoverStyle.DISC) {
-                    VinylDisc(
+                } else if (coverStyle.isDiscLook) {
+                    FlagshipDiscCover(
+                        style = coverStyle,
                         artworkUrl = currentSong?.displayThumbnail,
                         nextArtworkUrl = crossfadeNextArtworkUrl,
                         crossfadeProgressProvider = artworkCrossfadeProgress,
@@ -304,9 +314,6 @@ internal fun FlagshipLandscapePlayer(
                         spinActive = LocalPlayerContentActive.current,
                         contentDescription = stringResource(Res.string.album_art),
                         artworkOverlay = artworkOverlay.takeUnless { uiState.isLyricsVisible },
-                        discDiameter = FLAGSHIP_DISC_DIAMETER,
-                        discCenterX = FLAGSHIP_DISC_CENTER,
-                        discCenterYByWidth = FLAGSHIP_DISC_CENTER,
                         modifier = Modifier.fillMaxSize(),
                     )
                 } else {
@@ -331,10 +338,10 @@ internal fun FlagshipLandscapePlayer(
             // the cover mirrored past its right seam, the frost on lyrics or queue, then the lyrics band
             LandscapeCoverReflection(url = coverThumb, coverWidth = coverWidth, modifier = Modifier.align(Alignment.TopStart))
             if (uiState.isLyricsVisible || isQueueVisible) {
-                LandscapeCoverFrost(url = coverThumb, coverWidth = coverWidth, modifier = Modifier.align(Alignment.TopStart))
+                LandscapeCoverFrost(url = coverThumb, coverWidth = coverWidth, retract = { controlsRetract }, modifier = Modifier.align(Alignment.TopStart))
             }
             if (uiState.isLyricsVisible) {
-                LandscapeLyricsBand(url = coverThumb, coverWidth = coverWidth, modifier = Modifier.align(Alignment.BottomStart))
+                LandscapeLyricsBand(url = coverThumb, coverWidth = coverWidth, retract = { controlsRetract }, modifier = Modifier.align(Alignment.BottomStart))
             }
         }
 
@@ -553,6 +560,62 @@ internal fun FlagshipLandscapePlayer(
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             )
         }
+
+        // on the lyrics page the title and artist sit above the seek bar; as the controls tuck away they glide down and left
+        if (uiState.isLyricsVisible) {
+            Column(
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(start = coverWidth + PanelGutter, bottom = bottomInset + RetractTitleBottom)
+                        .padding(end = endInset + SideButtonsRoom)
+                        .fillMaxWidth()
+                        .graphicsLayer {
+                            val r = controlsRetract
+                            translationX = -(coverWidth - startInset).toPx() * r
+                            translationY = RetractDrop.toPx() * r
+                        },
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = currentSong?.title.orEmpty(),
+                    style =
+                        MaterialTheme.typography.titleLarge.copy(
+                            fontFamily = flagshipFont,
+                            fontSize = 21.sp,
+                            lineHeight = 26.sp,
+                        ),
+                    fontWeight = FontWeight.Bold,
+                    color = contentColor,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier =
+                        Modifier
+                            .clickable(enabled = currentSong != null, onClick = onSongInfo)
+                            .then(
+                                currentSong?.let { song ->
+                                    rememberTrackMarquee(
+                                        trackId = song.id,
+                                        enabled = LocalPlayerContentActive.current,
+                                        initialDelayMillis = 3000L,
+                                    )
+                                } ?: Modifier,
+                            ),
+                )
+                PlayerArtistLine(
+                    artists = currentSong?.artists,
+                    onNavigateToArtist = onNavigateToArtist,
+                    iterations = if (LocalPlayerContentActive.current) 1 else 0,
+                    style =
+                        MaterialTheme.typography.titleMedium.copy(
+                            fontFamily = flagshipFont,
+                            fontSize = 15.sp,
+                        ),
+                    color = contentColor.copy(alpha = 0.72f),
+                )
+            }
+        }
     }
 }
 
@@ -621,7 +684,7 @@ private fun LandscapeCoverReflection(url: String, coverWidth: Dp, modifier: Modi
 
 // a blurred frost over the cover's right edge while lyrics or the queue are open
 @Composable
-private fun LandscapeCoverFrost(url: String, coverWidth: Dp, modifier: Modifier) {
+private fun LandscapeCoverFrost(url: String, coverWidth: Dp, retract: () -> Float, modifier: Modifier) {
     val blurPx = with(LocalDensity.current) { 40.dp.toPx() }
     Box(
         modifier =
@@ -630,7 +693,8 @@ private fun LandscapeCoverFrost(url: String, coverWidth: Dp, modifier: Modifier)
                 .width(coverWidth * 0.5f)
                 .fillMaxHeight()
                 .clipToBounds()
-                .maskedBy(FROST_MASK),
+                .maskedBy(FROST_MASK)
+                .graphicsLayer { alpha = 1f - retract() },
     ) {
         BlurredArtworkBackground(url = url, modifier = Modifier.fillMaxSize(), blurRadiusPx = blurPx, pendingScrimAlpha = 0f)
     }
@@ -638,7 +702,7 @@ private fun LandscapeCoverFrost(url: String, coverWidth: Dp, modifier: Modifier)
 
 // the lower-left band the lyrics sit on: a blurred strip under a dark shade that fades toward the cover's middle
 @Composable
-private fun LandscapeLyricsBand(url: String, coverWidth: Dp, modifier: Modifier) {
+private fun LandscapeLyricsBand(url: String, coverWidth: Dp, retract: () -> Float, modifier: Modifier) {
     val blurPx = 30f
     Box(
         modifier =
@@ -646,7 +710,8 @@ private fun LandscapeLyricsBand(url: String, coverWidth: Dp, modifier: Modifier)
                 .width(coverWidth * 1.10f)
                 .fillMaxHeight(0.54f)
                 .clipToBounds()
-                .maskedBy(smoothFadeRight(0.58f)),
+                .maskedBy(smoothFadeRight(0.58f))
+                .graphicsLayer { alpha = 1f - retract() },
     ) {
         BlurredArtworkBackground(url = url, modifier = Modifier.fillMaxSize(), blurRadiusPx = blurPx, pendingScrimAlpha = 0f)
     }
@@ -656,6 +721,17 @@ private fun LandscapeLyricsBand(url: String, coverWidth: Dp, modifier: Modifier)
                 .width(coverWidth * 1.22f)
                 .fillMaxHeight(0.64f)
                 .background(Brush.verticalGradient(0f to Color.Black.copy(alpha = 0.62f), 1f to Color.Transparent))
-                .maskedBy(smoothFadeRight(0.56f)),
+                .maskedBy(smoothFadeRight(0.56f))
+                .graphicsLayer { alpha = 1f - retract() },
+    )
+    // the lower shade the title and artist settle onto as the controls retract
+    Box(
+        modifier =
+            modifier
+                .width(coverWidth * 1.22f)
+                .fillMaxHeight(0.64f)
+                .background(Brush.verticalGradient(0.48f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.58f)))
+                .maskedBy(smoothFadeRight(0.56f))
+                .graphicsLayer { alpha = retract() },
     )
 }
