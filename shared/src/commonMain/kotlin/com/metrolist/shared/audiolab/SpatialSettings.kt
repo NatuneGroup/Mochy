@@ -2,10 +2,12 @@
 
 package com.metrolist.shared.audiolab
 
+import kotlinx.serialization.Serializable
 /**
  * Headphone spatial audio. Crossfeed blends the other ear into each side, or virtual speakers place both channels at [speakerAngle] degrees.
  * Off by default.
  */
+@Serializable
 data class SpatialSettings(
     val enabled: Boolean = false,
     val mode: SpatialMode = SpatialMode.Crossfeed,

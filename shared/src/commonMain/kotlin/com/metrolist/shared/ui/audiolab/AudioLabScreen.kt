@@ -106,6 +106,7 @@ fun AudioLabScreen(
                     color = LabColors.Secondary,
                 )
             }
+            FxPresetsSection()
             if (wide) {
                 Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.Top) {
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(14.dp)) {
