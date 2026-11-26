@@ -108,6 +108,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.round
+import androidx.compose.ui.unit.sp
 import com.metrolist.shared.generated.resources.*
 import com.metrolist.shared.ui.LocalIsTv
 import com.metrolist.shared.ui.audiolab.AudioLabScreen
@@ -127,6 +128,7 @@ import com.metrolist.shared.ui.mochy.MochyProfileSettingsScreen
 import com.metrolist.shared.ui.mochy.pressBounce
 import com.metrolist.shared.ui.navigation.PredictiveNavigationContent
 import com.metrolist.shared.ui.navigation.rememberNavigationMotion
+import com.metrolist.shared.ui.onboarding.mochy.AppSwitch
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import com.metrolist.shared.ui.theme.rememberReducedMotion
 import com.metrolist.shared.ui.utils.DragScrollableColumn
@@ -134,6 +136,7 @@ import com.metrolist.shared.ui.utils.desktopArrowScroll
 import com.metrolist.shared.ui.utils.segmentedGroupShape
 import com.metrolist.shared.utils.isPullToRefreshSupported
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
@@ -819,6 +822,8 @@ private fun SettingsPageList(
     onRefresh: (() -> Unit)? = null,
 ) {
     var dialogItem by remember { mutableStateOf<SettingsItemRegistration?>(null) }
+    // Mochy's dark pages: each section is one card of rows, with a 20dp page gutter
+    val mochy = MaterialTheme.colorScheme.isDark
     val groups = page.groups.filter { it.items.isNotEmpty() }
     val mainSwitch =
         groups
@@ -867,12 +872,20 @@ private fun SettingsPageList(
                                         0.dp
                                     } else if (groupIndex == 0) {
                                         8.dp
+                                    } else if (mochy) {
+                                        18.dp
                                     } else {
                                         24.dp
                                     },
                             ),
                         ) {
-                            SettingsItemGroup(group.copy(items = emptyList()), highlightedItemId, onSettingValueChanged, {})
+                            SettingsItemGroup(
+                                group.copy(items = emptyList()),
+                                highlightedItemId,
+                                onSettingValueChanged,
+                                {},
+                                horizontalPadding = if (mochy) 20.dp else 16.dp,
+                            )
                         }
                     }
                 }
@@ -887,10 +900,21 @@ private fun SettingsPageList(
                         enter = expandVertically() + fadeIn(),
                         exit = shrinkVertically() + fadeOut(),
                     ) {
+                        val first = index == 0
+                        val last = index == group.items.lastIndex
                         Box(
-                            Modifier
-                                .padding(horizontal = 16.dp)
-                                .padding(bottom = if (index == group.items.lastIndex) 0.dp else 4.dp),
+                            if (mochy) {
+                                Modifier
+                                    .padding(horizontal = 20.dp)
+                                    .background(
+                                        MaterialTheme.colorScheme.settingsRowContainerColor(),
+                                        connectedShape(first, last, outer = 28.dp, inner = 0.dp),
+                                    ).padding(top = if (first) 6.dp else 0.dp, bottom = if (last) 6.dp else 0.dp)
+                            } else {
+                                Modifier
+                                    .padding(horizontal = 16.dp)
+                                    .padding(bottom = if (index == group.items.lastIndex) 0.dp else 4.dp)
+                            },
                         ) {
                             SettingsItemRow(
                                 item =
@@ -1209,6 +1233,7 @@ internal fun SettingsItemGroup(
     horizontalPadding: Dp = 16.dp,
     showHeading: Boolean = true,
 ) {
+    val mochy = MaterialTheme.colorScheme.isDark
     Column(modifier = Modifier.fillMaxWidth().alpha(if (group.enabled) 1f else 0.6f)) {
         if (showHeading && group.title.isNotBlank()) {
             Column(
@@ -1219,8 +1244,9 @@ internal fun SettingsItemGroup(
                     text = group.title,
                     style = MaterialTheme.typography.titleSmall,
                     fontFamily = mochyInterFontFamily(),
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = (-0.01).em,
+                    fontWeight = if (mochy) FontWeight.Bold else FontWeight.SemiBold,
+                    fontSize = if (mochy) 15.sp else TextUnit.Unspecified,
+                    letterSpacing = if (mochy) TextUnit.Unspecified else (-0.01).em,
                     color = MaterialTheme.colorScheme.settingsHeadingColor(),
                     modifier = Modifier.semantics { heading() },
                 )
@@ -1269,6 +1295,7 @@ private fun SettingsItemRow(
     onClick: () -> Unit,
 ) {
     val haptics = rememberMetrolistHaptics()
+    val mochy = MaterialTheme.colorScheme.isDark
     if (item.control == SettingsControl.MAIN_SWITCH) {
         SettingsMainSwitch(
             title = item.title,
@@ -1284,7 +1311,7 @@ private fun SettingsItemRow(
     if (item.control == SettingsControl.CUSTOM) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = connectedShape(first, last, outer = 20.dp, inner = 5.dp),
+            shape = if (mochy) connectedShape(first, last, outer = 28.dp, inner = 0.dp) else connectedShape(first, last, outer = 20.dp, inner = 5.dp),
             color = MaterialTheme.colorScheme.settingsRowContainerColor(),
         ) {
             Box(Modifier.alpha(if (item.enabled) 1f else 0.38f)) {
@@ -1296,14 +1323,20 @@ private fun SettingsItemRow(
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     val reducedMotion = rememberReducedMotion()
-    val shape = segmentedGroupShape(first, last, pressed)
+    val shape = if (mochy) connectedShape(first, last, outer = 28.dp, inner = 0.dp) else segmentedGroupShape(first, last, pressed)
     val background by animateColorAsState(
         targetValue =
             if (highlighted) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.settingsRowContainerColor(pressed),
         label = "settingsItemRow",
     )
     val titleColor by animateColorAsState(
-        if (highlighted) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+        if (highlighted) {
+            MaterialTheme.colorScheme.onPrimaryContainer
+        } else if (mochy) {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        } else {
+            MaterialTheme.colorScheme.onSurface
+        },
         label = "settingsItemTitle",
     )
     val descriptionColor by animateColorAsState(
@@ -1311,9 +1344,22 @@ private fun SettingsItemRow(
         label = "settingsItemDescription",
     )
     val valueColor by animateColorAsState(
-        if (highlighted) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary,
+        if (highlighted) {
+            MaterialTheme.colorScheme.onPrimaryContainer
+        } else if (mochy) {
+            Color.White.copy(alpha = 0.70f)
+        } else {
+            MaterialTheme.colorScheme.primary
+        },
         label = "settingsItemValue",
     )
+    // Mochy's value text: small bold Inter, the way its slider rows title their value
+    val valueTextStyle =
+        if (mochy) {
+            MaterialTheme.typography.labelLarge.copy(fontFamily = mochyInterFontFamily(), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+        } else {
+            MaterialTheme.typography.labelLarge
+        }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     LaunchedEffect(highlighted) {
         if (highlighted) {
@@ -1330,7 +1376,7 @@ private fun SettingsItemRow(
                 Modifier
                     .bringIntoViewRequester(bringIntoViewRequester)
                     .fillMaxWidth()
-                    .heightIn(min = 72.dp)
+                    .then(if (mochy) Modifier else Modifier.heightIn(min = 72.dp))
                     .pressBounce(interactionSource, if (reducedMotion) 1f else 0.99f)
                     .clip(shape)
                     .background(background)
@@ -1363,16 +1409,16 @@ private fun SettingsItemRow(
                                     },
                             )
                         },
-                    ).padding(horizontal = 16.dp, vertical = 16.dp),
+                    ).padding(horizontal = if (mochy) 20.dp else 16.dp, vertical = if (mochy) 14.dp else 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(if (mochy) 2.dp else 8.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         item.title,
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = if (mochy) MaterialTheme.typography.titleSmall else MaterialTheme.typography.bodyLarge,
                         fontFamily = mochyInterFontFamily(),
-                        fontWeight = FontWeight.Medium,
+                        fontWeight = if (mochy) null else FontWeight.Medium,
                         color =
                             if (item.enabled) {
                                 titleColor
@@ -1385,22 +1431,26 @@ private fun SettingsItemRow(
                 (item.annotatedDescription ?: item.description?.let(::AnnotatedString))?.let {
                     Text(
                         it,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = if (mochy) MaterialTheme.typography.labelMedium else MaterialTheme.typography.bodyMedium,
                         color = descriptionColor.copy(alpha = if (item.enabled) 1f else 0.38f),
                     )
                 }
             }
-            Spacer(Modifier.width(16.dp))
+            Spacer(Modifier.width(if (mochy) 8.dp else 16.dp))
             when (item.control) {
                 SettingsControl.SWITCH, SettingsControl.MAIN_SWITCH -> {
-                    ExpressiveSwitch(checked = item.checked == true, onCheckedChange = null, enabled = item.enabled)
+                    if (mochy) {
+                        AppSwitch(checked = item.checked == true, onCheckedChange = null, enabled = item.enabled)
+                    } else {
+                        ExpressiveSwitch(checked = item.checked == true, onCheckedChange = null, enabled = item.enabled)
+                    }
                 }
 
                 SettingsControl.CHOICE, SettingsControl.SLIDER, SettingsControl.TEXT -> {
                     item.valueLabel?.let {
                         Text(
                             it,
-                            style = MaterialTheme.typography.labelLarge,
+                            style = valueTextStyle,
                             color =
                                 if (item.enabled) {
                                     valueColor
@@ -1432,21 +1482,30 @@ private fun SettingsItemRow(
                     item.valueLabel?.let {
                         Text(
                             it,
-                            style = MaterialTheme.typography.labelLarge,
+                            style = valueTextStyle,
                             color = valueColor,
                             textAlign = TextAlign.End,
                             modifier = Modifier.widthIn(max = 128.dp),
                         )
                         Spacer(Modifier.width(8.dp))
                     }
-                    Icon(MetrolistIcons.Outlined.ChevronRight, null, tint = descriptionColor)
+                    if (mochy) {
+                        Icon(
+                            painterResource(Res.drawable.mochy_home_chevron),
+                            null,
+                            tint = Color.White.copy(alpha = 0.50f),
+                            modifier = Modifier.size(20.dp),
+                        )
+                    } else {
+                        Icon(MetrolistIcons.Outlined.ChevronRight, null, tint = descriptionColor)
+                    }
                 }
 
                 SettingsControl.ACTION -> {
                     item.valueLabel?.let {
                         Text(
                             it,
-                            style = MaterialTheme.typography.labelLarge,
+                            style = valueTextStyle,
                             color = valueColor,
                             textAlign = TextAlign.End,
                             modifier = Modifier.widthIn(max = 128.dp),

@@ -6,7 +6,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
 
-private val ColorScheme.isDark: Boolean get() = background.luminance() < 0.5f
+internal val ColorScheme.isDark: Boolean get() = background.luminance() < 0.5f
 
 fun ColorScheme.settingsRowContainerColor(pressed: Boolean = false): Color {
     // Mochy's rows: near-black fields on a black page, a touch lighter while held

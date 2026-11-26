@@ -31,7 +31,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.settings_reset_to_default
 import com.metrolist.shared.ui.haptics.HapticEvent
@@ -39,6 +41,7 @@ import com.metrolist.shared.ui.haptics.SliderDetents
 import com.metrolist.shared.ui.haptics.rememberMetrolistHaptics
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.playback.retainPlaybackKeyFocus
+import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import org.jetbrains.compose.resources.stringResource
 
 internal fun SettingsGroupRegistryBuilder.inlineSlider(
@@ -54,11 +57,33 @@ internal fun SettingsGroupRegistryBuilder.inlineSlider(
     onValueChange: (Float) -> Unit,
 ) {
     custom(id, title, description, enabled) { onSettingValueChanged ->
-        Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 8.dp)) {
+        // Mochy's slider rows: the title with its value on the right, the slider under it, inside the row's card
+        val mochy = MaterialTheme.colorScheme.isDark
+        Column(
+            if (mochy) {
+                Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp)
+            } else {
+                Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 8.dp)
+            },
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(title, style = MaterialTheme.typography.bodyLarge)
-                    Text(valueLabel, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                    Text(
+                        title,
+                        style = if (mochy) MaterialTheme.typography.titleSmall else MaterialTheme.typography.bodyLarge,
+                        fontFamily = if (mochy) mochyInterFontFamily() else null,
+                        color = if (mochy) MaterialTheme.colorScheme.onSurfaceVariant else Color.Unspecified,
+                    )
+                    if (!mochy) Text(valueLabel, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                }
+                if (mochy) {
+                    Text(
+                        valueLabel,
+                        fontFamily = mochyInterFontFamily(),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        color = Color.White.copy(alpha = 0.70f),
+                    )
                 }
                 SettingsResetButton(enabled = enabled && value != defaultValue) {
                     onValueChange(defaultValue)
@@ -68,9 +93,9 @@ internal fun SettingsGroupRegistryBuilder.inlineSlider(
             description?.let {
                 Text(
                     it,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = if (mochy) MaterialTheme.typography.labelMedium else MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(end = 8.dp),
+                    modifier = Modifier.padding(end = if (mochy) 0.dp else 8.dp),
                 )
             }
             val haptics = rememberMetrolistHaptics()
@@ -97,7 +122,7 @@ internal fun SettingsGroupRegistryBuilder.inlineSlider(
                     Modifier
                         .retainPlaybackKeyFocus()
                         .fillMaxWidth()
-                        .padding(end = 8.dp)
+                        .padding(top = if (mochy) 8.dp else 0.dp, end = if (mochy) 0.dp else 8.dp)
                         .semantics { contentDescription = title },
             )
         }

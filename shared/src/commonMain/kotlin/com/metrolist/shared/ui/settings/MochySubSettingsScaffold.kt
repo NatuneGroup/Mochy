@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -56,8 +57,10 @@ import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.back
 import com.metrolist.shared.generated.resources.close
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.generated.resources.mochy_pages_arrow_back_ios
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import com.metrolist.shared.ui.utils.supportsNativeBlur
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.PI
 import kotlin.math.sin
@@ -74,6 +77,7 @@ private const val TITLE_MORPH_MAX_BLUR_PX = 26f
 private val CollapseEasing = CubicBezierEasing(0.57f, 0.53f, 0f, 1f)
 private const val COLLAPSE_MILLIS = 900
 private val BackButtonColor = Color(0xFF2C2C2E)
+private val BackLabelStart = BackButtonSize + 10.dp
 
 /**
  * [listState] tells how far a list page has scrolled; pages that bring their own content are followed through
@@ -88,6 +92,8 @@ internal fun MochySubSettingsScaffold(
     backButtonModifier: Modifier = Modifier,
     // a close button at the header's right end, for a page shown beside the settings list
     onClose: (() -> Unit)? = null,
+    // the page this one sits under, written beside the back button
+    backLabel: String? = null,
     content: @Composable (topPadding: Dp) -> Unit,
 ) {
     val density = LocalDensity.current
@@ -153,10 +159,10 @@ internal fun MochySubSettingsScaffold(
                 .drawWithCache {
                     val scrim =
                         Brush.verticalGradient(
-                            0f to Color.Black.copy(alpha = 0.95f),
-                            0.45f to Color.Black.copy(alpha = 0.7f),
-                            0.75f to Color.Black.copy(alpha = 0.3f),
-                            1f to Color.Transparent,
+                            0f to Color.Black.copy(alpha = 0.90f),
+                            0.20f to Color.Black.copy(alpha = 0.50f),
+                            0.45f to Color.Black.copy(alpha = 0.18f),
+                            0.75f to Color.Transparent,
                         )
                     onDrawBehind { drawRect(scrim) }
                 },
@@ -179,10 +185,28 @@ internal fun MochySubSettingsScaffold(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    MetrolistIcons.AutoMirrored.Filled.ArrowBack,
+                    painter = painterResource(Res.drawable.mochy_pages_arrow_back_ios),
                     contentDescription = stringResource(Res.string.back),
                     tint = Color.White,
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+            if (backLabel != null) {
+                // gives way to the title, which slides into this spot as the page collapses
+                Text(
+                    text = backLabel,
+                    fontFamily = mochyInterFontFamily(),
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp,
+                    color = Color.White,
+                    maxLines = 1,
+                    modifier =
+                        Modifier
+                            .padding(top = HeaderTopPadding, start = BackLabelStart)
+                            .height(BackButtonSize)
+                            .wrapContentHeight(Alignment.CenterVertically)
+                            .graphicsLayer { alpha = (1f - collapse * 2.5f).coerceIn(0f, 1f) }
+                            .clickable(onClick = onBack),
                 )
             }
             if (onClose != null) {
