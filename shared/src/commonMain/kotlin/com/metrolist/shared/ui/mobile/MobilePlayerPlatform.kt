@@ -61,7 +61,7 @@ import com.metrolist.shared.ui.menu.MochyMenuGrabber
 import com.metrolist.shared.ui.menu.MochyMenuSheetCorner
 import com.metrolist.shared.ui.menu.mochyMenuMotion
 import com.metrolist.shared.ui.menu.mochyPlayerStyleMenuAction
-import com.metrolist.shared.ui.player.mochy.MochyStyleSelector
+import com.metrolist.shared.ui.player.mochy.MochyStylePicker
 import com.metrolist.shared.ui.menu.equalizerMenuAction
 import com.metrolist.shared.ui.menu.rememberDeleteUploadAction
 import com.metrolist.shared.ui.menu.songMediaMenuModel
@@ -192,18 +192,6 @@ internal class MobilePlayerPlatform(
         val menuSheetState = rememberModalSheetState(motion = if (mochyLook) mochyMenuMotion() else null)
         var showEqualizer by remember { mutableStateOf(false) }
         var showTempoPitch by remember { mutableStateOf(false) }
-        var showStyleSelector by remember { mutableStateOf(false) }
-        if (showStyleSelector) {
-            MochyStyleSelector(
-                selected = Settings.shared.playerType,
-                onSelect = { Settings.shared.playerType = it },
-                onDismiss = {
-                    showStyleSelector = false
-                    onDismiss()
-                },
-            )
-            return
-        }
         if (showEqualizer) {
             EqualizerDialog(
                 onDismiss = onDismiss,
@@ -323,7 +311,10 @@ internal class MobilePlayerPlatform(
                                 if (mochyLook) {
                                     mochyPlayerStyleMenuAction(onOpen = {
                                         scope.launch {
-                                            if (menuSheetState.hide()) showStyleSelector = true
+                                            if (menuSheetState.hide()) {
+                                                MochyStylePicker.show()
+                                                onDismiss()
+                                            }
                                         }
                                     })
                                 } else {
