@@ -178,6 +178,9 @@ import com.valentinilk.shimmer.shimmer
 import kotlinx.coroutines.flow.distinctUntilChanged
 import org.jetbrains.compose.resources.stringResource
 
+// Mochy's search page gutter
+internal val SearchHorizontalPadding = 24.dp
+
 data class SearchContentText(
     val search: String,
     val suggestions: String,
