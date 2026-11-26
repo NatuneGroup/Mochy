@@ -6210,4 +6210,5 @@
     <string name="mochy_menu_style_modern">Modern</string>
     <string name="mochy_menu_style_vintage">Vintage</string>
     <string name="mochy_menu_style_classic">Classic</string>
+    <string name="mochy_menu_customize_player">Customize player</string>
 </resources>

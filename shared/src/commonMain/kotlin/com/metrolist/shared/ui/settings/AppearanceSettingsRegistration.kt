@@ -11,7 +11,9 @@
 
 package com.metrolist.shared.ui.settings
 
+import com.metrolist.shared.generated.resources.mochy_menu_customize_player
 import com.metrolist.shared.generated.resources.mochy_pages_hide_descriptions
+import com.metrolist.shared.ui.player.mochy.MochyStylePicker
 import com.metrolist.shared.generated.resources.mochy_pages_hide_descriptions_desc
 import com.metrolist.shared.generated.resources.mochy_pages_info
 import androidx.compose.foundation.background
@@ -356,6 +358,12 @@ internal fun SettingsUiRegistryBuilder.registerAppearanceSettings(host: SharedSe
                         description = stringResource(Res.string.settings_artwork_overview),
                     )
                 }
+                // the reference's "Customize player": the picker over the player, the same one a long press on the cover opens
+                action(
+                    id = "customizePlayer",
+                    title = stringResource(Res.string.mochy_menu_customize_player),
+                    onClick = { MochyStylePicker.show() },
+                )
                 if (SettingsPageId.MINI_PLAYER_STYLE in host.availablePages) {
                     navigation(
                         id = "miniPlayerStyle",
