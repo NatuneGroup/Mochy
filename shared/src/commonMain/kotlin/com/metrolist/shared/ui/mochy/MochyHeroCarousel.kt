@@ -216,7 +216,7 @@ internal fun MochyHeroCarousel(
         } else {
             16.dp
         }
-    val surfaceFallback = MaterialTheme.colorScheme.surfaceContainerHigh
+    val surfaceFallback = BoneColor
 
     Box(
         modifier =

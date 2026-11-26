@@ -33,7 +33,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -43,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -135,7 +135,7 @@ internal fun MochyHomeTrackShelf(
                     val menu = onItemMenu?.let { show -> { show(song) } }
                     val enabled = isItemEnabled(song) && !song.isUnavailable
                     val click = { onItemClick(song) }
-                    val onSurface = MaterialTheme.colorScheme.onSurface
+                    val onSurface = Color.White
                     Row(
                         modifier =
                             Modifier
@@ -272,7 +272,7 @@ private fun MochyHomeArtwork(
     isPlaying: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier.size(size).clip(shape).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
+    Box(modifier.size(size).clip(shape).background(BoneColor)) {
         if (item is PlaylistItem) {
             PlaylistCoverImage(item, Modifier.fillMaxSize())
         } else {
@@ -300,7 +300,7 @@ private fun MochyHomeTitle(
         letterSpacing = (-0.03).em,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
-        color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha),
+        color = Color.White.copy(alpha = alpha),
         textAlign = textAlign,
     )
 }
@@ -317,7 +317,7 @@ private fun MochyHomeSubtitle(subtitle: String) {
         letterSpacing = (-0.02).em,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
-        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+        color = Color.White.copy(alpha = 0.5f),
     )
 }
 
@@ -340,7 +340,7 @@ private fun Modifier.homeMediaClick(
     cornerRadius: Dp,
     highlightSpill: Dp,
 ): Modifier {
-    val highlightColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+    val highlightColor = Color.White.copy(alpha = 0.12f)
     val shape = remember(cornerRadius) { RoundedCornerShape(cornerRadius) }
     val highlight =
         remember(highlightColor, cornerRadius, highlightSpill) {
