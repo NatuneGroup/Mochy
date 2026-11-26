@@ -5,8 +5,11 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -18,6 +21,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.metrolist.shared.api.artwork.YouTubeCanvasClip
@@ -52,6 +56,10 @@ import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.menu.LyricsMenu
 import com.metrolist.shared.ui.menu.MediaDownloadState
 import com.metrolist.shared.ui.menu.MediaMenuSheetContent
+import com.metrolist.shared.ui.menu.MochyMenuColors
+import com.metrolist.shared.ui.menu.MochyMenuGrabber
+import com.metrolist.shared.ui.menu.MochyMenuSheetCorner
+import com.metrolist.shared.ui.menu.mochyMenuMotion
 import com.metrolist.shared.ui.menu.equalizerMenuAction
 import com.metrolist.shared.ui.menu.rememberDeleteUploadAction
 import com.metrolist.shared.ui.menu.songMediaMenuModel
@@ -177,7 +185,9 @@ internal class MobilePlayerPlatform(
         val playbackState by controller.state.collectAsState()
         val inRoom by listenTogether.isInRoom.collectAsState()
         val scope = rememberCoroutineScope()
-        val menuSheetState = rememberModalSheetState()
+        // the player's menu in Mochy's look: a black sheet on the reference's 440ms ease
+        val mochyLook = MaterialTheme.colorScheme.background.luminance() < 0.5f
+        val menuSheetState = rememberModalSheetState(motion = if (mochyLook) mochyMenuMotion() else null)
         var showEqualizer by remember { mutableStateOf(false) }
         var showTempoPitch by remember { mutableStateOf(false) }
         if (showEqualizer) {
@@ -257,9 +267,10 @@ internal class MobilePlayerPlatform(
                 )
             }
         }
-        MenuSheet(onDismiss, sheetState = menuSheetState) {
+        MenuSheet(onDismiss, sheetState = menuSheetState, mochyLook = mochyLook) {
             MediaMenuSheetContent(
-                songMediaMenuModel(
+                mochyLook = mochyLook,
+                model = songMediaMenuModel(
                     song = song,
                     deleteUploadAction = deleteUploadAction,
                     isLiked = uiState.isLiked,
@@ -502,11 +513,22 @@ internal class MobilePlayerPlatform(
     private fun MenuSheet(
         onDismiss: () -> Unit,
         sheetState: ModalSheetState = rememberModalSheetState(),
+        // the player's menu in Mochy's look: black, rounded 30dp, with the reference's grabber
+        mochyLook: Boolean = false,
         content: @Composable ColumnScope.() -> Unit,
-    ) = ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, shape = ComponentShapes.BottomSheetShape) {
-        Column(
-            modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(bottom = 16.dp),
-            content = content,
-        )
+    ) {
+        val dragHandle: @Composable () -> Unit = if (mochyLook) ({ MochyMenuGrabber() }) else ({ BottomSheetDefaults.DragHandle() })
+        ModalBottomSheet(
+            onDismissRequest = onDismiss,
+            sheetState = sheetState,
+            shape = if (mochyLook) RoundedCornerShape(topStart = MochyMenuSheetCorner, topEnd = MochyMenuSheetCorner) else ComponentShapes.BottomSheetShape,
+            containerColor = if (mochyLook) MochyMenuColors.Surface else MaterialTheme.colorScheme.surfaceContainerLow,
+            dragHandle = dragHandle,
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(bottom = 16.dp),
+                content = content,
+            )
+        }
     }
 }

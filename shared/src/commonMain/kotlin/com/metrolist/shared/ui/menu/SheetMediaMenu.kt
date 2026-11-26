@@ -53,7 +53,24 @@ import com.metrolist.shared.ui.utils.artistArtworkShape
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun MediaMenuSheetContent(model: MediaMenuModel) {
+fun MediaMenuSheetContent(
+    model: MediaMenuModel,
+    // the player's menu in Mochy's look: its own header and rows, same actions
+    mochyLook: Boolean = false,
+) {
+    if (mochyLook) {
+        MochyMediaMenuSheetContent(
+            title = model.title,
+            subtitle = model.subtitle,
+            subtitleLinks = model.subtitleLinks,
+            thumbnail = model.thumbnail,
+            description = model.description,
+            headerActions = model.headerActions,
+            primaryActions = model.primaryActions,
+            actionGroups = model.actionGroups,
+        )
+        return
+    }
     ExpressiveMediaMenuHeader(
         title = model.title,
         subtitle = model.subtitle,
