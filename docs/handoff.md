@@ -91,7 +91,7 @@ Snapshot updated 2026-11-25.
 Waves 1 to 4 have landed (see Completed work). Still open:
 
 - **Stage follow-ups.** The Stage room (native `stageEngine` module, `libmochystage.so`, KEMAR HRTF asset) runs on Android in stereo PCM16 with the headphone model. Not yet ported: the room and scene drawing, editing objects one by one, speaker-output detection and surround downmix. Desktop and iOS show the card disabled.
-- **Flagship landscape extras.** The layout already matches the reference: cover on the left, with the info, lyrics and queue panel on the right. Still missing are the reference's cover looks (full-bleed, disc, record, TV), which need a cover-style setting first, plus the lyrics band, frost, reflection and auto-hiding control deck.
+- **Flagship landscape extras.** The layout already matches the reference: cover on the left, with the info, lyrics and queue panel on the right. The cover-style choice now offers full-bleed and the reference's five disc looks. The record look is the Turntable player style, and the reference has no TV cover look. The lyrics band, frost and reflection are Compose-layer approximations (the reference uses an Android bitmap mesh and a glass render node). The title and artist glide with the controls retract, and the auto-hiding control deck (3.5 s) is in place.
 - **Share Studio extras.** Video/karaoke export (`share/song/export/**`, Android GL) is not
   ported. The lyrics share card keeps the Metrolist look.
 - **Audio Lab module switch.** `MochyModuleRegistry` has no effect-module kind, so disabling a
@@ -177,7 +177,7 @@ workflow tests and Android collector test do not.
 1. Install `Mochy.apk` from the latest release run on a phone. Check Audio Lab (Spatial,
    Reverb, 8D), the song share card and the ID card flip.
 2. On a phone, check that Stage loads (the card is enabled) and test a preset with headphones.
-3. Flagship cover looks and lyrics band (needs a cover-style setting).
+3. Flagship landscape frost, reflection and lyrics band are approximations of the reference's bitmap-mesh versions.
 4. Answer any new review comments on PR #1.
 
 Do not bump `appVersion`, rewrite history, change Blacksmith runners, add paywalls,
