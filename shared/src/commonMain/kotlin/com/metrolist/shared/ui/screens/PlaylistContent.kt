@@ -86,7 +86,10 @@ import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.menu.artworkMenuActions
 import com.metrolist.shared.ui.menu.onSecondaryClick
 import com.metrolist.shared.ui.mochy.MochyCollapsingTopBar
-import com.metrolist.shared.ui.mochy.MochyDetailCoverBackdrop
+import com.metrolist.shared.ui.mochy.MochyDetailPhotoBackdrop
+import com.metrolist.shared.ui.mochy.MochyDetailTrackRow
+import com.metrolist.shared.ui.mochy.rememberRevealSeenState
+import com.metrolist.shared.ui.mochy.revealOnAppear
 import com.metrolist.shared.ui.navigation.NavigationBackHandler
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import com.metrolist.shared.ui.tv.TvReorderScrollTarget
@@ -225,6 +228,7 @@ fun PlaylistContent(
     val effectiveQuery = onSearchQueryChange?.let { searchQuery } ?: internalSearchQuery
     val searchListState = rememberLazyListState()
     val activeListState = if (effectiveQuery.isBlank()) listState else searchListState
+    val revealSeen = rememberRevealSeenState()
     val updateQuery: (String) -> Unit = { newQuery ->
         if (onSearchQueryChange != null) {
             onSearchQueryChange(newQuery)
@@ -309,10 +313,12 @@ fun PlaylistContent(
                 }
             },
             selectionControls = selectionControls.takeIf { selectionActive },
-            artworkBackdrop = { MochyDetailCoverBackdrop(backdropThumbnail) },
+            artworkBackdrop = { MochyDetailPhotoBackdrop(backdropThumbnail, activeListState) },
         ) {
             BoxWithConstraints(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
                 val isWide = maxWidth >= 960.dp
+                // the reference side layout: the cover takes 46% of the width, between 280 and 560dp
+                val sideWidth = (maxWidth * 0.46f).coerceIn(280.dp, 560.dp)
                 val isMedium = maxWidth >= 600.dp && !isWide
                 val updateSearchQuery: (String) -> Unit = { newQuery ->
                     searchListState.preparePlaylistSearch(effectiveQuery, newQuery, isWide, listState)
@@ -408,7 +414,7 @@ fun PlaylistContent(
                             Column(
                                 modifier =
                                     Modifier
-                                        .width(384.dp)
+                                        .width(sideWidth)
                                         .padding(horizontal = 24.dp)
                                         .verticalScrollWithDrag(rememberScrollState()),
                                 horizontalAlignment = Alignment.Start,
@@ -450,7 +456,7 @@ fun PlaylistContent(
                                 }
                             }
 
-                            Column(modifier = Modifier.weight(1f)) {
+                            Column(modifier = Modifier.weight(1f).padding(top = 62.dp)) {
                                 if (loadingHeader == null &&
                                     (orderControls != null || aboveOrderControls != null || searchEnabled || isSearchOpen)
                                 ) {
@@ -505,6 +511,7 @@ fun PlaylistContent(
                                                     count = displayedSongs.size,
                                                     sourceIndex = displayedIndices?.get(index) ?: index,
                                                     itemKey = songKeys[index],
+                                                    modifier = Modifier.revealOnAppear(key = "track_${song.id}", seenState = revealSeen, delayMillis = minOf(index, 8) * 28),
                                                     currentSongId = currentSongIdState,
                                                     currentQueueItemId = currentQueueItemIdState,
                                                     preferQueueItemId = preferQueueItemIdState,
@@ -707,7 +714,7 @@ fun PlaylistContent(
                                         count = displayedSongs.size,
                                         sourceIndex = displayedIndices?.get(index) ?: index,
                                         itemKey = songKeys[index],
-                                        modifier = itemModifier.padding(horizontal = CollectionHeaderHorizontalPadding),
+                                        modifier = itemModifier.revealOnAppear(key = "track_${song.id}", seenState = revealSeen, delayMillis = minOf(index, 8) * 28),
                                         currentSongId = currentSongIdState,
                                         currentQueueItemId = currentQueueItemIdState,
                                         preferQueueItemId = preferQueueItemIdState,
@@ -850,9 +857,8 @@ private fun LazyItemScope.PlaylistSongItem(
     val haptics = rememberMetrolistHaptics()
     if (reorderableState == null) {
         container {
-            SongListItem(
+            MochyDetailTrackRow(
                 song = song,
-                index = null,
                 isCurrent = playback.isCurrent,
                 isPlaying = playback.isPlaying,
                 isDownloaded = isDownloaded,
@@ -861,8 +867,7 @@ private fun LazyItemScope.PlaylistSongItem(
                 onLongClick = onLongClick,
                 onArtistClick = onArtistClick,
                 trailingContent = trailingContent,
-                showThumbnail = true,
-                clickableMetadata = isDesktop,
+                modifier = modifier,
             )
         }
     } else {
@@ -882,9 +887,8 @@ private fun LazyItemScope.PlaylistSongItem(
                         },
                     )
             container {
-                SongListItem(
+                MochyDetailTrackRow(
                     song = song,
-                    index = null,
                     isCurrent = playback.isCurrent,
                     isPlaying = playback.isPlaying,
                     isDownloaded = isDownloaded,
@@ -901,19 +905,6 @@ private fun LazyItemScope.PlaylistSongItem(
                                 onReorderDragStarted()
                             },
                         ),
-                    showThumbnail = true,
-                    clickableMetadata = isDesktop,
-                    longClickEnabled = isTv,
-                    leadingContent = {
-                        ReorderMenu(
-                            onMoveUp = onMoveUp,
-                            onMoveDown = onMoveDown,
-                            onMoveToTop = onMoveToTop,
-                            onMoveToBottom = onMoveToBottom,
-                            dragHandleModifier = if (isTv) Modifier else dragHandleModifier,
-                            expandedState = moveMenuExpanded,
-                        )
-                    },
                 )
             }
         }
