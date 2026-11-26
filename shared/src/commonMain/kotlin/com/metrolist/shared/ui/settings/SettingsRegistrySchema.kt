@@ -324,6 +324,7 @@ class SettingsGroupRegistryBuilder internal constructor(
     fun choice(
         id: String,
         title: String,
+        icon: DrawableResource? = null,
         description: String? = null,
         valueLabel: String? = null,
         choices: List<SettingsChoice>,
@@ -334,6 +335,7 @@ class SettingsGroupRegistryBuilder internal constructor(
         items +=
             SettingsItemRegistration(
                 id = id,
+                icon = icon,
                 title = title,
                 description = description,
                 control = SettingsControl.CHOICE,
@@ -348,6 +350,7 @@ class SettingsGroupRegistryBuilder internal constructor(
     fun slider(
         id: String,
         title: String,
+        icon: DrawableResource? = null,
         description: String? = null,
         valueLabel: String? = null,
         value: Float,
@@ -361,6 +364,7 @@ class SettingsGroupRegistryBuilder internal constructor(
         items +=
             SettingsItemRegistration(
                 id = id,
+                icon = icon,
                 title = title,
                 description = description,
                 control = SettingsControl.SLIDER,
@@ -378,6 +382,7 @@ class SettingsGroupRegistryBuilder internal constructor(
     fun text(
         id: String,
         title: String,
+        icon: DrawableResource? = null,
         description: String? = null,
         value: String,
         placeholder: String? = null,
@@ -389,6 +394,7 @@ class SettingsGroupRegistryBuilder internal constructor(
         items +=
             SettingsItemRegistration(
                 id = id,
+                icon = icon,
                 title = title,
                 description = description,
                 control = SettingsControl.TEXT,
@@ -404,6 +410,7 @@ class SettingsGroupRegistryBuilder internal constructor(
     fun navigation(
         id: String,
         title: String,
+        icon: DrawableResource? = null,
         destination: SettingsPageId,
         description: String? = null,
         valueLabel: String? = null,
@@ -412,6 +419,7 @@ class SettingsGroupRegistryBuilder internal constructor(
         items +=
             SettingsItemRegistration(
                 id = id,
+                icon = icon,
                 title = title,
                 description = description,
                 control = SettingsControl.NAVIGATION,
@@ -424,6 +432,7 @@ class SettingsGroupRegistryBuilder internal constructor(
     fun action(
         id: String,
         title: String,
+        icon: DrawableResource? = null,
         description: String? = null,
         valueLabel: String? = null,
         confirmationMessage: String? = null,
@@ -433,6 +442,7 @@ class SettingsGroupRegistryBuilder internal constructor(
         items +=
             SettingsItemRegistration(
                 id = id,
+                icon = icon,
                 title = title,
                 description = description,
                 control = SettingsControl.ACTION,

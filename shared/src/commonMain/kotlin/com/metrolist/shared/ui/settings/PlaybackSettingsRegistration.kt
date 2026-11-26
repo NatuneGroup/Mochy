@@ -143,6 +143,7 @@ internal fun SettingsUiRegistryBuilder.registerPlaybackSettings(host: SharedSett
             switch(
                 id = "autoSkipOnError",
                 title = stringResource(Res.string.auto_skip_next_on_error),
+                icon = Res.drawable.mochy_pages_skip_next,
                 description = stringResource(Res.string.auto_skip_next_on_error_desc),
                 checked = settings.autoSkipNextOnError,
             ) { settings.autoSkipNextOnError = it }
