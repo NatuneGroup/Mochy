@@ -5737,13 +5737,9 @@
     <!-- Translators: While holding Next, playback is at twice the selected speed. -->
     <string name="mochy_hold_fast">2×</string>
     <!-- Translators: Setting toggle for smoothly fading audio on play and pause. -->
-    <string name="mochy_transport_fade_title">Play and pause fade</string>
     <!-- Translators: Supporting description for the play and pause fade setting. -->
-    <string name="mochy_transport_fade_desc">Smoothly fade audio out on pause and swell it back in on resume</string>
     <!-- Translators: Setting slider label for the play and pause fade length. -->
-    <string name="mochy_transport_fade_duration">Fade duration</string>
     <!-- Translators: Formatted duration in seconds for the play and pause fade slider, e.g. 2.0 s. -->
-    <string name="mochy_transport_fade_seconds_value">%1$s s</string>
     <!-- Translators: Header label on the Mochy local profile ID card showing the user number. %1$s is a 4-digit member number. -->
     <string name="mochy_card_profile_usr">PROFILE USR#%1$s</string>
     <!-- Translators: Label above the username on the silver Mochy profile ID card. -->
