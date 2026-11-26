@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -659,37 +660,17 @@ internal fun MochySettingsNavigationPane(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp + host.bottomContentPadding),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                registry.rootGroups.filter { it.pages.isNotEmpty() }.forEachIndexed { groupIndex, group ->
-                    if (groupIndex > 0) {
-                        item("divider:" + group.title) {
-                            Box(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 6.dp)
-                                    .height(0.8.dp)
-                                    .background(MochySettingsColors.Divider),
-                            )
-                        }
-                    }
-                    items(group.pages.size, key = { group.pages[it].name }) { index ->
-                        val pageId = group.pages[index]
-                        registry[pageId]?.let { page ->
-                            MochyCategoryBubble(
-                                title = page.title,
-                                selected = pageId == selectedPageId,
-                                icon = { tint ->
-                                    val custom = host.customPageIcons[pageId]
-                                    if (custom != null) {
-                                        custom(tint)
-                                    } else {
-                                        Icon(page.icon, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
-                                    }
-                                },
-                                onClick = { onPageSelected(pageId) },
-                            )
-                        }
+                // the same flat list, order and icons as the phone home
+                items(mochyHomePages(registry, host), key = { it.name }) { pageId ->
+                    registry[pageId]?.let { page ->
+                        MochyCategoryBubble(
+                            title = page.title,
+                            icon = { tint -> MochyPageIcon(pageId, page.icon, host, tint) },
+                            selected = pageId == selectedPageId,
+                            onClick = { onPageSelected(pageId) },
+                        )
                     }
                 }
             }
