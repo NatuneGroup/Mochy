@@ -68,6 +68,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.runtime.mutableFloatStateOf
 import com.metrolist.shared.cast.CastState
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.album_art
@@ -108,8 +110,7 @@ private val EvenShade = Color.Black.copy(alpha = 0.38f)
 private const val LANDSCAPE_TRANSPORT_IDLE_MS = 3_500L
 private const val RETRACT_MS = 420
 // the title and artist rest just above the seek bar and glide this far down and to the left as the controls retract
-private val RetractTitleBottom = 150.dp
-private val RetractDrop = 120.dp
+private val LandscapeCoverGutter = 20.dp
 private val RetractEasing = CubicBezierEasing(0.4f, 0f, 0.2f, 1f)
 
 private enum class FlagshipLandscapePanel {
@@ -199,6 +200,8 @@ internal fun FlagshipLandscapePlayer(
     }
     val transportShown = transportRevealed || !lyricsShowing
     // 0 with the controls up, 1 with them tucked away on the lyrics page: the title, the frost and the band follow it
+    // the seek bar and transport's measured height: the title rests just above them and drops by this as they go
+    var controlsHeightPx by remember { mutableFloatStateOf(0f) }
     val controlsRetract by animateFloatAsState(
         targetValue = if (lyricsShowing && !transportShown) 1f else 0f,
         animationSpec = tween(RETRACT_MS, easing = RetractEasing),
@@ -314,6 +317,7 @@ internal fun FlagshipLandscapePlayer(
                         spinActive = LocalPlayerContentActive.current,
                         contentDescription = stringResource(Res.string.album_art),
                         artworkOverlay = artworkOverlay.takeUnless { uiState.isLyricsVisible },
+                        discTitle = currentSong?.title.orEmpty(),
                         modifier = Modifier.fillMaxSize(),
                     )
                 } else {
@@ -515,7 +519,7 @@ internal fun FlagshipLandscapePlayer(
                     shrinkVertically(tween(RETRACT_MS, easing = RetractEasing)) +
                         fadeOut(tween(RETRACT_MS, easing = RetractEasing)),
             ) {
-                Column {
+                Column(modifier = Modifier.onSizeChanged { if (transportShown) controlsHeightPx = it.height.toFloat() }) {
                     Column(modifier = Modifier.padding(horizontal = PanelGutter - 12.dp)) {
                         PlayerProgressSlider(
                             viewModel = viewModel,
@@ -563,17 +567,23 @@ internal fun FlagshipLandscapePlayer(
 
         // on the lyrics page the title and artist sit above the seek bar; as the controls tuck away they glide down and left
         if (uiState.isLyricsVisible) {
+            // the title's size eases from the panel's to the compact size the reference uses on the lyrics page
+            val r = controlsRetract
+            val titleSize = 22f - 5f * r
+            val artistSize = 15f - 2f * r
+            val controlsHeight = with(LocalDensity.current) { controlsHeightPx.toDp() }
             Column(
                 modifier =
                     Modifier
                         .align(Alignment.BottomStart)
-                        .padding(start = coverWidth + PanelGutter, bottom = bottomInset + RetractTitleBottom)
+                        .padding(start = coverWidth + PanelGutter, bottom = bottomInset + 8.dp + controlsHeight)
                         .padding(end = endInset + SideButtonsRoom)
                         .fillMaxWidth()
                         .graphicsLayer {
                             val r = controlsRetract
-                            translationX = -(coverWidth - startInset).toPx() * r
-                            translationY = RetractDrop.toPx() * r
+                            // the reference's drop: the controls' height less 6dp, and the bottom-left inset it settles at
+                            translationX = -(coverWidth + PanelGutter - startInset - LandscapeCoverGutter).toPx() * r
+                            translationY = (controlsHeightPx - 6.dp.toPx()) * r
                         },
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
@@ -582,8 +592,8 @@ internal fun FlagshipLandscapePlayer(
                     style =
                         MaterialTheme.typography.titleLarge.copy(
                             fontFamily = flagshipFont,
-                            fontSize = 21.sp,
-                            lineHeight = 26.sp,
+                            fontSize = titleSize.sp,
+                            lineHeight = (titleSize + 4f).sp,
                         ),
                     fontWeight = FontWeight.Bold,
                     color = contentColor,
@@ -610,7 +620,7 @@ internal fun FlagshipLandscapePlayer(
                     style =
                         MaterialTheme.typography.titleMedium.copy(
                             fontFamily = flagshipFont,
-                            fontSize = 15.sp,
+                            fontSize = artistSize.sp,
                         ),
                     color = contentColor.copy(alpha = 0.72f),
                 )
