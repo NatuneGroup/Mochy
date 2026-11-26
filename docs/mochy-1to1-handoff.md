@@ -41,7 +41,7 @@ is the Stable release, is identical to the old `dev`, and is left for the operat
 - KMP has no backdrop blur. The glass and frost effects are Compose-layer approximations built on `supportsNativeBlur()`.
 - Not ported: AGSL lyric shaders (Android-only), the CrossMix engine and card, the share session, card-to-page morphs,
   the reference's real-render style previews, and the module styles and editor.
-- Landscape glide distances may still be estimates. An agent was asked to use the reference values.
+- Landscape glide now uses the reference values (measured controls height less 6dp); not checked on a device.
 - None of this has been checked on a device. Compare phone screenshots with the reference before calling a screen matched.
 
 ## Working setup on the VPS
