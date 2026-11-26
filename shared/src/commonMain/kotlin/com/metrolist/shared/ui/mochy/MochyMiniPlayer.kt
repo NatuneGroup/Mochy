@@ -40,11 +40,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -101,6 +105,8 @@ fun MochyMiniPlayer(
     modifier: Modifier = Modifier,
     // a caller that already drags the whole mini player turns this off so the swipe is not taken twice
     swipeEnabled: Boolean = true,
+    // a d-pad or remote Enter on the focused pill expands it, as on the expressive mini
+    onDpadExpand: () -> Unit = onExpand,
 ) {
     val blur = remember { supportsNativeBlur() }
     val layoutDirection = LocalLayoutDirection.current
@@ -110,6 +116,7 @@ fun MochyMiniPlayer(
     val shape = RoundedCornerShape(50)
     val artwork = song.previewThumbnailUrl
     val skipCycle = remember { SkipCycleState() }
+    var isFocused by remember { mutableStateOf(false) }
 
     Box(
         modifier =
@@ -125,6 +132,15 @@ fun MochyMiniPlayer(
                 ).clip(shape)
                 .background(MaterialTheme.colorScheme.surfaceContainer.copy(alpha = MochyMiniTintAlpha))
                 .border(1.dp, MochyMiniHairline, shape)
+                .onFocusChanged { isFocused = it.isFocused }
+                .onPreviewKeyEvent { event ->
+                    if (isFocused && event.type == KeyEventType.KeyUp && (event.key == Key.Enter || event.key == Key.DirectionCenter)) {
+                        onDpadExpand()
+                        true
+                    } else {
+                        false
+                    }
+                }
                 .then(if (swipeEnabled) Modifier.pointerInput(canSkipNext, canSkipPrevious, layoutDirection, swipeThresholdPx) {
                     detectHorizontalDragGestures(
                         onDragStart = {

@@ -494,6 +494,10 @@ fun MiniPlayer(
                 playbackEnabled = true,
                 swipeThresholdPx = swipeThreshold,
                 swipeEnabled = false,
+                onDpadExpand = {
+                    hapticManager.perform(HapticEvent.PRESS)
+                    onDpadExpand()
+                },
                 modifier =
                     Modifier
                         .then(if (cardFocusRequester != null) Modifier.focusRequester(cardFocusRequester) else Modifier)
