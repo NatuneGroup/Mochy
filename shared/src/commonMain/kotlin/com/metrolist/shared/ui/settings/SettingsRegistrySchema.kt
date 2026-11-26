@@ -324,12 +324,12 @@ class SettingsGroupRegistryBuilder internal constructor(
     fun choice(
         id: String,
         title: String,
-        icon: DrawableResource? = null,
         description: String? = null,
         valueLabel: String? = null,
         choices: List<SettingsChoice>,
         selectedChoiceId: String,
         enabled: Boolean = true,
+        icon: DrawableResource? = null,
         onChoiceSelected: (String) -> Unit,
     ) {
         items +=
@@ -350,7 +350,6 @@ class SettingsGroupRegistryBuilder internal constructor(
     fun slider(
         id: String,
         title: String,
-        icon: DrawableResource? = null,
         description: String? = null,
         valueLabel: String? = null,
         value: Float,
@@ -359,6 +358,7 @@ class SettingsGroupRegistryBuilder internal constructor(
         enabled: Boolean = true,
         valueFormatter: (@Composable (Float) -> String)? = null,
         preview: (@Composable (Float) -> Unit)? = null,
+        icon: DrawableResource? = null,
         onValueChange: (Float) -> Unit,
     ) {
         items +=
@@ -382,13 +382,13 @@ class SettingsGroupRegistryBuilder internal constructor(
     fun text(
         id: String,
         title: String,
-        icon: DrawableResource? = null,
         description: String? = null,
         value: String,
         placeholder: String? = null,
         enabled: Boolean = true,
         secret: Boolean = false,
         multiline: Boolean = false,
+        icon: DrawableResource? = null,
         onValueChange: (String) -> Unit,
     ) {
         items +=
@@ -410,11 +410,11 @@ class SettingsGroupRegistryBuilder internal constructor(
     fun navigation(
         id: String,
         title: String,
-        icon: DrawableResource? = null,
         destination: SettingsPageId,
         description: String? = null,
         valueLabel: String? = null,
         enabled: Boolean = true,
+        icon: DrawableResource? = null,
     ) {
         items +=
             SettingsItemRegistration(
@@ -432,11 +432,11 @@ class SettingsGroupRegistryBuilder internal constructor(
     fun action(
         id: String,
         title: String,
-        icon: DrawableResource? = null,
         description: String? = null,
         valueLabel: String? = null,
         confirmationMessage: String? = null,
         enabled: Boolean = true,
+        icon: DrawableResource? = null,
         onClick: () -> Unit,
     ) {
         items +=
