@@ -2,6 +2,15 @@
 
 package com.metrolist.shared.ui.player.mochy
 
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.unit.Dp
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -313,6 +322,18 @@ internal fun FlagshipLandscapePlayer(
             }
         }
 
+        val coverThumb = currentSong?.displayThumbnail
+        if (coverThumb != null && !turntableMode && !showVideoSurface && coverStyle == PlayerCoverStyle.EDGE_TO_EDGE) {
+            // the cover mirrored past its right seam, the frost on lyrics or queue, then the lyrics band
+            LandscapeCoverReflection(url = coverThumb, coverWidth = coverWidth, modifier = Modifier.align(Alignment.TopStart))
+            if (uiState.isLyricsVisible || isQueueVisible) {
+                LandscapeCoverFrost(url = coverThumb, coverWidth = coverWidth, modifier = Modifier.align(Alignment.TopStart))
+            }
+            if (uiState.isLyricsVisible) {
+                LandscapeLyricsBand(url = coverThumb, coverWidth = coverWidth, modifier = Modifier.align(Alignment.BottomStart))
+            }
+        }
+
         FlagshipCoverButtons(
             liked = isLiked,
             menuOpen = isMenuOpen,
@@ -524,4 +545,108 @@ internal fun FlagshipLandscapePlayer(
             )
         }
     }
+}
+
+// the constants and masks below are the reference's landscape values: the cover's mirror, its frost and the lyrics band
+private const val REFLECTION_STRENGTH = 0.9f
+private const val REFLECTION_FADE_END = 0.85f
+private val FROST_MASK =
+    Brush.horizontalGradient(
+        0f to Color.Transparent,
+        0.06f to Color.Black,
+        0.76f to Color.Black,
+        0.84f to Color.Black.copy(alpha = 0.72f),
+        0.92f to Color.Black.copy(alpha = 0.28f),
+        1f to Color.Transparent,
+    )
+
+// a horizontal fade that holds full strength until [fadeStart] and eases to nothing at the right edge
+private fun smoothFadeRight(fadeStart: Float): Brush =
+    Brush.horizontalGradient(
+        *Array(9) { i ->
+            val t = i / 8f
+            (fadeStart + (1f - fadeStart) * t) to Color.Black.copy(alpha = 1f - t * t * (3f - 2f * t))
+        },
+    )
+
+// draws what's inside only where [mask] is opaque, on its own layer so the mask cuts the content, not what's behind
+private fun Modifier.maskedBy(mask: Brush): Modifier =
+    this
+        .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+        .drawWithContent {
+            drawContent()
+            drawRect(mask, blendMode = BlendMode.DstIn)
+        }
+
+// the cover flipped across its right seam, fading into the backdrop past it
+@Composable
+private fun LandscapeCoverReflection(url: String, coverWidth: Dp, modifier: Modifier) {
+    val blurPx = with(LocalDensity.current) { 40.dp.toPx() }
+    Box(
+        modifier =
+            modifier
+                .offset { IntOffset(coverWidth.roundToPx(), 0) }
+                .width(coverWidth * REFLECTION_FADE_END)
+                .fillMaxHeight()
+                .clipToBounds()
+                .maskedBy(
+                    Brush.horizontalGradient(
+                        *Array(9) { i ->
+                            val t = i / 8f
+                            (REFLECTION_FADE_END * t) to Color.Black.copy(alpha = REFLECTION_STRENGTH * (1f - t * t * (3f - 2f * t)))
+                        },
+                    ),
+                ),
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .width(coverWidth)
+                    .fillMaxHeight()
+                    .graphicsLayer { scaleX = -1f },
+        ) {
+            BlurredArtworkBackground(url = url, modifier = Modifier.fillMaxSize(), blurRadiusPx = blurPx, pendingScrimAlpha = 0f)
+        }
+    }
+}
+
+// a blurred frost over the cover's right edge while lyrics or the queue are open
+@Composable
+private fun LandscapeCoverFrost(url: String, coverWidth: Dp, modifier: Modifier) {
+    val blurPx = with(LocalDensity.current) { 40.dp.toPx() }
+    Box(
+        modifier =
+            modifier
+                .offset { IntOffset((coverWidth * 0.64f).roundToPx(), 0) }
+                .width(coverWidth * 0.5f)
+                .fillMaxHeight()
+                .clipToBounds()
+                .maskedBy(FROST_MASK),
+    ) {
+        BlurredArtworkBackground(url = url, modifier = Modifier.fillMaxSize(), blurRadiusPx = blurPx, pendingScrimAlpha = 0f)
+    }
+}
+
+// the lower-left band the lyrics sit on: a blurred strip under a dark shade that fades toward the cover's middle
+@Composable
+private fun LandscapeLyricsBand(url: String, coverWidth: Dp, modifier: Modifier) {
+    val blurPx = 30f
+    Box(
+        modifier =
+            modifier
+                .width(coverWidth * 1.10f)
+                .fillMaxHeight(0.54f)
+                .clipToBounds()
+                .maskedBy(smoothFadeRight(0.58f)),
+    ) {
+        BlurredArtworkBackground(url = url, modifier = Modifier.fillMaxSize(), blurRadiusPx = blurPx, pendingScrimAlpha = 0f)
+    }
+    Box(
+        modifier =
+            modifier
+                .width(coverWidth * 1.22f)
+                .fillMaxHeight(0.64f)
+                .background(Brush.verticalGradient(0f to Color.Black.copy(alpha = 0.62f), 1f to Color.Transparent))
+                .maskedBy(smoothFadeRight(0.56f)),
+    )
 }
