@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -109,6 +110,7 @@ fun MochyLyricsPage(
             AsyncImage(url = artworkUrl, modifier = Modifier.fillMaxSize(), contentDescription = null)
         }
 
+        CompositionLocalProvider(LocalMochyLyricsLook provides true) {
         lyrics(
             Modifier
                 .fillMaxSize()
@@ -129,5 +131,6 @@ fun MochyLyricsPage(
                     }
                 },
         )
+        }
     }
 }

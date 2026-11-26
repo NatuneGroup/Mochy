@@ -18,6 +18,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -82,6 +83,8 @@ import com.metrolist.shared.ui.components.lyrics.words.isSameLyricsText
 import com.metrolist.shared.ui.components.lyrics.words.measureSyllableRomanizationWidth
 import com.metrolist.shared.ui.components.lyrics.words.rememberFormattedMainText
 import com.metrolist.shared.ui.components.lyrics.words.romanizedSyllableText
+import com.metrolist.shared.ui.mochy.LocalMochyLyricsLook
+import com.metrolist.shared.ui.mochy.MochyGlowLine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.abs
@@ -783,6 +786,21 @@ internal fun InlineLyricsLine(
     translationShimmer: State<Float>? = null,
     backgroundTranslationShimmer: State<Float>? = null,
 ) {
+    // the Mochy look draws the sung line word by word with its glow; every other line keeps its renderer
+    if (LocalMochyLyricsLook.current && isActive && !isSelectionMode && !entry.isBackground && !entry.words.isNullOrEmpty()) {
+        MochyGlowLine(
+            entry = entry,
+            positionProvider = currentPosition,
+            color = textColor,
+            textAlign = alignment,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 8.dp)
+                    .then(if (isInteractive) Modifier.clickable(onClick = onSeek) else Modifier),
+        )
+        return
+    }
     val animStyle =
         remember(Settings.shared.lyricsAnimationStyle) {
             LyricsAnimationStyle.fromString(Settings.shared.lyricsAnimationStyle)
