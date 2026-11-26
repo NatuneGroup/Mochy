@@ -6223,4 +6223,8 @@
     <string name="mochy_lab_stage_spatial_note">3D Sims is on, so it places the sound instead.</string>
     <string name="mochy_lab_eightd_reset">Reset 8D Audio settings</string>
     <string name="mochy_lab_eightd_rotation_value">%1$s Hz (~%2$ss/round)</string>
+    <!-- Mochy lyrics -->
+    <string name="mochy_lyrics_source">Source</string>
+    <string name="mochy_lyrics_submitted_by">Submitted by</string>
+    <string name="mochy_lyrics_switch">Switch</string>
 </resources>
