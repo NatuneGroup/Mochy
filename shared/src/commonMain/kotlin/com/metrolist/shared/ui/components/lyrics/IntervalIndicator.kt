@@ -28,6 +28,8 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.dp
 import com.metrolist.shared.ui.components.WavyCircularProgressIndicator
 import com.metrolist.shared.ui.components.lyrics.words.FixedMotionDurationScale
+import com.metrolist.shared.ui.mochy.LocalMochyLyricsLook
+import com.metrolist.shared.ui.mochy.MochyLyricsInterludeDots
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -58,6 +60,18 @@ internal fun IntervalIndicator(
     color: Color,
     modifier: Modifier = Modifier,
 ) {
+    // the Mochy look counts the gap down with its three dots; every other look keeps this indicator
+    if (LocalMochyLyricsLook.current) {
+        MochyLyricsInterludeDots(
+            startMs = gapStartMs,
+            endMs = gapEndMs,
+            positionProvider = currentPositionMs,
+            visible = visible && surfaceVisible,
+            modifier = modifier,
+            onLayoutShift = onLayoutShift,
+        )
+        return
+    }
     val animAlpha = remember { Animatable(0f) }
     val animScale = remember { Animatable(if (visible) 1f else 0f) }
     var open by remember { mutableStateOf(visible) }
