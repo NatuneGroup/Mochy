@@ -56,18 +56,19 @@ import com.metrolist.shared.state.SongMetadataState
 import com.metrolist.shared.ui.components.AlbumHeader
 import com.metrolist.shared.ui.components.CollectionHeaderHorizontalPadding
 import com.metrolist.shared.ui.components.CollectionHeaderNavigation
-import com.metrolist.shared.ui.components.GroupedListItem
 import com.metrolist.shared.ui.components.InlineSearchRow
 import com.metrolist.shared.ui.components.LazyListScrollbar
 import com.metrolist.shared.ui.components.OtherVersionItem
 import com.metrolist.shared.ui.components.PlaylistHeaderActions
 import com.metrolist.shared.ui.components.PlaylistOrderControls
-import com.metrolist.shared.ui.components.SongListItem
 import com.metrolist.shared.ui.components.mediumCollectionArtworkSize
 import com.metrolist.shared.ui.components.rememberItemPlayback
 import com.metrolist.shared.ui.menu.onSecondaryClick
 import com.metrolist.shared.ui.mochy.MochyCollapsingTopBar
-import com.metrolist.shared.ui.mochy.MochyDetailCoverBackdrop
+import com.metrolist.shared.ui.mochy.MochyDetailPhotoBackdrop
+import com.metrolist.shared.ui.mochy.MochyDetailTrackRow
+import com.metrolist.shared.ui.mochy.rememberRevealSeenState
+import com.metrolist.shared.ui.mochy.revealOnAppear
 import com.metrolist.shared.ui.navigation.NavigationBackHandler
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import com.metrolist.shared.ui.utils.DragScrollableColumn
@@ -133,6 +134,7 @@ fun AlbumContent(
     isTrackSelected: (SongItem) -> Boolean = { false },
 ) {
     val currentSongIdState = rememberUpdatedState(currentSongId)
+    val revealSeen = rememberRevealSeenState()
     val isPlayingState = rememberUpdatedState(isPlaying)
     var sort by remember(album.id) { mutableStateOf(PlaylistSongSort.ORIGINAL) }
     var sortDirection by remember(album.id) { mutableStateOf(SortDirection.ASCENDING) }
@@ -203,11 +205,13 @@ fun AlbumContent(
                 }
             },
             selectionControls = selectionControls.takeIf { selectionActive },
-            artworkBackdrop = { MochyDetailCoverBackdrop(album.thumbnail) },
+            artworkBackdrop = { MochyDetailPhotoBackdrop(album.thumbnail, activeListState) },
         ) {
             BoxWithConstraints(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
                 val isWide = maxWidth >= 960.dp
                 val isMedium = maxWidth >= 600.dp && !isWide
+                // the reference side layout: the cover takes 46% of the width, between 280 and 560dp
+                val sideWidth = (maxWidth * 0.46f).coerceIn(280.dp, 560.dp)
                 LaunchedEffect(effectiveQuery.isNotBlank(), isWide) {
                     if (effectiveQuery.isNotBlank() && !isWide) {
                         searchListState.animateScrollToItem(listOfNotNull(header).size + 1)
@@ -264,7 +268,7 @@ fun AlbumContent(
                             Column(
                                 modifier =
                                     Modifier
-                                        .width(384.dp)
+                                        .width(sideWidth)
                                         .padding(horizontal = 24.dp)
                                         .verticalScrollWithDrag(rememberScrollState()),
                                 horizontalAlignment = Alignment.Start,
@@ -288,7 +292,7 @@ fun AlbumContent(
                             }
 
                             Column(
-                                modifier = Modifier.weight(1f).fillMaxHeight(),
+                                modifier = Modifier.weight(1f).fillMaxHeight().padding(top = 62.dp),
                             ) {
                                 if (sortAvailable || searchAvailable) {
                                     InlineSearchRow(
@@ -342,34 +346,25 @@ fun AlbumContent(
                                             }, contentType = { _, _ -> "song" }) { index, song ->
                                                 val playback by rememberItemPlayback(song.id, currentSongIdState, isPlayingState)
                                                 trackContainer(song) {
-                                                    GroupedListItem(
-                                                        index = index,
-                                                        count = displayedSongs.size,
-                                                        isSelected = isTrackSelected(song),
+                                                    MochyDetailTrackRow(
+                                                        song = song,
                                                         isCurrent = playback.isCurrent,
-                                                    ) {
-                                                        SongListItem(
-                                                            song = song,
-                                                            index = index,
-                                                            isCurrent = playback.isCurrent,
-                                                            isPlaying = playback.isPlaying,
-                                                            isDownloaded = song.id in downloadedSongIds,
-                                                            onClick = {
-                                                                onTrackClick(
-                                                                    song,
-                                                                    sortedSongs,
-                                                                    sortedSongs.indexOfPlaylistOccurrence(song),
-                                                                )
-                                                            },
-                                                            onShowMenu = { onTrackMenuClick(song) },
-                                                            onArtistClick = onArtistClick,
-                                                            onLongClick = onTrackLongClick?.let { { it(song) } },
-                                                            trailingContent = trackTrailingContent?.let { { it(song, index) } },
-                                                            showThumbnail = false,
-                                                            showAlbum = false,
-                                                            clickableMetadata = isDesktop,
-                                                        )
-                                                    }
+                                                        isPlaying = playback.isPlaying,
+                                                        isDownloaded = song.id in downloadedSongIds,
+                                                        onClick = {
+                                                            onTrackClick(
+                                                                song,
+                                                                sortedSongs,
+                                                                sortedSongs.indexOfPlaylistOccurrence(song),
+                                                            )
+                                                        },
+                                                        onShowMenu = { onTrackMenuClick(song) },
+                                                        onArtistClick = onArtistClick,
+                                                        onLongClick = onTrackLongClick?.let { { it(song) } },
+                                                        trailingContent = trackTrailingContent?.let { { it(song, index) } },
+                                                        selected = isTrackSelected(song),
+                                                        modifier = Modifier.revealOnAppear(key = "track_${song.id}", seenState = revealSeen, delayMillis = minOf(index, 8) * 28),
+                                                    )
                                                 }
                                             }
                                         }
@@ -516,28 +511,19 @@ fun AlbumContent(
                                 }, contentType = { _, _ -> "song" }) { index, song ->
                                     val playback by rememberItemPlayback(song.id, currentSongIdState, isPlayingState)
                                     trackContainer(song) {
-                                        GroupedListItem(
-                                            index = index,
-                                            count = displayedSongs.size,
-                                            modifier = itemModifier.padding(horizontal = CollectionHeaderHorizontalPadding),
+                                        MochyDetailTrackRow(
+                                            song = song,
                                             isCurrent = playback.isCurrent,
-                                        ) {
-                                            SongListItem(
-                                                song = song,
-                                                index = index,
-                                                isCurrent = playback.isCurrent,
-                                                isPlaying = playback.isPlaying,
-                                                isDownloaded = song.id in downloadedSongIds,
-                                                onClick = { onTrackClick(song, sortedSongs, sortedSongs.indexOfPlaylistOccurrence(song)) },
-                                                onShowMenu = { onTrackMenuClick(song) },
-                                                onArtistClick = onArtistClick,
-                                                onLongClick = onTrackLongClick?.let { { it(song) } },
-                                                trailingContent = trackTrailingContent?.let { { it(song, index) } },
-                                                showThumbnail = false,
-                                                showAlbum = false,
-                                                clickableMetadata = isDesktop,
-                                            )
-                                        }
+                                            isPlaying = playback.isPlaying,
+                                            isDownloaded = song.id in downloadedSongIds,
+                                            onClick = { onTrackClick(song, sortedSongs, sortedSongs.indexOfPlaylistOccurrence(song)) },
+                                            onShowMenu = { onTrackMenuClick(song) },
+                                            onArtistClick = onArtistClick,
+                                            onLongClick = onTrackLongClick?.let { { it(song) } },
+                                            trailingContent = trackTrailingContent?.let { { it(song, index) } },
+                                            selected = isTrackSelected(song),
+                                            modifier = Modifier.revealOnAppear(key = "track_${song.id}", seenState = revealSeen, delayMillis = minOf(index, 8) * 28),
+                                        )
                                     }
                                 }
                             }
