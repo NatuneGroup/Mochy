@@ -315,9 +315,6 @@ fun SearchContent(
                             text = text,
                             bottomContentPadding = contentPadding.calculateBottomPadding(),
                             isWide = isWide,
-                            listState = listState,
-                            moodsAndGenres = moodsAndGenres,
-                            onMoodClick = onItemClick,
                             modifier = Modifier.fillMaxSize(),
                         )
                     }
