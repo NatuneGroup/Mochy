@@ -6216,4 +6216,11 @@
     <string name="mochy_menu_style_vintage">Vintage</string>
     <string name="mochy_menu_style_classic">Classic</string>
     <string name="mochy_menu_customize_player">Customize player</string>
+    <!-- Mochy Audio Lab fixes -->
+    <string name="mochy_lab_fine_tune">FINE TUNE</string>
+    <string name="mochy_lab_reverb_custom">Custom</string>
+    <string name="mochy_lab_spatial_speakers_note">Two virtual speakers in front of a modelled head: the far ear hears each one a little later and darker, as in a room. 30° is a studio pair.</string>
+    <string name="mochy_lab_stage_spatial_note">3D Sims is on, so it places the sound instead.</string>
+    <string name="mochy_lab_eightd_reset">Reset 8D Audio settings</string>
+    <string name="mochy_lab_eightd_rotation_value">%1$s Hz (~%2$ss/round)</string>
 </resources>

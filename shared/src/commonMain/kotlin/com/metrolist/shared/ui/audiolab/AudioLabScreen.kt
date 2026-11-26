@@ -116,14 +116,14 @@ fun AudioLabScreen(
                     }
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                         ReverbCard()
-                        SpatialCard()
+                        SpatialCard(stageOn)
                     }
                 }
             } else {
                 StageGroup(stageSupport)
                 ReverbCard()
                 EightDAudioCard()
-                SpatialCard()
+                SpatialCard(stageOn)
             }
         }
     }
