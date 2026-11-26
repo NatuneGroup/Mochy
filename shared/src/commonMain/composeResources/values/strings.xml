@@ -6116,4 +6116,10 @@
     <string name="mochy_transition_manual_length">Length</string>
     <!-- Translators: A number of seconds. %1$d is the number. -->
     <string name="mochy_transition_seconds">%1$ds</string>
+    <!-- Translators: Switch title for the pause, play, forward and backward fade. -->
+    <string name="mochy_transition_fade_title">Enable fade</string>
+    <!-- Translators: Description of the fade switch for pause, play, skip and picking another song. -->
+    <string name="mochy_transition_fade_desc">Eases the music out when you pause, skip or pick another song, and back in when you play</string>
+    <!-- Translators: A fade length in seconds shown on the transport fade slider. %1$s is the number, such as 2 or 2.5. -->
+    <string name="mochy_transition_fade_seconds">%1$ss</string>
 </resources>

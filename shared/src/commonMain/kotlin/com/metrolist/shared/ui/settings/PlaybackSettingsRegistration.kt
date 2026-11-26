@@ -19,6 +19,7 @@ import com.metrolist.shared.settings.KeepScreenOnMode
 import com.metrolist.shared.settings.LoudnessLevel
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.settings.transition.TransportFadeCard
 import com.metrolist.shared.utils.formatPlaybackPitch
 import com.metrolist.shared.utils.formatPlaybackSpeed
 import com.metrolist.shared.utils.playbackPitchToSemitones
@@ -269,27 +270,12 @@ internal fun SettingsUiRegistryBuilder.registerPlaybackSettings(host: SharedSett
                     description = stringResource(Res.string.mochy_transition_overview),
                 )
             }
-            switch(
-                id = "transportFadeEnabled",
-                title = stringResource(Res.string.mochy_transport_fade_title),
-                description = stringResource(Res.string.mochy_transport_fade_desc),
-                checked = settings.transportFadeEnabled,
-            ) {
-                settings.transportFadeEnabled = it
-            }
-            val transportFadeHalfSeconds = (settings.transportFadeSeconds * 2f).roundToInt().coerceIn(1, 20)
-            val transportFadeText = "${transportFadeHalfSeconds / 2}.${if (transportFadeHalfSeconds % 2 == 0) 0 else 5}"
-            inlineSlider(
-                id = "transportFadeSeconds",
-                title = stringResource(Res.string.mochy_transport_fade_duration),
-                valueLabel = stringResource(Res.string.mochy_transport_fade_seconds_value, transportFadeText),
-                value = transportFadeHalfSeconds / 2f,
-                defaultValue = settings.defaultValue(settings::transportFadeSeconds),
-                range = 0.5f..10f,
-                steps = 18,
-                enabled = settings.transportFadeEnabled,
-            ) { value ->
-                settings.transportFadeSeconds = ((value * 2f).roundToInt().coerceIn(1, 20)) / 2f
+            custom(
+                id = "transportFade",
+                title = stringResource(Res.string.mochy_transition_fade_title),
+                description = stringResource(Res.string.mochy_transition_fade_desc),
+            ) { onSettingValueChanged ->
+                TransportFadeCard(onSettingValueChanged)
             }
         }
         group("queue", stringResource(Res.string.queue)) {
