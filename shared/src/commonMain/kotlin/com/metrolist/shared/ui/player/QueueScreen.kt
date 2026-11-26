@@ -89,6 +89,7 @@ import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
@@ -156,6 +157,7 @@ import com.metrolist.shared.playback.QueueRemoval
 import com.metrolist.shared.playback.SleepTimerState
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.LocalIsTv
+import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import com.metrolist.shared.ui.components.ChipShelf
 import com.metrolist.shared.ui.components.ContainedLoadingIndicator
 import com.metrolist.shared.ui.components.PlayerMenuAction
@@ -927,6 +929,19 @@ fun QueueScreen(
 
 @Composable
 private fun QueueSectionHeading(text: String) {
+    if (!LocalIsTv.current && MaterialTheme.colorScheme.background.luminance() < 0.5f) {
+        // the Mochy look: the reference's queue section titles, white on the dark page
+        Text(
+            text = text,
+            fontFamily = mochyInterFontFamily(),
+            fontSize = 17.sp,
+            lineHeight = 22.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            modifier = Modifier.padding(start = 18.dp, end = 18.dp, top = 16.dp, bottom = 8.dp),
+        )
+        return
+    }
     Text(
         text = text,
         style =
@@ -1228,6 +1243,10 @@ private fun QueueTrackSwipeToDismissBox(
     content: @Composable RowScope.() -> Unit,
 ) {
     val hapticManager = rememberMetrolistHaptics()
+    // the Mochy look: the reference's remove red and white glyph, inside the row's 14 dp shape
+    val mochyLook = !LocalIsTv.current && MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val slabColor = if (mochyLook) MochyQueueRemoveRed else MaterialTheme.colorScheme.errorContainer
+    val slabIconColor = if (mochyLook) Color.White else MaterialTheme.colorScheme.onErrorContainer
     val positionalThreshold = SwipeToDismissBoxDefaults.positionalThreshold
     val dismissState =
         remember(trackKey) {
@@ -1247,9 +1266,9 @@ private fun QueueTrackSwipeToDismissBox(
     val backgroundColor by animateColorAsState(
         targetValue =
             if (isThresholdReached) {
-                MaterialTheme.colorScheme.errorContainer
+                slabColor
             } else {
-                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
+                slabColor.copy(alpha = 0.5f)
             },
         animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
         label = "swipeBackgroundColor",
@@ -1257,9 +1276,9 @@ private fun QueueTrackSwipeToDismissBox(
     val iconColor by animateColorAsState(
         targetValue =
             if (isThresholdReached) {
-                MaterialTheme.colorScheme.onErrorContainer
+                slabIconColor
             } else {
-                MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.7f)
+                slabIconColor.copy(alpha = 0.7f)
             },
         animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
         label = "swipeIconColor",
@@ -1272,7 +1291,7 @@ private fun QueueTrackSwipeToDismissBox(
 
     SwipeToDismissBox(
         state = dismissState,
-        modifier = modifier.clip(queueItemShape),
+        modifier = modifier.clip(if (mochyLook) RoundedCornerShape(14.dp) else queueItemShape),
         backgroundContent = {
             val direction = dismissState.dismissDirection
             val alignment =
@@ -1340,6 +1359,8 @@ private fun TrackItem(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val isHovered by interactionSource.collectIsHoveredAsState()
+    // the Mochy look: the dark theme's rows, with the reference's inset, corners and type
+    val mochyLook = !LocalIsTv.current && MaterialTheme.colorScheme.background.luminance() < 0.5f
     val highlightProgress =
         animateFloatAsState(
             targetValue = if (isActive) 1f else 0f,
@@ -1347,7 +1368,7 @@ private fun TrackItem(
             label = "queueCurrentShape",
         ).value.coerceIn(0f, 1f)
     val shape =
-        RoundedCornerShape(
+        if (mochyLook) RoundedCornerShape(14.dp) else RoundedCornerShape(
             object : CornerSize {
                 override fun toPx(
                     shapeSize: Size,
@@ -1360,7 +1381,7 @@ private fun TrackItem(
                     )
             },
         )
-    val artworkShape = animatedCurrentSongArtworkShape(isActive, RoundedCornerShape(6.dp))
+    val artworkShape = animatedCurrentSongArtworkShape(isActive, RoundedCornerShape(if (mochyLook) 8.dp else 6.dp))
     val motionScale = rememberCoroutineScope().coroutineContext[MotionDurationScale]?.scaleFactor ?: 1f
     val motionEnabled = isActive && motionScale > 0f && !rememberReducedMotion()
     val artworkRotation by rememberArtworkShapeRotation(spinning = isPlaying, motionEnabled = motionEnabled)
@@ -1404,13 +1425,33 @@ private fun TrackItem(
     val durationText = remember(track.duration, isActive, currentDuration) { track.durationText(isActive, currentDuration) }
 
     Surface(
-        color = if (isHovered || isPressed) contentColor.copy(alpha = 0.08f).compositeOver(backgroundColor) else backgroundColor,
+        color =
+            if (mochyLook) {
+                mochyQueueRowColor(isMoving = isMoving, isActive = isActive)
+            } else if (isHovered || isPressed) {
+                contentColor.copy(alpha = 0.08f).compositeOver(backgroundColor)
+            } else {
+                backgroundColor
+            },
         contentColor = contentColor,
         shape = shape,
         modifier =
             modifier
                 .fillMaxWidth()
                 .heightIn(min = 60.dp)
+                .then(
+                    if (mochyLook) {
+                        Modifier
+                            .padding(horizontal = 10.dp)
+                            .graphicsLayer {
+                                val scale = if (isMoving) 1.02f else 1f
+                                scaleX = scale
+                                scaleY = scale
+                            }
+                    } else {
+                        Modifier
+                    },
+                )
                 .tvFocusHighlight(shape)
                 .currentSongSemantics(isActive, isPlaying)
                 .cursorContextMenu(contextMenu)
@@ -1490,7 +1531,7 @@ private fun TrackItem(
                 }
             }
 
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(if (mochyLook) 12.dp else 10.dp))
 
             Column(
                 modifier = Modifier.weight(1f),
@@ -1502,12 +1543,13 @@ private fun TrackItem(
                         MaterialTheme.typography.titleMedium.copy(
                             fontSize = 15.sp,
                             fontWeight = FontWeight.SemiBold,
-                            lineHeight = 20.sp,
+                            lineHeight = if (mochyLook) 19.sp else 20.sp,
                             letterSpacing = 0.15.sp,
                         ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    color = contentColor,
+                    color = if (mochyLook) Color.White else contentColor,
+                    fontFamily = if (mochyLook) mochyInterFontFamily() else null,
                 )
                 Row(
                     modifier = Modifier.height(18.dp),
@@ -1534,7 +1576,8 @@ private fun TrackItem(
                                 lineHeight = 18.sp,
                                 letterSpacing = 0.1.sp,
                             ),
-                        color = secondaryContentColor,
+                        color = if (mochyLook) Color.White.copy(alpha = 0.6f) else secondaryContentColor,
+                        fontFamily = if (mochyLook) mochyInterFontFamily() else null,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -1548,7 +1591,7 @@ private fun TrackItem(
                 ) {
                     Checkbox(checked = isSelected, onCheckedChange = null)
                 }
-            } else {
+            } else if (!mochyLook) {
                 IconButton(
                     onClick = {
                         Logger.d("Haptics", "Trigger QueueScreen track menu click index=$trackIndex")
@@ -1569,6 +1612,16 @@ private fun TrackItem(
         }
     }
 }
+
+private val MochyQueueRemoveRed = Color(0xFFFF453A)
+
+// the reference's queue row: the song playing gets a light highlight, a row being dragged a brighter one
+private fun mochyQueueRowColor(isMoving: Boolean, isActive: Boolean): Color =
+    when {
+        isMoving -> Color.White.copy(alpha = 0.12f)
+        isActive -> Color.White.copy(alpha = 0.07f)
+        else -> Color.Transparent
+    }
 
 @Composable
 private fun MetadataIcons(
