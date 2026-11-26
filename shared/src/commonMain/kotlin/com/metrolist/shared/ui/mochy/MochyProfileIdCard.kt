@@ -107,6 +107,7 @@ import com.metrolist.shared.generated.resources.mochy_card_local_member
 import com.metrolist.shared.generated.resources.mochy_card_of_name
 import com.metrolist.shared.generated.resources.mochy_card_profile_usr
 import com.metrolist.shared.generated.resources.mochy_hello
+import com.metrolist.shared.generated.resources.mochy_profile_add
 import com.metrolist.shared.generated.resources.mochy_profile_change_photo
 import com.metrolist.shared.generated.resources.mochy_profile_choose_photo
 import com.metrolist.shared.generated.resources.mochy_profile_greeting_fallback
@@ -115,6 +116,7 @@ import com.metrolist.shared.generated.resources.mochy_profile_greeting_good_to_s
 import com.metrolist.shared.generated.resources.mochy_profile_greeting_hey
 import com.metrolist.shared.generated.resources.mochy_profile_greeting_hello_again
 import com.metrolist.shared.generated.resources.mochy_profile_greeting_welcome_back
+import com.metrolist.shared.generated.resources.mochy_profile_edit
 import com.metrolist.shared.generated.resources.mochy_profile_picture
 import com.metrolist.shared.generated.resources.mochy_profile_remove_photo
 import com.metrolist.shared.generated.resources.mochy_profile_total_listening_time
@@ -124,10 +126,11 @@ import com.metrolist.shared.generated.resources.mochy_username_label
 import com.metrolist.shared.generated.resources.mochy_username_placeholder
 import com.metrolist.shared.generated.resources.mochy_welcome_to_mochy
 import com.metrolist.shared.settings.Settings
-import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.mp.KoinPlatform
 import kotlin.math.PI
@@ -249,18 +252,10 @@ fun ProfileIdCard(
                             )
                         } else if (onPhotoClick != null) {
                             Icon(
-                                imageVector = MetrolistIcons.Filled.Add,
+                                painter = painterResource(Res.drawable.mochy_profile_add),
                                 contentDescription = stringResource(Res.string.mochy_add_profile_picture),
                                 tint = Color.White.copy(alpha = 0.7f),
                                 modifier = Modifier.size(unit * 34f),
-                            )
-                        } else {
-                            val initial = firstDisplayCluster(name)
-                            Text(
-                                text = initial,
-                                color = Color.White.copy(alpha = 0.9f),
-                                fontSize = (unit.value * 36f).sp,
-                                fontWeight = FontWeight.Bold,
                             )
                         }
                     }
@@ -468,34 +463,45 @@ fun InteractiveProfileIdCard(
     modifier: Modifier = Modifier,
     onPhotoClick: (() -> Unit)? = null,
     backStats: MochyCardStats? = null,
+    showEditHint: Boolean = false,
 ) {
     val scope = rememberCoroutineScope()
     val tiltX = remember { Animatable(0f) }
     val tiltY = remember { Animatable(0f) }
     val flip = remember { Animatable(0f) }
     val showBack by remember { derivedStateOf { flip.value >= 90f } }
+    // the lean the finger asks for; it springs there, and springs back to flat on release
+    var tiltTarget by remember { mutableStateOf(Offset.Zero) }
+    var dragTravel by remember { mutableStateOf(Offset.Zero) }
+    LaunchedEffect(Unit) {
+        snapshotFlow { tiltTarget }.collect { t ->
+            val settle = t == Offset.Zero
+            val spec = if (settle) spring<Float>(dampingRatio = 0.42f, stiffness = Spring.StiffnessLow) else spring(stiffness = Spring.StiffnessMediumLow)
+            launch { tiltX.animateTo(t.y, spec) }
+            launch { tiltY.animateTo(t.x, spec) }
+        }
+    }
 
     Box(
         modifier =
             modifier
                 .pointerInput(Unit) {
                     detectDragGestures(
-                        onDragEnd = {
-                            scope.launch { tiltX.animateTo(0f, spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessLow)) }
-                            scope.launch { tiltY.animateTo(0f, spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessLow)) }
-                        },
-                        onDragCancel = {
-                            scope.launch { tiltX.animateTo(0f, spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessLow)) }
-                            scope.launch { tiltY.animateTo(0f, spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessLow)) }
-                        },
+                        onDragStart = { dragTravel = Offset.Zero },
+                        onDragEnd = { tiltTarget = Offset.Zero },
+                        onDragCancel = { tiltTarget = Offset.Zero },
                     ) { change, drag ->
                         change.consume()
-                        scope.launch { tiltY.snapTo((tiltY.value + drag.x * 0.12f).coerceIn(-28f, 28f)) }
-                        scope.launch { tiltX.snapTo((tiltX.value - drag.y * 0.12f).coerceIn(-22f, 22f)) }
+                        dragTravel += drag
+                        tiltTarget =
+                            Offset(
+                                (dragTravel.x * 0.09f).coerceIn(-26f, 26f),
+                                (-dragTravel.y * 0.07f).coerceIn(-18f, 18f),
+                            )
                     }
                 }.clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
                     val target = if (showBack) 0f else 180f
-                    scope.launch { flip.animateTo(target, tween(durationMillis = 600, easing = FastOutSlowInEasing)) }
+                    scope.launch { flip.animateTo(target, tween(durationMillis = 900, easing = FastOutSlowInEasing)) }
                 }.graphicsLayer {
                     rotationX = tiltX.value
                     rotationY = tiltY.value + flip.value
@@ -510,6 +516,7 @@ fun InteractiveProfileIdCard(
                 joinedText = joinedText,
                 silver = silver,
                 onPhotoClick = onPhotoClick,
+                showEditHint = showEditHint,
                 sheen = { 0.5f + tiltY.value / 42f },
             )
         } else {
@@ -539,6 +546,8 @@ fun MochyProfileEditorContent(
     modifier: Modifier = Modifier,
     showCelebrateButton: Boolean = true,
     rememberPhotoPicker: (@Composable (onPicked: (uri: String) -> Unit) -> () -> Unit)? = null,
+    showEditHint: Boolean = false,
+    onUsernameChange: (String) -> Unit = {},
 ) {
     val settings = Settings.shared
     val cardNumber = remember { ensureMochyCardNumber() }
@@ -572,7 +581,8 @@ fun MochyProfileEditorContent(
             silver = silver,
             onPhotoClick = launchPhotoPicker,
             backStats = cardStats,
-            modifier = Modifier.widthIn(max = 420.dp),
+            showEditHint = showEditHint,
+            modifier = Modifier.widthIn(max = 380.dp),
         )
 
         Text(
@@ -618,6 +628,7 @@ fun MochyProfileEditorContent(
                 val clipped = truncateDisplayName(updated)
                 username = clipped
                 settings.mochyUsername = clipped
+                onUsernameChange(clipped)
             },
             label = { Text(stringResource(Res.string.mochy_username_label)) },
             placeholder = { Text(stringResource(Res.string.mochy_username_placeholder)) },
@@ -705,8 +716,8 @@ private val MochyGreetingWords = listOf(
 )
 
 /**
- * Mochy profile page: a greeting, the ID card and its editor, then the listening-time card.
- * Stats come from the same history snapshot the card back reads.
+ * Mochy profile page, laid out as the reference's Mochy page: a greeting over the ID card and its
+ * editor, then the listening-time card. Stats come from the same history snapshot the card back reads.
  */
 @Composable
 fun MochyProfileSettingsScreen(
@@ -716,62 +727,83 @@ fun MochyProfileSettingsScreen(
     val settings = Settings.shared
     val totalMs by produceState<Long?>(initialValue = null) { value = loadListeningTotalMs() }
     val greetingWord = remember { MochyGreetingWords.random() }
-    val savedName = settings.mochyUsername.ifBlank { settings.accountName }.trim()
+    // the editor reports each name change, so the greeting follows the name as it is typed
+    var greetingName by remember { mutableStateOf(settings.mochyUsername.ifBlank { settings.accountName }.trim()) }
     val reveal = remember { Animatable(0f) }
     LaunchedEffect(Unit) { reveal.animateTo(1f, tween(durationMillis = 900, easing = MochyPageEase)) }
 
-    val header: @Composable () -> Unit = {
-        Text(
-            text =
-                stringResource(
-                    Res.string.mochy_profile_greeting_format,
-                    stringResource(greetingWord),
-                    savedName.ifBlank { stringResource(Res.string.mochy_profile_greeting_fallback) },
-                ),
-            style = TextStyle(fontFamily = mochyInterFontFamily(), fontWeight = FontWeight.Bold, fontSize = 23.sp, letterSpacing = (-0.6).sp),
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        MochyProfileEditorContent(
-            showCelebrateButton = true,
-            rememberPhotoPicker = rememberPhotoPicker,
-        )
-    }
-
-    Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 16.dp)
-                .graphicsLayer {
-                    alpha = reveal.value
-                    translationY = (1f - reveal.value) * 60.dp.toPx()
-                },
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        BoxWithConstraints(modifier = Modifier.widthIn(max = MochyPageMaxWidth).fillMaxWidth()) {
-            if (maxWidth >= MochyTwoColumnMinWidth) {
-                Row(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.Top) {
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) { header() }
-                    Column(modifier = Modifier.weight(1f)) { MochyListeningTimeCard(totalMs ?: 0L) }
-                }
-            } else {
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    header()
-                    MochyListeningTimeCard(totalMs ?: 0L)
+    // width is read here, outside the scroll, so nothing inside the scroll gets an unbounded width
+    BoxWithConstraints(modifier = modifier.fillMaxSize().background(Color.Black)) {
+        val wide = maxWidth >= MochyTwoColumnMinWidth
+        val figureScale = mochyWidthScale(minOf(maxWidth, MochyPageMaxWidth).value)
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp, vertical = 16.dp)
+                    .graphicsLayer {
+                        alpha = reveal.value
+                        translationY = (1f - reveal.value) * 60.dp.toPx()
+                    },
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Column(modifier = Modifier.widthIn(max = MochyPageMaxWidth).fillMaxWidth()) {
+                if (wide) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.Top) {
+                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            MochyProfileHeader(greetingWord, greetingName, rememberPhotoPicker) { greetingName = it }
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            MochyListeningTimeCard(totalMs ?: 0L, figureScale)
+                        }
+                    }
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        MochyProfileHeader(greetingWord, greetingName, rememberPhotoPicker) { greetingName = it }
+                        MochyListeningTimeCard(totalMs ?: 0L, figureScale)
+                    }
                 }
             }
         }
     }
 }
 
+/** Greeting line, then the editor that holds the card. Used in both page layouts. */
 @Composable
-private fun MochyListeningTimeCard(totalMs: Long) {
+private fun MochyProfileHeader(
+    greetingWord: StringResource,
+    name: String,
+    rememberPhotoPicker: (@Composable (onPicked: (uri: String) -> Unit) -> () -> Unit)?,
+    onNameChange: (String) -> Unit,
+) {
+    Text(
+        text =
+            stringResource(
+                Res.string.mochy_profile_greeting_format,
+                stringResource(greetingWord),
+                name.ifBlank { stringResource(Res.string.mochy_profile_greeting_fallback) },
+            ),
+        style = TextStyle(fontFamily = mochyInterFontFamily(), fontWeight = FontWeight.Bold, fontSize = 23.sp, letterSpacing = (-0.6).sp),
+        color = MaterialTheme.colorScheme.onSurface,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+    )
+    MochyProfileEditorContent(
+        showCelebrateButton = true,
+        rememberPhotoPicker = rememberPhotoPicker,
+        showEditHint = true,
+        onUsernameChange = onNameChange,
+    )
+}
+
+@Composable
+private fun MochyListeningTimeCard(totalMs: Long, figureScale: Float) {
     val totalMinutes = (totalMs / 60_000L).coerceAtLeast(0L)
     val hours = totalMinutes / 60
-    BoxWithConstraints(
+    // long hour counts shrink the figures a step so the label keeps its room
+    val k = figureScale * if (hours >= 1000) 0.8f else if (hours >= 100) 0.9f else 1f
+    Column(
         modifier =
             Modifier
                 .fillMaxWidth()
@@ -779,8 +811,6 @@ private fun MochyListeningTimeCard(totalMs: Long) {
                 .background(MochyPageCard)
                 .padding(20.dp),
     ) {
-        // long hour counts shrink the figures a step so the label keeps its room
-        val k = mochyWidthScale(maxWidth.value + 40f) * if (hours >= 1000) 0.8f else if (hours >= 100) 0.9f else 1f
         Row(verticalAlignment = Alignment.CenterVertically) {
             MochyTimeValue(hours.toString(), stringResource(Res.string.mochy_profile_unit_hour_short), k)
             Box(
@@ -799,6 +829,9 @@ private fun MochyListeningTimeCard(totalMs: Long) {
                 modifier = Modifier.weight(1f),
             )
         }
+        Spacer(Modifier.height(14.dp))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF474747)))
+        Spacer(Modifier.height(12.dp))
     }
 }
 
@@ -850,13 +883,6 @@ internal fun truncateDisplayName(
         count++
     }
     return input.substring(0, index)
-}
-
-internal fun firstDisplayCluster(input: String): String {
-    if (input.isEmpty()) return ""
-    val end = nextDisplayClusterEnd(input, 0)
-    val cluster = input.substring(0, end)
-    return if (cluster.length == 1) cluster[0].uppercaseChar().toString() else cluster
 }
 
 private fun nextDisplayClusterEnd(
@@ -1099,7 +1125,7 @@ private fun EditHint(
     alpha: () -> Float,
 ) {
     Icon(
-        imageVector = MetrolistIcons.Outlined.Edit,
+        painter = painterResource(Res.drawable.mochy_profile_edit),
         contentDescription = null,
         tint = tint,
         modifier =

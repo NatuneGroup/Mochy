@@ -5745,11 +5745,11 @@
     <!-- Translators: Formatted duration in seconds for the play and pause fade slider, e.g. 2.0 s. -->
     <string name="mochy_transport_fade_seconds_value">%1$s s</string>
     <!-- Translators: Header label on the Mochy local profile ID card showing the user number. %1$s is a 4-digit member number. -->
-    <string name="mochy_card_profile_usr">PROFILE USR %1$s</string>
+    <string name="mochy_card_profile_usr">PROFILE USR#%1$s</string>
     <!-- Translators: Label above the username on the silver Mochy profile ID card. -->
     <string name="mochy_card_id_of">ID CARD OF</string>
     <!-- Translators: Vertical scrolling marquee text along the edge of the Mochy profile ID card. %1$s is the user's chosen name. -->
-    <string name="mochy_card_of_name">MOCHY · %1$s</string>
+    <string name="mochy_card_of_name">%1$s`s CARD</string>
     <!-- Translators: Default placeholder name shown on the Mochy profile ID card before the user enters a name. -->
     <string name="mochy_card_default_name">Listener</string>
     <!-- Translators: Tagline displayed below the username on the local Mochy profile ID card. -->
