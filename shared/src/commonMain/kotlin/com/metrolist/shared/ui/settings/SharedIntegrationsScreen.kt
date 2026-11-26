@@ -76,6 +76,7 @@ import com.metrolist.shared.discord.discordPlaybackTimestamps
 import com.metrolist.shared.discord.discordSettingsVisible
 import com.metrolist.shared.discord.resolveDiscordButtonLabel
 import com.metrolist.shared.generated.resources.*
+import com.metrolist.shared.generated.resources.mochy_onb_login
 import com.metrolist.shared.listentogether.ListenTogetherManager
 import com.metrolist.shared.model.SongItem
 import com.metrolist.shared.scrobble.ScrobbleProvider
@@ -663,6 +664,7 @@ private fun buildIntegrationsRegistry(
                 action(
                     id = "lastFmLogin",
                     title = stringResource(Res.string.lastfm_connect_account),
+                    icon = Res.drawable.mochy_onb_login,
                     description = stringResource(Res.string.lastfm_connect_description),
                 ) { onOpenLogin(ScrobbleLoginProvider.LAST_FM) }
             } else {

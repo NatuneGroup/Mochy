@@ -146,6 +146,7 @@ import com.metrolist.shared.ui.utils.desktopArrowScroll
 import com.metrolist.shared.ui.utils.segmentedGroupShape
 import com.metrolist.shared.utils.isPullToRefreshSupported
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.absoluteValue
@@ -1300,6 +1301,22 @@ internal fun SettingsItemGroup(
     }
 }
 
+// Mochy's row icon: the reference drawable in a 32dp light circle, dimmed while the row is off
+@Composable
+private fun MochyRowIcon(icon: DrawableResource, enabled: Boolean) {
+    Box(
+        modifier = Modifier.size(32.dp).clip(CircleShape).background(Color(0xFFE5E5EA)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = null,
+            tint = if (enabled) Color(0xFF1C1C1E) else Color(0xFF1C1C1E).copy(alpha = 0.38f),
+            modifier = Modifier.size(16.dp),
+        )
+    }
+}
+
 @Composable
 private fun SettingsItemRow(
     item: SettingsItemRegistration,
@@ -1332,7 +1349,16 @@ private fun SettingsItemRow(
             color = MaterialTheme.colorScheme.settingsRowContainerColor(),
         ) {
             Box(Modifier.alpha(if (item.enabled) 1f else 0.38f)) {
-                item.customContent?.invoke(onSettingValueChanged)
+                val icon = item.icon
+                if (mochy && icon != null) {
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        MochyRowIcon(icon, item.enabled)
+                        Spacer(Modifier.width(16.dp))
+                        Box(Modifier.weight(1f)) { item.customContent?.invoke(onSettingValueChanged) }
+                    }
+                } else {
+                    item.customContent?.invoke(onSettingValueChanged)
+                }
             }
         }
         return
@@ -1438,17 +1464,7 @@ private fun SettingsItemRow(
         ) {
             if (mochy) {
                 item.icon?.let { icon ->
-                    Box(
-                        modifier = Modifier.size(32.dp).clip(CircleShape).background(Color(0xFFE5E5EA)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            painter = painterResource(icon),
-                            contentDescription = null,
-                            tint = if (item.enabled) Color(0xFF1C1C1E) else Color(0xFF1C1C1E).copy(alpha = 0.38f),
-                            modifier = Modifier.size(16.dp),
-                        )
-                    }
+                    MochyRowIcon(icon, item.enabled)
                     Spacer(Modifier.width(16.dp))
                 }
             }
