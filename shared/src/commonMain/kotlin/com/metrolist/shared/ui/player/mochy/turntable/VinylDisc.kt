@@ -52,6 +52,7 @@ fun VinylDisc(
     discDiameter: Float = TURNTABLE_DISC_DIAMETER,
     discCenterX: Float = TURNTABLE_DISC_CENTER_X,
     discCenterYByWidth: Float = TURNTABLE_DISC_CENTER_Y_BY_WIDTH,
+    labelRatio: Float = TURNTABLE_ART_RATIO,
 ) {
     val reducedMotion = rememberReducedMotion()
     val angle = remember { mutableFloatStateOf(0f) }
@@ -111,10 +112,10 @@ fun VinylDisc(
         ) {
             val r = size.minDimension / 2f
             val center = Offset(size.width / 2f, size.height / 2f)
-            drawVinyl(center, r, TURNTABLE_ART_RATIO)
+            drawVinyl(center, r, labelRatio)
         }
 
-        val labelSide = (discSide * TURNTABLE_ART_RATIO).dp
+        val labelSide = (discSide * labelRatio).dp
         Box(
             modifier =
                 platterModifier.graphicsLayer {

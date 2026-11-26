@@ -21,6 +21,11 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.metrolist.shared.generated.resources.*
+import com.metrolist.shared.generated.resources.mochy_pages_cover_disc_small_full
+import com.metrolist.shared.generated.resources.mochy_pages_cover_disc_small_label
+import com.metrolist.shared.generated.resources.mochy_pages_cover_disc_big_full
+import com.metrolist.shared.generated.resources.mochy_pages_cover_disc_big_label
+import com.metrolist.shared.generated.resources.mochy_pages_cover_disc_album
 import com.metrolist.shared.generated.resources.mochy_pages_slow_motion_video
 import com.metrolist.shared.generated.resources.mochy_pages_sparks
 import com.metrolist.shared.settings.AnimatedCoverResolution
@@ -643,6 +648,11 @@ internal fun SettingsUiRegistryBuilder.registerAppearanceSettings(host: SharedSe
                 SettingsChoice(PlayerCoverStyle.SQUARED.name, stringResource(Res.string.player_cover_style_squared)),
                 SettingsChoice(PlayerCoverStyle.EDGE_TO_EDGE.name, stringResource(Res.string.player_cover_style_edge_to_edge)),
                 SettingsChoice(PlayerCoverStyle.DISC.name, stringResource(Res.string.player_cover_style_disc)),
+                SettingsChoice(PlayerCoverStyle.DISC_SMALL_FULL.name, stringResource(Res.string.mochy_pages_cover_disc_small_full)),
+                SettingsChoice(PlayerCoverStyle.DISC_SMALL_LABEL.name, stringResource(Res.string.mochy_pages_cover_disc_small_label)),
+                SettingsChoice(PlayerCoverStyle.DISC_BIG_FULL.name, stringResource(Res.string.mochy_pages_cover_disc_big_full)),
+                SettingsChoice(PlayerCoverStyle.DISC_BIG_LABEL.name, stringResource(Res.string.mochy_pages_cover_disc_big_label)),
+                SettingsChoice(PlayerCoverStyle.DISC_ALBUM.name, stringResource(Res.string.mochy_pages_cover_disc_album)),
             )
         val selectedCoverStyle = settings.playerCoverStyle
         val sliderChoices = sliderStyleChoices()

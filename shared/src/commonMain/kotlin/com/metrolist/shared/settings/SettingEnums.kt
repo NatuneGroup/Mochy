@@ -182,6 +182,12 @@ enum class PlayerCoverStyle {
     SQUARED,
     EDGE_TO_EDGE,
     DISC,
+    // the reference's disc looks; appended so the saved ordinals above stay valid
+    DISC_SMALL_FULL,
+    DISC_SMALL_LABEL,
+    DISC_BIG_FULL,
+    DISC_BIG_LABEL,
+    DISC_ALBUM,
 }
 
 enum class IpodTheme {

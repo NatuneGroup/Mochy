@@ -89,7 +89,6 @@ import com.metrolist.shared.ui.player.QueueSession
 import com.metrolist.shared.ui.player.artworkSeekGestures
 import com.metrolist.shared.ui.player.artworkSwipe
 import com.metrolist.shared.ui.player.mochy.turntable.TurntableStage
-import com.metrolist.shared.ui.player.mochy.turntable.VinylDisc
 import com.metrolist.shared.viewmodels.PlayerViewModel
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
@@ -207,16 +206,16 @@ internal fun FlagshipLandscapePlayer(
                     Modifier.size(width = coverWidth, height = maxHeight)
                 }
 
-                PlayerCoverStyle.DISC -> {
-                    Modifier.padding(start = squareStart).size(squareSide)
-                }
-
                 PlayerCoverStyle.SQUARED -> {
                     Modifier
                         .padding(start = squareStart)
                         .size(squareSide)
                         .shadow(24.dp, SquareShape)
                         .clip(SquareShape)
+                }
+
+                else -> {
+                    Modifier.padding(start = squareStart).size(squareSide)
                 }
             }
 
@@ -295,8 +294,9 @@ internal fun FlagshipLandscapePlayer(
                         },
                         modifier = Modifier.fillMaxSize(),
                     )
-                } else if (coverStyle == PlayerCoverStyle.DISC) {
-                    VinylDisc(
+                } else if (coverStyle.isDiscLook) {
+                    FlagshipDiscCover(
+                        style = coverStyle,
                         artworkUrl = currentSong?.displayThumbnail,
                         nextArtworkUrl = crossfadeNextArtworkUrl,
                         crossfadeProgressProvider = artworkCrossfadeProgress,
@@ -304,9 +304,6 @@ internal fun FlagshipLandscapePlayer(
                         spinActive = LocalPlayerContentActive.current,
                         contentDescription = stringResource(Res.string.album_art),
                         artworkOverlay = artworkOverlay.takeUnless { uiState.isLyricsVisible },
-                        discDiameter = FLAGSHIP_DISC_DIAMETER,
-                        discCenterX = FLAGSHIP_DISC_CENTER,
-                        discCenterYByWidth = FLAGSHIP_DISC_CENTER,
                         modifier = Modifier.fillMaxSize(),
                     )
                 } else {

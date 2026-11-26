@@ -236,8 +236,8 @@ import com.metrolist.shared.ui.mochy.LikeSlot
 import com.metrolist.shared.ui.navigation.NavigationBackHandler
 import com.metrolist.shared.ui.navigation.blockInput
 import com.metrolist.shared.ui.player.mochy.BedsideClock
-import com.metrolist.shared.ui.player.mochy.FLAGSHIP_DISC_CENTER
-import com.metrolist.shared.ui.player.mochy.FLAGSHIP_DISC_DIAMETER
+import com.metrolist.shared.ui.player.mochy.FlagshipDiscCover
+import com.metrolist.shared.ui.player.mochy.isDiscLook
 import com.metrolist.shared.ui.player.mochy.FlagshipActions
 import com.metrolist.shared.ui.player.mochy.FlagshipBarBottomGap
 import com.metrolist.shared.ui.player.mochy.FlagshipBarHeight
@@ -256,7 +256,6 @@ import com.metrolist.shared.ui.player.mochy.ipod.rememberIpodLook
 import com.metrolist.shared.ui.player.mochy.turntable.TurntableControls
 import com.metrolist.shared.ui.player.mochy.turntable.TurntablePills
 import com.metrolist.shared.ui.player.mochy.turntable.TurntableStage
-import com.metrolist.shared.ui.player.mochy.turntable.VinylDisc
 import com.metrolist.shared.ui.share.SongShareCardDialog
 import com.metrolist.shared.ui.theme.ComponentShapes
 import com.metrolist.shared.ui.theme.rememberMochyLook
@@ -2167,8 +2166,9 @@ fun PlayerScreen(
                                                                                 },
                                                                             ),
                                                                 ) {
-                                                                    if (flagshipCoverStyle == PlayerCoverStyle.DISC) {
-                                                                        VinylDisc(
+                                                                    if (flagshipCoverStyle.isDiscLook) {
+                                                                        FlagshipDiscCover(
+                                                                            style = flagshipCoverStyle,
                                                                             artworkUrl = currentSong.displayThumbnail,
                                                                             nextArtworkUrl = crossfadeNextArtworkUrl,
                                                                             crossfadeProgressProvider = artworkCrossfadeProgress,
@@ -2179,9 +2179,6 @@ fun PlayerScreen(
                                                                                 artworkOverlay.takeUnless {
                                                                                     uiState.isLyricsVisible
                                                                                 },
-                                                                            discDiameter = FLAGSHIP_DISC_DIAMETER,
-                                                                            discCenterX = FLAGSHIP_DISC_CENTER,
-                                                                            discCenterYByWidth = FLAGSHIP_DISC_CENTER,
                                                                             modifier = Modifier.fillMaxSize(),
                                                                         )
                                                                     } else {
