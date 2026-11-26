@@ -6,7 +6,6 @@
 package com.metrolist.shared.ui.settings
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -56,9 +55,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
@@ -81,7 +83,18 @@ import com.metrolist.shared.generated.resources.settings_search_no_results
 import com.metrolist.shared.generated.resources.settings_search_placeholder
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.generated.resources.mochy_settings_cast_connected
+import com.metrolist.shared.generated.resources.mochy_settings_equalizer
+import com.metrolist.shared.generated.resources.mochy_settings_integration
+import com.metrolist.shared.generated.resources.mochy_settings_library_add
+import com.metrolist.shared.generated.resources.mochy_settings_lyrics
+import com.metrolist.shared.generated.resources.mochy_settings_palette
+import com.metrolist.shared.generated.resources.mochy_settings_play
+import com.metrolist.shared.generated.resources.mochy_settings_settings
+import com.metrolist.shared.generated.resources.mochy_settings_storage
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
+import com.metrolist.shared.ui.utils.supportsNativeBlur
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
@@ -92,7 +105,7 @@ internal object MochySettingsColors {
     // the open page beside the desktop pane: a step up from the black so the two read apart
     val Pane = Color(0xFF0C0C0D)
     val Bubble = Color(0xFF1C1C1E)
-    val BubbleSelected = Color(0xFF2E2E31)
+    val BubbleSelected = Color(0xFF3A3A3E)
     val IconBackground = Color(0xFF333338)
     val Field = Color(0xFF141416)
     val FieldFocused = Color(0xFF1E1E21)
@@ -117,13 +130,15 @@ internal fun MochySettingsHome(
     host: SharedSettingsHost,
     onPageSelected: (SettingsPageId) -> Unit,
     onSearchResultSelected: (SettingsPageId, String?) -> Unit,
+    // the page open beside the list on a wide window, lit like the desktop pane's bubble
+    selectedRoute: String? = null,
 ) {
-    val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
     var query by rememberSaveable { mutableStateOf("") }
     var searchFocused by remember { mutableStateOf(false) }
     val searching = searchFocused || query.isNotBlank()
     val results = rememberSettingsSearchResults(registry, query)
+    val recommendations = remember(registry) { pickMochyRecommendations(registry) }
     val collapse by rememberMochyCollapse(scrollState)
     val contentAlpha by animateFloatAsState(
         targetValue = if (searching) 0f else 1f,
@@ -133,7 +148,6 @@ internal fun MochySettingsHome(
     val showContent by remember { derivedStateOf { contentAlpha > 0.001f } }
     val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val headerHeight = statusBar + TopClearance + TitleBlockHeight + FieldHeight + 32.dp
-    val font = mochyInterFontFamily()
 
     Box(Modifier.fillMaxSize().background(MochySettingsColors.Page)) {
         Column(Modifier.fillMaxSize().verticalScroll(scrollState)) {
@@ -151,32 +165,36 @@ internal fun MochySettingsHome(
 
             if (showContent) {
                 Column(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).graphicsLayer { alpha = contentAlpha },
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth().graphicsLayer { alpha = contentAlpha },
                 ) {
-                    registry.rootGroups.filter { it.pages.isNotEmpty() }.forEachIndexed { groupIndex, group ->
-                        // Mochy has no group headings, just a hairline between kinds of pages
-                        if (groupIndex > 0) {
-                            Box(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 6.dp)
-                                    .height(0.8.dp)
-                                    .background(MochySettingsColors.Divider),
-                            )
-                        }
-                        group.pages.forEach { pageId ->
+                    MochyRecommendedCard(
+                        recommendations = recommendations,
+                        registry = registry,
+                        onOpen = onSearchResultSelected,
+                    )
+
+                    Spacer(Modifier.height(18.dp))
+
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp)
+                            .height(0.8.dp)
+                            .background(MochySettingsColors.Divider),
+                    )
+
+                    Spacer(Modifier.height(18.dp))
+
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        mochyHomePages(registry, host).forEach { pageId ->
                             registry[pageId]?.let { page ->
                                 MochyCategoryBubble(
                                     title = page.title,
-                                    icon = { tint ->
-                                        val custom = host.customPageIcons[pageId]
-                                        if (custom != null) {
-                                            custom(tint)
-                                        } else {
-                                            Icon(page.icon, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
-                                        }
-                                    },
+                                    icon = { tint -> MochyPageIcon(pageId, page.icon, host, tint) },
+                                    selected = pageId.name == selectedRoute,
                                     onClick = { onPageSelected(pageId) },
                                 )
                             }
@@ -214,6 +232,7 @@ private fun MochySettingsTopBar(
     val density = LocalDensity.current
     val travel = with(density) { TitleBlockHeight.toPx() }
     val page = MochySettingsColors.Page
+    val blur = supportsNativeBlur()
     Box(Modifier.fillMaxWidth()) {
         // the page colour builds up under the bar once the title has folded away
         Box(
@@ -251,6 +270,9 @@ private fun MochySettingsTopBar(
                             scaleX = scale
                             scaleY = scale
                             transformOrigin = TransformOrigin(0f, 0.5f)
+                            // the reference blurs the folding title in 3px steps up to 12px, clamped at the edges
+                            val blurPx = (((p * 14f) / 3f).toInt() * 3).toFloat()
+                            renderEffect = if (blur && blurPx > 0f) BlurEffect(blurPx, blurPx, TileMode.Clamp) else null
                         },
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
@@ -367,13 +389,6 @@ private fun MochySearchField(
                 .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            MetrolistIcons.Outlined.Search,
-            contentDescription = null,
-            tint = MochySettingsColors.Placeholder,
-            modifier = Modifier.size(20.dp),
-        )
-        Spacer(Modifier.width(10.dp))
         Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
             if (value.isEmpty()) {
                 Text(placeholder, fontSize = 15.sp, color = MochySettingsColors.Placeholder, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -389,6 +404,7 @@ private fun MochySearchField(
             )
         }
         if (value.isNotEmpty()) {
+            Spacer(Modifier.width(10.dp))
             Icon(
                 MetrolistIcons.Default.Close,
                 contentDescription = null,
@@ -399,6 +415,64 @@ private fun MochySearchField(
     }
 }
 
+// the reference's order for the bubbles it has; pages it doesn't name follow in the registry's order
+private val MochyHomePageOrder = listOf(
+    SettingsPageId.AUDIO_LAB,
+    SettingsPageId.PLAYER,
+    SettingsPageId.LYRICS,
+    SettingsPageId.CONTENT,
+    SettingsPageId.APPEARANCE,
+    SettingsPageId.STORAGE,
+    SettingsPageId.DISCORD,
+    SettingsPageId.LAST_FM,
+    SettingsPageId.LISTEN_BRAINZ,
+    SettingsPageId.LISTEN_TOGETHER,
+    SettingsPageId.DEVICE_CONNECT,
+    SettingsPageId.MOCHY_MODULES,
+)
+
+// the pages on Mochy's list: the registry's root groups, plus the reference's own bubbles that live outside them
+internal fun mochyHomePages(
+    registry: SettingsUiRegistry,
+    host: SharedSettingsHost,
+): List<SettingsPageId> {
+    val rootPages = registry.rootGroups.flatMap { it.pages }.filter { registry[it] != null }
+    val named = MochyHomePageOrder.filter { it in host.availablePages && registry[it] != null }
+    return (named + rootPages).distinct().sortedBy { MochyHomePageOrder.indexOf(it).takeIf { index -> index >= 0 } ?: Int.MAX_VALUE }
+}
+
+// the reference's drawable for each bubble it has one for; other pages keep the registry icon
+private fun mochyPageDrawable(pageId: SettingsPageId): DrawableResource? =
+    when (pageId) {
+        SettingsPageId.AUDIO_LAB -> Res.drawable.mochy_settings_equalizer
+        SettingsPageId.PLAYER -> Res.drawable.mochy_settings_play
+        SettingsPageId.LYRICS -> Res.drawable.mochy_settings_lyrics
+        SettingsPageId.CONTENT -> Res.drawable.mochy_settings_settings
+        SettingsPageId.APPEARANCE -> Res.drawable.mochy_settings_palette
+        SettingsPageId.STORAGE -> Res.drawable.mochy_settings_storage
+        SettingsPageId.DISCORD, SettingsPageId.LAST_FM, SettingsPageId.LISTEN_BRAINZ, SettingsPageId.LISTEN_TOGETHER ->
+            Res.drawable.mochy_settings_integration
+        SettingsPageId.DEVICE_CONNECT -> Res.drawable.mochy_settings_cast_connected
+        SettingsPageId.MOCHY_MODULES -> Res.drawable.mochy_settings_library_add
+        else -> null
+    }
+
+@Composable
+private fun MochyPageIcon(
+    pageId: SettingsPageId,
+    fallback: ImageVector,
+    host: SharedSettingsHost,
+    tint: Color,
+) {
+    val custom = host.customPageIcons[pageId]
+    val drawable = mochyPageDrawable(pageId)
+    when {
+        custom != null -> custom(tint)
+        drawable != null -> Icon(painter = painterResource(drawable), contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
+        else -> Icon(fallback, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
+    }
+}
+
 @Composable
 private fun MochyCategoryBubble(
     title: String,
@@ -406,19 +480,14 @@ private fun MochyCategoryBubble(
     onClick: () -> Unit,
     selected: Boolean = false,
 ) {
-    // the desktop pane marks the open page by lifting its bubble a shade
-    val background by animateColorAsState(
-        if (selected) MochySettingsColors.BubbleSelected else MochySettingsColors.Bubble,
-        tween(180, easing = FastOutSlowInEasing),
-        label = "mochyBubble",
-    )
+    // the desktop pane marks the open page by lifting its bubble a shade; the reference switches it at once
     Row(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .height(64.dp)
                 .clip(RoundedCornerShape(22.dp))
-                .background(background)
+                .background(if (selected) MochySettingsColors.BubbleSelected else MochySettingsColors.Bubble)
                 .clickable(onClick = onClick)
                 .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -507,7 +576,8 @@ private fun MochySearchResults(
                         modifier = Modifier.size(38.dp).clip(CircleShape).background(MochySettingsColors.IconBackground),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Icon(result.page.icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                        // the reference uses the gear for every result, whatever page it lands on
+                        Icon(MetrolistIcons.Outlined.Settings, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                     }
                     Spacer(Modifier.width(11.dp))
                     Column {
@@ -517,15 +587,12 @@ private fun MochySearchResults(
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 16.sp,
                             color = Color.White,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
                         )
                         Text(
                             text = result.page.title,
                             fontFamily = font,
                             fontSize = 12.sp,
                             color = Color.White.copy(alpha = 0.55f),
-                            maxLines = 1,
                         )
                     }
                 }

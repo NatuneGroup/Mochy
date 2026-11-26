@@ -6094,4 +6094,16 @@
     <!-- Mochy settings pane -->
     <!-- Translators: Hint shown in the empty right side of the wide settings layout, until a setting is picked from the list. -->
     <string name="mochy_pane_hint">Pick a setting on the left to open it here.</string>
+    <!-- Mochy settings home -->
+    <string name="mochy_settings_recommended_item">Recommended for you</string>
+    <string name="mochy_settings_crumb">Settings › %1$s</string>
+    <string name="mochy_settings_rec_equalizer">Shape your sound with the equalizer</string>
+    <string name="mochy_settings_rec_spatial">Try spatial audio on your headphones</string>
+    <string name="mochy_settings_rec_crossfade">Blend each song into the next</string>
+    <string name="mochy_settings_rec_bluetooth">Start playing when your headphones connect</string>
+    <string name="mochy_settings_rec_pause_muted">Pause when the volume goes all the way down</string>
+    <string name="mochy_settings_rec_canvas">Turn moving covers back on</string>
+    <string name="mochy_settings_rec_lastfm">Scrobble what you play to Last.fm</string>
+    <string name="mochy_settings_rec_discord">Show what you're playing on Discord</string>
+    <string name="mochy_settings_rec_devices">Play on your TV or another phone</string>
 </resources>
