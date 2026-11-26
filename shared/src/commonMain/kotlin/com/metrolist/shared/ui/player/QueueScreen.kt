@@ -116,6 +116,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import com.metrolist.shared.generated.resources.Res
+import com.metrolist.shared.generated.resources.mochy_queue_drag_handle
+import org.jetbrains.compose.resources.painterResource
 import com.metrolist.shared.generated.resources.action_download
 import com.metrolist.shared.generated.resources.action_like
 import com.metrolist.shared.generated.resources.add_to_playlist
@@ -1487,8 +1489,11 @@ private fun TrackItem(
                             onMoveDown = onMoveDown,
                             onMoveToTop = onMoveToTop,
                             onMoveToBottom = onMoveToBottom,
-                            modifier = Modifier.size(36.dp),
+                            modifier = Modifier.size(if (mochyLook) 44.dp else 36.dp),
                             dragHandleModifier = if (LocalIsTv.current) Modifier else dragHandleModifier,
+                            // the reference's three-bar grip, brighter while the row is being dragged
+                            handleIcon = if (mochyLook) painterResource(Res.drawable.mochy_queue_drag_handle) else null,
+                            handleTint = Color.White.copy(alpha = if (isMoving) 0.9f else 0.5f),
                         )
                     } else {
                         Spacer(modifier = Modifier.size(36.dp))
