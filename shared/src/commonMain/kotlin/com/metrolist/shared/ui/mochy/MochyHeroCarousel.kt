@@ -63,8 +63,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Brush
@@ -72,12 +73,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -89,6 +92,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.metrolist.shared.generated.resources.Res
+import com.metrolist.shared.generated.resources.mochy_home2_arrow_forward
+import com.metrolist.shared.generated.resources.mochy_home2_pause
+import com.metrolist.shared.generated.resources.mochy_home2_play
 import com.metrolist.shared.generated.resources.mochy_hero_view
 import com.metrolist.shared.generated.resources.next
 import com.metrolist.shared.generated.resources.now_playing
@@ -100,11 +106,11 @@ import com.metrolist.shared.model.YTItem
 import com.metrolist.shared.settings.displayName
 import com.metrolist.shared.ui.components.images.AsyncImage
 import com.metrolist.shared.ui.icons.MetrolistIcons
-import com.metrolist.shared.ui.player.mochy.AnimatedPlayGlyph
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import com.metrolist.shared.ui.utils.supportsNativeBlur
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
@@ -115,7 +121,20 @@ private val HeroSlideEasing = CubicBezierEasing(0.32f, 0f, 0.15f, 1f)
 private val HeroPillFill = Color.White.copy(alpha = 0.64f)
 private val HeroPillContent = Color(0xFF2F2F2F)
 private val HeroLabelColor = Color.White.copy(alpha = 0.69f)
-private val PeekPageGap = 16.dp
+private val PeekPageGap = 14.dp
+
+// the reference's section tuck: the first section starts this far up inside the hero's faded bottom
+private val HeroSectionTuck = 7.dp
+
+// the hero's scroll-away: rides up, zooms, dims and dissolves from the bottom as the list scrolls it away
+private const val HERO_SCROLL_FOLLOW = 0.2f
+private const val HERO_SCROLL_ZOOM = 0.22f
+private const val HERO_SCROLL_FADE_FROM = 0.2f
+private const val HERO_SCROLL_FADE_TO = 0.85f
+private const val HERO_SCROLL_DIM = 0.22f
+
+// the page wipe's blur at a full page away (the reference's 18dp)
+private val PageSwitchBlur = 18.dp
 
 private class HeroPeekPageSize(
     private val share: Float,
@@ -126,7 +145,7 @@ private class HeroPeekPageSize(
     ): Int = ((availableSpace - pageSpacing) * share).roundToInt().coerceAtLeast(1)
 }
 
-private val DesktopPeekPageSize = HeroPeekPageSize(0.76f)
+private val DesktopPeekPageSize = HeroPeekPageSize(0.8f)
 private val TabletPeekPageSize = HeroPeekPageSize(0.8f)
 
 @Composable
@@ -143,6 +162,7 @@ internal fun MochyHeroCarousel(
     onTogglePlayPause: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     hoverTilt: Boolean = false,
+    scrollProgress: (() -> Float)? = null,
 ) {
     if (items.isEmpty()) return
 
@@ -201,6 +221,8 @@ internal fun MochyHeroCarousel(
     Box(
         modifier =
             modifier
+                .heroTuck()
+                .then(scrollProgress?.let { Modifier.heroScrollAway(it) } ?: Modifier)
                 .fillMaxWidth()
                 .padding(horizontal = horizontalInset),
         contentAlignment = Alignment.Center,
@@ -362,6 +384,8 @@ private fun MochyHeroCard(
             else -> HeroPillKind.PLAY
         }
 
+    val edgeBlur = remember(fullBleed) { fullBleed && supportsNativeBlur() }
+
     val textInset =
         if (fullBleed) {
             36.dp
@@ -400,33 +424,36 @@ private fun MochyHeroCard(
             pageOffset = pageOffset,
             curve = wipeCurve,
             peek = peek,
+            blur = if (edgeBlur) PageSwitchBlur else 0.dp,
         ) {
             // Mochy frosts the hero's top and bottom: the page's media is recorded once and drawn again, blurred,
-            // into two edge bands beside it, never inside it, so the layer can't end up drawing itself
-            val edgeBlur = fullBleed && remember { supportsNativeBlur() }
+            // into two edge bands beside it, never inside it, so the layer can't end up drawing itself.
+            // the bands are inside the drifting box, so they slide with the media
             val mediaLayer = rememberGraphicsLayer()
-            Box(
-                Modifier.fillMaxSize().then(
-                    if (edgeBlur) {
-                        Modifier.drawWithContent {
-                            mediaLayer.record { this@drawWithContent.drawContent() }
-                            drawLayer(mediaLayer)
-                        }
-                    } else {
-                        Modifier
-                    },
-                ),
-            ) {
-                AsyncImage(
-                    url = item.thumbnail,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize().pageMediaDrift(pageOffset, peek),
-                )
-            }
-            if (edgeBlur) {
-                HeroBlurBand(mediaLayer, atTop = true, heightFraction = 0.46f, radius = 22.dp)
-                HeroBlurBand(mediaLayer, atTop = false, heightFraction = 0.5f, radius = 30.dp)
+            Box(Modifier.fillMaxSize().pageMediaDrift(pageOffset, peek)) {
+                Box(
+                    Modifier.fillMaxSize().then(
+                        if (edgeBlur) {
+                            Modifier.drawWithContent {
+                                mediaLayer.record { this@drawWithContent.drawContent() }
+                                drawLayer(mediaLayer)
+                            }
+                        } else {
+                            Modifier
+                        },
+                    ),
+                ) {
+                    AsyncImage(
+                        url = item.thumbnail,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+                if (edgeBlur) {
+                    HeroBlurBand(mediaLayer, atTop = true, heightFraction = 0.46f, radius = 22.dp)
+                    HeroBlurBand(mediaLayer, atTop = false, heightFraction = 0.5f, radius = 30.dp)
+                }
             }
             HeroScrims(fullBleed)
             Box(
@@ -562,14 +589,15 @@ private fun BoxScope.HeroBlurBand(
 
 @Composable
 private fun HeroScrims(fullBleed: Boolean) {
+    // the reference's stops, the top and bottom gradients folded into the dim
     val brush =
         if (fullBleed) {
             Brush.verticalGradient(
                 0f to heroScrimBlack(0.86f),
-                0.22f to heroScrimBlack(0.59f),
+                0.475f * 0.463f to heroScrimBlack(0.59f),
                 0.463f to heroScrimBlack(0f),
                 0.533f to heroScrimBlack(0f),
-                0.742f to heroScrimBlack(0.59f),
+                0.533f + 0.457f * (0.989f - 0.533f) to heroScrimBlack(0.59f),
                 0.989f to Color.Black,
                 1f to Color.Black,
             )
@@ -581,28 +609,53 @@ private fun HeroScrims(fullBleed: Boolean) {
                 1f to heroScrimBlack(0.84f),
             )
         }
-    val feedBackground = MaterialTheme.colorScheme.background
-    Box(
-        Modifier.fillMaxSize().background(brush).then(
-            if (fullBleed) {
-                Modifier.drawWithCache {
-                    val edge =
-                        Brush.verticalGradient(
-                            0f to feedBackground.copy(alpha = 0f),
-                            1f to feedBackground,
-                            startY = (size.height - 32.dp.toPx()).coerceAtLeast(0f),
-                            endY = size.height,
-                        )
-                    onDrawBehind { drawRect(edge) }
-                }
-            } else {
-                Modifier
-            },
-        ),
-    )
+    Box(Modifier.fillMaxSize().background(brush))
 }
 
 private fun heroScrimBlack(gradient: Float): Color = Color.Black.copy(alpha = 1f - (1f - HERO_DIM) * (1f - gradient))
+
+// the hero as the list scrolls it away: the reference's ScrollAwayCover, without its soft copy
+private fun Modifier.heroScrollAway(progress: () -> Float): Modifier =
+    graphicsLayer {
+        val p = progress()
+        translationY = p * size.height * HERO_SCROLL_FOLLOW
+        val zoom = 1f + p * HERO_SCROLL_ZOOM
+        scaleX = zoom
+        scaleY = zoom
+        transformOrigin = TransformOrigin(0.5f, 0.35f)
+        alpha = 1f - heroSmoothstep(HERO_SCROLL_FADE_FROM, HERO_SCROLL_FADE_TO, p)
+        compositingStrategy = if (p > 0f) CompositingStrategy.Offscreen else CompositingStrategy.Auto
+    }.drawWithContent {
+        drawContent()
+        val p = progress()
+        if (p > 0f) {
+            drawRect(Color.Black.copy(alpha = HERO_SCROLL_DIM * p))
+            // the bottom dissolves; above it the picture is solid, so only the band is cut
+            val clear = 0.1f + 0.45f * heroSmoothstep(0f, 0.8f, p)
+            val top = size.height * (1f - clear)
+            drawRect(
+                brush = Brush.verticalGradient(0f to Color.Black, 1f to Color.Transparent, startY = top, endY = size.height),
+                topLeft = Offset(0f, top),
+                size = Size(size.width, size.height - top),
+                blendMode = BlendMode.DstIn,
+            )
+        }
+    }
+
+private fun heroSmoothstep(from: Float, to: Float, x: Float): Float {
+    val t = ((x - from) / (to - from)).coerceIn(0f, 1f)
+    return t * t * (3f - 2f * t)
+}
+
+// drawn full height, but the list only makes room for all but the tuck
+private fun Modifier.heroTuck(): Modifier =
+    layout { measurable, constraints ->
+        val placeable = measurable.measure(constraints)
+        val tuck = HeroSectionTuck.roundToPx()
+        layout(placeable.width, (placeable.height - tuck).coerceAtLeast(0)) {
+            placeable.place(0, 0)
+        }
+    }
 
 private enum class HeroPillKind {
     PLAY,
@@ -648,7 +701,12 @@ private fun MochyHeroPill(
                 modifier = Modifier.height(33.dp).padding(start = if (opensPage) 17.dp else 21.dp, end = 17.dp),
             ) {
                 if (!opensPage) {
-                    AnimatedPlayGlyph(playing = action == HeroPillKind.PAUSE, color = HeroPillContent, height = 15.dp)
+                    Icon(
+                        painter = painterResource(if (action == HeroPillKind.PAUSE) Res.drawable.mochy_home2_pause else Res.drawable.mochy_home2_play),
+                        contentDescription = null,
+                        tint = HeroPillContent,
+                        modifier = Modifier.size(15.dp),
+                    )
                     Spacer(Modifier.width(9.dp))
                 }
                 Text(
@@ -663,7 +721,7 @@ private fun MochyHeroPill(
                 if (opensPage) {
                     Spacer(Modifier.width(5.dp))
                     Icon(
-                        MetrolistIcons.AutoMirrored.Filled.ArrowForward,
+                        painter = painterResource(Res.drawable.mochy_home2_arrow_forward),
                         contentDescription = null,
                         tint = HeroPillContent,
                         modifier = Modifier.size(16.dp),

@@ -351,6 +351,7 @@ fun HomeContent(
                         onOpenItem = onItemClick,
                         onTogglePlayPause = onTogglePlayPause,
                         hoverTilt = desktopHome,
+                        scrollProgress = heroScrollProgress,
                     )
                 }
             }

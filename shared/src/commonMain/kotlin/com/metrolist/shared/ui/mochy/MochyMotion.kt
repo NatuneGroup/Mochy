@@ -31,10 +31,12 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
@@ -331,7 +333,7 @@ private const val PAGE_WIPE_CURVE_REACH = 0.6f
 private const val PAGE_WIPE_FLAT = 0.04f
 private const val PAGE_WIPE_SETTLED = 0.001f
 private const val PAGE_WIPE_HIDDEN = 0.999f
-private const val PEEK_DIM = 0.48f
+private const val PEEK_DIM = 0.5f
 private const val PEEK_MEDIA_TRAVEL = 0.12f
 
 private val FeatherEase = floatArrayOf(0f, 0.104f, 0.352f, 0.648f, 0.896f, 1f)
@@ -377,6 +379,8 @@ internal fun MochyPageWipe(
     curve: () -> Float,
     modifier: Modifier = Modifier,
     peek: Boolean = false,
+    // the page is blurred by this much at a full page away, so the switch reads as soft as the reference's
+    blur: Dp = 0.dp,
     content: @Composable BoxScope.() -> Unit,
 ) {
     if (peek) {
@@ -407,6 +411,13 @@ internal fun MochyPageWipe(
                     val a = abs(d)
                     translationX = -d * size.width
                     alpha = if (a >= PAGE_WIPE_HIDDEN) 0f else 1f
+                    renderEffect =
+                        if (blur > 0.dp && a in PAGE_WIPE_SETTLED..PAGE_WIPE_HIDDEN) {
+                            val radius = a * blur.toPx()
+                            BlurEffect(radius, radius, TileMode.Clamp)
+                        } else {
+                            null
+                        }
                     compositingStrategy =
                         if (a in PAGE_WIPE_SETTLED..PAGE_WIPE_HIDDEN) {
                             CompositingStrategy.Offscreen
@@ -508,7 +519,7 @@ internal fun Modifier.pageTextDrift(
     graphicsLayer {
         val d = pageOffset()
         if (peek) {
-            alpha = (1f - abs(d) * 0.72f).coerceIn(0f, 1f)
+            alpha = (1f - abs(d) * 0.75f).coerceIn(0f, 1f)
             return@graphicsLayer
         }
         translationX = d * size.width * (PAGE_TEXT_TRAVEL + PAGE_MEDIA_TRAVEL)
