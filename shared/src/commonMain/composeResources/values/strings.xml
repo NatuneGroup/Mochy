@@ -6199,4 +6199,7 @@
     <!-- Mochy settings pages -->
     <string name="mochy_pages_hide_descriptions">Hide descriptions in settings</string>
     <string name="mochy_pages_hide_descriptions_desc">Show titles only in settings lists.</string>
+    <!-- Mochy mini player -->
+    <!-- Translators: Option in the mini player style list for Mochy's own frosted pill. -->
+    <string name="mochy_mini_type_mochy">Mochy</string>
 </resources>

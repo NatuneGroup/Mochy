@@ -202,6 +202,7 @@ enum class MiniPlayerType {
     MODERN,
     VINTAGE,
     EXPRESSIVE,
+    MOCHY,
 }
 
 enum class DensityScale(

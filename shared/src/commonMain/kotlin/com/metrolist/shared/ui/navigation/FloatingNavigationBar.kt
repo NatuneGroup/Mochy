@@ -7,13 +7,10 @@ package com.metrolist.shared.ui.navigation
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -21,14 +18,14 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -36,8 +33,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ShortNavigationBarDefaults
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -56,7 +51,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
@@ -65,8 +62,8 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -76,12 +73,12 @@ import com.metrolist.shared.ui.mochy.press3D
 import com.metrolist.shared.ui.mochy.pressBounce
 import com.metrolist.shared.ui.mochy.smoothFrames
 import com.metrolist.shared.ui.theme.rememberReducedMotion
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.roundToInt
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 val LocalFloatingNavBar = compositionLocalOf { false }
 
@@ -375,7 +372,7 @@ private fun <T> FloatingNavigationBar(
     Row(
         modifier =
             modifier
-                .wrapContentWidth()
+                .fillMaxWidth()
                 .windowInsetsPadding(ShortNavigationBarDefaults.windowInsets)
                 .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -384,7 +381,7 @@ private fun <T> FloatingNavigationBar(
         Surface(
             modifier =
                 Modifier
-                    .wrapContentWidth()
+                    .weight(1f)
                     .height(FloatingBarHeight)
                     .press3D(maxTilt = 4f, pressedScale = 0.985f, enabled = !reducedMotion),
             shape = CircleShape,
@@ -395,7 +392,7 @@ private fun <T> FloatingNavigationBar(
             Row(
                 modifier =
                     Modifier
-                        .wrapContentWidth()
+                        .fillMaxWidth()
                         .height(FloatingBarHeight)
                         .chromeOutline(outlineColor)
                         .padding(horizontal = NavRowPadding)
@@ -414,7 +411,7 @@ private fun <T> FloatingNavigationBar(
                                 pillItems.getOrNull(index)?.let { onSelect(it.key) }
                             },
                         ),
-                horizontalArrangement = Arrangement.spacedBy(NavHighlightGap),
+                horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 pillItems.forEachIndexed { index, item ->
@@ -425,6 +422,7 @@ private fun <T> FloatingNavigationBar(
                         onClick = { onSelect(item.key) },
                         modifier =
                             Modifier
+                                .weight(1f)
                                 .onGloballyPositioned { coordinates ->
                                     val x = coordinates.positionInParent().x
                                     val bounds = x to (x + coordinates.size.width)
@@ -482,46 +480,58 @@ private fun <T> FloatingNavigationItem(
     modifier: Modifier = Modifier,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val contentColor by animateColorAsState(
-        if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-        label = "floatingItemContent",
+    // the outline and the filled icon cross-fade; the label is not drawn, the tab keeps it for screen readers
+    val lit by animateFloatAsState(
+        targetValue = if (selected) 1f else 0f,
+        animationSpec = tween(200),
+        label = "floatingItemLit",
     )
-    Row(
+    val iconSize = if (item.key.toString() in SmallerTabKeys) 22.dp else 24.dp
+    Box(
         modifier =
             modifier
-                .height(FloatingItemHeight)
-                .pressBounce(
-                    interactionSource = interactionSource,
-                    pressedScale = if (reducedMotion) 1f else 0.90f,
-                ).clip(CircleShape)
+                .fillMaxHeight()
+                .pressBounce(interactionSource = interactionSource, pressedScale = if (reducedMotion) 1f else 0.85f)
+                .clip(CircleShape)
                 .focusOutline(CircleShape)
                 .selectable(
                     selected = selected,
                     onClick = onClick,
                     role = Role.Tab,
                     interactionSource = interactionSource,
-                    indication = ripple(),
-                ).padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
+                    indication = null,
+                ).semantics { contentDescription = item.label },
+        contentAlignment = Alignment.Center,
     ) {
-        AnimatedVisibility(
-            visible = selected,
-            enter = fadeIn() + expandHorizontally(spring(dampingRatio = 0.9f, stiffness = 700f)),
-            exit = fadeOut() + shrinkHorizontally(spring(dampingRatio = 0.9f, stiffness = 700f)),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(imageVector = item.selectedIcon, contentDescription = null, tint = contentColor)
-                Spacer(Modifier.width(8.dp))
-            }
-        }
-        Text(
-            text = item.label,
-            color = contentColor,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Medium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
+        Icon(
+            imageVector = item.icon,
+            contentDescription = null,
+            tint = Color.White,
+            modifier =
+                Modifier
+                    .size(iconSize)
+                    .graphicsLayer {
+                        alpha = UnlitTabAlpha * (1f - lit)
+                        compositingStrategy = CompositingStrategy.ModulateAlpha
+                    },
+        )
+        Icon(
+            imageVector = item.selectedIcon,
+            contentDescription = null,
+            tint = Color.White,
+            modifier =
+                Modifier
+                    .size(iconSize)
+                    .graphicsLayer {
+                        alpha = lit
+                        compositingStrategy = CompositingStrategy.ModulateAlpha
+                    },
         )
     }
 }
+
+// the reference draws Home and Search a little smaller than the other tabs
+private val SmallerTabKeys = setOf("Home", "Search")
+
+// the tab that is not lit shows at 70%, as the reference's tabs do
+private const val UnlitTabAlpha = 0.7f

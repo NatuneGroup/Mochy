@@ -103,6 +103,7 @@ import com.metrolist.shared.ui.theme.getGradientColors
 import com.metrolist.shared.ui.theme.rememberArtworkSeedColor
 import com.metrolist.shared.ui.theme.rememberMochyLook
 import com.metrolist.shared.ui.utils.artworkBlur
+import com.metrolist.shared.ui.mochy.MochyMiniPlayer
 import com.metrolist.shared.ui.utils.supportsNativeBlur
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -138,6 +139,24 @@ fun MiniPlayer(
     val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     val active = isActive && lifecycleState == Lifecycle.State.RESUMED
     val marqueeModifier = rememberTrackMarquee(song.id, active, 3_000L)
+    if (rememberMochyLook().miniPlayerType == MiniPlayerType.MOCHY) {
+        val pixelSensitivity = (173f - Settings.shared.swipeSensitivity.coerceIn(0f, 100f)) / 100f
+        MochyMiniPlayer(
+            song = song,
+            isPlaying = isPlaying,
+            isLoading = isLoading,
+            onTogglePlay = onTogglePlay,
+            onSkipNext = onSkipNext,
+            onSkipPrevious = onSkipPrevious,
+            onExpand = onExpand,
+            canSkipNext = canSkipNext,
+            canSkipPrevious = canSkipPrevious,
+            playbackEnabled = playbackEnabled,
+            swipeThresholdPx = with(LocalDensity.current) { 80.dp.toPx() } * pixelSensitivity,
+            modifier = modifier,
+        )
+        return
+    }
     if (rememberMochyLook().miniPlayerType == MiniPlayerType.EXPRESSIVE) {
         val pixelSensitivity = (173f - Settings.shared.swipeSensitivity.coerceIn(0f, 100f)) / 100f
         ExpressiveMiniPlayer(

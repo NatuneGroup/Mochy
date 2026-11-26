@@ -554,7 +554,7 @@ class Settings(
     var ipodWheelColor by preference(IpodWheelColor.THEME)
     var ipodShadow by preference(true)
     var ipodTallScreen by preference(false)
-    var miniPlayerType by preference(MiniPlayerType.EXPRESSIVE)
+    var miniPlayerType by preference(MiniPlayerType.MOCHY)
     var useRoundedRectPlayButton by preference(false)
     var cropAlbumArt by preference(true)
     var swapPlayerControls by preference(false)
