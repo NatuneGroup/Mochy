@@ -2179,6 +2179,7 @@ fun PlayerScreen(
                                                                                 artworkOverlay.takeUnless {
                                                                                     uiState.isLyricsVisible
                                                                                 },
+                                                                            discTitle = currentSong.title,
                                                                             modifier = Modifier.fillMaxSize(),
                                                                         )
                                                                     } else {
