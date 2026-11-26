@@ -207,6 +207,7 @@ import com.metrolist.shared.ui.components.HomeLoadingPlaceholder
 import com.metrolist.shared.ui.components.MiniPlayer
 import com.metrolist.shared.ui.components.PopupContent
 import com.metrolist.shared.ui.components.PopupVisibility
+import com.metrolist.shared.ui.player.mochy.MochyStylePickerHost
 import com.metrolist.shared.ui.components.RefreshIndicator
 import com.metrolist.shared.ui.components.SongSwipeActions
 import com.metrolist.shared.ui.components.SwipeBackLayout
@@ -1947,6 +1948,7 @@ fun MobileApp(
             }
 
             YouTubeSyncSnackbar(snackbarHostState)
+            MochyStylePickerHost()
             PopupVisibility(visible = YouTubeSessionState.showExpiredSessionNotice) {
                 AlertDialog(
                     onDismissRequest = YouTubeSessionState::dismissExpiredSessionNotice,

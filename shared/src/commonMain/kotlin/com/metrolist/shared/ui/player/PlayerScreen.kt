@@ -336,6 +336,7 @@ internal fun Modifier.artworkSeekGestures(
     progressive: Boolean = false,
     onDoubleTap: ((Offset) -> Unit)? = null,
     onSeek: (Long) -> Unit,
+    onLongPress: (() -> Unit)? = null,
 ): Modifier {
     val hasDoubleTap = seekEnabled || onDoubleTap != null
     if (!hasDoubleTap && onTap != null) {
@@ -351,6 +352,7 @@ internal fun Modifier.artworkSeekGestures(
     val currentOnTap by rememberUpdatedState(onTap)
     val currentOnDoubleTap by rememberUpdatedState(onDoubleTap)
     val currentOnSeek by rememberUpdatedState(onSeek)
+    val currentOnLongPress by rememberUpdatedState(onLongPress)
     val currentProgressive by rememberUpdatedState(progressive)
     var rootPosition by remember { mutableStateOf(Offset.Zero) }
     var skipMultiplier by remember { mutableStateOf(1) }
@@ -378,6 +380,7 @@ internal fun Modifier.artworkSeekGestures(
         .pointerInput(stepMs) {
             detectTapGestures(
                 onTap = { currentOnTap?.invoke() },
+                onLongPress = { currentOnLongPress?.invoke() },
                 onDoubleTap = { offset ->
                     val doubleTapAction = currentOnDoubleTap
                     if (doubleTapAction != null) {

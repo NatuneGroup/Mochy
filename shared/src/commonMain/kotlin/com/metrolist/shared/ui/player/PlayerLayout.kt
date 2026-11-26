@@ -169,6 +169,7 @@ import com.metrolist.shared.ui.haptics.rememberMetrolistHaptics
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.navigation.navigationPopupSource
 import com.metrolist.shared.ui.player.mochy.FlagshipTransport
+import com.metrolist.shared.ui.player.mochy.MochyStylePicker
 import com.metrolist.shared.ui.theme.ComponentShapes
 import com.metrolist.shared.ui.theme.rememberMochyLook
 import com.metrolist.shared.ui.tv.tvFocusHighlight
@@ -418,6 +419,10 @@ internal fun TabletPlayerContent(
                                                 tapLabel = null,
                                                 progressive = Settings.shared.seekExtraSeconds,
                                                 onSeek = onArtworkSeek,
+                                                // Mochy's flagship: a long press on the cover opens the style picker
+                                                onLongPress = {
+                                                    if (Settings.shared.playerType == PlayerType.MOCHY) MochyStylePicker.show()
+                                                },
                                             ),
                                 ) {
                                     if (showVideoSurface) {
