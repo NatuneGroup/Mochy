@@ -1117,6 +1117,7 @@ private fun GridShelfItem(
             isPlaying = playback.isPlaying,
             enabled = enabled,
             clickableMetadata = isWide && !LocalIsTv.current,
+            desktopHover = isWide && !LocalIsTv.current,
         )
     }
 }
@@ -1327,6 +1328,7 @@ private fun HomeListItem(
         isPlaying = playback.isPlaying,
         enabled = enabled,
         clickableMetadata = isWide && !LocalIsTv.current,
+        desktopHover = isWide && !LocalIsTv.current,
     )
 }
 

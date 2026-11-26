@@ -806,10 +806,19 @@ fun YTListItem(
     compactSongSubtitle: Boolean = false,
     contentPadding: PaddingValues = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
     onAlbumPlay: (() -> Unit)? = null,
+    // the desktop pointer: a hovered row lifts slightly and shows a hand, with no ripple
+    desktopHover: Boolean = false,
 ) {
     val pageArtwork = rememberAlbumArtworkSource(item, onClick)
     val itemEnabled = enabled && !item.isUnavailable
     val currentSong = isCurrent && (item is SongItem || item is EpisodeItem)
+    val hoverSource = remember { MutableInteractionSource() }
+    val hovered by hoverSource.collectIsHoveredAsState()
+    val hoverScale by animateFloatAsState(
+        targetValue = if (desktopHover && hovered && itemEnabled) 1.02f else 1f,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = 600f),
+        label = "listItemHover",
+    )
     val colors = animateCurrentSongColors(currentSong)
     val contentColor = colors.content
     val subtitleColor = colors.subtitle
@@ -819,13 +828,26 @@ fun YTListItem(
             modifier
                 .fillMaxWidth()
                 .heightIn(min = 48.dp)
-                .alpha(if (itemEnabled) 1f else 0.38f)
+                .then(
+                    if (desktopHover) {
+                        Modifier
+                            .graphicsLayer {
+                                scaleX = hoverScale
+                                scaleY = hoverScale
+                            }.hoverable(hoverSource)
+                            .pointerHoverIcon(PointerIcon.Hand)
+                    } else {
+                        Modifier
+                    },
+                ).alpha(if (itemEnabled) 1f else 0.38f)
                 .clip(if (currentSong) CircleShape else RoundedCornerShape(4.dp))
                 .background(colors.container)
                 .focusOutline(if (currentSong) CircleShape else RoundedCornerShape(4.dp))
                 .currentSongSemantics(currentSong, isPlaying)
                 .then(if (pageArtwork != null) Modifier.navigationPageSource(pageArtwork.token) else Modifier)
                 .combinedClickable(
+                    interactionSource = if (desktopHover) hoverSource else null,
+                    indication = if (desktopHover) null else LocalIndication.current,
                     enabled = itemEnabled || onLongClick != null || onShowMenu != null || item.isUnavailable,
                     onClick = {
                         if (itemEnabled) {
