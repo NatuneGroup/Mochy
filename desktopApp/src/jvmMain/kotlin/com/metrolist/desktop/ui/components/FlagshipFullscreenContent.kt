@@ -235,7 +235,13 @@ private fun FlagshipCover(modifier: Modifier) {
                 )
             }
 
-            PlayerCoverStyle.DISC -> {
+            PlayerCoverStyle.DISC,
+            PlayerCoverStyle.DISC_SMALL_FULL,
+            PlayerCoverStyle.DISC_SMALL_LABEL,
+            PlayerCoverStyle.DISC_BIG_FULL,
+            PlayerCoverStyle.DISC_BIG_LABEL,
+            PlayerCoverStyle.DISC_ALBUM,
+            -> {
                 VinylDisc(
                     artworkUrl = PlayerState.currentArtworkUrl,
                     nextArtworkUrl = null,
