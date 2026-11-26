@@ -136,10 +136,21 @@ import com.metrolist.shared.ui.icons.SongStatusIcons
 import com.metrolist.shared.ui.menu.ExpressiveSelectionMenu
 import com.metrolist.shared.ui.menu.trackPressPosition
 import com.metrolist.shared.ui.mochy.MochyLibraryChipRow
+import com.metrolist.shared.ui.mochy.MochyLibraryGridGap
+import com.metrolist.shared.ui.mochy.MochyLibraryGridRowGap
+import com.metrolist.shared.ui.mochy.MochyLibraryGridTile
 import com.metrolist.shared.ui.mochy.MochyLibraryIndexRail
+import com.metrolist.shared.ui.mochy.MochyLibraryListRow
+import com.metrolist.shared.ui.mochy.MochyLibraryPillButton
+import com.metrolist.shared.ui.mochy.MochyLibraryRoundButton
+import com.metrolist.shared.ui.mochy.rememberRevealSeenState
+import com.metrolist.shared.ui.mochy.revealOnAppear
 import com.metrolist.shared.ui.mochy.MochyLibrarySectionDivider
 import com.metrolist.shared.ui.mochy.buildLibraryIndex
+import com.metrolist.shared.ui.navigation.LocalContentObscured
 import com.metrolist.shared.ui.navigation.LocalRootContentActive
+import com.metrolist.shared.ui.theme.rememberReducedMotion
+import androidx.compose.ui.graphics.luminance
 import com.metrolist.shared.ui.navigation.LocalUseDesktopUi
 import com.metrolist.shared.ui.navigation.blockInput
 import com.metrolist.shared.ui.player.staticConnectedLeadingButtonShapes
@@ -266,6 +277,10 @@ fun LibraryContent(
     val currentSongIdState = rememberUpdatedState(currentSongId)
     val isPlayingState = rememberUpdatedState(isPlaying)
     val rootActive = LocalRootContentActive.current
+    // the Mochy look is the dark theme's, as on Mochy's home; TV keeps its own
+    val mochyLook = !LocalIsTv.current && MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val revealSeen = rememberRevealSeenState()
+    val revealItems = mochyLook && rootActive && !LocalContentObscured.current && !rememberReducedMotion()
 
     val sortingFilter = selectedFilter?.let { LibraryFilterType.valueOf(it.name) } ?: LibraryFilterType.ALL
     val sorting = Settings.shared.librarySorting(sortingFilter)
@@ -421,8 +436,11 @@ fun LibraryContent(
                 }
             val sizedGrid = isGridView && useGridItemSize && pinchColumns == 0
             val gridGap = if (isGridView) (14 - (if (pinchColumns > 0) pinchColumns else gridColumns) * 2).dp else 8.dp
-            val horizontalGap = if (sizedGrid) GridTileSpacing else gridGap
-            val verticalGap = if (sizedGrid) GridRowSpacing else gridGap
+            val sidePadding = if (mochyLook) 24.dp else 16.dp
+            val horizontalGap =
+                if (mochyLook) (if (isGridView) MochyLibraryGridGap else 0.dp) else if (sizedGrid) GridTileSpacing else gridGap
+            val verticalGap =
+                if (mochyLook) (if (isGridView) MochyLibraryGridRowGap else 0.dp) else if (sizedGrid) GridRowSpacing else gridGap
             key(isGridView) {
                 val scope = rememberCoroutineScope()
                 val showIndexRail =
@@ -487,8 +505,8 @@ fun LibraryContent(
                         contentPadding =
                             PaddingValues(
                                 top = topPadding,
-                                start = 16.dp,
-                                end = if (indexEntries.size >= 4) 36.dp else 16.dp,
+                                start = sidePadding,
+                                end = if (indexEntries.size >= 4) 36.dp else sidePadding,
                                 bottom = bottomPadding + extraBottomPadding,
                             ),
                         horizontalArrangement = Arrangement.spacedBy(horizontalGap),
@@ -504,6 +522,7 @@ fun LibraryContent(
                                 onSearchToggle = toggleSearch,
                                 onFilterChange = onFilterChange,
                                 onGridViewChange = onGridViewChange,
+                                mochyLook = mochyLook,
                             )
                         }
                         if (onSearchQueryChange != null) {
@@ -537,7 +556,14 @@ fun LibraryContent(
                             span = { GridItemSpan(if (isGridView) 1 else maxLineSpan) },
                         ) { index ->
                             val playlist = searchedAutoPlaylists[index]
-                            Box(Modifier.animateItem()) {
+                            Box(
+                                Modifier.animateItem().revealOnAppear(
+                                    key = "library/auto/${playlist.type}",
+                                    seenState = revealSeen,
+                                    enabled = revealItems,
+                                    delayMillis = minOf(index, 4) * 60,
+                                ),
+                            ) {
                                 itemContainer(
                                     HiddenLibraryItem(
                                         HiddenLibraryItemType.AUTO,
@@ -549,7 +575,7 @@ fun LibraryContent(
                                     isGridView,
                                     { onAutoPlaylistClick(playlist.type) },
                                 ) {
-                                    AutoPlaylistItem(playlist, isGridView)
+                                    AutoPlaylistItem(playlist, isGridView, mochyLook)
                                 }
                             }
                         }
@@ -611,6 +637,14 @@ fun LibraryContent(
                                     ) {
                                         LibraryItem(
                                             artistLabel = text.artist,
+                                            mochyLook = mochyLook,
+                                            revealModifier =
+                                                Modifier.revealOnAppear(
+                                                    key = "library/${item.libraryReorderKey}",
+                                                    seenState = revealSeen,
+                                                    enabled = revealItems,
+                                                    delayMillis = minOf(index, 4) * 60,
+                                                ),
                                             item = item,
                                             isGridView = isGridView,
                                             isCurrent = item is SongItem && playback.isCurrent,
@@ -703,6 +737,7 @@ private fun LibraryHeader(
     onSearchToggle: () -> Unit,
     onFilterChange: (LibraryFilter?) -> Unit,
     onGridViewChange: (Boolean) -> Unit,
+    mochyLook: Boolean,
 ) {
     var sortExpanded by remember { mutableStateOf(false) }
     var sortMenuOffset by remember { mutableStateOf(IntOffset.Zero) }
@@ -718,7 +753,87 @@ private fun LibraryHeader(
             onSelectionChange = onFilterChange,
             label = { text.filterLabels.getValue(it) },
         )
-        Row(
+        if (mochyLook) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(Modifier.trackPressPosition { sortMenuOffset = it.round() }) {
+                    MochyLibraryPillButton(
+                        text = text.sortLabels.getValue(sortType),
+                        onClick = { sortExpanded = true },
+                    )
+                    ExpressiveSelectionMenu(
+                        expanded = sortExpanded,
+                        onDismissRequest = { sortExpanded = false },
+                        anchorOffset = sortMenuOffset,
+                        options = LibrarySortType.entries.filter { it.isAvailableFor(selectedFilter) },
+                        selectedOption = sortType,
+                        optionLabel = { text.sortLabels.getValue(it) },
+                        onOptionSelected = { option ->
+                            Settings.shared.setLibrarySorting(
+                                sortingFilter,
+                                LibrarySorting(LibraryContentSort.valueOf(option.name), option.defaultDirection),
+                            )
+                        },
+                    )
+                }
+                MochyLibraryRoundButton(
+                    icon = MetrolistIcons.Outlined.KeyboardArrowDown,
+                    contentDescription =
+                        stringResource(
+                            if (ascending) Res.string.playlist_direction_descending else Res.string.playlist_direction_ascending,
+                        ),
+                    onClick = {
+                        Settings.shared.setLibrarySorting(
+                            sortingFilter,
+                            sorting.copy(direction = if (ascending) SortDirection.DESCENDING else SortDirection.ASCENDING),
+                        )
+                    },
+                    enabled = sortType != LibrarySortType.MANUAL,
+                    rotation = if (ascending) 180f else 0f,
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                if (isDesktop && isGridView) {
+                    Box(Modifier.trackPressPosition { gridSizeMenuOffset = it.round() }) {
+                        MochyLibraryRoundButton(
+                            icon = MetrolistIcons.Outlined.Tune,
+                            contentDescription = stringResource(Res.string.display_density),
+                            onClick = { gridSizeExpanded = true },
+                        )
+                        ExpressiveSelectionMenu(
+                            expanded = gridSizeExpanded,
+                            onDismissRequest = { gridSizeExpanded = false },
+                            anchorOffset = gridSizeMenuOffset,
+                            options = LibraryGridColumnsRange.toList(),
+                            selectedOption = Settings.shared.libraryGridColumns,
+                            optionLabel = { it.toString() },
+                            onOptionSelected = { Settings.shared.libraryGridColumns = it },
+                        )
+                    }
+                }
+                MochyLibraryRoundButton(
+                    icon = if (isSearchOpen) MetrolistIcons.Default.Close else MetrolistIcons.Default.Search,
+                    contentDescription = text.search,
+                    onClick = onSearchToggle,
+                    picked = isSearchOpen,
+                )
+                MochyLibraryRoundButton(
+                    icon = MetrolistIcons.Default.GridView,
+                    contentDescription = text.grid,
+                    onClick = { onGridViewChange(true) },
+                    picked = isGridView,
+                )
+                MochyLibraryRoundButton(
+                    icon = MetrolistIcons.AutoMirrored.Outlined.List,
+                    contentDescription = text.list,
+                    onClick = { onGridViewChange(false) },
+                    picked = !isGridView,
+                )
+            }
+        }
+        if (!mochyLook) Row(
             // LazyVerticalGrid supplies unbounded height, which can inflate expressive buttons under release optimizations.
             Modifier.fillMaxWidth().height(SplitButtonDefaults.MediumContainerHeight),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -936,27 +1051,64 @@ private fun LibrarySortType.isAvailableFor(filter: LibraryFilter?): Boolean =
 private fun AutoPlaylistItem(
     playlist: LibraryAutoPlaylist,
     isGridView: Boolean,
+    mochyLook: Boolean = false,
 ) {
+    val cover = libraryCover(playlist.type).takeIf { Settings.shared.collectionCovers[playlist.type] == null }
+    val thumbnail = Settings.shared.collectionCovers[playlist.type]
     if (isGridView) {
         Box(Modifier.fillMaxWidth()) {
-            GridCard(
-                cover = libraryCover(playlist.type).takeIf { Settings.shared.collectionCovers[playlist.type] == null },
-                title = playlist.title,
-                subtitle = playlist.subtitle,
-                thumbnail = Settings.shared.collectionCovers[playlist.type],
-                icon = playlist.icon,
-            )
+            if (mochyLook) {
+                MochyLibraryGridTile(
+                    title = playlist.title,
+                    subtitle = playlist.subtitle,
+                    thumbnail = thumbnail,
+                    icon = playlist.icon,
+                    artistId = null,
+                    cover = cover,
+                    localArtwork = null,
+                    artworkOverlay = null,
+                    artworkAspectRatio = 1f,
+                    isPlaylistArtwork = false,
+                    isCurrent = false,
+                    isPlaying = false,
+                )
+            } else {
+                GridCard(
+                    cover = cover,
+                    title = playlist.title,
+                    subtitle = playlist.subtitle,
+                    thumbnail = thumbnail,
+                    icon = playlist.icon,
+                )
+            }
             playlist.badge?.let { AutoPlaylistBadge(it, Modifier.align(Alignment.TopEnd).padding(8.dp)) }
         }
     } else {
         Box(Modifier.fillMaxWidth()) {
-            ListCard(
-                cover = libraryCover(playlist.type).takeIf { Settings.shared.collectionCovers[playlist.type] == null },
-                title = playlist.title,
-                subtitle = playlist.subtitle,
-                thumbnail = Settings.shared.collectionCovers[playlist.type],
-                icon = playlist.icon,
-            )
+            if (mochyLook) {
+                MochyLibraryListRow(
+                    title = playlist.title,
+                    subtitle = playlist.subtitle,
+                    thumbnail = thumbnail,
+                    icon = playlist.icon,
+                    artistId = null,
+                    cover = cover,
+                    localArtwork = null,
+                    artworkOverlay = null,
+                    artworkAspectRatio = 1f,
+                    isPlaylistArtwork = false,
+                    isCurrent = false,
+                    isPlaying = false,
+                )
+            } else {
+                ListCard(
+                    cover = cover,
+                    title = playlist.title,
+                    subtitle = playlist.subtitle,
+                    thumbnail = thumbnail,
+                    icon = playlist.icon,
+                )
+            }
             playlist.badge?.let { AutoPlaylistBadge(it, Modifier.align(Alignment.CenterEnd).padding(end = 8.dp)) }
         }
     }
@@ -996,6 +1148,8 @@ private fun LibraryItem(
     onAlbumPlay: (() -> Unit)? = null,
     isCurrent: Boolean,
     isPlaying: Boolean,
+    mochyLook: Boolean = false,
+    revealModifier: Modifier = Modifier,
 ) {
     val artworkOverlay: (@Composable BoxScope.() -> Unit)? =
         if (item is SongItem) {
@@ -1043,40 +1197,30 @@ private fun LibraryItem(
             ?.takeIf { it.isLocal && it.customThumbnail.isNullOrBlank() }
             ?.artworkThumbnails
     if (isGridView) {
-        Box {
-            GridCard(
-                cover = (item as? PlaylistItem)?.let(::libraryCover),
-                title = item.displayTitle,
-                subtitle = subtitle,
-                thumbnail =
-                    (item as? PlaylistItem)?.let { libraryArtwork(it.id, it.thumbnail, it.customThumbnail) } ?: item.displayThumbnailUrl,
-                localArtwork = localArtwork,
-                isPlaylistArtwork = item is PlaylistItem,
-                icon = null,
-                artistId = artistId,
-                artworkOverlay = artworkOverlay,
-                artworkAspectRatio = item.thumbnailAspectRatio,
-                isCurrent = isCurrent,
-                isPlaying = isPlaying,
-            )
-            if (isDownloaded) DownloadedCollectionIcon(Modifier.align(Alignment.TopEnd).padding(8.dp))
-            reorderHandle?.invoke(Modifier.align(Alignment.TopStart))
-        }
-    } else {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.weight(1f)) {
-                ListCard(
+        Box(revealModifier) {
+            val thumbnail =
+                (item as? PlaylistItem)?.let { libraryArtwork(it.id, it.thumbnail, it.customThumbnail) } ?: item.displayThumbnailUrl
+            if (mochyLook) {
+                MochyLibraryGridTile(
+                    title = item.displayTitle,
+                    subtitle = subtitle,
+                    thumbnail = thumbnail,
+                    icon = null,
+                    artistId = artistId,
+                    cover = (item as? PlaylistItem)?.let(::libraryCover),
+                    localArtwork = localArtwork,
+                    artworkOverlay = artworkOverlay,
+                    artworkAspectRatio = item.thumbnailAspectRatio,
+                    isPlaylistArtwork = item is PlaylistItem,
+                    isCurrent = isCurrent,
+                    isPlaying = isPlaying,
+                )
+            } else {
+                GridCard(
                     cover = (item as? PlaylistItem)?.let(::libraryCover),
                     title = item.displayTitle,
                     subtitle = subtitle,
-                    thumbnail =
-                        (item as? PlaylistItem)?.let {
-                            libraryArtwork(
-                                it.id,
-                                it.thumbnail,
-                                it.customThumbnail,
-                            )
-                        } ?: item.displayThumbnailUrl,
+                    thumbnail = thumbnail,
                     localArtwork = localArtwork,
                     isPlaylistArtwork = item is PlaylistItem,
                     icon = null,
@@ -1086,6 +1230,46 @@ private fun LibraryItem(
                     isCurrent = isCurrent,
                     isPlaying = isPlaying,
                 )
+            }
+            if (isDownloaded) DownloadedCollectionIcon(Modifier.align(Alignment.TopEnd).padding(8.dp))
+            reorderHandle?.invoke(Modifier.align(Alignment.TopStart))
+        }
+    } else {
+        Row(modifier = revealModifier, verticalAlignment = Alignment.CenterVertically) {
+            val thumbnail =
+                (item as? PlaylistItem)?.let { libraryArtwork(it.id, it.thumbnail, it.customThumbnail) } ?: item.displayThumbnailUrl
+            Box(Modifier.weight(1f)) {
+                if (mochyLook) {
+                    MochyLibraryListRow(
+                        title = item.displayTitle,
+                        subtitle = subtitle,
+                        thumbnail = thumbnail,
+                        icon = null,
+                        artistId = artistId,
+                        cover = (item as? PlaylistItem)?.let(::libraryCover),
+                        localArtwork = localArtwork,
+                        artworkOverlay = artworkOverlay,
+                        artworkAspectRatio = item.thumbnailAspectRatio,
+                        isPlaylistArtwork = item is PlaylistItem,
+                        isCurrent = isCurrent,
+                        isPlaying = isPlaying,
+                    )
+                } else {
+                    ListCard(
+                        cover = (item as? PlaylistItem)?.let(::libraryCover),
+                        title = item.displayTitle,
+                        subtitle = subtitle,
+                        thumbnail = thumbnail,
+                        localArtwork = localArtwork,
+                        isPlaylistArtwork = item is PlaylistItem,
+                        icon = null,
+                        artistId = artistId,
+                        artworkOverlay = artworkOverlay,
+                        artworkAspectRatio = item.thumbnailAspectRatio,
+                        isCurrent = isCurrent,
+                        isPlaying = isPlaying,
+                    )
+                }
             }
             if (isDownloaded) DownloadedCollectionIcon(Modifier.padding(horizontal = 8.dp))
             reorderHandle?.invoke(Modifier)

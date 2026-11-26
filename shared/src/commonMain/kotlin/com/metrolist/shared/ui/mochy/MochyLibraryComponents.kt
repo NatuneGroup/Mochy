@@ -18,13 +18,16 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -32,6 +35,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -47,6 +51,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
@@ -56,17 +62,23 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.mochy_library_index_scrubber
 import com.metrolist.shared.model.YTItem
+import com.metrolist.shared.ui.components.Artwork
+import com.metrolist.shared.ui.components.squareArtworkSlot
+import com.metrolist.shared.ui.utils.artistArtworkShape
 import com.metrolist.shared.ui.haptics.HapticEvent
 import com.metrolist.shared.ui.haptics.rememberMetrolistHaptics
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.DrawableResource
 import kotlin.math.roundToInt
 
 private const val SYMBOL_BUCKET = "#"
@@ -384,6 +396,196 @@ private fun MochyLibraryChipPill(text: String, selected: Boolean, onClick: () ->
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
+        )
+    }
+}
+
+// Library cards and rows, Mochy's way: the shared artwork (cover, local art, play overlay, now-playing marks)
+// drawn at the reference's corner radii and type. The grid's card corner is the reference's HomeCardCornerRadius.
+internal val MochyLibraryCardCorner = 25.dp
+internal val MochyLibraryGridGap = 15.dp
+internal val MochyLibraryGridRowGap = 18.dp
+private val MochyLibraryRowArt = 54.dp
+private val MochyLibraryRowCorner = 14.dp
+private val MochyLibraryRowTextInset = 13.dp
+
+@Composable
+internal fun MochyLibraryGridTile(
+    title: String,
+    subtitle: String,
+    thumbnail: String?,
+    icon: ImageVector?,
+    artistId: String?,
+    cover: DrawableResource?,
+    localArtwork: List<String>?,
+    artworkOverlay: (@Composable BoxScope.() -> Unit)?,
+    artworkAspectRatio: Float,
+    isPlaylistArtwork: Boolean,
+    isCurrent: Boolean,
+    isPlaying: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier.fillMaxWidth()) {
+        Box(Modifier.fillMaxWidth().aspectRatio(1f), contentAlignment = Alignment.Center) {
+            Artwork(
+                thumbnail = thumbnail,
+                icon = icon,
+                modifier = Modifier.fillMaxWidth().aspectRatio(artworkAspectRatio),
+                iconSize = 56.dp,
+                cornerRadius = MochyLibraryCardCorner,
+                shape = artistId?.let { artistArtworkShape(it) } ?: RoundedCornerShape(MochyLibraryCardCorner),
+                cover = cover,
+                localArtwork = localArtwork,
+                overlay = artworkOverlay,
+                isPlaylistArtwork = isPlaylistArtwork,
+                isCurrent = isCurrent,
+                isPlaying = isPlaying,
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = title,
+            color = Color.White.copy(alpha = 0.92f),
+            fontFamily = mochyInterFontFamily(),
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 14.sp,
+            lineHeight = 17.sp,
+            letterSpacing = (-0.03).em,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        if (subtitle.isNotEmpty()) {
+            Text(
+                text = subtitle,
+                color = Color.White.copy(alpha = 0.5f),
+                fontFamily = mochyInterFontFamily(),
+                fontWeight = FontWeight.Medium,
+                fontSize = 12.sp,
+                lineHeight = 15.sp,
+                letterSpacing = (-0.02).em,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+@Composable
+internal fun MochyLibraryListRow(
+    title: String,
+    subtitle: String,
+    thumbnail: String?,
+    icon: ImageVector?,
+    artistId: String?,
+    cover: DrawableResource?,
+    localArtwork: List<String>?,
+    artworkOverlay: (@Composable BoxScope.() -> Unit)?,
+    artworkAspectRatio: Float,
+    isPlaylistArtwork: Boolean,
+    isCurrent: Boolean,
+    isPlaying: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth().padding(vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Artwork(
+            thumbnail = thumbnail,
+            icon = icon,
+            modifier = Modifier.squareArtworkSlot(MochyLibraryRowArt, artworkAspectRatio),
+            iconSize = 24.dp,
+            cornerRadius = MochyLibraryRowCorner,
+            shape = artistId?.let { artistArtworkShape(it) } ?: RoundedCornerShape(MochyLibraryRowCorner),
+            cover = cover,
+            localArtwork = localArtwork,
+            overlay = artworkOverlay,
+            isPlaylistArtwork = isPlaylistArtwork,
+            isCurrent = isCurrent,
+            isPlaying = isPlaying,
+        )
+        Column(Modifier.weight(1f).padding(horizontal = MochyLibraryRowTextInset)) {
+            Text(
+                text = title,
+                color = if (isCurrent) Color.White else Color.White.copy(alpha = 0.92f),
+                fontFamily = mochyInterFontFamily(),
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 15.sp,
+                lineHeight = 17.sp,
+                letterSpacing = (-0.03).em,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (subtitle.isNotEmpty()) {
+                Text(
+                    text = subtitle,
+                    color = Color.White.copy(alpha = 0.5f),
+                    fontFamily = mochyInterFontFamily(),
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 12.sp,
+                    lineHeight = 15.sp,
+                    letterSpacing = (-0.02).em,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
+// the library header's controls in Mochy's pill and round-button style, the same as the Manage pill
+private val MochyLibraryControl = Color(0xFF2E2E31)
+private val MochyLibraryControlPicked = Color(0xFF3D3D41)
+
+@Composable
+internal fun MochyLibraryPillButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .clip(RoundedCornerShape(percent = 50))
+            .background(MochyLibraryControl)
+            .clickable(role = Role.Button, onClick = onClick)
+            .heightIn(min = 40.dp)
+            .padding(horizontal = 18.dp, vertical = 6.dp),
+    ) {
+        Text(
+            text = text,
+            color = Color.White,
+            fontFamily = mochyInterFontFamily(),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
+internal fun MochyLibraryRoundButton(
+    icon: ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    picked: Boolean = false,
+    enabled: Boolean = true,
+    rotation: Float = 0f,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .background(if (picked) MochyLibraryControlPicked else MochyLibraryControl)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = Color.White.copy(alpha = if (enabled) 1f else 0.38f),
+            modifier = Modifier.size(20.dp).graphicsLayer { rotationZ = rotation },
         )
     }
 }
