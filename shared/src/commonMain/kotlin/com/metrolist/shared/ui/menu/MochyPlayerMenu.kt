@@ -50,6 +50,7 @@ import com.metrolist.shared.generated.resources.mochy_menu_heart_outline
 import com.metrolist.shared.generated.resources.mochy_menu_library_add
 import com.metrolist.shared.generated.resources.mochy_menu_library_add_check
 import com.metrolist.shared.generated.resources.mochy_menu_lyrics
+import com.metrolist.shared.generated.resources.mochy_menu_player_style
 import com.metrolist.shared.generated.resources.mochy_menu_playlist_add
 import com.metrolist.shared.generated.resources.mochy_menu_radio
 import com.metrolist.shared.generated.resources.mochy_menu_share
@@ -70,6 +71,7 @@ import com.metrolist.shared.ui.components.ExpandableText
 import com.metrolist.shared.ui.components.PlayerMenuAction
 import com.metrolist.shared.ui.components.images.AsyncImage
 import com.metrolist.shared.ui.components.isAutoPlaylistIcon
+import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
@@ -285,3 +287,12 @@ internal fun MochyMediaMenuSheetContent(
     }
     Spacer(Modifier.height(24.dp))
 }
+
+// the player menu's entry for the style picker, shown in Mochy's look
+@Composable
+internal fun mochyPlayerStyleMenuAction(onOpen: () -> Unit): PlayerMenuAction =
+    PlayerMenuAction(
+        icon = MetrolistIcons.Outlined.Palette,
+        title = stringResource(Res.string.mochy_menu_player_style),
+        onClick = onOpen,
+    )
