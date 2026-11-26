@@ -7,7 +7,6 @@
 
 package com.metrolist.shared.ui.screens
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -41,9 +40,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.SearchBarValue
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
@@ -71,6 +68,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
@@ -84,12 +82,21 @@ import com.metrolist.shared.model.SongItem
 import com.metrolist.shared.model.YTItem
 import com.metrolist.shared.ui.LocalIsTv
 import com.metrolist.shared.ui.icons.MetrolistIcons
-import com.metrolist.shared.ui.mochy.pressBounce
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
-import com.metrolist.shared.ui.theme.rememberReducedMotion
 import com.metrolist.shared.ui.tv.tvFocusHighlight
 import com.metrolist.shared.viewmodels.SearchViewModel
 import org.jetbrains.compose.resources.stringResource
+
+/** Mochy's search palette: the pill, the suggestion tiles and the section rules. */
+internal object MochySearchColors {
+    val Field = Color(0xFF141416)
+    val FieldFocused = Color(0xFF1E1E21)
+    val Tile = Color(0xFF121214)
+    val Divider = Color(0xFF232326)
+    val Primary = Color.White
+    val Secondary = Color(0xFF9A9AA0)
+    val Placeholder = Color(0xFF77777D)
+}
 
 data class SearchScreenText(
     val contentText: SearchContentText,
@@ -271,117 +278,21 @@ fun SearchBar(
     BoxWithConstraints(
         modifier =
             modifier
-                .padding(horizontal = 16.dp, vertical = 2.dp),
+                .padding(horizontal = 24.dp, vertical = 2.dp),
         contentAlignment = Alignment.Center,
     ) {
-        val isWide = maxWidth > 480.dp
-        val reducedMotion = rememberReducedMotion()
-        val barBorder = BorderStroke(0.75.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
 
-        if (!isWide && !isTv) {
-            val searchBarColors =
-                SearchBarDefaults.colors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                )
-            Surface(
-                shape = SearchBarDefaults.inputFieldShape,
-                content = {
-                    SearchBarDefaults.InputField(
-                        textFieldState = textFieldState,
-                        searchBarState = searchBarState,
-                        onSearch = submitSearch,
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .focusRequester(focusRequester),
-                        placeholder = {
-                            Text(
-                                text = placeholder,
-                                fontFamily = mochyInterFontFamily(),
-                                maxLines = 1,
-                                overflow = TextOverflow.Clip,
-                            )
-                        },
-                        leadingIcon = {
-                            if (isQuerySubmitted) {
-                                val backInteraction = remember { MutableInteractionSource() }
-                                IconButton(
-                                    onClick = onBack,
-                                    interactionSource = backInteraction,
-                                    modifier =
-                                        Modifier
-                                            .size(48.dp)
-                                            .pressBounce(backInteraction, if (reducedMotion) 1f else 0.88f),
-                                    shapes = IconButtonDefaults.shapes(),
-                                ) {
-                                    Icon(
-                                        imageVector = MetrolistIcons.AutoMirrored.Filled.ArrowBack,
-                                        contentDescription = backLabel,
-                                        modifier = Modifier.size(24.dp),
-                                    )
-                                }
-                            } else {
-                                Icon(
-                                    imageVector = MetrolistIcons.Default.Search,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp),
-                                )
-                            }
-                        },
-                        trailingIcon = {
-                            if (query.isNotEmpty()) {
-                                val clearInteraction = remember { MutableInteractionSource() }
-                                IconButton(
-                                    onClick = onClear,
-                                    interactionSource = clearInteraction,
-                                    modifier =
-                                        Modifier
-                                            .size(48.dp)
-                                            .pressBounce(clearInteraction, if (reducedMotion) 1f else 0.88f),
-                                    shapes = IconButtonDefaults.shapes(),
-                                ) {
-                                    Icon(imageVector = MetrolistIcons.Default.Clear, contentDescription = clearLabel)
-                                }
-                            } else if (onMicrophoneClick != null) {
-                                val micInteraction = remember { MutableInteractionSource() }
-                                IconButton(
-                                    onClick = onMicrophoneClick,
-                                    interactionSource = micInteraction,
-                                    modifier =
-                                        Modifier
-                                            .size(48.dp)
-                                            .pressBounce(micInteraction, if (reducedMotion) 1f else 0.88f),
-                                    shapes = IconButtonDefaults.shapes(),
-                                ) {
-                                    Icon(
-                                        imageVector = MetrolistIcons.Rounded.Mic,
-                                        contentDescription = microphoneContentDescription,
-                                        modifier = Modifier.size(24.dp),
-                                    )
-                                }
-                            }
-                        },
-                        colors = searchBarColors.inputFieldColors,
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-                color = searchBarColors.containerColor,
-                border = barBorder,
-                tonalElevation = 0.dp,
-                shadowElevation = 0.dp,
-            )
-        } else {
-            val barHeight = if (isTv) 48.dp else 40.dp
-            val iconSize = 18.dp
-            val fontSize = 14.sp
+        run {
+            val barHeight = 48.dp
+            val iconSize = 20.dp
+            val fontSize = 15.sp
 
             Box(
                 modifier =
                     Modifier
                         .fillMaxWidth()
                         .height(barHeight)
-                        .background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape)
-                        .border(barBorder, CircleShape),
+                        .background(if (isFocused) MochySearchColors.FieldFocused else MochySearchColors.Field, RoundedCornerShape(50)),
                 contentAlignment = Alignment.Center,
             ) {
                 Row(
@@ -399,7 +310,7 @@ fun SearchBar(
                                 imageVector = MetrolistIcons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = backLabel,
                                 modifier = Modifier.size(iconSize),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                tint = MochySearchColors.Secondary,
                             )
                         }
                     } else {
@@ -407,7 +318,7 @@ fun SearchBar(
                             imageVector = MetrolistIcons.Default.Search,
                             contentDescription = null,
                             modifier = Modifier.size(iconSize),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = MochySearchColors.Secondary,
                         )
                     }
 
@@ -461,11 +372,12 @@ fun SearchBar(
                                 },
                         keyboardOptions = KeyboardOptions(showKeyboardOnFocus = !isTv || tvKeyboardRequested),
                         textStyle =
-                            MaterialTheme.typography.bodyMedium.copy(
-                                color = MaterialTheme.colorScheme.onSurface,
+                            TextStyle(
+                                fontFamily = mochyInterFontFamily(),
+                                color = MochySearchColors.Primary,
                                 fontSize = fontSize,
                             ),
-                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                        cursorBrush = SolidColor(MochySearchColors.Primary),
                         lineLimits = TextFieldLineLimits.SingleLine,
                         onKeyboardAction = { submitSearch(textFieldState.text.toString()) },
                         decorator = { innerTextField ->
@@ -475,8 +387,8 @@ fun SearchBar(
                                         text = placeholder,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
-                                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = fontSize),
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                        style = TextStyle(fontFamily = mochyInterFontFamily(), fontSize = fontSize),
+                                        color = MochySearchColors.Placeholder,
                                     )
                                 }
                                 innerTextField()
@@ -494,7 +406,7 @@ fun SearchBar(
                                 imageVector = MetrolistIcons.Default.Clear,
                                 contentDescription = clearLabel,
                                 modifier = Modifier.size(iconSize),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                tint = MochySearchColors.Secondary,
                             )
                         }
                     } else if (onMicrophoneClick != null) {
@@ -507,7 +419,7 @@ fun SearchBar(
                                 imageVector = MetrolistIcons.Rounded.Mic,
                                 contentDescription = microphoneContentDescription,
                                 modifier = Modifier.size(iconSize),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                tint = MochySearchColors.Secondary,
                             )
                         }
                     }
