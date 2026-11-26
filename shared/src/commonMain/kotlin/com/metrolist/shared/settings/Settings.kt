@@ -64,6 +64,7 @@ import com.metrolist.shared.constants.CastEnabledKey
 import com.metrolist.shared.constants.CastVolumeStepKey
 import com.metrolist.shared.constants.ClassicRecommendationsKey
 import com.metrolist.shared.constants.CollectionCoversKey
+import com.metrolist.shared.constants.CrossfadeStyleKey
 import com.metrolist.shared.constants.DatabaseLikesRecoveryVersionKey
 import com.metrolist.shared.constants.DefaultOpenTabKey
 import com.metrolist.shared.constants.DeletedPlaylistIdsJsonKey
@@ -566,6 +567,11 @@ class Settings(
     var crossfadeEnabled by preference(false)
     var crossfadeDuration by preference(10f)
     var crossfadeGapless by preference(true)
+    // which blend the Transition page keeps when crossfade is on; an upgrade with a 5 s crossfade counts as Auto, anything else keeps its length as Manual
+    var crossfadeStyle by preference(
+        CrossfadeStyleKey,
+        if (crossfadeDuration == AutoCrossfadeSeconds) CrossfadeStyle.AUTO else CrossfadeStyle.MANUAL,
+    )
     var transportFadeEnabled by preference(TransportFadeEnabledKey, true)
     var transportFadeSeconds by preference(TransportFadeSecondsKey, 2.0f)
     var sponsorBlockEnabled by preference(SponsorBlockEnabledKey, false)

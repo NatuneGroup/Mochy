@@ -125,6 +125,7 @@ import com.metrolist.shared.ui.menu.trackPressPosition
 import com.metrolist.shared.ui.mochy.MochyModulesScreen
 import com.metrolist.shared.ui.mochy.MochyProfileSettingsScreen
 import com.metrolist.shared.ui.mochy.pressBounce
+import com.metrolist.shared.ui.settings.transition.TransitionSettingsScreen
 import com.metrolist.shared.ui.navigation.PredictiveNavigationContent
 import com.metrolist.shared.ui.navigation.rememberNavigationMotion
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
@@ -150,6 +151,7 @@ fun SharedSettingsScreen(
                 host.availablePages +
                     SettingsPageId.EQUALIZER +
                     SettingsPageId.AUDIO_LAB +
+                    SettingsPageId.TRANSITION +
                     SettingsPageId.MOCHY_PROFILE +
                     SettingsPageId.MOCHY_MODULES,
             pageContent = { page, onBack, onNavigate ->
@@ -167,6 +169,10 @@ fun SharedSettingsScreen(
                                 host.isStageAvailable -> AudioLabStageSupport.Available
                                 else -> AudioLabStageSupport.EngineUnavailable
                             },
+                    )
+                } else if (page == SettingsPageId.TRANSITION) {
+                    TransitionSettingsScreen(
+                        onAudioChanged = { host.onSettingChanged(SettingsChangeEffect.AUDIO, null) },
                     )
                 } else if (page == SettingsPageId.MOCHY_PROFILE) {
                     MochyProfileSettingsScreen(rememberPhotoPicker = host.rememberMochyProfilePhotoPicker)

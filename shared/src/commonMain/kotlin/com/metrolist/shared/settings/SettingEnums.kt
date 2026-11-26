@@ -34,6 +34,14 @@ enum class KeepScreenOnMode {
             }
 }
 
+enum class CrossfadeStyle {
+    AUTO,
+    MANUAL,
+}
+
+// the length Auto Crossfade blends each song over, in seconds
+const val AutoCrossfadeSeconds = 5f
+
 enum class AppLayout {
     EXPRESS,
     COMFORTABLE,

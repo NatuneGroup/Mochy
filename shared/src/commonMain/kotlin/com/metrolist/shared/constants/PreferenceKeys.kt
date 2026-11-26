@@ -281,3 +281,5 @@ val StageRoomSizeKey = "stageRoomSize"
 val StageWallsKey = "stageWalls"
 val StageRoomAmountKey = "stageRoomAmount"
 val StageLevelDbKey = "stageLevelDb"
+
+val CrossfadeStyleKey = "crossfadeStyle"
