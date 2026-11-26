@@ -6091,4 +6091,23 @@
     <string name="onb_welcome_to_mochy">welcome to mochy!</string>
     <!-- Translators: Line shown on the final onboarding page. -->
     <string name="onb_all_good">You’re good to go</string>
+    <!-- Mochy profile -->
+    <!-- Translators: Greeting word on the Mochy profile page, picked at random each visit. -->
+    <string name="mochy_profile_greeting_hello_again">Hello again</string>
+    <!-- Translators: Greeting word on the Mochy profile page, picked at random each visit. -->
+    <string name="mochy_profile_greeting_hey">Hey</string>
+    <!-- Translators: Greeting word on the Mochy profile page, picked at random each visit. -->
+    <string name="mochy_profile_greeting_welcome_back">Welcome back</string>
+    <!-- Translators: Greeting word on the Mochy profile page, picked at random each visit. -->
+    <string name="mochy_profile_greeting_good_to_see_you">Good to see you</string>
+    <!-- Translators: Name used in the Mochy profile greeting when the user has not set a name. -->
+    <string name="mochy_profile_greeting_fallback">there</string>
+    <!-- Translators: Mochy profile greeting. %1$s is the greeting word, %2$s is the user's name. -->
+    <string name="mochy_profile_greeting_format">%1$s, %2$s!</string>
+    <!-- Translators: Label beside the total listening hours and minutes on the Mochy profile page. -->
+    <string name="mochy_profile_total_listening_time">Total listening time</string>
+    <!-- Translators: Short unit for hours on the Mochy profile listening card. -->
+    <string name="mochy_profile_unit_hour_short">h</string>
+    <!-- Translators: Short unit for minutes on the Mochy profile listening card. -->
+    <string name="mochy_profile_unit_minute_short">m</string>
 </resources>

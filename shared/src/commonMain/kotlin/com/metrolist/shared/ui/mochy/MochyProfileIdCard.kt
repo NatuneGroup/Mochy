@@ -3,6 +3,7 @@
 package com.metrolist.shared.ui.mochy
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -73,12 +74,14 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -106,8 +109,17 @@ import com.metrolist.shared.generated.resources.mochy_card_profile_usr
 import com.metrolist.shared.generated.resources.mochy_hello
 import com.metrolist.shared.generated.resources.mochy_profile_change_photo
 import com.metrolist.shared.generated.resources.mochy_profile_choose_photo
+import com.metrolist.shared.generated.resources.mochy_profile_greeting_fallback
+import com.metrolist.shared.generated.resources.mochy_profile_greeting_format
+import com.metrolist.shared.generated.resources.mochy_profile_greeting_good_to_see_you
+import com.metrolist.shared.generated.resources.mochy_profile_greeting_hey
+import com.metrolist.shared.generated.resources.mochy_profile_greeting_hello_again
+import com.metrolist.shared.generated.resources.mochy_profile_greeting_welcome_back
 import com.metrolist.shared.generated.resources.mochy_profile_picture
 import com.metrolist.shared.generated.resources.mochy_profile_remove_photo
+import com.metrolist.shared.generated.resources.mochy_profile_total_listening_time
+import com.metrolist.shared.generated.resources.mochy_profile_unit_hour_short
+import com.metrolist.shared.generated.resources.mochy_profile_unit_minute_short
 import com.metrolist.shared.generated.resources.mochy_username_label
 import com.metrolist.shared.generated.resources.mochy_username_placeholder
 import com.metrolist.shared.generated.resources.mochy_welcome_to_mochy
@@ -673,26 +685,156 @@ private suspend fun loadMochyCardStats(): MochyCardStats? =
         )
     }.getOrNull()
 
-/** Settings page wrapper around [MochyProfileEditorContent]. */
+/** Eases the Mochy profile page in, as the reference's recap easing does. */
+private val MochyPageEase = CubicBezierEasing(0.2f, 0f, 0f, 1f)
+
+/** Cards on the Mochy profile page share this surface colour. */
+private val MochyPageCard = Color(0xFF0F0F0F)
+
+/** On wide windows the page stops growing here and is centred. */
+private val MochyPageMaxWidth = 1040.dp
+
+/** Wide windows put the greeting and card in one column and the listening card in the other. */
+private val MochyTwoColumnMinWidth = 720.dp
+
+private val MochyGreetingWords = listOf(
+    Res.string.mochy_profile_greeting_hello_again,
+    Res.string.mochy_profile_greeting_hey,
+    Res.string.mochy_profile_greeting_welcome_back,
+    Res.string.mochy_profile_greeting_good_to_see_you,
+)
+
+/**
+ * Mochy profile page: a greeting, the ID card and its editor, then the listening-time card.
+ * Stats come from the same history snapshot the card back reads.
+ */
 @Composable
 fun MochyProfileSettingsScreen(
     modifier: Modifier = Modifier,
     rememberPhotoPicker: (@Composable (onPicked: (uri: String) -> Unit) -> () -> Unit)? = null,
 ) {
-    Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
+    val settings = Settings.shared
+    val totalMs by produceState<Long?>(initialValue = null) { value = loadListeningTotalMs() }
+    val greetingWord = remember { MochyGreetingWords.random() }
+    val savedName = settings.mochyUsername.ifBlank { settings.accountName }.trim()
+    val reveal = remember { Animatable(0f) }
+    LaunchedEffect(Unit) { reveal.animateTo(1f, tween(durationMillis = 900, easing = MochyPageEase)) }
+
+    val header: @Composable () -> Unit = {
+        Text(
+            text =
+                stringResource(
+                    Res.string.mochy_profile_greeting_format,
+                    stringResource(greetingWord),
+                    savedName.ifBlank { stringResource(Res.string.mochy_profile_greeting_fallback) },
+                ),
+            style = TextStyle(fontFamily = mochyInterFontFamily(), fontWeight = FontWeight.Bold, fontSize = 23.sp, letterSpacing = (-0.6).sp),
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
         MochyProfileEditorContent(
             showCelebrateButton = true,
             rememberPhotoPicker = rememberPhotoPicker,
         )
     }
+
+    Column(
+        modifier =
+            modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 16.dp)
+                .graphicsLayer {
+                    alpha = reveal.value
+                    translationY = (1f - reveal.value) * 60.dp.toPx()
+                },
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        BoxWithConstraints(modifier = Modifier.widthIn(max = MochyPageMaxWidth).fillMaxWidth()) {
+            if (maxWidth >= MochyTwoColumnMinWidth) {
+                Row(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.Top) {
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) { header() }
+                    Column(modifier = Modifier.weight(1f)) { MochyListeningTimeCard(totalMs ?: 0L) }
+                }
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    header()
+                    MochyListeningTimeCard(totalMs ?: 0L)
+                }
+            }
+        }
+    }
 }
+
+@Composable
+private fun MochyListeningTimeCard(totalMs: Long) {
+    val totalMinutes = (totalMs / 60_000L).coerceAtLeast(0L)
+    val hours = totalMinutes / 60
+    BoxWithConstraints(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(22.dp))
+                .background(MochyPageCard)
+                .padding(20.dp),
+    ) {
+        // long hour counts shrink the figures a step so the label keeps its room
+        val k = mochyWidthScale(maxWidth.value + 40f) * if (hours >= 1000) 0.8f else if (hours >= 100) 0.9f else 1f
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            MochyTimeValue(hours.toString(), stringResource(Res.string.mochy_profile_unit_hour_short), k)
+            Box(
+                modifier =
+                    Modifier
+                        .padding(horizontal = (14 * k).dp)
+                        .width(1.dp)
+                        .height((34 * k).dp)
+                        .background(Color.White.copy(alpha = 0.4f)),
+            )
+            MochyTimeValue((totalMinutes % 60).toString(), stringResource(Res.string.mochy_profile_unit_minute_short), k)
+            Spacer(Modifier.width(10.dp))
+            Text(
+                text = stringResource(Res.string.mochy_profile_total_listening_time),
+                style = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 14.sp, lineHeight = 18.sp, color = Color(0xFF8A8A8A), textAlign = TextAlign.End),
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun MochyTimeValue(value: String, unit: String, k: Float) {
+    val density = LocalDensity.current
+    Row(verticalAlignment = Alignment.Bottom) {
+        OdometerNumber(
+            value = value,
+            fontSize = with(density) { (44f * k).dp.toSp() },
+            fontWeight = FontWeight.Bold,
+            fontFamily = mochyInterFontFamily(),
+            color = Color.White,
+            letterSpacing = (-2).sp,
+        )
+        Text(
+            text = unit,
+            style = TextStyle(fontFamily = mochyInterFontFamily(), fontWeight = FontWeight.Bold, fontSize = with(density) { (18f * k).dp.toSp() }, color = Color.White),
+            modifier = Modifier.padding(start = 1.dp, bottom = (6 * k).dp),
+        )
+    }
+}
+
+/** The reference scales its figures by card width, clamped so they never overflow. */
+private fun mochyWidthScale(cardWidthDp: Float): Float = (cardWidthDp / 320f).coerceIn(0.72f, 1.2f)
+
+/** Total listening time in milliseconds from the history store. Null when the history cannot be read. */
+private suspend fun loadListeningTotalMs(): Long? =
+    runCatching {
+        val database = KoinPlatform.getKoin().get<MusicDatabase>()
+        database
+            .historyStatisticsSnapshot(
+                sinceMs = 0L,
+                untilMs = Clock.System.now().toEpochMilliseconds(),
+            ).totals.playTimeMs
+    }.getOrNull()
 
 private const val MAX_MOCHY_USERNAME_CLUSTERS = 32
 
