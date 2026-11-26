@@ -11,6 +11,9 @@
 
 package com.metrolist.shared.ui.settings
 
+import com.metrolist.shared.generated.resources.mochy_pages_hide_descriptions
+import com.metrolist.shared.generated.resources.mochy_pages_hide_descriptions_desc
+import com.metrolist.shared.generated.resources.mochy_pages_info
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -536,6 +539,7 @@ internal fun SettingsUiRegistryBuilder.registerAppearanceSettings(host: SharedSe
                 switch(
                     id = "hideSettingsDescriptions",
                     title = stringResource(Res.string.mochy_pages_hide_descriptions),
+                    icon = Res.drawable.mochy_pages_info,
                     description = stringResource(Res.string.mochy_pages_hide_descriptions_desc),
                     checked = settings.hideSettingsDescriptions,
                 ) { settings.hideSettingsDescriptions = it }
