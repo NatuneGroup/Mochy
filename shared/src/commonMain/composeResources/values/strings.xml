@@ -6091,4 +6091,7 @@
     <string name="onb_welcome_to_mochy">welcome to mochy!</string>
     <!-- Translators: Line shown on the final onboarding page. -->
     <string name="onb_all_good">You’re good to go</string>
+    <!-- Mochy settings pane -->
+    <!-- Translators: Hint shown in the empty right side of the wide settings layout, until a setting is picked from the list. -->
+    <string name="mochy_pane_hint">Pick a setting on the left to open it here.</string>
 </resources>

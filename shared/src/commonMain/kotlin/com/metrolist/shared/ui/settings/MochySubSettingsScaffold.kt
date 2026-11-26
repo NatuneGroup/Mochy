@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.back
+import com.metrolist.shared.generated.resources.close
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import com.metrolist.shared.ui.utils.supportsNativeBlur
@@ -85,6 +86,8 @@ internal fun MochySubSettingsScaffold(
     listState: LazyListState?,
     modifier: Modifier = Modifier,
     backButtonModifier: Modifier = Modifier,
+    // a close button at the header's right end, for a page shown beside the settings list
+    onClose: (() -> Unit)? = null,
     content: @Composable (topPadding: Dp) -> Unit,
 ) {
     val density = LocalDensity.current
@@ -182,6 +185,26 @@ internal fun MochySubSettingsScaffold(
                     modifier = Modifier.size(20.dp),
                 )
             }
+            if (onClose != null) {
+                Box(
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(top = HeaderTopPadding)
+                            .size(BackButtonSize)
+                            .clip(CircleShape)
+                            .background(BackButtonColor)
+                            .clickable(onClick = onClose),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        MetrolistIcons.Default.Close,
+                        contentDescription = stringResource(Res.string.close),
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
             Text(
                 text = title,
                 fontFamily = mochyInterFontFamily(),
@@ -193,6 +216,8 @@ internal fun MochySubSettingsScaffold(
                 overflow = TextOverflow.Ellipsis,
                 modifier =
                     Modifier
+                        // keeps a long title clear of the close button it folds beside
+                        .padding(end = if (onClose != null) BackButtonSize + 8.dp else 0.dp)
                         .onSizeChanged { titleHeightPx = it.height }
                         .graphicsLayer {
                             val p = collapse

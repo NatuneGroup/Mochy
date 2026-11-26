@@ -248,6 +248,8 @@ internal fun SharedSettingsRegistryScreen(
     var containerWidth by remember { mutableIntStateOf(0) }
     val expanded =
         !host.singlePane && with(LocalDensity.current) { containerWidth.toDp() >= 840.dp }
+    // wide windows in the dark theme take Mochy's list-and-page pane
+    val mochyLook = !LocalIsTv.current && MaterialTheme.colorScheme.background.luminance() < 0.5f
     Box(
         modifier =
             modifier
@@ -255,41 +257,64 @@ internal fun SharedSettingsRegistryScreen(
                 .onSizeChanged { containerWidth = it.width },
     ) {
         val previousPageId = pageStack.dropLast(1).lastOrNull()?.let { runCatching { SettingsPageId.valueOf(it) }.getOrNull() }
-        if (expanded) {
+        if (expanded && mochyLook) {
+            MochySettingsPane(
+                registry = registry,
+                host = host,
+                listSelectedPageId = registry.pages.firstOrNull { it.id.name == pageStack.firstOrNull() }?.id,
+                detailPageId = selectedPageId,
+                onPageSelected = { openPage(it) },
+                onSearchResultSelected = { pageId, itemId ->
+                    openPage(pageId, highlightedId = itemId)
+                },
+                detail = { pageId ->
+                    PredictiveNavigationContent(
+                        targetState = pageId,
+                        previousState = previousPageId ?: pageId,
+                        backEnabled = canNavigateBackFromSettings(pageStack, expanded = false),
+                        onBack = ::closePage,
+                        modifier = Modifier.fillMaxSize(),
+                    ) { shownId ->
+                        registry[shownId]?.let { page ->
+                            // the page's own header carries back and close here, so the pane adds no title row
+                            CompactSettingsDetail(
+                                page = page,
+                                listState = pageListStates.getValue(page.id),
+                                bottomContentPadding = host.bottomContentPadding,
+                                pageContent = host.pageContent,
+                                lyricsPreview = host.lyricsPreview,
+                                highlightedItemId = highlightedItemId,
+                                onBack = ::closePage,
+                                onNavigate = { openPage(it, parentPageId = page.id) },
+                                onSettingValueChanged = { settingsRevision++ },
+                                onRefresh = host.pageRefresh(page.id),
+                                onClose = host.onClose,
+                            )
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing),
+            )
+        } else if (expanded) {
             val detailPageId = selectedPageId ?: registry.pages.firstOrNull { !it.custom }?.id
-            // wide windows in the dark theme keep the two panes but take Mochy's black page and bubbles
-            val mochyLook = !LocalIsTv.current && MaterialTheme.colorScheme.background.luminance() < 0.5f
             Row(
                 modifier =
                     Modifier
                         .fillMaxSize()
-                        .background(if (mochyLook) MochySettingsColors.Page else MaterialTheme.colorScheme.surface)
+                        .background(MaterialTheme.colorScheme.surface)
                         .windowInsetsPadding(WindowInsets.safeDrawing),
             ) {
                 val paneSelection = registry.pages.firstOrNull { it.id.name == pageStack.firstOrNull() }?.id ?: detailPageId
-                if (mochyLook) {
-                    MochySettingsNavigationPane(
-                        registry = registry,
-                        host = host,
-                        selectedPageId = paneSelection,
-                        onPageSelected = { openPage(it) },
-                        onSearchResultSelected = { pageId, itemId ->
-                            openPage(pageId, highlightedId = itemId)
-                        },
-                        modifier = Modifier.width(360.dp).fillMaxHeight(),
-                    )
-                } else {
-                    SettingsNavigationPane(
-                        registry = registry,
-                        selectedPageId = paneSelection,
-                        bottomContentPadding = host.bottomContentPadding,
-                        onPageSelected = { openPage(it) },
-                        onSearchResultSelected = { pageId, itemId ->
-                            openPage(pageId, highlightedId = itemId)
-                        },
-                        modifier = Modifier.width(360.dp).fillMaxHeight(),
-                    )
-                }
+                SettingsNavigationPane(
+                    registry = registry,
+                    selectedPageId = paneSelection,
+                    bottomContentPadding = host.bottomContentPadding,
+                    onPageSelected = { openPage(it) },
+                    onSearchResultSelected = { pageId, itemId ->
+                        openPage(pageId, highlightedId = itemId)
+                    },
+                    modifier = Modifier.width(360.dp).fillMaxHeight(),
+                )
                 Column(
                     modifier = Modifier.weight(1f).fillMaxHeight().padding(end = 12.dp, bottom = 12.dp),
                 ) {
@@ -326,7 +351,7 @@ internal fun SharedSettingsRegistryScreen(
                     Surface(
                         modifier = Modifier.fillMaxWidth().weight(1f),
                         shape = RoundedCornerShape(28.dp),
-                        color = if (mochyLook) MochySettingsColors.Pane else MaterialTheme.colorScheme.surfaceContainerLow,
+                        color = MaterialTheme.colorScheme.surfaceContainerLow,
                     ) {
                         PredictiveNavigationContent(
                             targetState = detailPageId,
@@ -535,6 +560,7 @@ private fun CompactSettingsDetail(
     onNavigate: (SettingsPageId) -> Unit,
     onSettingValueChanged: () -> Unit,
     onRefresh: (() -> Unit)? = null,
+    onClose: (() -> Unit)? = null,
 ) {
     val isTv = LocalIsTv.current
     val contentFocusRequester = remember { FocusRequester() }
@@ -544,6 +570,7 @@ private fun CompactSettingsDetail(
             title = page.title,
             onBack = onBack,
             listState = if (page.custom) null else listState,
+            onClose = onClose,
         ) { headerHeight ->
             if (page.custom) {
                 Box(Modifier.fillMaxSize().padding(top = headerHeight)) {
