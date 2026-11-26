@@ -237,6 +237,7 @@ import com.metrolist.shared.constants.SwipeToRemoveSongKey
 import com.metrolist.shared.constants.SwipeToSongKey
 import com.metrolist.shared.constants.TempoPitchPresetsJsonKey
 import com.metrolist.shared.constants.TokenLoginWarningDismissedKey
+import com.metrolist.shared.constants.HideSettingsDescriptionsKey
 import com.metrolist.shared.constants.TransportFadeEnabledKey
 import com.metrolist.shared.constants.TransportFadeSecondsKey
 import com.metrolist.shared.constants.UpdateInstallMethodKey
@@ -567,6 +568,7 @@ class Settings(
     var crossfadeDuration by preference(10f)
     var crossfadeGapless by preference(true)
     var transportFadeEnabled by preference(TransportFadeEnabledKey, true)
+    var hideSettingsDescriptions by preference(HideSettingsDescriptionsKey, true)
     var transportFadeSeconds by preference(TransportFadeSecondsKey, 2.0f)
     var sponsorBlockEnabled by preference(SponsorBlockEnabledKey, false)
     var skipSilence by preference(false)

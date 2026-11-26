@@ -6128,4 +6128,7 @@
     <string name="mochy_profile_unit_hour_short">h</string>
     <!-- Translators: Short unit for minutes on the Mochy profile listening card. -->
     <string name="mochy_profile_unit_minute_short">m</string>
+    <!-- Mochy settings pages -->
+    <string name="mochy_pages_hide_descriptions">Hide descriptions in settings</string>
+    <string name="mochy_pages_hide_descriptions_desc">Show titles only in settings lists.</string>
 </resources>

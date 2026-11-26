@@ -15,6 +15,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.runtime.Composable
 import com.metrolist.shared.generated.resources.*
+import com.metrolist.shared.generated.resources.mochy_pages_bluetooth
+import com.metrolist.shared.generated.resources.mochy_pages_cached
+import com.metrolist.shared.generated.resources.mochy_pages_shuffle
+import com.metrolist.shared.generated.resources.mochy_pages_skip_next
+import com.metrolist.shared.generated.resources.mochy_pages_volume_off
 import com.metrolist.shared.settings.KeepScreenOnMode
 import com.metrolist.shared.settings.LoudnessLevel
 import com.metrolist.shared.settings.Settings
@@ -104,6 +109,7 @@ internal fun SettingsUiRegistryBuilder.registerPlaybackSettings(host: SharedSett
             }
             switch(
                 id = "skipSilence",
+                icon = Res.drawable.mochy_pages_skip_next,
                 title = stringResource(Res.string.skip_silence),
                 description = stringResource(Res.string.skip_silence_desc),
                 checked = settings.skipSilence,
@@ -331,6 +337,7 @@ internal fun SettingsUiRegistryBuilder.registerPlaybackSettings(host: SharedSett
             ) { settings.useLegacyShuffle = it }
             switch(
                 id = "persistentQueue",
+                icon = Res.drawable.mochy_pages_cached,
                 title = stringResource(Res.string.persistent_queue),
                 description = stringResource(Res.string.persistent_queue_desc),
                 checked = settings.persistentQueue,
@@ -345,6 +352,7 @@ internal fun SettingsUiRegistryBuilder.registerPlaybackSettings(host: SharedSett
             }
             switch(
                 id = "persistentShuffle",
+                icon = Res.drawable.mochy_pages_shuffle,
                 title = stringResource(Res.string.persistent_shuffle_title),
                 description = stringResource(Res.string.persistent_shuffle_desc),
                 checked = settings.persistentShuffleAcrossQueues,
@@ -418,6 +426,7 @@ internal fun SettingsUiRegistryBuilder.registerPlaybackSettings(host: SharedSett
                     }
                     switch(
                         id = "resumeOnBluetoothConnect",
+                        icon = Res.drawable.mochy_pages_bluetooth,
                         title = stringResource(Res.string.resume_on_bluetooth_connect),
                         description = stringResource(Res.string.resume_on_bluetooth_connect_desc),
                         checked = settings.resumeOnBluetoothConnect,
@@ -425,6 +434,7 @@ internal fun SettingsUiRegistryBuilder.registerPlaybackSettings(host: SharedSett
                 }
                 switch(
                     id = "pauseOnMute",
+                    icon = Res.drawable.mochy_pages_volume_off,
                     title = stringResource(Res.string.pause_music_when_media_is_muted),
                     description = stringResource(Res.string.pause_music_when_media_is_muted_desc),
                     checked = settings.pauseOnMute,

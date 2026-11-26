@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.metrolist.shared.api.lyrics.AiProviderPresets
 import com.metrolist.shared.generated.resources.*
+import com.metrolist.shared.generated.resources.mochy_pages_translate
 import com.metrolist.shared.repository.LyricsRepository
 import com.metrolist.shared.settings.LyricsTextSizeRange
 import com.metrolist.shared.settings.PlayerBackgroundStyle
@@ -318,6 +319,7 @@ internal fun SettingsUiRegistryBuilder.registerLyricsSettings(host: SharedSettin
             group("runtime", stringResource(Res.string.ai_runtime)) {
                 switch(
                     id = "translationEnabled",
+                    icon = Res.drawable.mochy_pages_translate,
                     title = stringResource(Res.string.ai_translation_enable),
                     description = stringResource(Res.string.ai_translation_enable_description),
                     checked = settings.lyricsAiTranslationEnabled,
