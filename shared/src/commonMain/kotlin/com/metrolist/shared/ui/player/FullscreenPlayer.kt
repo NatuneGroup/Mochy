@@ -124,6 +124,7 @@ import com.metrolist.shared.ui.components.lyrics.rememberCaptionLyricsPositionSt
 import com.metrolist.shared.ui.components.rememberSheetBackProgress
 import com.metrolist.shared.ui.components.sliders.collectPlaybackDisplayState
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.mochy.MochyLyricsPage
 import com.metrolist.shared.ui.navigation.blockInput
 import com.metrolist.shared.ui.navigation.navigationPopupSource
 import com.metrolist.shared.ui.theme.uiEnhanced
@@ -315,7 +316,12 @@ fun FullscreenPlayerContent(
                 ) {
                     Box(Modifier.fillMaxSize().graphicsLayer { applySheetBackContentTransform(backProgress.value) }) {
                         if (uiState.isLyricsVisible) {
-                            Box(modifier = Modifier.padding(24.dp)) {
+                            MochyLyricsPage(
+                                artworkUrl = currentSong?.displayThumbnail,
+                                onClose = { viewModel.setLyricsVisible(false) },
+                                contentBottomInset = 0.dp,
+                                modifier = Modifier.padding(24.dp),
+                            ) { lyricsModifier ->
                                 LyricsViewWithPosition(
                                     viewModel = viewModel,
                                     lyrics = uiState.lyrics,
@@ -328,6 +334,7 @@ fun FullscreenPlayerContent(
                                     textColor = Color.White,
                                     isCasting = isCasting,
                                     isBuffering = isBuffering,
+                                    modifier = lyricsModifier,
                                 )
                             }
                         } else if (uiState.isQueueVisible || queueClosing) {
