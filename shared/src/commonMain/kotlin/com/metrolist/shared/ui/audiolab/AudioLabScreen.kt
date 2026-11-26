@@ -42,6 +42,8 @@ import com.metrolist.shared.generated.resources.audio_lab_percent
 import com.metrolist.shared.generated.resources.audio_lab_stage_kemar_credit
 import com.metrolist.shared.generated.resources.percent_symbol
 import com.metrolist.shared.settings.Settings
+import com.metrolist.shared.ui.settings.LocalSettingsPageHasTopBar
+import com.metrolist.shared.ui.settings.LocalSettingsPageTopPadding
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
@@ -77,11 +79,14 @@ fun AudioLabScreen(
     val eightD = Settings.shared.eightDSettings()
     val effects = activeEffects(reverb, spatial, eightD, stageOn)
 
+    // on Mochy's header the top padding is inside the scroll, so content scrolls up under the header
+    val headerTop = if (LocalSettingsPageHasTopBar.current) LocalSettingsPageTopPadding.current else 0.dp
     BoxWithConstraints(
         modifier
             .fillMaxWidth()
             .verticalScroll(scroll)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(top = headerTop),
     ) {
         val wide = maxWidth >= TwoColumnWidth
         Column(

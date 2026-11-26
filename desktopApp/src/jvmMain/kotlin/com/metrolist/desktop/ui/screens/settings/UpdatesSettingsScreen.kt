@@ -65,6 +65,7 @@ import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.components.AlertDialog
 import com.metrolist.shared.ui.components.PopupContent
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.settings.settingsPageHeaderTop
 import com.metrolist.shared.ui.settings.settingsPageSubtitle
 import com.metrolist.shared.ui.update.GitHubMarkdown
 import com.metrolist.shared.ui.update.UpdateInfo
@@ -89,7 +90,12 @@ fun UpdatesSettingsScreen(colorScheme: ColorScheme) {
         if (!UiState.hasCheckedForUpdates) AppState.checkForUpdates()
     }
     Column(
-        modifier = Modifier.fillMaxSize().verticalScrollWithDrag(rememberScrollState()).padding(vertical = 28.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScrollWithDrag(rememberScrollState())
+                .padding(vertical = 28.dp)
+                .padding(top = settingsPageHeaderTop()),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Material3SettingsGroup(

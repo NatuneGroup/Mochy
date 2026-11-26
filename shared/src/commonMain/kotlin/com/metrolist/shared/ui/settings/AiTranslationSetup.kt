@@ -123,11 +123,14 @@ internal fun AiTranslationSetup(
     }
     val titles = listOf(Res.string.ai_setup_account, Res.string.ai_setup_sign_in, Res.string.ai_setup_configure)
     var browserFailed by remember { mutableStateOf(false) }
+    // on Mochy's header the top padding is inside the scroll, so content scrolls up under the header
+    val headerTop = if (LocalSettingsPageHasTopBar.current) LocalSettingsPageTopPadding.current else 0.dp
     Column(
         Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 16.dp)
+            .padding(top = headerTop)
             .padding(bottom = LocalSettingsPageBottomPadding.current),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {

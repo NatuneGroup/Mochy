@@ -199,6 +199,7 @@ import com.metrolist.shared.ui.components.ExpressiveFilterChip
 import com.metrolist.shared.ui.components.PopupContent
 import com.metrolist.shared.ui.components.PopupVisibility
 import com.metrolist.shared.ui.menu.CsvColumnMappingDialog
+import com.metrolist.shared.ui.settings.settingsPageHeaderTop
 import com.metrolist.shared.ui.utils.DragScrollableColumn
 import com.metrolist.shared.ui.utils.verticalScrollWithDrag
 import com.metrolist.shared.utils.XdgUtils
@@ -627,7 +628,8 @@ fun BackupRestoreSettingsScreen(colorScheme: ColorScheme) {
                     .fillMaxWidth()
                     .weight(1f)
                     .verticalScrollWithDrag(rememberScrollState())
-                    .padding(vertical = 28.dp),
+                    .padding(vertical = 28.dp)
+                    .padding(top = settingsPageHeaderTop()),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             if (isBusy) LinearWavyProgressIndicator(Modifier.fillMaxWidth())

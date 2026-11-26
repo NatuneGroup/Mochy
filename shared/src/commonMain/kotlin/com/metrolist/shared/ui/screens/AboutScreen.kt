@@ -88,6 +88,8 @@ import com.metrolist.shared.generated.resources.stands_with_palestine
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.components.images.AsyncImage
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.settings.LocalSettingsPageHasTopBar
+import com.metrolist.shared.ui.settings.LocalSettingsPageTopPadding
 import com.metrolist.shared.ui.utils.toPolygonShape
 import com.metrolist.shared.ui.utils.verticalScrollWithDrag
 import com.metrolist.shared.utils.getAppArchitecture
@@ -190,6 +192,8 @@ fun AboutScreen(
             )
         },
     ) { paddingValues ->
+        // on Mochy's header the top padding is inside the scroll, so content scrolls up under the header
+        val headerTopPadding = if (LocalSettingsPageHasTopBar.current) LocalSettingsPageTopPadding.current else 0.dp
         Column(
             modifier =
                 Modifier
@@ -197,6 +201,7 @@ fun AboutScreen(
                     .padding(paddingValues)
                     .verticalScrollWithDrag(rememberScrollState())
                     .padding(contentPadding)
+                    .padding(top = headerTopPadding)
                     .padding(bottom = bottomInset),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),

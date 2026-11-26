@@ -144,6 +144,7 @@ import com.metrolist.shared.generated.resources.updates_title
 import com.metrolist.shared.generated.resources.updates_version
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.settings.LocalSettingsPageHasTopBar
+import com.metrolist.shared.ui.settings.LocalSettingsPageTopPadding
 import com.metrolist.shared.ui.settings.settingsPageSubtitle
 import com.metrolist.shared.ui.update.GitHubMarkdown
 import com.metrolist.shared.ui.update.UpdateInfo
@@ -559,6 +560,8 @@ fun UpdateDetailsScreen(
             }
         }
     val miniPlayerInset = LocalMiniPlayerBottomInset.current
+    // Mochy's header: content starts below it inside the scroll, so it scrolls up under the header
+    val headerTopPadding = if (LocalSettingsPageHasTopBar.current) LocalSettingsPageTopPadding.current else 0.dp
 
     Scaffold(
         contentWindowInsets = WindowInsets(0),
@@ -688,7 +691,8 @@ fun UpdateDetailsScreen(
                     Modifier
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .padding(top = headerTopPadding),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Text(title, style = MaterialTheme.typography.headlineLarge)

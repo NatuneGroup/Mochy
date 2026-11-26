@@ -78,10 +78,12 @@ private val CollapseEasing = CubicBezierEasing(0.57f, 0.53f, 0f, 1f)
 private const val COLLAPSE_MILLIS = 900
 private val BackButtonColor = Color(0xFF2C2C2E)
 private val BackLabelStart = BackButtonSize + 10.dp
+private val CollapsedStickyGap = 8.dp
 
 /**
  * [listState] tells how far a list page has scrolled; pages that bring their own content are followed through
- * the scrolls they pass up instead. [content] gets the header's height to start below.
+ * the scrolls they pass up instead. [content] gets the expanded header's height (content starts below it inside
+ * its own scroll) and the bottom of the collapsed bar (where sticky rows pin).
  */
 @Composable
 internal fun MochySubSettingsScaffold(
@@ -94,7 +96,7 @@ internal fun MochySubSettingsScaffold(
     onClose: (() -> Unit)? = null,
     // the page this one sits under, written beside the back button
     backLabel: String? = null,
-    content: @Composable (topPadding: Dp) -> Unit,
+    content: @Composable (headerHeight: Dp, collapsedBottom: Dp) -> Unit,
 ) {
     val density = LocalDensity.current
     var nestedOffset by remember { mutableFloatStateOf(0f) }
@@ -142,12 +144,13 @@ internal fun MochySubSettingsScaffold(
     )
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val headerHeight = statusBarTop + ExpandedHeaderHeight
+    val collapsedBottom = statusBarTop + HeaderTopPadding + BackButtonSize + CollapsedStickyGap
     val blur = remember { supportsNativeBlur() }
     var titleHeightPx by remember { mutableIntStateOf(0) }
 
     Box(modifier.fillMaxSize().background(MochySettingsColors.Page)) {
         Box(Modifier.fillMaxSize().nestedScroll(tracker)) {
-            content(headerHeight)
+            content(headerHeight, collapsedBottom)
         }
 
         // the black under the bar, only once the title has folded into it
