@@ -13,6 +13,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.unit.Dp
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -104,6 +105,8 @@ private val EvenShade = Color.Black.copy(alpha = 0.38f)
 
 // the lyrics page tucks the seek bar and transport away after this long without a touch
 private const val LANDSCAPE_TRANSPORT_IDLE_MS = 3_500L
+private const val RETRACT_MS = 420
+private val RetractEasing = CubicBezierEasing(0.4f, 0f, 0.2f, 1f)
 
 private enum class FlagshipLandscapePanel {
     INFO,
@@ -494,10 +497,15 @@ internal fun FlagshipLandscapePlayer(
                 }
             }
 
+            // the reference tucks the seek bar and transport down over 420 ms on an ease-in-out cubic
             AnimatedVisibility(
                 visible = transportShown,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut(),
+                enter =
+                    expandVertically(tween(RETRACT_MS, easing = RetractEasing)) +
+                        fadeIn(tween(RETRACT_MS, easing = RetractEasing)),
+                exit =
+                    shrinkVertically(tween(RETRACT_MS, easing = RetractEasing)) +
+                        fadeOut(tween(RETRACT_MS, easing = RetractEasing)),
             ) {
                 Column {
                     Column(modifier = Modifier.padding(horizontal = PanelGutter - 12.dp)) {
