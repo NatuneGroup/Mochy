@@ -7,7 +7,16 @@
 
 package com.metrolist.shared.ui.settings
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +26,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
@@ -48,8 +58,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
@@ -106,8 +123,10 @@ import com.metrolist.shared.ui.components.focusOutline
 import com.metrolist.shared.ui.components.images.AsyncImage
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.icons.MetrolistIconsBrand
+import com.metrolist.shared.ui.onboarding.mochy.AppSwitch
 import com.metrolist.shared.utils.MetrolistClock
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 internal enum class DiscordEditTarget {
@@ -359,10 +378,32 @@ private object DiscordColors {
     val Cover = Color(0xFF0C0C0C)
     val Primary = Color.White
     val Secondary = Color.White.copy(alpha = 0.55f)
+    val Banner = Color(0xFF3C3C3C)
+    val ToggleCard = Color(0xFF232323)
+    val Blurple = Color(0xFF5865F2)
 }
 
 // the card keeps its phone width on wide windows instead of stretching across the page
 private val PresenceCardMaxWidth = 420.dp
+
+private val ProfileBannerHeight = 104.dp
+private val ProfileAvatarSize = 72.dp
+private val ProfileAvatarRing = 5.dp
+
+/** the buttons the card shows, next to the same list before validation so the card can say which were adjusted */
+private fun discordPreviewButtons(activity: DiscordActivity): Pair<List<Pair<DiscordEditTarget, Pair<String, String>>>, List<Pair<DiscordEditTarget, Pair<String, String>>>> {
+    // validate each configured button separately so its slot survives label truncation
+    val configuredButtons =
+        listOfNotNull(
+            activity.button1Label?.let { label -> activity.button1Url?.let { url -> DiscordEditTarget.BUTTON1 to (label to url) } },
+            activity.button2Label?.let { label -> activity.button2Url?.let { url -> DiscordEditTarget.BUTTON2 to (label to url) } },
+        ).filter { (_, pair) -> pair.first.isNotEmpty() && pair.second.isNotEmpty() }
+    val buttons =
+        configuredButtons.mapNotNull { (slot, pair) ->
+            DiscordPresence.validatedButtons(listOf(pair)).firstOrNull()?.let { slot to it }
+        }
+    return configuredButtons to buttons
+}
 
 @Composable
 internal fun DiscordPresenceCard(
@@ -374,16 +415,7 @@ internal fun DiscordPresenceCard(
     onOpenUrl: (String) -> Unit,
     onEditField: (DiscordEditTarget) -> Unit,
 ) {
-    // validate each configured button separately so its slot survives label truncation
-    val configuredButtons =
-        listOfNotNull(
-            activity.button1Label?.let { label -> activity.button1Url?.let { url -> DiscordEditTarget.BUTTON1 to (label to url) } },
-            activity.button2Label?.let { label -> activity.button2Url?.let { url -> DiscordEditTarget.BUTTON2 to (label to url) } },
-        ).filter { (_, pair) -> pair.first.isNotEmpty() && pair.second.isNotEmpty() }
-    val buttons =
-        configuredButtons.mapNotNull { (slot, pair) ->
-            DiscordPresence.validatedButtons(listOf(pair)).firstOrNull()?.let { slot to it }
-        }
+    val (configuredButtons, buttons) = discordPreviewButtons(activity)
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -478,6 +510,7 @@ private fun DiscordActivityCard(
     editMode: Boolean,
     onOpenUrl: (String) -> Unit,
     onEditField: (DiscordEditTarget) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     // a once-a-second clock moves the bar and the elapsed time, like discord's own card
     val now by produceState(MetrolistClock.nowMs()) {
@@ -491,7 +524,7 @@ private fun DiscordActivityCard(
 
     Column(
         modifier =
-            Modifier
+            modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(14.dp))
                 .background(DiscordColors.Activity)
@@ -509,7 +542,12 @@ private fun DiscordActivityCard(
         }
         Spacer(Modifier.height(8.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            DiscordPreviewPictures(large = playback.artworkUrl ?: activity.largeImage, small = activity.smallImage)
+            DiscordPreviewPictures(
+                large = playback.artworkUrl ?: activity.largeImage,
+                small = activity.smallImage,
+                playing = playback.isPlaying,
+                progress = discordPreviewProgress(activity, now),
+            )
             Column(
                 Modifier
                     .weight(1f)
@@ -669,11 +707,13 @@ private fun discordPreviewClock(ms: Long): String {
     return "${seconds / 60}:${(seconds % 60).toString().padStart(2, '0')}"
 }
 
-/** the big picture with the small round one tucked into its corner, as discord lays them out */
+/** the big picture with the small one tucked into its corner, as discord lays them out; the discord mark sits on the cover */
 @Composable
 private fun DiscordPreviewPictures(
     large: String?,
     small: String?,
+    playing: Boolean,
+    progress: Float,
 ) {
     Box(Modifier.size(66.dp)) {
         Box(
@@ -685,8 +725,23 @@ private fun DiscordPreviewPictures(
             large?.let {
                 AsyncImage(url = it, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
             }
+            Box(
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(3.dp)
+                    .size(18.dp)
+                    .clip(CircleShape)
+                    .background(DiscordColors.Blurple),
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    painter = painterResource(Res.drawable.mochy_integrations_discord),
+                    contentDescription = null,
+                    modifier = Modifier.size(11.dp),
+                )
+            }
         }
-        if (large != null && small != null) {
+        if (large != null) {
             Box(
                 Modifier
                     .size(26.dp)
@@ -697,9 +752,206 @@ private fun DiscordPreviewPictures(
                     .padding(3.dp)
                     .clip(CircleShape),
             ) {
-                AsyncImage(url = small, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+                if (small != null) {
+                    AsyncImage(url = small, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+                } else {
+                    DiscordStatusBadge(playing = playing, progress = progress, modifier = Modifier.fillMaxSize())
+                }
             }
         }
+    }
+}
+
+/** the status badge the status picture uses: a ring that fills with the track, a play triangle or pause bars */
+@Composable
+private fun DiscordStatusBadge(
+    playing: Boolean,
+    progress: Float,
+    modifier: Modifier,
+) {
+    Canvas(modifier) {
+        val s = size.minDimension
+        drawCircle(Color(0xFF1E1F22))
+        val stroke = s * 0.085f
+        val inset = s * 0.16f + stroke / 2
+        val arcSize = Size(s - inset * 2, s - inset * 2)
+        drawArc(Color.White.copy(alpha = 0.22f), 0f, 360f, false, Offset(inset, inset), arcSize, style = Stroke(stroke))
+        val sweep = 360f * progress.coerceIn(0f, 1f)
+        if (sweep > 0f) {
+            drawArc(Color.White, -90f, sweep, false, Offset(inset, inset), arcSize, style = Stroke(stroke, cap = StrokeCap.Round))
+        }
+        val glyph = s * 0.30f
+        val cx = s / 2
+        val cy = s / 2
+        if (playing) {
+            val left = cx - glyph * 0.38f
+            val triangle =
+                Path().apply {
+                    moveTo(left, cy - glyph / 2)
+                    lineTo(left, cy + glyph / 2)
+                    lineTo(left + glyph * 0.9f, cy)
+                    close()
+                }
+            drawPath(triangle, Color.White)
+        } else {
+            val bar = glyph * 0.3f
+            val gap = glyph * 0.26f
+            listOf(cx - gap / 2 - bar, cx + gap / 2).forEach { x ->
+                drawRoundRect(
+                    Color.White,
+                    topLeft = Offset(x, cy - glyph / 2),
+                    size = Size(bar, glyph),
+                    cornerRadius = CornerRadius(bar / 2),
+                )
+            }
+        }
+    }
+}
+
+/** how far through the track the card is, 0 when discord has no end time */
+private fun discordPreviewProgress(
+    activity: DiscordActivity,
+    now: Long,
+): Float {
+    val end = activity.endTimestamp ?: return 0f
+    val start = activity.startTimestamp
+    val total = (end - start).coerceAtLeast(1L)
+    return (now - start).coerceIn(0L, total).toFloat() / total
+}
+
+/** the status card again, floating at the bottom once the card above has scrolled away */
+@Composable
+internal fun DiscordFloatingPreview(
+    visible: Boolean,
+    activity: DiscordActivity,
+    playback: IntegrationPlaybackState,
+    onOpenUrl: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(tween(220)) + slideInVertically(tween(260)) { it / 3 },
+        exit = fadeOut(tween(160)) + slideOutVertically(tween(200)) { it / 3 },
+        modifier = modifier,
+    ) {
+        DiscordActivityCard(
+            activity = activity,
+            playback = playback,
+            buttons = discordPreviewButtons(activity).second,
+            enabled = true,
+            editMode = false,
+            onOpenUrl = onOpenUrl,
+            onEditField = {},
+            modifier =
+                Modifier
+                    .widthIn(max = PresenceCardMaxWidth)
+                    .shadow(elevation = 18.dp, shape = RoundedCornerShape(14.dp))
+                    .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(14.dp)),
+        )
+    }
+}
+
+/** the profile above the status card: banner, avatar, name and the log out action of the account row */
+@Composable
+internal fun DiscordProfileCard(
+    displayName: String,
+    username: String,
+    avatarUrl: String?,
+    enabled: Boolean,
+    onLogout: () -> Unit,
+) {
+    Column(
+        modifier =
+            Modifier
+                .widthIn(max = PresenceCardMaxWidth)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp))
+                .background(DiscordColors.Profile),
+    ) {
+        Box(Modifier.fillMaxWidth().height(ProfileBannerHeight + ProfileAvatarSize / 2)) {
+            Box(Modifier.fillMaxWidth().height(ProfileBannerHeight).background(DiscordColors.Banner))
+            Box(
+                Modifier
+                    .padding(start = 22.dp)
+                    .align(Alignment.BottomStart)
+                    .size(ProfileAvatarSize)
+                    .clip(CircleShape)
+                    .background(DiscordColors.Banner)
+                    .padding(ProfileAvatarRing)
+                    .clip(CircleShape)
+                    .background(Color(0xFFD9D9D9)),
+            ) {
+                avatarUrl?.let {
+                    AsyncImage(url = it, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+                }
+            }
+        }
+        Column(Modifier.padding(start = 24.dp, end = 24.dp, top = 10.dp, bottom = 12.dp)) {
+            Text(
+                text = displayName,
+                color = DiscordColors.Primary,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = username,
+                color = DiscordColors.Secondary,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            TextButton(
+                onClick = onLogout,
+                enabled = enabled,
+                shapes = ButtonDefaults.shapes(),
+                modifier = Modifier.align(Alignment.End),
+            ) {
+                Text(stringResource(Res.string.discord_logout))
+            }
+        }
+    }
+}
+
+/** the master switch as the reference's toggle card: the discord mark, the title, the status line and the switch */
+@Composable
+internal fun DiscordToggleCard(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    title: String,
+    status: String,
+    enabled: Boolean,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp))
+                .background(DiscordColors.ToggleCard)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+    ) {
+        Image(
+            painter = painterResource(Res.drawable.mochy_integrations_discord),
+            contentDescription = null,
+            modifier = Modifier.size(22.dp).clip(CircleShape).background(DiscordColors.Blurple).padding(4.dp),
+        )
+        Column(
+            Modifier
+                .weight(1f)
+                .padding(horizontal = 12.dp),
+        ) {
+            Text(
+                title,
+                color = DiscordColors.Primary,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(status, color = DiscordColors.Secondary, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+        }
+        AppSwitch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
     }
 }
 
