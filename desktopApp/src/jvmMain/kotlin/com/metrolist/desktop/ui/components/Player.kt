@@ -1071,6 +1071,7 @@ fun StandardBottomPlayer(
                                         modifier = Modifier.widthIn(max = if (isMedium) 260.dp else 320.dp),
                                         compact = isCompact,
                                         contentColor = colorScheme.onSurface,
+                                        hoverFeedback = true,
                                     )
                                 } else {
                                     PlayerPrimaryControls(

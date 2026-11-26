@@ -7,11 +7,17 @@
 
 package com.metrolist.shared.ui.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -52,6 +58,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalViewConfiguration
@@ -484,8 +492,17 @@ fun YTGridItem(
     showAlbumYear: Boolean = false,
     artwork: AlbumArtworkSource? = null,
     showDurationBadge: Boolean = false,
+    // the desktop pointer: a hovered card swells slightly and shows a hand, with no ripple
+    desktopHover: Boolean = false,
 ) {
     val itemEnabled = enabled && !item.isUnavailable
+    val hoverSource = remember { MutableInteractionSource() }
+    val hovered by hoverSource.collectIsHoveredAsState()
+    val hoverScale by animateFloatAsState(
+        targetValue = if (desktopHover && hovered && itemEnabled) 1.04f else 1f,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = 600f),
+        label = "gridItemHover",
+    )
     val pageArtwork = artwork ?: rememberAlbumArtworkSource(item, onClick)
     val onMenuClick = onShowMenu?.let { show -> { show(item) } } ?: onLongClick
     val subtitleStyle =
@@ -509,12 +526,25 @@ fun YTGridItem(
         modifier =
             modifier
                 .press3D(maxTilt = 6f, pressedScale = 0.97f, enabled = itemEnabled && !LocalIsTv.current)
-                .alpha(if (itemEnabled) 1f else 0.38f)
+                .then(
+                    if (desktopHover) {
+                        Modifier
+                            .graphicsLayer {
+                                scaleX = hoverScale
+                                scaleY = hoverScale
+                            }.hoverable(hoverSource)
+                            .pointerHoverIcon(PointerIcon.Hand)
+                    } else {
+                        Modifier
+                    },
+                ).alpha(if (itemEnabled) 1f else 0.38f)
                 .clip(gridCellShape())
                 .focusOutline(gridCellShape())
                 .artworkMenuActions(onMenuClick, menuActionLabel)
                 .then(if (pageArtwork != null) Modifier.navigationPageSource(pageArtwork.token) else Modifier)
                 .combinedClickable(
+                    interactionSource = if (desktopHover) hoverSource else null,
+                    indication = if (desktopHover) null else LocalIndication.current,
                     enabled = itemEnabled || onMenuClick != null || item.isUnavailable,
                     onClick = {
                         if (itemEnabled && onClick != null) {
