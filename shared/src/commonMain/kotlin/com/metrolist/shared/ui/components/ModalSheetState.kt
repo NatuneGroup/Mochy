@@ -239,8 +239,10 @@ fun rememberModalSheetState(
     initialValue: SheetValue = SheetValue.Hidden,
     enabledValues: Set<SheetValue> = setOf(SheetValue.Hidden, SheetValue.PartiallyExpanded, SheetValue.Expanded),
     confirmValueChange: (SheetValue) -> Boolean = { true },
+    // a look can bring its own open and close motion; null keeps the theme's spring
+    motion: AnimationSpec<Float>? = null,
 ): ModalSheetState {
-    val spatialSpec = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
+    val spatialSpec = motion ?: MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
     val density = LocalDensity.current.density
     val confirm = rememberUpdatedState(confirmValueChange)
     return rememberSaveable(
