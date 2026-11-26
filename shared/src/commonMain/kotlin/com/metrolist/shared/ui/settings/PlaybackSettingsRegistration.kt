@@ -15,10 +15,16 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.runtime.Composable
 import com.metrolist.shared.generated.resources.*
+import com.metrolist.shared.generated.resources.mochy_pages_bluetooth
+import com.metrolist.shared.generated.resources.mochy_pages_cached
+import com.metrolist.shared.generated.resources.mochy_pages_shuffle
+import com.metrolist.shared.generated.resources.mochy_pages_skip_next
+import com.metrolist.shared.generated.resources.mochy_pages_volume_off
 import com.metrolist.shared.settings.KeepScreenOnMode
 import com.metrolist.shared.settings.LoudnessLevel
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.settings.transition.TransportFadeCard
 import com.metrolist.shared.utils.formatPlaybackPitch
 import com.metrolist.shared.utils.formatPlaybackSpeed
 import com.metrolist.shared.utils.playbackPitchToSemitones
@@ -103,6 +109,7 @@ internal fun SettingsUiRegistryBuilder.registerPlaybackSettings(host: SharedSett
             }
             switch(
                 id = "skipSilence",
+                icon = Res.drawable.mochy_pages_skip_next,
                 title = stringResource(Res.string.skip_silence),
                 description = stringResource(Res.string.skip_silence_desc),
                 checked = settings.skipSilence,
@@ -269,27 +276,12 @@ internal fun SettingsUiRegistryBuilder.registerPlaybackSettings(host: SharedSett
                     description = stringResource(Res.string.mochy_transition_overview),
                 )
             }
-            switch(
-                id = "transportFadeEnabled",
-                title = stringResource(Res.string.mochy_transport_fade_title),
-                description = stringResource(Res.string.mochy_transport_fade_desc),
-                checked = settings.transportFadeEnabled,
-            ) {
-                settings.transportFadeEnabled = it
-            }
-            val transportFadeHalfSeconds = (settings.transportFadeSeconds * 2f).roundToInt().coerceIn(1, 20)
-            val transportFadeText = "${transportFadeHalfSeconds / 2}.${if (transportFadeHalfSeconds % 2 == 0) 0 else 5}"
-            inlineSlider(
-                id = "transportFadeSeconds",
-                title = stringResource(Res.string.mochy_transport_fade_duration),
-                valueLabel = stringResource(Res.string.mochy_transport_fade_seconds_value, transportFadeText),
-                value = transportFadeHalfSeconds / 2f,
-                defaultValue = settings.defaultValue(settings::transportFadeSeconds),
-                range = 0.5f..10f,
-                steps = 18,
-                enabled = settings.transportFadeEnabled,
-            ) { value ->
-                settings.transportFadeSeconds = ((value * 2f).roundToInt().coerceIn(1, 20)) / 2f
+            custom(
+                id = "transportFade",
+                title = stringResource(Res.string.mochy_transition_fade_title),
+                description = stringResource(Res.string.mochy_transition_fade_desc),
+            ) { onSettingValueChanged ->
+                TransportFadeCard(onSettingValueChanged)
             }
         }
         group("queue", stringResource(Res.string.queue)) {
@@ -301,6 +293,7 @@ internal fun SettingsUiRegistryBuilder.registerPlaybackSettings(host: SharedSett
             ) { settings.useLegacyShuffle = it }
             switch(
                 id = "persistentQueue",
+                icon = Res.drawable.mochy_pages_cached,
                 title = stringResource(Res.string.persistent_queue),
                 description = stringResource(Res.string.persistent_queue_desc),
                 checked = settings.persistentQueue,
@@ -315,6 +308,7 @@ internal fun SettingsUiRegistryBuilder.registerPlaybackSettings(host: SharedSett
             }
             switch(
                 id = "persistentShuffle",
+                icon = Res.drawable.mochy_pages_shuffle,
                 title = stringResource(Res.string.persistent_shuffle_title),
                 description = stringResource(Res.string.persistent_shuffle_desc),
                 checked = settings.persistentShuffleAcrossQueues,
@@ -388,6 +382,7 @@ internal fun SettingsUiRegistryBuilder.registerPlaybackSettings(host: SharedSett
                     }
                     switch(
                         id = "resumeOnBluetoothConnect",
+                        icon = Res.drawable.mochy_pages_bluetooth,
                         title = stringResource(Res.string.resume_on_bluetooth_connect),
                         description = stringResource(Res.string.resume_on_bluetooth_connect_desc),
                         checked = settings.resumeOnBluetoothConnect,
@@ -395,6 +390,7 @@ internal fun SettingsUiRegistryBuilder.registerPlaybackSettings(host: SharedSett
                 }
                 switch(
                     id = "pauseOnMute",
+                    icon = Res.drawable.mochy_pages_volume_off,
                     title = stringResource(Res.string.pause_music_when_media_is_muted),
                     description = stringResource(Res.string.pause_music_when_media_is_muted_desc),
                     checked = settings.pauseOnMute,

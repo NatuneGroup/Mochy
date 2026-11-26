@@ -5737,13 +5737,9 @@
     <!-- Translators: While holding Next, playback is at twice the selected speed. -->
     <string name="mochy_hold_fast">2×</string>
     <!-- Translators: Setting toggle for smoothly fading audio on play and pause. -->
-    <string name="mochy_transport_fade_title">Play and pause fade</string>
     <!-- Translators: Supporting description for the play and pause fade setting. -->
-    <string name="mochy_transport_fade_desc">Smoothly fade audio out on pause and swell it back in on resume</string>
     <!-- Translators: Setting slider label for the play and pause fade length. -->
-    <string name="mochy_transport_fade_duration">Fade duration</string>
     <!-- Translators: Formatted duration in seconds for the play and pause fade slider, e.g. 2.0 s. -->
-    <string name="mochy_transport_fade_seconds_value">%1$s s</string>
     <!-- Translators: Header label on the Mochy local profile ID card showing the user number. %1$s is a 4-digit member number. -->
     <string name="mochy_card_profile_usr">PROFILE USR#%1$s</string>
     <!-- Translators: Label above the username on the silver Mochy profile ID card. -->
@@ -6174,4 +6170,33 @@
     <string name="mochy_transition_manual_length">Length</string>
     <!-- Translators: A number of seconds. %1$d is the number. -->
     <string name="mochy_transition_seconds">%1$ds</string>
+    <!-- Translators: Switch title for the pause, play, forward and backward fade. -->
+    <string name="mochy_transition_fade_title">Enable fade</string>
+    <!-- Translators: Description of the fade switch for pause, play, skip and picking another song. -->
+    <string name="mochy_transition_fade_desc">Eases the music out when you pause, skip or pick another song, and back in when you play</string>
+    <!-- Translators: A fade length in seconds shown on the transport fade slider. %1$s is the number, such as 2 or 2.5. -->
+    <string name="mochy_transition_fade_seconds">%1$ss</string>
+    <!-- Translators: Heading of the Audio Lab presets row. -->
+    <string name="mochy_lab_presets">Presets</string>
+    <!-- Translators: Button that renames the picked Audio Lab preset. -->
+    <string name="mochy_lab_preset_edit">Edit</string>
+    <!-- Translators: Round button that adds a new Audio Lab preset. -->
+    <string name="mochy_lab_preset_add">Add preset</string>
+    <!-- Translators: Title of the dialog that names a new Audio Lab preset. -->
+    <string name="mochy_lab_preset_new">New preset</string>
+    <!-- Translators: Title of the dialog that renames an Audio Lab preset. -->
+    <string name="mochy_lab_preset_edit_title">Edit preset</string>
+    <!-- Translators: Example name shown in the empty preset name field. -->
+    <string name="mochy_lab_preset_name_hint">Late night</string>
+    <!-- Translators: Error under the preset name field when another preset already has that name. -->
+    <string name="mochy_lab_preset_taken">A preset already has this name</string>
+    <!-- Translators: Button that saves an Audio Lab preset name. -->
+    <string name="mochy_lab_preset_save">Save</string>
+    <!-- Translators: Button that deletes an Audio Lab preset. -->
+    <string name="mochy_lab_preset_delete">Delete</string>
+    <!-- Translators: Button that closes a dialog without saving. -->
+    <string name="mochy_lab_cancel">Cancel</string>
+    <!-- Mochy settings pages -->
+    <string name="mochy_pages_hide_descriptions">Hide descriptions in settings</string>
+    <string name="mochy_pages_hide_descriptions_desc">Show titles only in settings lists.</string>
 </resources>

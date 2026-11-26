@@ -2,6 +2,7 @@
 
 package com.metrolist.shared.ui.audiolab
 
+import androidx.compose.runtime.key
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
@@ -363,6 +364,7 @@ private fun LabChipPill(chip: LabChip, selected: Boolean, onSelect: (String) -> 
     val bg by animateColorAsState(if (selected) Color.White else LabColors.Chip, tween(180), label = "chipBg")
     val fg by animateColorAsState(if (selected) Color.Black else Color.White, tween(180), label = "chipFg")
     val interaction = remember { MutableInteractionSource() }
+    val longClick: () -> Unit = { onLongPress?.invoke(chip.key) }
     Row(
         modifier = Modifier
             .height(38.dp)
@@ -372,7 +374,7 @@ private fun LabChipPill(chip: LabChip, selected: Boolean, onSelect: (String) -> 
                 interactionSource = interaction,
                 indication = null,
                 onClick = { onSelect(chip.key) },
-                onLongClick = onLongPress?.let { longPress -> { longPress(chip.key) } },
+                onLongClick = if (onLongPress != null) longClick else null,
             )
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -388,6 +390,27 @@ private fun LabChipPill(chip: LabChip, selected: Boolean, onSelect: (String) -> 
             fontSize = 14.sp,
             color = fg,
             maxLines = 1,
+        )
+    }
+}
+
+/** a text button in the section headers, such as Edit: dims while disabled */
+@Composable
+fun LabTextAction(text: String, enabled: Boolean = true, onClick: () -> Unit) {
+    val font = mochyInterFontFamily()
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text,
+            fontFamily = font,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 14.sp,
+            color = if (enabled) Color.White else LabColors.Faint,
         )
     }
 }
@@ -511,3 +534,5 @@ class LevelFollower {
 
 @Composable
 fun rememberOnScreen(): MutableState<Boolean> = remember { mutableStateOf(true) }
+
+internal fun degreesToRadians(degrees: Double): Double = degrees * kotlin.math.PI / 180.0

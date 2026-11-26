@@ -7,6 +7,7 @@
 
 package com.metrolist.shared.ui.settings.transition
 
+import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -21,13 +22,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
@@ -35,6 +39,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
@@ -51,16 +56,54 @@ internal object TransitionColors {
 
 /** the dark box a live picture sits in, outlined and clipped so its animation repaints only itself */
 @Composable
-internal fun TransitionStage(content: @Composable BoxScope.() -> Unit) {
+internal fun TransitionStage(height: Dp = 132.dp, content: @Composable BoxScope.() -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(132.dp)
+            .height(height)
             .clip(RoundedCornerShape(18.dp))
             .background(TransitionColors.Stage)
             .border(1.dp, TransitionColors.StageLine, RoundedCornerShape(18.dp)),
     ) {
         content()
+    }
+}
+
+/** a slider with its name on the left and its value on the right; the stock Material 3 slider underneath */
+@Composable
+internal fun TransitionSlider(
+    label: String,
+    valueText: String,
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    valueRange: ClosedFloatingPointRange<Float>,
+    steps: Int,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = label,
+                fontFamily = mochyInterFontFamily(),
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp,
+                color = TransitionColors.Primary,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = valueText,
+                fontFamily = mochyInterFontFamily(),
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp,
+                color = TransitionColors.Primary,
+            )
+        }
+        Slider(
+            value = value.coerceIn(valueRange.start, valueRange.endInclusive),
+            onValueChange = onValueChange,
+            valueRange = valueRange,
+            steps = steps,
+        )
     }
 }
 

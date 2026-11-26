@@ -50,6 +50,7 @@ import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -129,6 +130,7 @@ import com.metrolist.shared.ui.mochy.pressBounce
 import com.metrolist.shared.ui.settings.transition.TransitionSettingsScreen
 import com.metrolist.shared.ui.navigation.PredictiveNavigationContent
 import com.metrolist.shared.ui.navigation.rememberNavigationMotion
+import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.onboarding.mochy.AppSwitch
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import com.metrolist.shared.ui.theme.rememberReducedMotion
@@ -1302,6 +1304,8 @@ private fun SettingsItemRow(
 ) {
     val haptics = rememberMetrolistHaptics()
     val mochy = MaterialTheme.colorScheme.isDark
+    // the setting's own switch: a row shows its one-line description only when this is off
+    val hideDescriptions = Settings.shared.hideSettingsDescriptions
     if (item.control == SettingsControl.MAIN_SWITCH) {
         SettingsMainSwitch(
             title = item.title,
@@ -1418,6 +1422,22 @@ private fun SettingsItemRow(
                     ).padding(horizontal = if (mochy) 20.dp else 16.dp, vertical = if (mochy) 14.dp else 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            if (mochy) {
+                item.icon?.let { icon ->
+                    Box(
+                        modifier = Modifier.size(32.dp).clip(CircleShape).background(Color(0xFFE5E5EA)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            painter = painterResource(icon),
+                            contentDescription = null,
+                            tint = if (item.enabled) Color(0xFF1C1C1E) else Color(0xFF1C1C1E).copy(alpha = 0.38f),
+                            modifier = Modifier.size(16.dp),
+                        )
+                    }
+                    Spacer(Modifier.width(16.dp))
+                }
+            }
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(if (mochy) 2.dp else 8.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
@@ -1434,11 +1454,13 @@ private fun SettingsItemRow(
                         modifier = Modifier.weight(1f),
                     )
                 }
-                (item.annotatedDescription ?: item.description?.let(::AnnotatedString))?.let {
+                (item.annotatedDescription ?: item.description?.let(::AnnotatedString))?.takeUnless { hideDescriptions }?.let {
                     Text(
                         it,
                         style = if (mochy) MaterialTheme.typography.labelMedium else MaterialTheme.typography.bodyMedium,
                         color = descriptionColor.copy(alpha = if (item.enabled) 1f else 0.38f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
@@ -1523,19 +1545,33 @@ private fun SettingsItemRow(
             }
         }
         if (item.control == SettingsControl.CHOICE) {
-            ExpressiveSelectionMenu(
-                expanded = choiceMenuExpanded,
-                onDismissRequest = { choiceMenuExpanded = false },
-                anchorOffset = choiceMenuOffset,
-                options = item.choices,
-                selectedOption = item.choices.find { it.id == item.selectedChoiceId },
-                optionLabel = { it.label },
-                optionIcon = { it.preview?.invoke() },
-                onOptionSelected = { choice ->
-                    item.onChoiceSelected?.invoke(choice.id)
-                    onSettingValueChanged()
-                },
-            )
+            if (mochy) {
+                MochyChoiceSheet(
+                    title = item.title,
+                    choices = item.choices,
+                    selectedId = item.selectedChoiceId,
+                    isVisible = choiceMenuExpanded,
+                    onSelect = { choiceId ->
+                        item.onChoiceSelected?.invoke(choiceId)
+                        onSettingValueChanged()
+                    },
+                    onDismiss = { choiceMenuExpanded = false },
+                )
+            } else {
+                ExpressiveSelectionMenu(
+                    expanded = choiceMenuExpanded,
+                    onDismissRequest = { choiceMenuExpanded = false },
+                    anchorOffset = choiceMenuOffset,
+                    options = item.choices,
+                    selectedOption = item.choices.find { it.id == item.selectedChoiceId },
+                    optionLabel = { it.label },
+                    optionIcon = { it.preview?.invoke() },
+                    onOptionSelected = { choice ->
+                        item.onChoiceSelected?.invoke(choice.id)
+                        onSettingValueChanged()
+                    },
+                )
+            }
         }
     }
 }
