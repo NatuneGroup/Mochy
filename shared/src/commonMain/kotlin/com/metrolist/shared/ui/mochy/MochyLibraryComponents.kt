@@ -7,8 +7,13 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +24,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -40,6 +46,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
@@ -309,5 +317,73 @@ internal fun MochyLibraryIndexRail(
                 )
             }
         }
+    }
+}
+
+// the library's filter pills, Mochy's way: a dark track holding the pills, the picked one a step lighter
+private val MochyLibraryChipTrack = Color(0xFF161618)
+private val MochyLibraryChip = Color(0xFF232326)
+private val MochyLibraryChipSelected = Color(0xFF3D3D41)
+
+@Composable
+internal fun <T> MochyLibraryChipRow(
+    options: List<T>,
+    selectedOption: T?,
+    onSelectionChange: (T?) -> Unit,
+    label: (T) -> String,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(horizontal = 16.dp),
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(contentPadding),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(
+            modifier = Modifier
+                .clip(RoundedCornerShape(percent = 50))
+                .background(MochyLibraryChipTrack)
+                .padding(3.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            options.forEach { option ->
+                val selected = selectedOption == option
+                MochyLibraryChipPill(
+                    text = label(option),
+                    selected = selected,
+                    onClick = { onSelectionChange(if (selected) null else option) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MochyLibraryChipPill(text: String, selected: Boolean, onClick: () -> Unit) {
+    val background by animateColorAsState(
+        targetValue = if (selected) MochyLibraryChipSelected else MochyLibraryChip,
+        animationSpec = tween(220),
+        label = "mochyLibraryChip",
+    )
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .clip(RoundedCornerShape(percent = 50))
+            .background(background)
+            .clickable(role = Role.Tab, onClick = onClick)
+            .heightIn(min = 28.dp)
+            .padding(horizontal = 14.dp, vertical = 5.dp),
+    ) {
+        Text(
+            text = text,
+            color = if (selected) Color.White else Color.White.copy(alpha = 0.72f),
+            fontFamily = mochyInterFontFamily(),
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+        )
     }
 }
