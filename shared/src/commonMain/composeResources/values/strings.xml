@@ -6174,4 +6174,24 @@
     <string name="mochy_transition_manual_length">Length</string>
     <!-- Translators: A number of seconds. %1$d is the number. -->
     <string name="mochy_transition_seconds">%1$ds</string>
+    <!-- Translators: Heading of the Audio Lab presets row. -->
+    <string name="mochy_lab_presets">Presets</string>
+    <!-- Translators: Button that renames the picked Audio Lab preset. -->
+    <string name="mochy_lab_preset_edit">Edit</string>
+    <!-- Translators: Round button that adds a new Audio Lab preset. -->
+    <string name="mochy_lab_preset_add">Add preset</string>
+    <!-- Translators: Title of the dialog that names a new Audio Lab preset. -->
+    <string name="mochy_lab_preset_new">New preset</string>
+    <!-- Translators: Title of the dialog that renames an Audio Lab preset. -->
+    <string name="mochy_lab_preset_edit_title">Edit preset</string>
+    <!-- Translators: Example name shown in the empty preset name field. -->
+    <string name="mochy_lab_preset_name_hint">Late night</string>
+    <!-- Translators: Error under the preset name field when another preset already has that name. -->
+    <string name="mochy_lab_preset_taken">A preset already has this name</string>
+    <!-- Translators: Button that saves an Audio Lab preset name. -->
+    <string name="mochy_lab_preset_save">Save</string>
+    <!-- Translators: Button that deletes an Audio Lab preset. -->
+    <string name="mochy_lab_preset_delete">Delete</string>
+    <!-- Translators: Button that closes a dialog without saving. -->
+    <string name="mochy_lab_cancel">Cancel</string>
 </resources>

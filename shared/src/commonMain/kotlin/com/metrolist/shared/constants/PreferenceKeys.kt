@@ -280,6 +280,8 @@ val StagePresetIdKey = "stagePresetId"
 val StageRoomSizeKey = "stageRoomSize"
 val StageWallsKey = "stageWalls"
 val StageRoomAmountKey = "stageRoomAmount"
+val FxPresetsJsonKey = "fxPresetsJson"
+val FxPresetIdKey = "fxPresetId"
 val StageLevelDbKey = "stageLevelDb"
 
 val CrossfadeStyleKey = "crossfadeStyle"
