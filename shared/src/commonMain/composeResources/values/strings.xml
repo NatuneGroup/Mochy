@@ -6199,4 +6199,12 @@
     <!-- Mochy settings pages -->
     <string name="mochy_pages_hide_descriptions">Hide descriptions in settings</string>
     <string name="mochy_pages_hide_descriptions_desc">Show titles only in settings lists.</string>
+    <!-- Mochy player menu -->
+    <string name="mochy_menu_player_style">Player style</string>
+    <string name="mochy_menu_style_flagship">Flagship</string>
+    <string name="mochy_menu_style_turntable">Turntable</string>
+    <string name="mochy_menu_style_ipod">iPod</string>
+    <string name="mochy_menu_style_modern">Modern</string>
+    <string name="mochy_menu_style_vintage">Vintage</string>
+    <string name="mochy_menu_style_classic">Classic</string>
 </resources>
