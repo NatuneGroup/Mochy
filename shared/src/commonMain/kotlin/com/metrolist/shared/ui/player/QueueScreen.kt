@@ -1243,6 +1243,10 @@ private fun QueueTrackSwipeToDismissBox(
     content: @Composable RowScope.() -> Unit,
 ) {
     val hapticManager = rememberMetrolistHaptics()
+    // the Mochy look: the reference's remove red and white glyph, inside the row's 14 dp shape
+    val mochyLook = !LocalIsTv.current && MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val slabColor = if (mochyLook) MochyQueueRemoveRed else MaterialTheme.colorScheme.errorContainer
+    val slabIconColor = if (mochyLook) Color.White else MaterialTheme.colorScheme.onErrorContainer
     val positionalThreshold = SwipeToDismissBoxDefaults.positionalThreshold
     val dismissState =
         remember(trackKey) {
@@ -1262,9 +1266,9 @@ private fun QueueTrackSwipeToDismissBox(
     val backgroundColor by animateColorAsState(
         targetValue =
             if (isThresholdReached) {
-                MaterialTheme.colorScheme.errorContainer
+                slabColor
             } else {
-                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
+                slabColor.copy(alpha = 0.5f)
             },
         animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
         label = "swipeBackgroundColor",
@@ -1272,9 +1276,9 @@ private fun QueueTrackSwipeToDismissBox(
     val iconColor by animateColorAsState(
         targetValue =
             if (isThresholdReached) {
-                MaterialTheme.colorScheme.onErrorContainer
+                slabIconColor
             } else {
-                MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.7f)
+                slabIconColor.copy(alpha = 0.7f)
             },
         animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
         label = "swipeIconColor",
@@ -1287,7 +1291,7 @@ private fun QueueTrackSwipeToDismissBox(
 
     SwipeToDismissBox(
         state = dismissState,
-        modifier = modifier.clip(queueItemShape),
+        modifier = modifier.clip(if (mochyLook) RoundedCornerShape(14.dp) else queueItemShape),
         backgroundContent = {
             val direction = dismissState.dismissDirection
             val alignment =
@@ -1608,6 +1612,8 @@ private fun TrackItem(
         }
     }
 }
+
+private val MochyQueueRemoveRed = Color(0xFFFF453A)
 
 // the reference's queue row: the song playing gets a light highlight, a row being dragged a brighter one
 private fun mochyQueueRowColor(isMoving: Boolean, isActive: Boolean): Color =
