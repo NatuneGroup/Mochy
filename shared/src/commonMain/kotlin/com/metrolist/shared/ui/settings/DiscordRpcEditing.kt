@@ -85,6 +85,7 @@ import com.metrolist.shared.discord.DiscordPresence
 import com.metrolist.shared.discord.DiscordTemplateRenderer
 import com.metrolist.shared.discord.resolveDiscordButtonLabel
 import com.metrolist.shared.generated.resources.Res
+import com.metrolist.shared.generated.resources.mochy_integrations_discord
 import com.metrolist.shared.generated.resources.album
 import com.metrolist.shared.generated.resources.cancel
 import com.metrolist.shared.generated.resources.details

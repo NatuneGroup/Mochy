@@ -1,8 +1,11 @@
 // Ported from Mochy Music by realidkroo (github.com/realidkroo/mochy-music). Licensed under GPL-3.0.
 
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.metrolist.shared.ui.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
