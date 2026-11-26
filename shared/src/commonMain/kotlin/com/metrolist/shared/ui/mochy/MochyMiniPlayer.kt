@@ -7,8 +7,7 @@ package com.metrolist.shared.ui.mochy
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -23,9 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,7 +36,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
@@ -53,18 +49,18 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.metrolist.shared.model.SongItem
 import com.metrolist.shared.model.previewThumbnailUrl
+import com.metrolist.shared.ui.components.PlayerSheetSurface
 import com.metrolist.shared.ui.components.images.AsyncImage
 import com.metrolist.shared.ui.player.mochy.AnimatedPlayGlyph
 import com.metrolist.shared.ui.player.mochy.AnimatedSkipGlyph
 import com.metrolist.shared.ui.player.mochy.SkipCycleState
-import com.metrolist.shared.ui.utils.nativeBlurCompat
-import com.metrolist.shared.ui.utils.supportsNativeBlur
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -80,16 +76,20 @@ private val MochyMiniButtonGap = 8.dp
 private val MochyMiniEndInset = 12.dp
 private val MochyMiniGlyph = 19.dp
 
-// the chrome's tint and hairline, the same values the nav bar's glass uses
-private const val MOCHY_MINI_TINT_ALPHA = 0.78f
-private const val MOCHY_MINI_BACKDROP_ALPHA = 0.6f
-private const val MOCHY_MINI_BLUR_PX = 24f
-private val MochyMiniHairline = Color.White.copy(alpha = 0.05f)
+// the pill's ends are fully round: half its 64dp height
+private val MochyMiniCorner = 32.dp
 
 /**
- * The mini player for Mochy's look. The pill blurs its cover behind the tint where the device can blur, and
- * is a plain tinted pill where it can't. Play, next, tapping the pill and the horizontal swipe all do what
- * the other mini players do.
+ * The round highlight behind a pressed button: the nav bar's highlight colour, 4dp past the 36dp button, so the
+ * skip button's sits 8dp in from the pill's end like the cover does.
+ */
+private val MochyMiniButtonHighlight =
+    RoundedHighlight(cornerRadius = 22.dp, spillX = 4.dp, spillY = 4.dp, color = MochyChromeHighlightColor)
+
+/**
+ * The mini player for Mochy's look: the frosted chrome pill the nav bar uses. Inside the player sheet it hands
+ * its bounds and colour to the sheet, so the open player grows out of the pill. Play, next, tapping the pill
+ * and the horizontal swipe all do what the other mini players do.
  */
 @Composable
 fun MochyMiniPlayer(
@@ -110,30 +110,25 @@ fun MochyMiniPlayer(
     // a d-pad or remote Enter on the focused pill expands it, as on the expressive mini
     onDpadExpand: () -> Unit = onExpand,
 ) {
-    val blur = remember { supportsNativeBlur() }
     val layoutDirection = LocalLayoutDirection.current
     val scope = rememberCoroutineScope()
     var dragOffsetX by remember { mutableFloatStateOf(0f) }
     var returnAnimation by remember { mutableStateOf<Job?>(null) }
-    val shape = RoundedCornerShape(50)
+    val hairline = with(LocalDensity.current) { MOCHY_CHROME_OUTLINE_PX.toDp() }
     val artwork = song.previewThumbnailUrl
     val skipCycle = remember { SkipCycleState() }
     var isFocused by remember { mutableStateOf(false) }
 
-    Box(
+    PlayerSheetSurface(
+        color = MochyChromeColor,
+        cornerRadius = MochyMiniCorner,
+        elevation = 6.dp,
+        border = BorderStroke(hairline, MochyChromeOutlineColor),
         modifier =
             modifier
                 .fillMaxWidth()
                 .height(MochyMiniHeight)
                 .graphicsLayer { translationX = dragOffsetX }
-                .shadow(
-                    elevation = 6.dp,
-                    shape = shape,
-                    ambientColor = Color.Black.copy(alpha = 0.12f),
-                    spotColor = Color.Black.copy(alpha = 0.12f),
-                ).clip(shape)
-                .background(MaterialTheme.colorScheme.surfaceContainer.copy(alpha = MOCHY_MINI_TINT_ALPHA))
-                .border(1.dp, MochyMiniHairline, shape)
                 .onFocusChanged { isFocused = it.isFocused }
                 .onPreviewKeyEvent { event ->
                     if (isFocused && event.type == KeyEventType.KeyUp && (event.key == Key.Enter || event.key == Key.DirectionCenter)) {
@@ -190,90 +185,72 @@ fun MochyMiniPlayer(
                     },
                 ).clickable(onClick = onExpand),
     ) {
-        // the cover, blurred and under the tint, is what makes the pill frosted; without blur the tint stands alone
-        if (blur && artwork != null) {
-            AsyncImage(
-                url = artwork,
-                contentDescription = null,
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .graphicsLayer { alpha = MOCHY_MINI_BACKDROP_ALPHA }
-                        .nativeBlurCompat(MOCHY_MINI_BLUR_PX, offscreen = true),
-                contentScale = ContentScale.Crop,
-            )
-        }
+        Box(Modifier.fillMaxSize()) {
+            MochyChromeGlass(Modifier.matchParentSize())
 
-        Row(
-            modifier = Modifier.fillMaxSize().padding(start = MochyMiniArtInset, end = MochyMiniEndInset),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            AsyncImage(
-                url = artwork,
-                contentDescription = null,
-                modifier = Modifier.size(MochyMiniArtSize).clip(RoundedCornerShape(MochyMiniArtCorner)),
-                contentScale = ContentScale.Crop,
-            )
-            Spacer(Modifier.width(MochyMiniTextGap))
-            Column(
-                modifier = Modifier.weight(1f).mochyTextFade(),
-                verticalArrangement = Arrangement.Center,
+            Row(
+                modifier = Modifier.fillMaxSize().padding(start = MochyMiniArtInset, end = MochyMiniEndInset),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = song.title,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    softWrap = false,
+                AsyncImage(
+                    url = artwork,
+                    contentDescription = null,
+                    modifier = Modifier.size(MochyMiniArtSize).clip(RoundedCornerShape(MochyMiniArtCorner)),
+                    contentScale = ContentScale.Crop,
                 )
-                val subtitle =
-                    listOf(song.artists.joinToString { it.name }, song.album?.name.orEmpty())
-                        .filter { it.isNotBlank() }
-                        .joinToString(" — ")
-                if (subtitle.isNotBlank()) {
+                Spacer(Modifier.width(MochyMiniTextGap))
+                Column(
+                    modifier = Modifier.weight(1f).mochyTextFade(),
+                    verticalArrangement = Arrangement.Center,
+                ) {
                     Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        text = song.title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White,
                         maxLines = 1,
                         softWrap = false,
                     )
-                }
-            }
-            Spacer(Modifier.width(MochyMiniTextEnd))
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(MochyMiniButtonGap),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                MochyMiniButton(enabled = playbackEnabled, onClick = onTogglePlay) {
-                    if (isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                    } else {
-                        AnimatedPlayGlyph(
-                            playing = isPlaying,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            height = MochyMiniGlyph,
+                    val subtitle =
+                        listOf(song.artists.joinToString { it.name }, song.album?.name.orEmpty())
+                            .filter { it.isNotBlank() }
+                            .joinToString(" — ")
+                    if (subtitle.isNotBlank()) {
+                        Text(
+                            text = subtitle,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White,
+                            maxLines = 1,
+                            softWrap = false,
                         )
                     }
                 }
-                MochyMiniButton(
-                    enabled = canSkipNext,
-                    onClick = {
-                        scope.launch { skipCycle.step() }
-                        onSkipNext()
-                    },
+                Spacer(Modifier.width(MochyMiniTextEnd))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(MochyMiniButtonGap),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    AnimatedSkipGlyph(
-                        cycle = skipCycle,
-                        backwards = false,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        width = MochyMiniGlyph,
-                    )
+                    MochyMiniButton(enabled = playbackEnabled, onClick = onTogglePlay) {
+                        AnimatedPlayGlyph(
+                            playing = isPlaying,
+                            color = Color.White,
+                            height = MochyMiniGlyph,
+                        )
+                    }
+                    MochyMiniButton(
+                        enabled = canSkipNext,
+                        onClick = {
+                            scope.launch { skipCycle.step() }
+                            onSkipNext()
+                        },
+                    ) {
+                        AnimatedSkipGlyph(
+                            cycle = skipCycle,
+                            backwards = false,
+                            color = Color.White,
+                            width = MochyMiniGlyph,
+                        )
+                    }
                 }
             }
         }
@@ -292,8 +269,7 @@ private fun MochyMiniButton(
             Modifier
                 .size(MochyMiniButtonSize)
                 .pressBounce(interactionSource = interaction)
-                .clip(CircleShape)
-                .clickable(interactionSource = interaction, indication = null, enabled = enabled, onClick = onClick),
+                .clickable(interactionSource = interaction, indication = MochyMiniButtonHighlight, enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         content()

@@ -26,6 +26,10 @@ fun modernMiniPlayerHeight(density: Density): Dp =
 
 val ModernMiniPlayerHorizontalPadding = 12.dp
 val ModernMiniPlayerBottomSpacing = 6.dp
+
+// Mochy's phone pill: the full width less 24dp each side, sitting straight on the nav bar's 8dp top margin
+val MochyMiniPlayerHorizontalPadding = 24.dp
+val MochyMiniPlayerBottomSpacing = 0.dp
 val QueuePeekHeight = 64.dp
 
 val ListItemHeight = 64.dp
