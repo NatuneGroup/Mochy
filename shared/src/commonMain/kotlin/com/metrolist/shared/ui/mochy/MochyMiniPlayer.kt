@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,7 +54,9 @@ import androidx.compose.ui.unit.dp
 import com.metrolist.shared.model.SongItem
 import com.metrolist.shared.model.previewThumbnailUrl
 import com.metrolist.shared.ui.components.images.AsyncImage
-import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.player.mochy.AnimatedPlayGlyph
+import com.metrolist.shared.ui.player.mochy.AnimatedSkipGlyph
+import com.metrolist.shared.ui.player.mochy.SkipCycleState
 import com.metrolist.shared.ui.utils.nativeBlurCompat
 import com.metrolist.shared.ui.utils.supportsNativeBlur
 import kotlinx.coroutines.Job
@@ -98,6 +99,8 @@ fun MochyMiniPlayer(
     playbackEnabled: Boolean,
     swipeThresholdPx: Float,
     modifier: Modifier = Modifier,
+    // a caller that already drags the whole mini player turns this off so the swipe is not taken twice
+    swipeEnabled: Boolean = true,
 ) {
     val blur = remember { supportsNativeBlur() }
     val layoutDirection = LocalLayoutDirection.current
@@ -106,6 +109,7 @@ fun MochyMiniPlayer(
     var returnAnimation by remember { mutableStateOf<Job?>(null) }
     val shape = RoundedCornerShape(50)
     val artwork = song.previewThumbnailUrl
+    val skipCycle = remember { SkipCycleState() }
 
     Box(
         modifier =
@@ -121,7 +125,7 @@ fun MochyMiniPlayer(
                 ).clip(shape)
                 .background(MaterialTheme.colorScheme.surfaceContainer.copy(alpha = MochyMiniTintAlpha))
                 .border(1.dp, MochyMiniHairline, shape)
-                .pointerInput(canSkipNext, canSkipPrevious, layoutDirection, swipeThresholdPx) {
+                .then(if (swipeEnabled) Modifier.pointerInput(canSkipNext, canSkipPrevious, layoutDirection, swipeThresholdPx) {
                     detectHorizontalDragGestures(
                         onDragStart = {
                             returnAnimation?.cancel()
@@ -161,7 +165,7 @@ fun MochyMiniPlayer(
                             change.consume()
                         },
                     )
-                }.clickable(onClick = onExpand),
+                } else { Modifier }).clickable(onClick = onExpand),
     ) {
         // the cover, blurred and under the tint, is what makes the pill frosted; without blur the tint stands alone
         if (blur && artwork != null) {
@@ -227,20 +231,25 @@ fun MochyMiniPlayer(
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                     } else {
-                        Icon(
-                            imageVector = if (isPlaying) MetrolistIcons.Rounded.Pause else MetrolistIcons.Rounded.PlayArrow,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(MochyMiniGlyph),
+                        AnimatedPlayGlyph(
+                            playing = isPlaying,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            height = MochyMiniGlyph,
                         )
                     }
                 }
-                MochyMiniButton(enabled = canSkipNext, onClick = onSkipNext) {
-                    Icon(
-                        imageVector = MetrolistIcons.Rounded.SkipNext,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.size(MochyMiniGlyph),
+                MochyMiniButton(
+                    enabled = canSkipNext,
+                    onClick = {
+                        scope.launch { skipCycle.step() }
+                        onSkipNext()
+                    },
+                ) {
+                    AnimatedSkipGlyph(
+                        cycle = skipCycle,
+                        backwards = false,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        width = MochyMiniGlyph,
                     )
                 }
             }

@@ -896,10 +896,12 @@ fun MetrolistApp(
         val hasBottomNavigation = navigationSuiteType.isNavigationBar
         val isExpressiveMiniPlayer = rememberMochyLook().miniPlayerType == MiniPlayerType.EXPRESSIVE && !useDesktopMiniPlayer
         val isModernMiniPlayer = rememberMochyLook().miniPlayerType == MiniPlayerType.MODERN && !useDesktopMiniPlayer
+        val isMochyMiniPlayer = rememberMochyLook().miniPlayerType == MiniPlayerType.MOCHY && !useDesktopMiniPlayer
         val miniPlayerBottomSpacing =
             when {
                 isExpressiveMiniPlayer -> ModernMiniPlayerBottomSpacing
                 isModernMiniPlayer -> ModernMiniPlayerBottomSpacing
+                isMochyMiniPlayer -> ModernMiniPlayerBottomSpacing
                 else -> 0.dp
             }
         val hiddenMiniPlayerBottomOffset = safeBottomPadding + miniPlayerBottomSpacing

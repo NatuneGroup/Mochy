@@ -161,6 +161,7 @@ import com.metrolist.shared.ui.haptics.HapticEvent
 import com.metrolist.shared.ui.haptics.MetrolistHaptics
 import com.metrolist.shared.ui.haptics.rememberMetrolistHaptics
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.mochy.MochyMiniPlayer
 import com.metrolist.shared.ui.player.shouldShowMusicVideoSurface
 import com.metrolist.shared.ui.theme.rememberMochyLook
 import com.metrolist.shared.ui.tv.tvFocusHighlight
@@ -209,6 +210,7 @@ fun MiniPlayer(
     val miniPlayerActive = bottomSheetState?.isCollapsed != false && lifecycleState == Lifecycle.State.RESUMED
     val isExpressiveMiniPlayer = rememberMochyLook().miniPlayerType == MiniPlayerType.EXPRESSIVE && !useDesktopLayout
     val isModern = rememberMochyLook().miniPlayerType == MiniPlayerType.MODERN && !useDesktopLayout
+    val isMochyMiniPlayer = rememberMochyLook().miniPlayerType == MiniPlayerType.MOCHY && !useDesktopLayout
     val expressiveProgressEnabled = isExpressiveMiniPlayer && Settings.shared.showExpressiveMiniPlayerProgress
     val progressActive = miniPlayerActive && (!isExpressiveMiniPlayer || expressiveProgressEnabled) && !useDesktopLayout && !isLive
     var progressWidthPx by remember { mutableIntStateOf(0) }
@@ -351,7 +353,7 @@ fun MiniPlayer(
                         MiniPlayerHeight
                     },
                 ).then(
-                    if (isModern || isExpressiveMiniPlayer) {
+                    if (isModern || isExpressiveMiniPlayer || isMochyMiniPlayer) {
                         Modifier
                             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
                             .padding(horizontal = ModernMiniPlayerHorizontalPadding)
@@ -462,6 +464,41 @@ fun MiniPlayer(
                         null
                     },
                 onAddToPlaylist = { addToPlaylist(listOf(song)) },
+            )
+            return
+        }
+        if (isMochyMiniPlayer) {
+            MochyMiniPlayer(
+                song = song,
+                isPlaying = isPlaying,
+                isLoading = isPlaybackLoading && miniPlayerActive,
+                onTogglePlay = {
+                    hapticManager.perform(HapticEvent.PRESS)
+                    if (isListenTogetherGuest) {
+                        playerConnection.setVolume(if (volume > 0.01f) 0f else 1f)
+                    } else {
+                        playerConnection.togglePlayPause()
+                    }
+                },
+                onSkipNext = {
+                    hapticManager.perform(HapticEvent.PRESS)
+                    playerConnection.skipToNext()
+                },
+                onSkipPrevious = { playerConnection.skipToPrevious() },
+                onExpand = {
+                    hapticManager.perform(HapticEvent.PRESS)
+                    onExpand()
+                },
+                canSkipNext = canSkipNext && !isListenTogetherGuest,
+                canSkipPrevious = canSkipPrevious && !isListenTogetherGuest,
+                playbackEnabled = true,
+                swipeThresholdPx = swipeThreshold,
+                swipeEnabled = false,
+                modifier =
+                    Modifier
+                        .then(if (cardFocusRequester != null) Modifier.focusRequester(cardFocusRequester) else Modifier)
+                        .tvFocusHighlight(scale = 1f)
+                        .graphicsLayer { translationX = dragOffset.value.x },
             )
             return
         }
