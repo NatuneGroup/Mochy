@@ -5,14 +5,17 @@
 
 package com.metrolist.shared.ui.player.mochy
 
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,23 +24,27 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,7 +61,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.Canvas
+import androidx.compose.ui.zIndex
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.mochy_menu_player_style
 import com.metrolist.shared.generated.resources.mochy_menu_style_classic
@@ -64,30 +71,44 @@ import com.metrolist.shared.generated.resources.mochy_menu_style_modern
 import com.metrolist.shared.generated.resources.mochy_menu_style_turntable
 import com.metrolist.shared.generated.resources.mochy_menu_style_vintage
 import com.metrolist.shared.settings.PlayerType
+import com.metrolist.shared.settings.Settings
+import com.metrolist.shared.ui.components.PopupVisibility
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
-import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.stringResource
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
-// the styles KMP has, in the order the reference's picker shows its own
-internal val MochyStyleOrder: List<Pair<PlayerType, StringResource>> =
+// the styles KMP has, stacked the way the reference's picker stacks its own: each column is one page, and the styles in it
+// sit one behind another with the chosen one in front
+internal val MochyStyleColumns: List<List<Pair<PlayerType, StringResource>>> =
     listOf(
-        PlayerType.MOCHY to Res.string.mochy_menu_style_flagship,
-        PlayerType.TURNTABLE to Res.string.mochy_menu_style_turntable,
-        PlayerType.IPOD to Res.string.mochy_menu_style_ipod,
-        PlayerType.MODERN to Res.string.mochy_menu_style_modern,
-        PlayerType.VINTAGE to Res.string.mochy_menu_style_vintage,
-        PlayerType.CLASSIC to Res.string.mochy_menu_style_classic,
+        listOf(
+            PlayerType.MOCHY to Res.string.mochy_menu_style_flagship,
+            PlayerType.TURNTABLE to Res.string.mochy_menu_style_turntable,
+        ),
+        listOf(PlayerType.IPOD to Res.string.mochy_menu_style_ipod),
+        listOf(
+            PlayerType.MODERN to Res.string.mochy_menu_style_modern,
+            PlayerType.VINTAGE to Res.string.mochy_menu_style_vintage,
+            PlayerType.CLASSIC to Res.string.mochy_menu_style_classic,
+        ),
     )
 
 private val CardWidth = 170.dp
 private val CardCorner = 28.dp
 private val PreviewCorner = 20.dp
 private val CardFill = Color(0xFF1C1C1E)
+private val StackStep = 46.dp
+private val StackHeight = 440.dp
 
+// the picker as a page: a black screen with its title, the columns side by side one page at a time
+// and a tap on a card picks that style
 @Composable
 fun MochyStyleSelector(
     selected: PlayerType,
@@ -95,6 +116,8 @@ fun MochyStyleSelector(
     onDismiss: () -> Unit,
 ) {
     val font = mochyInterFontFamily()
+    val startColumn = MochyStyleColumns.indexOfFirst { column -> column.any { it.first == selected } }.coerceAtLeast(0)
+    val pagerState = rememberPagerState(initialPage = startColumn) { MochyStyleColumns.size }
     Column(
         modifier = Modifier.fillMaxSize().background(Color.Black).padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 18.dp),
     ) {
@@ -120,47 +143,83 @@ fun MochyStyleSelector(
             }
         }
         Spacer(Modifier.height(24.dp))
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 24.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            items(MochyStyleOrder, key = { it.first.name }) { (style, title) ->
-                StyleCard(
-                    style = style,
-                    title = stringResource(title),
-                    selected = style == selected,
-                    onClick = {
-                        onSelect(style)
-                        onDismiss()
-                    },
-                )
-            }
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxWidth(),
+            beyondViewportPageCount = 1,
+        ) { page ->
+            StyleColumn(
+                styles = MochyStyleColumns[page],
+                selected = selected,
+                onClick = { style ->
+                    onSelect(style)
+                    onDismiss()
+                },
+            )
         }
     }
 }
 
-// the card for one style: the chosen one stands full size, the others sit back a little and fade
+// one column of the grid: its styles stacked in the middle of the page, the chosen one in front
+@Composable
+private fun StyleColumn(
+    styles: List<Pair<PlayerType, StringResource>>,
+    selected: PlayerType,
+    onClick: (PlayerType) -> Unit,
+) {
+    val front = styles.indexOfFirst { it.first == selected }.takeIf { it >= 0 } ?: 0
+    Box(
+        modifier = Modifier.fillMaxWidth().height(StackHeight),
+        contentAlignment = Alignment.TopCenter,
+    ) {
+        // the one behind goes first, so the front card draws on top
+        styles.indices.sortedBy { -abs(it - front) }.forEach { index ->
+            val (style, title) = styles[index]
+            StyleCard(
+                style = style,
+                title = stringResource(title),
+                front = index == front,
+                depth = index - front,
+                onClick = { onClick(style) },
+            )
+        }
+    }
+}
+
+// a card in its column: the front card stands full size, the cards behind it step down and sit back
 @Composable
 private fun StyleCard(
     style: PlayerType,
     title: String,
-    selected: Boolean,
+    front: Boolean,
+    depth: Int,
     onClick: () -> Unit,
 ) {
-    val lift by animateFloatAsState(
-        targetValue = if (selected) 1f else 0f,
-        animationSpec = spring(dampingRatio = 0.6f, stiffness = 420f),
-        label = "mochyStyleLift",
+    val step by animateDpAsState(
+        targetValue = if (front) 0.dp else StackStep * depth,
+        animationSpec = spring(dampingRatio = 0.7f, stiffness = 380f),
+        label = "mochyStyleStack",
+    )
+    val cardScale by animateFloatAsState(
+        targetValue = if (front) 1f else 0.9f,
+        animationSpec = spring(dampingRatio = 0.7f, stiffness = 380f),
+        label = "mochyStyleScale",
+    )
+    val cardAlpha by animateFloatAsState(
+        targetValue = if (front) 1f else 0.55f,
+        animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing),
+        label = "mochyStyleAlpha",
     )
     Column(
         modifier =
             Modifier
                 .width(CardWidth)
+                .zIndex(if (front) 1f else 0f)
+                .offset(y = step)
                 .graphicsLayer {
-                    val scale = 0.92f + 0.08f * lift
-                    scaleX = scale
-                    scaleY = scale
-                    alpha = 0.6f + 0.4f * lift
+                    scaleX = cardScale
+                    scaleY = cardScale
+                    alpha = cardAlpha
                 }.clip(RoundedCornerShape(CardCorner))
                 .background(CardFill)
                 .clickable(onClick = onClick)
@@ -268,5 +327,32 @@ private fun DrawScope.rotateGroove(
         val a = (angle + k * 90f) * PI.toFloat() / 180f
         val p = Offset(center.x + cos(a) * radius * 0.5f, center.y + sin(a) * radius * 0.5f)
         drawCircle(Color.White.copy(alpha = 0.08f), radius * 0.12f, p)
+    }
+}
+
+// the picker's open state, so any screen can show it: the player menu, the artwork's long press and the settings row
+object MochyStylePicker {
+    private val opened = MutableStateFlow(false)
+    val isOpen: StateFlow<Boolean> get() = opened
+
+    fun show() {
+        opened.value = true
+    }
+
+    fun hide() {
+        opened.value = false
+    }
+}
+
+// the picker over whatever is showing; it writes the chosen style to the player style setting
+@Composable
+fun MochyStylePickerHost() {
+    val open by MochyStylePicker.isOpen.collectAsState()
+    PopupVisibility(visible = open) {
+        MochyStyleSelector(
+            selected = Settings.shared.playerType,
+            onSelect = { Settings.shared.playerType = it },
+            onDismiss = { MochyStylePicker.hide() },
+        )
     }
 }
