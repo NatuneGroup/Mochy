@@ -54,6 +54,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
@@ -76,6 +77,8 @@ import com.metrolist.shared.ui.theme.rememberReducedMotion
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -503,10 +506,9 @@ private fun <T> FloatingNavigationItem(
                 ).semantics { contentDescription = item.label },
         contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            imageVector = item.icon,
-            contentDescription = null,
-            tint = Color.White,
+        TabIcon(
+            vector = item.icon,
+            res = item.iconRes,
             modifier =
                 Modifier
                     .size(iconSize)
@@ -515,10 +517,9 @@ private fun <T> FloatingNavigationItem(
                         compositingStrategy = CompositingStrategy.ModulateAlpha
                     },
         )
-        Icon(
-            imageVector = item.selectedIcon,
-            contentDescription = null,
-            tint = Color.White,
+        TabIcon(
+            vector = item.selectedIcon,
+            res = item.selectedIconRes,
             modifier =
                 Modifier
                     .size(iconSize)
@@ -526,6 +527,29 @@ private fun <T> FloatingNavigationItem(
                         alpha = lit
                         compositingStrategy = CompositingStrategy.ModulateAlpha
                     },
+        )
+    }
+}
+
+@Composable
+private fun TabIcon(
+    vector: ImageVector,
+    res: DrawableResource?,
+    modifier: Modifier,
+) {
+    if (res != null) {
+        Icon(
+            painter = painterResource(res),
+            contentDescription = null,
+            tint = Color.White,
+            modifier = modifier,
+        )
+    } else {
+        Icon(
+            imageVector = vector,
+            contentDescription = null,
+            tint = Color.White,
+            modifier = modifier,
         )
     }
 }

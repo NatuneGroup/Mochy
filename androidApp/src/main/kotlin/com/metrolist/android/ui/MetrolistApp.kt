@@ -482,7 +482,7 @@ fun MetrolistApp(
             onRejectPairing = AndroidDeviceConnect.manager::rejectPairing,
         )
         val initialStartRoute = remember { resolveAndPersistStartupScreen() }
-        val topLevelRoutes = remember { setOf(Screen.Home, Screen.Search, Screen.Library, Screen.EasterEgg) }
+        val topLevelRoutes = remember { setOf(Screen.Home, Screen.Search, Screen.Library, Screen.Settings, Screen.EasterEgg) }
         val navigationState =
             key(navigationSaveKey) {
                 rememberNavigationState(
@@ -2496,7 +2496,7 @@ fun resolveAndPersistStartupScreen(): Screen {
 
 fun NavKey.isVisibleNavigationScreen(): Boolean =
     when (this) {
-        Screen.Home, Screen.Search, Screen.Library, Screen.EasterEgg -> true
+        Screen.Home, Screen.Search, Screen.Library, Screen.Settings, Screen.EasterEgg -> true
         else -> false
     }
 

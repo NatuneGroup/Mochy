@@ -135,11 +135,13 @@ import com.metrolist.shared.ui.menu.trackPressPosition
 import com.metrolist.shared.ui.mochy.MochyModulesScreen
 import com.metrolist.shared.ui.mochy.MochyProfileSettingsScreen
 import com.metrolist.shared.ui.mochy.pressBounce
+import com.metrolist.shared.ui.navigation.LocalUseDesktopUi
 import com.metrolist.shared.ui.navigation.PredictiveNavigationContent
 import com.metrolist.shared.ui.navigation.rememberNavigationMotion
 import com.metrolist.shared.ui.onboarding.mochy.AppSwitch
 import com.metrolist.shared.ui.settings.transition.TransitionSettingsScreen
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
+import com.metrolist.shared.ui.theme.rememberMochyLook
 import com.metrolist.shared.ui.theme.rememberReducedMotion
 import com.metrolist.shared.ui.utils.DragScrollableColumn
 import com.metrolist.shared.ui.utils.desktopArrowScroll
@@ -460,8 +462,10 @@ private fun CompactSettingsHome(
     onSearchResultSelected: (SettingsPageId, String?) -> Unit,
 ) {
     val isTv = LocalIsTv.current
-    // the dark theme gets Mochy's own settings list, on narrow desktop windows too
-    if (!isTv && host.title == null && MaterialTheme.colorScheme.background.luminance() < 0.5f) {
+    // the dark theme gets Mochy's own settings list, on narrow desktop windows too; so does
+    // the phone floating bar's Settings tab, which is Mochy's look in any theme
+    val mochyBar = rememberMochyLook().floatingNavBar && !LocalUseDesktopUi.current
+    if (!isTv && host.title == null && (mochyBar || MaterialTheme.colorScheme.background.luminance() < 0.5f)) {
         MochySettingsHome(
             registry = registry,
             host = host,

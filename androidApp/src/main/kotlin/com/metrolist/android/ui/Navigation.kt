@@ -39,6 +39,14 @@ import com.metrolist.shared.generated.resources.filter_library
 import com.metrolist.shared.generated.resources.home
 import com.metrolist.shared.generated.resources.listen_together
 import com.metrolist.shared.generated.resources.menu_history
+import com.metrolist.shared.generated.resources.mochy_nav_home
+import com.metrolist.shared.generated.resources.mochy_nav_home_filled
+import com.metrolist.shared.generated.resources.mochy_nav_library
+import com.metrolist.shared.generated.resources.mochy_nav_library_filled
+import com.metrolist.shared.generated.resources.mochy_nav_search
+import com.metrolist.shared.generated.resources.mochy_nav_search_filled
+import com.metrolist.shared.generated.resources.mochy_nav_settings
+import com.metrolist.shared.generated.resources.mochy_nav_settings_filled
 import com.metrolist.shared.generated.resources.mysterious_fourth_tab
 import com.metrolist.shared.generated.resources.recognize_nearby_music
 import com.metrolist.shared.generated.resources.search
@@ -61,6 +69,7 @@ import com.metrolist.shared.ui.navigation.visibleSidebarScreens
 import com.metrolist.shared.ui.tv.tvFocusHighlight
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration.Companion.milliseconds
@@ -106,6 +115,27 @@ val Screen.iconFilled: ImageVector?
             else -> null
         }
 
+// the Mochy tab drawables for the floating bar
+val Screen.navIconRes: DrawableResource?
+    get() =
+        when (this) {
+            Screen.Home -> Res.drawable.mochy_nav_home
+            Screen.Search -> Res.drawable.mochy_nav_search
+            Screen.Library -> Res.drawable.mochy_nav_library
+            Screen.Settings -> Res.drawable.mochy_nav_settings
+            else -> null
+        }
+
+val Screen.selectedNavIconRes: DrawableResource?
+    get() =
+        when (this) {
+            Screen.Home -> Res.drawable.mochy_nav_home_filled
+            Screen.Search -> Res.drawable.mochy_nav_search_filled
+            Screen.Library -> Res.drawable.mochy_nav_library_filled
+            Screen.Settings -> Res.drawable.mochy_nav_settings_filled
+            else -> null
+        }
+
 @Composable
 fun MetrolistNavigationScaffold(
     navigator: Navigator,
@@ -148,6 +178,8 @@ fun MetrolistNavigationScaffold(
                 label = label,
                 icon = icon,
                 selectedIcon = screen.iconFilled ?: icon,
+                iconRes = screen.navIconRes,
+                selectedIconRes = screen.selectedNavIconRes,
             )
         }
     val hapticManager = rememberMetrolistHaptics()
@@ -206,7 +238,8 @@ fun MetrolistNavigationScaffold(
         navigationVisible = navigationVisible,
         floatingNavigation = useFloatingNavigation,
         onFloatingNavigationOccupiedHeightChanged = onFloatingNavigationOccupiedHeightChanged,
-        floatingSeparateKey = Screen.Search.takeIf { it in screens },
+        // Mochy's bar keeps Search inside the pill, in tab order
+        floatingSeparateKey = null,
         navigationSuiteType = navigationSuiteType,
         navigationSuiteColors =
             NavigationSuiteDefaults.colors(
@@ -250,12 +283,13 @@ fun MetrolistNavigationScaffold(
     )
 }
 
+// Mochy's tab order; Settings is always the last tab
 private fun floatingNavigationItems(): List<Screen> =
     buildList {
         if (Settings.shared.showBottomNavHome) add(Screen.Home)
-        if (Settings.shared.showBottomNavLibrary) add(Screen.Library)
         if (Settings.shared.showBottomNavSearch) add(Screen.Search)
-        if (isEmpty()) add(Screen.EasterEgg)
+        if (Settings.shared.showBottomNavLibrary) add(Screen.Library)
+        add(Screen.Settings)
     }
 
 private fun visibleNavigationItems(): List<Screen> =
@@ -263,7 +297,7 @@ private fun visibleNavigationItems(): List<Screen> =
         if (Settings.shared.showBottomNavHome) add(Screen.Home)
         if (Settings.shared.showBottomNavSearch) add(Screen.Search)
         if (Settings.shared.showBottomNavLibrary) add(Screen.Library)
-        if (isEmpty()) add(Screen.EasterEgg)
+        add(Screen.Settings)
     }
 
 private fun Modifier.navigationLongPress(
