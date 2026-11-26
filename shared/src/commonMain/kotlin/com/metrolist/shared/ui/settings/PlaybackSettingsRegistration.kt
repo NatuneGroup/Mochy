@@ -23,7 +23,6 @@ import com.metrolist.shared.utils.formatPlaybackPitch
 import com.metrolist.shared.utils.formatPlaybackSpeed
 import com.metrolist.shared.utils.playbackPitchToSemitones
 import com.metrolist.shared.utils.semitonesToPlaybackPitch
-import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
@@ -262,42 +261,13 @@ internal fun SettingsUiRegistryBuilder.registerPlaybackSettings(host: SharedSett
                     description = stringResource(Res.string.settings_audio_lab_overview),
                 )
             }
-            switch(
-                id = "crossfadeEnabled",
-                title = stringResource(Res.string.crossfade),
-                description = stringResource(Res.string.track_transition_fade_desc),
-                checked = settings.crossfadeEnabled,
-            ) {
-                settings.crossfadeEnabled = it
-                host.onSettingChanged(SettingsChangeEffect.AUDIO, null)
-            }
-            inlineSlider(
-                id = "crossfadeDuration",
-                title = stringResource(Res.string.crossfade_duration),
-                valueLabel =
-                    pluralStringResource(
-                        Res.plurals.seconds,
-                        settings.crossfadeDuration.roundToInt(),
-                        settings.crossfadeDuration.roundToInt(),
-                    ),
-                value = settings.crossfadeDuration,
-                defaultValue = settings.defaultValue(settings::crossfadeDuration),
-                range = 1f..15f,
-                steps = 13,
-                enabled = settings.crossfadeEnabled,
-            ) {
-                settings.crossfadeDuration = it.roundToInt().toFloat()
-                host.onSettingChanged(SettingsChangeEffect.AUDIO, null)
-            }
-            switch(
-                id = "crossfadeGapless",
-                title = stringResource(Res.string.crossfade_gapless),
-                description = stringResource(Res.string.crossfade_gapless_desc),
-                checked = settings.crossfadeGapless,
-                enabled = settings.crossfadeEnabled,
-            ) {
-                settings.crossfadeGapless = it
-                host.onSettingChanged(SettingsChangeEffect.AUDIO, null)
+            if (SettingsPageId.TRANSITION in host.availablePages) {
+                navigation(
+                    "transition",
+                    stringResource(Res.string.mochy_transition_title),
+                    SettingsPageId.TRANSITION,
+                    description = stringResource(Res.string.mochy_transition_overview),
+                )
             }
             switch(
                 id = "transportFadeEnabled",

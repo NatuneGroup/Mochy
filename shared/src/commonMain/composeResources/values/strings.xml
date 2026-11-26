@@ -6149,4 +6149,29 @@
     <string name="mochy_lab_xf_natural">Natural</string>
     <!-- Translators: Crossfeed level name: the strongest. -->
     <string name="mochy_lab_xf_strong">Strong</string>
+    <!-- Mochy transition cards -->
+    <!-- Translators: Settings row title that opens the Transition page. -->
+    <string name="mochy_transition_title">Transition</string>
+    <!-- Translators: Settings row description under the Transition row. -->
+    <string name="mochy_transition_overview">Choose how each song blends into the next</string>
+    <!-- Translators: Heading above the transition choices on the Transition page. -->
+    <string name="mochy_transition_music_heading">Music transitions</string>
+    <!-- Translators: Choice that turns crossfading off entirely. -->
+    <string name="mochy_transition_off">Off (I hate having fun)</string>
+    <!-- Translators: Description of the Off choice. -->
+    <string name="mochy_transition_off_desc">Each song ends before the next one starts</string>
+    <!-- Translators: Label shown on the card of the transition that is picked. Written in capitals on screen. -->
+    <string name="mochy_transition_selected">Selected</string>
+    <!-- Translators: Name of the crossfade choice that uses a fixed length. -->
+    <string name="mochy_transition_auto">Auto Crossfade</string>
+    <!-- Translators: Description of Auto Crossfade. %1$d is the blend length in seconds. -->
+    <string name="mochy_transition_auto_desc">A smooth %1$d-second blend from every song into the next</string>
+    <!-- Translators: Name of the crossfade choice where the listener sets the length. -->
+    <string name="mochy_transition_manual">Manual Crossfade</string>
+    <!-- Translators: Description of Manual Crossfade. -->
+    <string name="mochy_transition_manual_desc">Pick how long each song blends into the next</string>
+    <!-- Translators: Label of the slider that sets the manual crossfade length. -->
+    <string name="mochy_transition_manual_length">Length</string>
+    <!-- Translators: A number of seconds. %1$d is the number. -->
+    <string name="mochy_transition_seconds">%1$ds</string>
 </resources>

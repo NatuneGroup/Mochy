@@ -174,6 +174,13 @@ fun rememberMetrolistSettingsRegistry(
         SettingsTone.ORANGE,
     )
     customPage(
+        SettingsPageId.TRANSITION,
+        stringResource(Res.string.mochy_transition_title),
+        stringResource(Res.string.mochy_transition_overview),
+        MetrolistIcons.Outlined.Tune,
+        SettingsTone.ORANGE,
+    )
+    customPage(
         SettingsPageId.MOCHY_PROFILE,
         stringResource(Res.string.mochy_profile_settings_title),
         stringResource(Res.string.mochy_profile_settings_overview),
