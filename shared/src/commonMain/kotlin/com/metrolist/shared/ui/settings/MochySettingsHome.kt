@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -53,6 +54,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.BlurEffect
@@ -252,6 +254,23 @@ private fun MochySettingsTopBar(
                 }
             },
         )
+        // a status-bar-high band of the same fade, so whatever scrolls under the clock and icons is covered
+        Box(
+            Modifier.fillMaxWidth().height(statusBar).drawWithCache {
+                onDrawBehind {
+                    val p = collapse().coerceIn(0f, 1f)
+                    if (p <= 0.01f) return@onDrawBehind
+                    drawRect(
+                        Brush.verticalGradient(
+                            0f to page.copy(alpha = p * 0.95f),
+                            0.45f to page.copy(alpha = p * 0.72f),
+                            0.78f to page.copy(alpha = p * 0.34f),
+                            1f to Color.Transparent,
+                        ),
+                    )
+                }
+            },
+        )
         Column(Modifier.padding(top = statusBar + TopClearance)) {
             Row(
                 modifier =
@@ -261,37 +280,44 @@ private fun MochySettingsTopBar(
                         .padding(horizontal = SidePadding),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Column(
-                    modifier =
-                        Modifier.weight(1f).graphicsLayer {
-                            val p = collapse().coerceIn(0f, 1f)
-                            alpha = (1f - p * 1.6f).coerceIn(0f, 1f)
-                            translationY = -p * travel
-                            val scale = 1f - p * 0.18f
-                            scaleX = scale
-                            scaleY = scale
-                            transformOrigin = TransformOrigin(0f, 0.5f)
-                            // the reference blurs the folding title in 3px steps up to 12px, clamped at the edges
-                            val blurPx = (((p * 14f) / 3f).toInt() * 3).toFloat()
-                            renderEffect = if (blur && blurPx > 0f) BlurEffect(blurPx, blurPx, TileMode.Clamp) else null
-                        },
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                // clipped to its own row, so the folding title never draws over the status bar
+                Box(
+                    modifier = Modifier.weight(1f).fillMaxHeight().clipToBounds(),
+                    contentAlignment = Alignment.CenterStart,
                 ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.mochy_mark),
-                        contentDescription = stringResource(Res.string.app_name),
-                        tint = Color.White,
-                        modifier = Modifier.size(MarkSize),
-                    )
-                    Text(
-                        text = stringResource(Res.string.settings),
-                        fontFamily = mochyInterFontFamily(),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 34.sp,
-                        lineHeight = 40.sp,
-                        color = Color.White,
-                        maxLines = 1,
-                    )
+                    Column(
+                        modifier =
+                            Modifier.graphicsLayer {
+                                val p = collapse().coerceIn(0f, 1f)
+                                // gone well before the title could climb past the top of its row
+                                alpha = (1f - p * 2.5f).coerceIn(0f, 1f)
+                                translationY = -p * travel
+                                val scale = 1f - p * 0.18f
+                                scaleX = scale
+                                scaleY = scale
+                                transformOrigin = TransformOrigin(0f, 0.5f)
+                                // the reference blurs the folding title in 3px steps up to 12px, clamped at the edges
+                                val blurPx = (((p * 14f) / 3f).toInt() * 3).toFloat()
+                                renderEffect = if (blur && blurPx > 0f) BlurEffect(blurPx, blurPx, TileMode.Clamp) else null
+                            },
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.mochy_mark),
+                            contentDescription = stringResource(Res.string.app_name),
+                            tint = Color.White,
+                            modifier = Modifier.size(MarkSize),
+                        )
+                        Text(
+                            text = stringResource(Res.string.settings),
+                            fontFamily = mochyInterFontFamily(),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 34.sp,
+                            lineHeight = 40.sp,
+                            color = Color.White,
+                            maxLines = 1,
+                        )
+                    }
                 }
                 // beside the mark at rest, it drops to the search field's middle as the header folds
                 MochySettingsAvatar(
