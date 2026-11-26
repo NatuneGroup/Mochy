@@ -126,6 +126,8 @@ import com.metrolist.shared.generated.resources.mochy_username_label
 import com.metrolist.shared.generated.resources.mochy_username_placeholder
 import com.metrolist.shared.generated.resources.mochy_welcome_to_mochy
 import com.metrolist.shared.settings.Settings
+import com.metrolist.shared.ui.settings.LocalSettingsPageHasTopBar
+import com.metrolist.shared.ui.settings.LocalSettingsPageTopPadding
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -741,6 +743,8 @@ fun MochyProfileSettingsScreen(
     val reveal = remember { Animatable(0f) }
     LaunchedEffect(Unit) { reveal.animateTo(1f, tween(durationMillis = 900, easing = MochyPageEase)) }
 
+    // on Mochy's header the top padding is inside the scroll, so content scrolls up under the header
+    val headerTop = if (LocalSettingsPageHasTopBar.current) LocalSettingsPageTopPadding.current else 0.dp
     // width is read here, outside the scroll, so nothing inside the scroll gets an unbounded width
     BoxWithConstraints(modifier = modifier.fillMaxSize().background(Color.Black)) {
         val wide = maxWidth >= MochyTwoColumnMinWidth
@@ -751,6 +755,7 @@ fun MochyProfileSettingsScreen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp, vertical = 16.dp)
+                    .padding(top = headerTop)
                     .graphicsLayer {
                         alpha = reveal.value
                         translationY = (1f - reveal.value) * 60.dp.toPx()

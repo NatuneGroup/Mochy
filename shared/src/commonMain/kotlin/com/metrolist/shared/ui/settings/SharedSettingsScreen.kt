@@ -208,6 +208,16 @@ val LocalSettingsPageBottomPadding = compositionLocalOf { 0.dp }
 
 val LocalSettingsPageHasTopBar = compositionLocalOf { false }
 
+// Mochy's expanded header height: a custom page starts its own scroll content below it, so content scrolls up under the header
+val LocalSettingsPageTopPadding = compositionLocalOf { 0.dp }
+
+// bottom of Mochy's collapsed header bar: sticky rows pin here instead of at the expanded header
+val LocalSettingsPageCollapsedBottom = compositionLocalOf { 0.dp }
+
+// the top padding a custom page's scroll content starts at on Mochy's header, 0 everywhere else
+@Composable
+fun settingsPageHeaderTop(): Dp = if (LocalSettingsPageHasTopBar.current) LocalSettingsPageTopPadding.current else 0.dp
+
 @Composable
 fun rememberSettingsPageScrollBehavior(compactTopBar: Boolean = false): TopAppBarScrollBehavior? =
     if (LocalSettingsPageHasTopBar.current || compactTopBar) {
@@ -588,12 +598,14 @@ private fun CompactSettingsDetail(
             onBack = onBack,
             listState = if (page.custom) null else listState,
             onClose = onClose,
-        ) { headerHeight ->
+        ) { headerHeight, collapsedBottom ->
             if (page.custom) {
-                Box(Modifier.fillMaxSize().padding(top = headerHeight)) {
+                Box(Modifier.fillMaxSize()) {
                     CompositionLocalProvider(
                         LocalSettingsPageBottomPadding provides bottomContentPadding,
                         LocalSettingsPageHasTopBar provides true,
+                        LocalSettingsPageTopPadding provides headerHeight,
+                        LocalSettingsPageCollapsedBottom provides collapsedBottom,
                     ) {
                         pageContent(page.id, onBack, onNavigate)
                     }
@@ -867,9 +879,8 @@ private fun SettingsPageList(
         if (highlightedGroupIndex >= 0) listState.scrollToItem(highlightedGroupIndex)
     }
     val hasPreview = page.id == SettingsPageId.LYRICS
-    val fixedPreview = hasPreview && !LocalIsTv.current
     val effectiveOnRefresh = onRefresh.takeIf { isPullToRefreshSupported && !LocalIsTv.current }
-    BoxWithConstraints(Modifier.fillMaxSize().padding(top = if (fixedPreview) contentPadding.calculateTopPadding() else 0.dp)) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
         val previewHeight = minOf(300.dp, maxHeight * 0.4f)
         val listContent: LazyListScope.() -> Unit = {
             groups.forEachIndexed { groupIndex, group ->
@@ -995,7 +1006,7 @@ private fun SettingsPageList(
                     }
                 }
             }
-            if (hasPreview && !fixedPreview) {
+            if (hasPreview) {
                 item("lyrics_preview") {
                     lyricsPreview(
                         Modifier
@@ -1007,36 +1018,19 @@ private fun SettingsPageList(
                 }
             }
         }
-        Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(if (fixedPreview) 16.dp else 0.dp)) {
-            if (fixedPreview) {
-                lyricsPreview(Modifier.fillMaxWidth().height(previewHeight).padding(horizontal = 16.dp))
-            }
+        Column(Modifier.fillMaxSize()) {
             if (effectiveOnRefresh != null) {
                 SettingsPullToRefreshPageList(
                     effectiveOnRefresh,
                     listState,
-                    contentPadding =
-                        if (fixedPreview) {
-                            PaddingValues(
-                                bottom = contentPadding.calculateBottomPadding(),
-                            )
-                        } else {
-                            contentPadding
-                        },
+                    contentPadding = contentPadding,
                     content = listContent,
                 )
             } else {
                 DragScrollableColumn(
                     state = listState,
                     modifier = Modifier.weight(1f).fillMaxWidth().desktopArrowScroll(listState),
-                    contentPadding =
-                        if (fixedPreview) {
-                            PaddingValues(
-                                bottom = contentPadding.calculateBottomPadding(),
-                            )
-                        } else {
-                            contentPadding
-                        },
+                    contentPadding = contentPadding,
                     content = listContent,
                 )
             }

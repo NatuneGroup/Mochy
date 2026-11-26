@@ -103,6 +103,7 @@ import com.metrolist.shared.ui.settings.LocalSettingsPageBottomPadding
 import com.metrolist.shared.ui.settings.PlaylistImportFile
 import com.metrolist.shared.ui.settings.SettingsChoice
 import com.metrolist.shared.ui.settings.SettingsPageId
+import com.metrolist.shared.ui.settings.settingsPageHeaderTop
 import com.metrolist.shared.ui.theme.MetrolistTheme
 import com.metrolist.shared.ui.theme.parseThemeSeedColor
 import com.metrolist.shared.update.IosUpdateNotice
@@ -564,7 +565,7 @@ fun MetrolistIOSApp() {
                                             .fillMaxSize()
                                             .verticalScroll(
                                                 rememberScrollState(),
-                                            ).padding(bottom = LocalSettingsPageBottomPadding.current),
+                                            ).padding(top = settingsPageHeaderTop()).padding(bottom = LocalSettingsPageBottomPadding.current),
                                     ) {
                                         IosStorageSettingsPage(downloadManager, onDownloads)
                                     }
@@ -576,7 +577,7 @@ fun MetrolistIOSApp() {
                                             .fillMaxSize()
                                             .verticalScroll(
                                                 rememberScrollState(),
-                                            ).padding(bottom = LocalSettingsPageBottomPadding.current),
+                                            ).padding(top = settingsPageHeaderTop()).padding(bottom = LocalSettingsPageBottomPadding.current),
                                     ) {
                                         if (showPlaylistImporter) {
                                             TextButton(onClick = { showPlaylistImporter = false }, shapes = ButtonDefaults.shapes()) {

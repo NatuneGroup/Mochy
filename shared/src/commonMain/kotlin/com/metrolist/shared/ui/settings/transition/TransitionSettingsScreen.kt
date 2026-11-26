@@ -41,6 +41,8 @@ import com.metrolist.shared.settings.CrossfadeStyle
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.audiolab.LabCard
 import com.metrolist.shared.ui.audiolab.LabToggleRow
+import com.metrolist.shared.ui.settings.LocalSettingsPageHasTopBar
+import com.metrolist.shared.ui.settings.LocalSettingsPageTopPadding
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
@@ -70,12 +72,15 @@ internal fun TransitionSettingsScreen(
         onAudioChanged()
     }
 
+    // on Mochy's header the top padding is inside the scroll, so content scrolls up under the header
+    val headerTop = if (LocalSettingsPageHasTopBar.current) LocalSettingsPageTopPadding.current else 0.dp
     Column(
         modifier =
             modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(top = headerTop),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Column(Modifier.widthIn(max = MaxContentWidth).fillMaxWidth()) {

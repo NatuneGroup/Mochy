@@ -70,6 +70,7 @@ import com.metrolist.shared.ui.LocalIsTv
 import com.metrolist.shared.ui.components.singleLineMarquee
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.settings.LocalSettingsPageHasTopBar
+import com.metrolist.shared.ui.settings.LocalSettingsPageTopPadding
 import com.metrolist.shared.ui.settings.rememberSettingsPageScrollBehavior
 import com.metrolist.shared.ui.tv.tvFocusHighlight
 import com.metrolist.shared.ui.utils.segmentedGroupShape
@@ -140,8 +141,10 @@ fun SettingsSubScreen(
             }
         },
     ) { paddingValues ->
+        // on Mochy's header the top padding sits inside the scroll, so content scrolls up under the header
+        val headerTopPadding = if (LocalSettingsPageHasTopBar.current) LocalSettingsPageTopPadding.current else 0.dp
         Column(Modifier.fillMaxSize().padding(paddingValues)) {
-            persistentHeader()
+            Box(Modifier.padding(top = headerTopPadding)) { persistentHeader() }
             Column(
                 modifier =
                     Modifier
@@ -154,7 +157,8 @@ fun SettingsSubScreen(
                                 Modifier.padding(bottom = miniPlayerInset)
                             },
                         ).focusGroup()
-                        .padding(vertical = 16.dp),
+                        .padding(vertical = 16.dp)
+                        .padding(top = headerTopPadding),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 content()

@@ -101,6 +101,10 @@ import com.metrolist.shared.modules.WebModuleManifest
 import com.metrolist.shared.ui.components.ExpressiveSwitch
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.settings.LocalSettingsPageBottomPadding
+import com.metrolist.shared.ui.settings.LocalSettingsPageCollapsedBottom
+import com.metrolist.shared.ui.settings.LocalSettingsPageHasTopBar
+import com.metrolist.shared.ui.settings.LocalSettingsPageTopPadding
+import com.metrolist.shared.ui.settings.MochySettingsColors
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -163,11 +167,16 @@ fun MochyModulesScreen(
                 .toSet()
         }
 
-    Column(modifier = modifier.fillMaxSize()) {
+    // on Mochy's header the tabs pin at the collapsed bar, and the lists start below the expanded header
+    val onMochyHeader = LocalSettingsPageHasTopBar.current
+    val headerTop = if (onMochyHeader) LocalSettingsPageTopPadding.current else 0.dp
+    val stickyTop = if (onMochyHeader) LocalSettingsPageCollapsedBottom.current else 0.dp
+    val tabs: @Composable () -> Unit = {
         Row(
             modifier =
                 Modifier
                     .fillMaxWidth()
+                    .background(MochySettingsColors.Page)
                     .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -196,7 +205,9 @@ fun MochyModulesScreen(
                 Text(stringResource(Res.string.mochy_modules_add_url))
             }
         }
+    }
 
+    Column(modifier = modifier.fillMaxSize().padding(top = stickyTop)) {
         if (selectedTab == 0) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -204,11 +215,12 @@ fun MochyModulesScreen(
                     PaddingValues(
                         start = 16.dp,
                         end = 16.dp,
-                        top = 4.dp,
+                        top = headerTop - stickyTop + 4.dp,
                         bottom = 24.dp + bottomPadding,
                     ),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
+                stickyHeader(key = "modules_tabs") { tabs() }
                 items(entries, key = { it.id }) { entry ->
                     val isTesting = entry.id in testingIds
                     val steps = diagnosticSteps[entry.id].orEmpty()
@@ -262,11 +274,12 @@ fun MochyModulesScreen(
                     PaddingValues(
                         start = 16.dp,
                         end = 16.dp,
-                        top = 4.dp,
+                        top = headerTop - stickyTop + 4.dp,
                         bottom = 24.dp + bottomPadding,
                     ),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
+                stickyHeader(key = "modules_tabs") { tabs() }
                 item("catalog_header") {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
