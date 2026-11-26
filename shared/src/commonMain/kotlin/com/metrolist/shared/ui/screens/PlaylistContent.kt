@@ -441,7 +441,6 @@ fun PlaylistContent(
                                                         showPlayback = showPlayback,
                                                         isFavorite = isFavorite,
                                                         onFavorite = onAddToLibrary,
-                                                        buttonHeight = 48.dp,
                                                     )
                                                 }
                                             } else {
@@ -649,7 +648,6 @@ fun PlaylistContent(
                                                             showPlayback = showPlayback,
                                                             isFavorite = isFavorite,
                                                             onFavorite = onAddToLibrary,
-                                                            buttonHeight = 40.dp,
                                                         )
                                                     }
                                                 } else {

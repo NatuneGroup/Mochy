@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import com.metrolist.shared.constants.currentGridThumbnailHeight
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.n_song
@@ -65,32 +66,44 @@ fun AlbumHeader(
         isMedium = isMedium,
         modifier = modifier,
         mediumArtworkSize = mediumArtworkSize,
+        plainInfo = true,
         artwork = { artworkModifier, cornerRadius -> AlbumHeaderArtwork(album, artworkModifier, cornerRadius) },
         actions = actions,
     ) {
+        // the reference's detail type: title 24/28 bold, creator 15 bold, meta 11 semibold
         Text(
             text = album.title,
             modifier = titleModifier,
-            style = MaterialTheme.typography.headlineMediumEmphasized,
             fontFamily = mochyInterFontFamily(),
             fontWeight = FontWeight.Bold,
-            letterSpacing = (-0.03).em,
+            fontSize = 24.sp,
+            lineHeight = 28.sp,
+            letterSpacing = (-0.06).em,
+            color = MaterialTheme.colorScheme.onSurface,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
+        Spacer(Modifier.height(3.dp))
         Text(
             text = artistLinksText(album.artists, onArtistClick) ?: AnnotatedString(""),
-            style = MaterialTheme.typography.titleLarge,
             fontFamily = mochyInterFontFamily(),
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold,
+            fontSize = 15.sp,
+            lineHeight = 18.sp,
+            letterSpacing = (-0.04).em,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.88f),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+        Spacer(Modifier.height(3.dp))
         Text(
             text = albumMetadataText(album, songs),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontFamily = mochyInterFontFamily(),
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 11.sp,
+            lineHeight = 14.sp,
+            letterSpacing = (-0.02).em,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -104,7 +117,7 @@ fun AlbumHeader(
                     fadeOut(MaterialTheme.motionScheme.fastEffectsSpec()),
         ) {
             Column {
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(6.dp))
                 ExpandableText(
                     text = description.orEmpty(),
                     collapsedMaxLines = 2,

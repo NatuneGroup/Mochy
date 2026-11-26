@@ -62,6 +62,8 @@ internal fun CollectionHeader(
     isMedium: Boolean,
     modifier: Modifier = Modifier,
     mediumArtworkSize: Dp = 176.dp,
+    // the detail pages set text straight on the page, with no card behind it
+    plainInfo: Boolean = false,
     artwork: @Composable (Modifier, Dp) -> Unit,
     actions: @Composable (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
@@ -80,12 +82,12 @@ internal fun CollectionHeader(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 artwork(Modifier.size(mediumArtworkSize), uiEnhanced(8.dp, 16.dp))
-                CollectionInfoCard(Modifier.weight(1f), content)
+                CollectionInfo(plainInfo, Modifier.weight(1f), content)
             }
         } else {
             artwork(Modifier.fillMaxWidth().aspectRatio(1f), uiEnhanced(8.dp, if (isWide) 20.dp else 28.dp))
             Spacer(Modifier.height(16.dp))
-            CollectionInfoCard(content = content)
+            CollectionInfo(plainInfo, Modifier, content)
         }
         actions?.let {
             Spacer(Modifier.height(16.dp))
@@ -107,6 +109,19 @@ fun CollectionInfoCard(
         border = BorderStroke(0.75.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)),
     ) {
         Column(modifier = Modifier.padding(16.dp), content = content)
+    }
+}
+
+@Composable
+private fun CollectionInfo(
+    plain: Boolean,
+    modifier: Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    if (plain) {
+        Column(modifier = modifier.fillMaxWidth(), content = content)
+    } else {
+        CollectionInfoCard(modifier, content)
     }
 }
 
