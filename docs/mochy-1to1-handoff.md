@@ -11,6 +11,10 @@ and each round had fewer: 80+, then 3, then 22, then 5. The last pushed fixes ar
 read the newest CI run on PR #19, fix the `e:` lines, push, and repeat until Android, Desktop and iOS are green. Then
 fast-forward `dev` to the branch, which publishes the nightly APK.
 
+On `66d50053` the Kotlin compile errors were gone and only ktlint style checks failed. To format, push a commit
+whose message contains `[ktlint-format]`: the Format Kotlin workflow formats the branch and pushes the result back
+(dispatching it by hand only works once the workflow file is on the default branch).
+
 Get the errors with:
 `gh run view <id> -R NatuneGroup/Mochy --log-failed | grep ' e: '`
 
