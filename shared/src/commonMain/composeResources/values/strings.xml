@@ -6106,4 +6106,7 @@
     <string name="mochy_settings_rec_lastfm">Scrobble what you play to Last.fm</string>
     <string name="mochy_settings_rec_discord">Show what you're playing on Discord</string>
     <string name="mochy_settings_rec_devices">Play on your TV or another phone</string>
+    <!-- Mochy integrations -->
+    <!-- Translators: Time shown under the Discord preview when the track has no end time, the placeholder is the elapsed clock. -->
+    <string name="mochy_integrations_discord_time_elapsed">%1$s elapsed</string>
 </resources>

@@ -19,16 +19,17 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -40,16 +41,18 @@ import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -79,13 +82,11 @@ import com.metrolist.shared.generated.resources.discord_example_artist_name
 import com.metrolist.shared.generated.resources.discord_example_song_title
 import com.metrolist.shared.generated.resources.discord_listen_to_metrolist
 import com.metrolist.shared.generated.resources.discord_logout
-import com.metrolist.shared.generated.resources.discord_position_duration
 import com.metrolist.shared.generated.resources.discord_presence_competing_in
 import com.metrolist.shared.generated.resources.discord_presence_listening_to
 import com.metrolist.shared.generated.resources.discord_preview_buttons_adjusted
 import com.metrolist.shared.generated.resources.discord_preview_edit_hint
 import com.metrolist.shared.generated.resources.discord_state
-import com.metrolist.shared.generated.resources.discord_time_left
 import com.metrolist.shared.generated.resources.discord_token_album_name
 import com.metrolist.shared.generated.resources.discord_token_album_url
 import com.metrolist.shared.generated.resources.discord_token_artist_name
@@ -95,6 +96,7 @@ import com.metrolist.shared.generated.resources.discord_token_song_url
 import com.metrolist.shared.generated.resources.discord_token_video_id
 import com.metrolist.shared.generated.resources.done
 import com.metrolist.shared.generated.resources.edit
+import com.metrolist.shared.generated.resources.mochy_integrations_discord_time_elapsed
 import com.metrolist.shared.generated.resources.preview
 import com.metrolist.shared.model.AlbumTiny
 import com.metrolist.shared.model.ArtistTiny
@@ -102,11 +104,10 @@ import com.metrolist.shared.model.SongItem
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.components.focusOutline
 import com.metrolist.shared.ui.components.images.AsyncImage
-import com.metrolist.shared.ui.components.singleLineMarquee
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.icons.MetrolistIconsBrand
 import com.metrolist.shared.utils.MetrolistClock
-import com.metrolist.shared.utils.formatDuration
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 
 internal enum class DiscordEditTarget {
@@ -351,6 +352,18 @@ internal fun DiscordAccountRow(
     }
 }
 
+// the status card's colours from the reference's discord settings cards, fixed dark values so the preview reads the same in both themes
+private object DiscordColors {
+    val Profile = Color(0xFF0D0D0D)
+    val Activity = Color(0xFF1E1E1E)
+    val Cover = Color(0xFF0C0C0C)
+    val Primary = Color.White
+    val Secondary = Color.White.copy(alpha = 0.55f)
+}
+
+// the card keeps its phone width on wide windows instead of stretching across the page
+private val PresenceCardMaxWidth = 420.dp
+
 @Composable
 internal fun DiscordPresenceCard(
     activity: DiscordActivity,
@@ -361,229 +374,219 @@ internal fun DiscordPresenceCard(
     onOpenUrl: (String) -> Unit,
     onEditField: (DiscordEditTarget) -> Unit,
 ) {
+    // validate each configured button separately so its slot survives label truncation
+    val configuredButtons =
+        listOfNotNull(
+            activity.button1Label?.let { label -> activity.button1Url?.let { url -> DiscordEditTarget.BUTTON1 to (label to url) } },
+            activity.button2Label?.let { label -> activity.button2Url?.let { url -> DiscordEditTarget.BUTTON2 to (label to url) } },
+        ).filter { (_, pair) -> pair.first.isNotEmpty() && pair.second.isNotEmpty() }
+    val buttons =
+        configuredButtons.mapNotNull { (slot, pair) ->
+            DiscordPresence.validatedButtons(listOf(pair)).firstOrNull()?.let { slot to it }
+        }
+
     Column(
-        modifier = Modifier.fillMaxWidth().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            val headerModifier =
-                if (editMode) {
-                    Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
-                        .focusOutline(RoundedCornerShape(6.dp))
-                        .clickable(enabled = enabled) { onEditField(DiscordEditTarget.ACTIVITY_NAME) }
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                } else {
-                    Modifier
-                }
-            Row(modifier = Modifier.weight(1f).then(headerModifier), verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        activityVerb(activity.activityType).uppercase(),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(
-                        activity.name.orEmpty(),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.singleLineMarquee(),
-                    )
-                }
-                if (editMode) {
-                    Spacer(Modifier.width(8.dp))
-                    Icon(
-                        MetrolistIcons.Outlined.Edit,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
-            }
-            Spacer(Modifier.width(8.dp))
-            val editInteraction = remember { MutableInteractionSource() }
-            Surface(
-                onClick = { onToggleEditMode(!editMode) },
-                enabled = enabled,
-                interactionSource = editInteraction,
-                shape = CircleShape,
-                color =
-                    if (editMode) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.surfaceContainerHighest
-                    },
-                contentColor =
-                    if (editMode) {
-                        MaterialTheme.colorScheme.onPrimary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-            ) {
-                Row(
-                    modifier = Modifier.padding(start = 12.dp, end = 14.dp, top = 6.dp, bottom = 6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        MetrolistIcons.Outlined.Edit,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                    )
-                    Text(stringResource(Res.string.edit), style = MaterialTheme.typography.labelLarge, maxLines = 1)
-                }
-            }
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box {
-                AsyncImage(
-                    url = playback.artworkUrl ?: activity.largeImage,
-                    contentDescription = null,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.size(96.dp),
-                )
-                Icon(
-                    MetrolistIconsBrand.Discord,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier =
-                        Modifier
-                            .align(Alignment.BottomEnd)
-                            .size(30.dp)
-                            .clip(CircleShape)
-                            .padding(5.dp),
-                )
-            }
-            Spacer(Modifier.width(16.dp))
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                DiscordEditableLine(
-                    text = activity.details.orEmpty(),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.SemiBold,
-                    enabled = enabled,
-                    editMode = editMode,
-                ) { onEditField(DiscordEditTarget.DETAILS) }
-                DiscordEditableLine(
-                    text = activity.state,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = null,
-                    enabled = enabled,
-                    editMode = editMode,
-                ) { onEditField(DiscordEditTarget.STATE) }
-                if (editMode || !activity.largeText.isNullOrBlank()) {
-                    DiscordEditableLine(
-                        text = activity.largeText.orEmpty(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = null,
-                        enabled = enabled,
-                        editMode = editMode,
-                    ) { onEditField(DiscordEditTarget.ALBUM) }
-                }
-                val now = MetrolistClock.nowMs()
-                val timeText =
-                    when {
-                        activity.endTimestamp != null && activity.endTimestamp > now -> {
-                            stringResource(
-                                Res.string.discord_time_left,
-                                formatDuration(activity.endTimestamp - now),
-                            )
-                        }
-
-                        playback.durationMs > 0 -> {
-                            stringResource(
-                                Res.string.discord_position_duration,
-                                formatDuration(playback.positionMs),
-                                formatDuration(playback.durationMs),
-                            )
-                        }
-
-                        else -> {
-                            formatDuration(playback.positionMs)
-                        }
-                    }
-                Text(
-                    timeText,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-        // Validate each configured button separately so its editor slot survives label truncation.
-        val configuredButtons =
-            listOfNotNull(
-                activity.button1Label?.let { label -> activity.button1Url?.let { url -> DiscordEditTarget.BUTTON1 to (label to url) } },
-                activity.button2Label?.let { label -> activity.button2Url?.let { url -> DiscordEditTarget.BUTTON2 to (label to url) } },
-            ).filter { (_, pair) -> pair.first.isNotEmpty() && pair.second.isNotEmpty() }
-        val buttons =
-            configuredButtons.mapNotNull { (slot, pair) ->
-                DiscordPresence.validatedButtons(listOf(pair)).firstOrNull()?.let { slot to it }
-            }
-        buttons.forEach { (slot, button) ->
-            Button(
-                onClick = {
-                    if (editMode) {
-                        onEditField(slot)
-                    } else {
-                        onOpenUrl(button.second)
-                    }
-                },
-                enabled = enabled,
+        Column(
+            modifier = Modifier.widthIn(max = PresenceCardMaxWidth).fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                shapes = ButtonDefaults.shapes(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(button.first, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                if (editMode) {
-                    Spacer(Modifier.width(8.dp))
-                    Icon(
-                        MetrolistIcons.Outlined.Edit,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                    )
+                val editInteraction = remember { MutableInteractionSource() }
+                Surface(
+                    onClick = { onToggleEditMode(!editMode) },
+                    enabled = enabled,
+                    interactionSource = editInteraction,
+                    shape = CircleShape,
+                    color =
+                        if (editMode) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.surfaceContainerHighest
+                        },
+                    contentColor =
+                        if (editMode) {
+                            MaterialTheme.colorScheme.onPrimary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                ) {
+                    Row(
+                        modifier = Modifier.padding(start = 12.dp, end = 14.dp, top = 6.dp, bottom = 6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            MetrolistIcons.Outlined.Edit,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Text(stringResource(Res.string.edit), style = MaterialTheme.typography.labelLarge, maxLines = 1)
+                    }
                 }
             }
-        }
-        if (buttons.map { it.second } != configuredButtons.map { it.second }) {
-            Text(stringResource(Res.string.discord_preview_buttons_adjusted), style = MaterialTheme.typography.bodySmall)
-        }
-        if (editMode) {
-            Text(
-                stringResource(Res.string.discord_preview_edit_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            // the reference's profile container: the activity card sits inside it with the same insets
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(DiscordColors.Profile)
+                        .padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 24.dp),
+            ) {
+                DiscordActivityCard(
+                    activity = activity,
+                    playback = playback,
+                    buttons = buttons,
+                    enabled = enabled,
+                    editMode = editMode,
+                    onOpenUrl = onOpenUrl,
+                    onEditField = onEditField,
+                )
+            }
+            // Discord shortens long button labels and drops buttons with long links
+            if (buttons.map { it.second } != configuredButtons.map { it.second }) {
+                Text(
+                    stringResource(Res.string.discord_preview_buttons_adjusted),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            if (editMode) {
+                Text(
+                    stringResource(Res.string.discord_preview_edit_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }
 
+/** the status card itself: the listening line, the pictures, the lines, the bar and the buttons */
 @Composable
-private fun DiscordEditableLine(
-    text: String,
-    style: TextStyle,
-    color: Color,
-    fontWeight: FontWeight?,
+private fun DiscordActivityCard(
+    activity: DiscordActivity,
+    playback: IntegrationPlaybackState,
+    buttons: List<Pair<DiscordEditTarget, Pair<String, String>>>,
     enabled: Boolean,
     editMode: Boolean,
+    onOpenUrl: (String) -> Unit,
+    onEditField: (DiscordEditTarget) -> Unit,
+) {
+    // a once-a-second clock moves the bar and the elapsed time, like discord's own card
+    val now by produceState(MetrolistClock.nowMs()) {
+        while (true) {
+            delay(1_000)
+            value = MetrolistClock.nowMs()
+        }
+    }
+    val verb = activityVerb(activity.activityType)
+    val title = listOfNotNull(verb, activity.name?.takeIf { it.isNotBlank() }).joinToString(" ")
+
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
+                .background(DiscordColors.Activity)
+                .padding(14.dp),
+    ) {
+        PreviewEditable(editMode, enabled, onClick = { onEditField(DiscordEditTarget.ACTIVITY_NAME) }) {
+            Text(
+                text = title,
+                color = DiscordColors.Primary,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            DiscordPreviewPictures(large = playback.artworkUrl ?: activity.largeImage, small = activity.smallImage)
+            Column(
+                Modifier
+                    .weight(1f)
+                    .padding(start = 14.dp),
+            ) {
+                if (editMode || !activity.details.isNullOrBlank()) {
+                    PreviewEditable(editMode, enabled, onClick = { onEditField(DiscordEditTarget.DETAILS) }) {
+                        DiscordPreviewLine(activity.details.orEmpty(), size = 16, weight = FontWeight.Bold, color = DiscordColors.Primary)
+                    }
+                }
+                if (editMode || activity.state.isNotBlank()) {
+                    PreviewEditable(editMode, enabled, onClick = { onEditField(DiscordEditTarget.STATE) }) {
+                        DiscordPreviewLine(activity.state)
+                    }
+                }
+                if (editMode || !activity.largeText.isNullOrBlank()) {
+                    PreviewEditable(editMode, enabled, onClick = { onEditField(DiscordEditTarget.ALBUM) }) {
+                        DiscordPreviewLine(activity.largeText.orEmpty())
+                    }
+                }
+                DiscordPreviewTimes(activity, now)
+            }
+        }
+        if (buttons.isNotEmpty()) {
+            Spacer(Modifier.height(12.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                buttons.forEach { (slot, button) ->
+                    val (label, url) = button
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(30.dp)
+                                .alpha(if (enabled) 1f else 0.38f)
+                                .clip(CircleShape)
+                                .background(DiscordColors.Profile)
+                                .clickable(enabled = enabled) {
+                                    if (editMode) onEditField(slot) else onOpenUrl(url)
+                                },
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                label,
+                                color = DiscordColors.Primary,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            if (editMode) {
+                                Spacer(Modifier.width(8.dp))
+                                Icon(
+                                    MetrolistIcons.Outlined.Edit,
+                                    contentDescription = null,
+                                    tint = DiscordColors.Primary,
+                                    modifier = Modifier.size(12.dp),
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** a line of the card; in edit mode it gets the same highlight and pencil the editor fields use */
+@Composable
+private fun PreviewEditable(
+    editMode: Boolean,
+    enabled: Boolean,
     onClick: () -> Unit,
+    content: @Composable () -> Unit,
 ) {
     if (!editMode) {
-        Text(
-            text,
-            style = style,
-            fontWeight = fontWeight,
-            color = color,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.singleLineMarquee(),
-        )
+        content()
         return
     }
     Row(
@@ -596,15 +599,7 @@ private fun DiscordEditableLine(
                 .padding(horizontal = 8.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text,
-            style = style,
-            fontWeight = fontWeight,
-            color = color,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
+        Box(Modifier.weight(1f)) { content() }
         Spacer(Modifier.width(8.dp))
         Icon(
             MetrolistIcons.Outlined.Edit,
@@ -612,6 +607,99 @@ private fun DiscordEditableLine(
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(14.dp),
         )
+    }
+}
+
+@Composable
+private fun DiscordPreviewLine(
+    text: String,
+    size: Int = 11,
+    weight: FontWeight = FontWeight.Normal,
+    color: Color = DiscordColors.Secondary,
+) {
+    Text(text, color = color, fontSize = size.sp, fontWeight = weight, maxLines = 1, overflow = TextOverflow.Ellipsis)
+}
+
+/** listening shows a bar from start to end, a track without an end counts up only */
+@Composable
+private fun DiscordPreviewTimes(
+    activity: DiscordActivity,
+    now: Long,
+) {
+    // a zero start means discord sends no timestamps, so the preview shows none either
+    if (activity.startTimestamp <= 0L) return
+    val start = activity.startTimestamp
+    val mono = Modifier.padding(top = 6.dp)
+    val end = activity.endTimestamp
+    if (end == null) {
+        Text(
+            stringResource(Res.string.mochy_integrations_discord_time_elapsed, discordPreviewClock(now - start)),
+            color = DiscordColors.Secondary,
+            fontSize = 10.sp,
+            fontFamily = FontFamily.Monospace,
+            modifier = mono,
+        )
+        return
+    }
+    val total = (end - start).coerceAtLeast(1L)
+    val elapsed = (now - start).coerceIn(0L, total)
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = mono) {
+        Text(discordPreviewClock(elapsed), color = DiscordColors.Secondary, fontSize = 9.sp, fontFamily = FontFamily.Monospace)
+        Box(
+            Modifier
+                .weight(1f)
+                .padding(horizontal = 8.dp)
+                .height(3.dp)
+                .clip(CircleShape)
+                .background(Color.White.copy(alpha = 0.2f)),
+        ) {
+            Box(
+                Modifier
+                    .fillMaxWidth(elapsed.toFloat() / total)
+                    .height(3.dp)
+                    .background(Color.White),
+            )
+        }
+        Text(discordPreviewClock(total), color = DiscordColors.Secondary, fontSize = 9.sp, fontFamily = FontFamily.Monospace)
+    }
+}
+
+private fun discordPreviewClock(ms: Long): String {
+    val seconds = (ms / 1000).coerceAtLeast(0)
+    return "${seconds / 60}:${(seconds % 60).toString().padStart(2, '0')}"
+}
+
+/** the big picture with the small round one tucked into its corner, as discord lays them out */
+@Composable
+private fun DiscordPreviewPictures(
+    large: String?,
+    small: String?,
+) {
+    Box(Modifier.size(66.dp)) {
+        Box(
+            Modifier
+                .size(60.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(DiscordColors.Cover),
+        ) {
+            large?.let {
+                AsyncImage(url = it, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+            }
+        }
+        if (large != null && small != null) {
+            Box(
+                Modifier
+                    .size(26.dp)
+                    .align(Alignment.BottomEnd)
+                    .offset(x = 2.dp, y = 2.dp)
+                    .clip(CircleShape)
+                    .background(DiscordColors.Activity)
+                    .padding(3.dp)
+                    .clip(CircleShape),
+            ) {
+                AsyncImage(url = small, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+            }
+        }
     }
 }
 
