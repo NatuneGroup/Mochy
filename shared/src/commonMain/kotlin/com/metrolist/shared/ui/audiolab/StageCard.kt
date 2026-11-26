@@ -4,6 +4,7 @@ package com.metrolist.shared.ui.audiolab
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -61,6 +62,20 @@ internal fun StageCard(support: AudioLabStageSupport) {
     val stage = Settings.shared.stageSettings()
     val usable = support == AudioLabStageSupport.Available
     val active = usable && stage.enabled
+    val unavailableText: String? = if (usable) {
+        null
+    } else {
+        stringResource(
+            if (support == AudioLabStageSupport.AndroidOnly) {
+                Res.string.audio_lab_stage_android_only
+            } else {
+                Res.string.audio_lab_stage_unavailable
+            },
+        )
+    }
+    val footer: (@Composable ColumnScope.() -> Unit)? = if (unavailableText == null) null else {
+        { StageNote(unavailableText) }
+    }
     EffectCard(
         picture = { StagePicture(stage) },
         header = {
@@ -111,26 +126,19 @@ internal fun StageCard(support: AudioLabStageSupport) {
                 )
             }
         },
-        footer = if (!usable) {
-            {
-                Text(
-                    text = stringResource(
-                        if (support == AudioLabStageSupport.AndroidOnly) {
-                            Res.string.audio_lab_stage_android_only
-                        } else {
-                            Res.string.audio_lab_stage_unavailable
-                        },
-                    ),
-                    fontFamily = mochyInterFontFamily(),
-                    fontSize = 12.sp,
-                    lineHeight = 16.sp,
-                    color = LabColors.Secondary,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
-            }
-        } else {
-            null
-        },
+        footer = footer,
+    )
+}
+
+@Composable
+private fun ColumnScope.StageNote(text: String) {
+    Text(
+        text = text,
+        fontFamily = mochyInterFontFamily(),
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+        color = LabColors.Secondary,
+        modifier = Modifier.padding(top = 4.dp),
     )
 }
 

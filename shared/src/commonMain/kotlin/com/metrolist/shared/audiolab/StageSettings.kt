@@ -2,6 +2,7 @@
 
 package com.metrolist.shared.audiolab
 
+import kotlinx.serialization.Serializable
 import kotlin.math.pow
 
 /** Wall materials: how much sound the walls soak up and how quickly they dull what bounces off them. */
@@ -58,6 +59,7 @@ data class StageBox(
  * Stage (3D room) controls. The sound positions and the listener come from [presetId]; the room size, walls and
  * echo amount are what the presets set and what the sliders change. Off by default.
  */
+@Serializable
 data class StageSettings(
     val enabled: Boolean = false,
     val presetId: String = StagePresets.DEFAULT_ID,
