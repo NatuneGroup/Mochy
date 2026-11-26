@@ -6,7 +6,6 @@
 package com.metrolist.shared.ui.settings
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -92,7 +91,7 @@ internal object MochySettingsColors {
     // the open page beside the desktop pane: a step up from the black so the two read apart
     val Pane = Color(0xFF0C0C0D)
     val Bubble = Color(0xFF1C1C1E)
-    val BubbleSelected = Color(0xFF2E2E31)
+    val BubbleSelected = Color(0xFF3A3A3E)
     val IconBackground = Color(0xFF333338)
     val Field = Color(0xFF141416)
     val FieldFocused = Color(0xFF1E1E21)
@@ -117,13 +116,15 @@ internal fun MochySettingsHome(
     host: SharedSettingsHost,
     onPageSelected: (SettingsPageId) -> Unit,
     onSearchResultSelected: (SettingsPageId, String?) -> Unit,
+    // the page open beside the list on a wide window, lit like the desktop pane's bubble
+    selectedRoute: String? = null,
 ) {
-    val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
     var query by rememberSaveable { mutableStateOf("") }
     var searchFocused by remember { mutableStateOf(false) }
     val searching = searchFocused || query.isNotBlank()
     val results = rememberSettingsSearchResults(registry, query)
+    val recommendations = remember(registry) { pickMochyRecommendations(registry) }
     val collapse by rememberMochyCollapse(scrollState)
     val contentAlpha by animateFloatAsState(
         targetValue = if (searching) 0f else 1f,
@@ -133,7 +134,6 @@ internal fun MochySettingsHome(
     val showContent by remember { derivedStateOf { contentAlpha > 0.001f } }
     val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val headerHeight = statusBar + TopClearance + TitleBlockHeight + FieldHeight + 32.dp
-    val font = mochyInterFontFamily()
 
     Box(Modifier.fillMaxSize().background(MochySettingsColors.Page)) {
         Column(Modifier.fillMaxSize().verticalScroll(scrollState)) {
@@ -151,34 +151,47 @@ internal fun MochySettingsHome(
 
             if (showContent) {
                 Column(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).graphicsLayer { alpha = contentAlpha },
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth().graphicsLayer { alpha = contentAlpha },
                 ) {
-                    registry.rootGroups.filter { it.pages.isNotEmpty() }.forEachIndexed { groupIndex, group ->
-                        // Mochy has no group headings, just a hairline between kinds of pages
-                        if (groupIndex > 0) {
-                            Box(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 6.dp)
-                                    .height(0.8.dp)
-                                    .background(MochySettingsColors.Divider),
-                            )
-                        }
-                        group.pages.forEach { pageId ->
-                            registry[pageId]?.let { page ->
-                                MochyCategoryBubble(
-                                    title = page.title,
-                                    icon = { tint ->
-                                        val custom = host.customPageIcons[pageId]
-                                        if (custom != null) {
-                                            custom(tint)
-                                        } else {
-                                            Icon(page.icon, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
-                                        }
-                                    },
-                                    onClick = { onPageSelected(pageId) },
-                                )
+                    MochyRecommendedCard(
+                        recommendations = recommendations,
+                        registry = registry,
+                        onOpen = onSearchResultSelected,
+                    )
+
+                    Spacer(Modifier.height(18.dp))
+
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp)
+                            .height(0.8.dp)
+                            .background(MochySettingsColors.Divider),
+                    )
+
+                    Spacer(Modifier.height(18.dp))
+
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        registry.rootGroups.filter { it.pages.isNotEmpty() }.forEach { group ->
+                            group.pages.forEach { pageId ->
+                                registry[pageId]?.let { page ->
+                                    MochyCategoryBubble(
+                                        title = page.title,
+                                        icon = { tint ->
+                                            val custom = host.customPageIcons[pageId]
+                                            if (custom != null) {
+                                                custom(tint)
+                                            } else {
+                                                Icon(page.icon, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
+                                            }
+                                        },
+                                        selected = pageId.name == selectedRoute,
+                                        onClick = { onPageSelected(pageId) },
+                                    )
+                                }
                             }
                         }
                     }
@@ -367,13 +380,6 @@ private fun MochySearchField(
                 .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            MetrolistIcons.Outlined.Search,
-            contentDescription = null,
-            tint = MochySettingsColors.Placeholder,
-            modifier = Modifier.size(20.dp),
-        )
-        Spacer(Modifier.width(10.dp))
         Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
             if (value.isEmpty()) {
                 Text(placeholder, fontSize = 15.sp, color = MochySettingsColors.Placeholder, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -389,6 +395,7 @@ private fun MochySearchField(
             )
         }
         if (value.isNotEmpty()) {
+            Spacer(Modifier.width(10.dp))
             Icon(
                 MetrolistIcons.Default.Close,
                 contentDescription = null,
@@ -406,19 +413,14 @@ private fun MochyCategoryBubble(
     onClick: () -> Unit,
     selected: Boolean = false,
 ) {
-    // the desktop pane marks the open page by lifting its bubble a shade
-    val background by animateColorAsState(
-        if (selected) MochySettingsColors.BubbleSelected else MochySettingsColors.Bubble,
-        tween(180, easing = FastOutSlowInEasing),
-        label = "mochyBubble",
-    )
+    // the desktop pane marks the open page by lifting its bubble a shade; the reference switches it at once
     Row(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .height(64.dp)
                 .clip(RoundedCornerShape(22.dp))
-                .background(background)
+                .background(if (selected) MochySettingsColors.BubbleSelected else MochySettingsColors.Bubble)
                 .clickable(onClick = onClick)
                 .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -507,7 +509,8 @@ private fun MochySearchResults(
                         modifier = Modifier.size(38.dp).clip(CircleShape).background(MochySettingsColors.IconBackground),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Icon(result.page.icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                        // the reference uses the gear for every result, whatever page it lands on
+                        Icon(MetrolistIcons.Outlined.Settings, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                     }
                     Spacer(Modifier.width(11.dp))
                     Column {
@@ -517,15 +520,12 @@ private fun MochySearchResults(
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 16.sp,
                             color = Color.White,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
                         )
                         Text(
                             text = result.page.title,
                             fontFamily = font,
                             fontSize = 12.sp,
                             color = Color.White.copy(alpha = 0.55f),
-                            maxLines = 1,
                         )
                     }
                 }
