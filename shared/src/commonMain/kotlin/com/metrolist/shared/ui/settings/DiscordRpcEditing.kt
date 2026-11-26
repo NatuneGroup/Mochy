@@ -7,6 +7,8 @@
 
 package com.metrolist.shared.ui.settings
 
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.unit.sp
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn

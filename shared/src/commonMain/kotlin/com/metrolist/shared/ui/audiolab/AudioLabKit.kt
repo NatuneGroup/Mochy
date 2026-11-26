@@ -2,6 +2,7 @@
 
 package com.metrolist.shared.ui.audiolab
 
+import androidx.compose.runtime.key
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
@@ -533,3 +534,5 @@ class LevelFollower {
 
 @Composable
 fun rememberOnScreen(): MutableState<Boolean> = remember { mutableStateOf(true) }
+
+internal fun degreesToRadians(degrees: Double): Double = degrees * kotlin.math.PI / 180.0

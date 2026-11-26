@@ -118,7 +118,6 @@ import com.metrolist.shared.settings.displayTitle
 import com.metrolist.shared.settings.moveLibraryItems
 import com.metrolist.shared.settings.orderLibraryItems
 import com.metrolist.shared.ui.LocalIsTv
-import com.metrolist.shared.ui.components.ChipShelf
 import com.metrolist.shared.ui.components.CollectionPreviews
 import com.metrolist.shared.ui.components.ContainedLoadingIndicator
 import com.metrolist.shared.ui.components.ExpandableSearchBar
@@ -136,6 +135,7 @@ import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.icons.SongStatusIcons
 import com.metrolist.shared.ui.menu.ExpressiveSelectionMenu
 import com.metrolist.shared.ui.menu.trackPressPosition
+import com.metrolist.shared.ui.mochy.MochyLibraryChipRow
 import com.metrolist.shared.ui.mochy.MochyLibraryIndexRail
 import com.metrolist.shared.ui.mochy.MochyLibrarySectionDivider
 import com.metrolist.shared.ui.mochy.buildLibraryIndex
@@ -712,13 +712,11 @@ private fun LibraryHeader(
     val sorting = Settings.shared.librarySorting(sortingFilter)
     val ascending = sorting.direction == SortDirection.ASCENDING
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        ChipShelf(
+        MochyLibraryChipRow(
             options = LibraryFilter.entries.filterNot { it == LibraryFilter.PODCASTS && Settings.shared.hidePodcasts },
             selectedOption = selectedFilter,
             onSelectionChange = onFilterChange,
             label = { text.filterLabels.getValue(it) },
-            modifier = Modifier.padding(top = 1.dp),
-            contentPadding = PaddingValues(horizontal = 2.dp),
         )
         Row(
             // LazyVerticalGrid supplies unbounded height, which can inflate expressive buttons under release optimizations.
