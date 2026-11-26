@@ -18,6 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.metrolist.desktop.state.app.AppState
 import com.metrolist.desktop.state.content.ArtistState
+import com.metrolist.desktop.state.content.BrowseState
+import com.metrolist.desktop.state.content.HomeState
 import com.metrolist.desktop.state.content.PlaylistAlbumState
 import com.metrolist.desktop.state.content.PodcastState
 import com.metrolist.desktop.state.content.SearchState
@@ -38,6 +40,7 @@ import com.metrolist.shared.generated.resources.search
 import com.metrolist.shared.generated.resources.songs
 import com.metrolist.shared.model.AlbumItem
 import com.metrolist.shared.model.ArtistItem
+import com.metrolist.shared.model.BrowseItem
 import com.metrolist.shared.model.EpisodeItem
 import com.metrolist.shared.model.PlaylistItem
 import com.metrolist.shared.model.PodcastItem
@@ -71,6 +74,7 @@ fun SearchResultsList(
                 if (item is SongItem) SongSwipeActions(item, content = content) else content()
             },
             uiState = uiState,
+            moodsAndGenres = HomeState.uiState.moodsAndGenres,
             text = searchScreenText(),
             onQueryChange = { SearchState.onQueryChange(it) },
             onSearch = { SearchState.search(it) },
@@ -213,6 +217,7 @@ private fun openSearchItem(
         is AlbumItem -> PlaylistAlbumState.fetchAlbumData(item.id)
         is ArtistItem -> ArtistState.fetchArtistData(item)
         is PlaylistItem -> PlaylistAlbumState.fetchPlaylistData(item.id, item.thumbnail)
+        is BrowseItem -> BrowseState.fetchBrowseData(item.id, item.params, item.title)
         else -> Unit
     }
 }

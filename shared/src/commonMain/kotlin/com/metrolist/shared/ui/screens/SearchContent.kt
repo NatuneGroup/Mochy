@@ -75,6 +75,8 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -99,6 +101,7 @@ import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.clearing_search_history
 import com.metrolist.shared.generated.resources.explicit
 import com.metrolist.shared.generated.resources.loading
+import com.metrolist.shared.generated.resources.mood_and_genres
 import com.metrolist.shared.generated.resources.more_options
 import com.metrolist.shared.generated.resources.retry
 import com.metrolist.shared.generated.resources.saved
@@ -108,6 +111,7 @@ import com.metrolist.shared.generated.resources.song_type
 import com.metrolist.shared.model.AlbumItem
 import com.metrolist.shared.model.ArtistItem
 import com.metrolist.shared.model.ArtistTiny
+import com.metrolist.shared.model.BrowseItem
 import com.metrolist.shared.model.EpisodeItem
 import com.metrolist.shared.model.PlaylistItem
 import com.metrolist.shared.model.PodcastItem
@@ -166,6 +170,7 @@ import com.metrolist.shared.ui.utils.supportsNativeBlur
 import com.metrolist.shared.utils.formatDuration
 import com.metrolist.shared.utils.monthlyAudienceText
 import com.metrolist.shared.utils.withoutPlaybackCountLabel
+import com.metrolist.shared.viewmodels.HomeViewModel
 import com.metrolist.shared.viewmodels.SearchPresentation
 import com.metrolist.shared.viewmodels.SearchViewModel.SearchUiState
 import com.metrolist.shared.viewmodels.searchPresentation
@@ -254,6 +259,7 @@ fun SearchContent(
     onMixClick: (YTItem) -> Unit = {},
     itemContainer: @Composable (YTItem, @Composable () -> Unit) -> Unit = { _, content -> content() },
     onAlbumPlay: ((AlbumItem) -> Unit)? = null,
+    moodsAndGenres: List<HomeViewModel.Genre> = emptyList(),
 ) {
     val query = uiState.query
     val isQuerySubmitted = uiState.isQuerySubmitted
@@ -289,6 +295,9 @@ fun SearchContent(
 
                     SearchPresentation.IDLE -> {
                         SearchEmptyState(
+                            listState = listState,
+                            moodsAndGenres = moodsAndGenres,
+                            onMoodClick = onItemClick,
                             recentSearchItems = if (Settings.shared.hideRecentSearches) emptyList() else uiState.recentSearchItems,
                             searchHistory = uiState.searchHistory,
                             isClearingSearchHistory = uiState.isClearingSearchHistory,
@@ -303,6 +312,9 @@ fun SearchContent(
                             text = text,
                             bottomContentPadding = contentPadding.calculateBottomPadding(),
                             isWide = isWide,
+                            listState = listState,
+                            moodsAndGenres = moodsAndGenres,
+                            onMoodClick = onItemClick,
                             modifier = Modifier.fillMaxSize(),
                         )
                     }
@@ -356,6 +368,9 @@ private fun SearchEnterMotion(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun SearchEmptyState(
+    listState: LazyListState,
+    moodsAndGenres: List<HomeViewModel.Genre>,
+    onMoodClick: (YTItem) -> Unit,
     recentSearchItems: List<YTItem>,
     searchHistory: List<String>,
     isClearingSearchHistory: Boolean,
@@ -429,7 +444,6 @@ private fun SearchEmptyState(
         )
     }
 
-    val listState = rememberLazyListState()
     DragScrollableColumn(
         state = listState,
         modifier = modifier.fillMaxWidth().desktopArrowScroll(listState),
@@ -481,6 +495,41 @@ private fun SearchEmptyState(
             }
         }
 
+        if (moodsAndGenres.isNotEmpty()) {
+            item {
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
+                    Column(Modifier.widthIn(max = 1400.dp).fillMaxWidth()) {
+                        SearchSectionTitle(title = stringResource(Res.string.mood_and_genres))
+                        Spacer(Modifier.height(12.dp))
+                        moodsAndGenres.chunked(2).forEach { row ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = SearchHorizontalPadding, vertical = 5.dp),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            ) {
+                                row.forEach { genre ->
+                                    MochyMoodTile(
+                                        title = genre.name,
+                                        onClick = {
+                                            onMoodClick(
+                                                BrowseItem(
+                                                    id = genre.id,
+                                                    title = genre.name,
+                                                    thumbnail = genre.thumbnail,
+                                                    params = genre.params,
+                                                ),
+                                            )
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                }
+                                if (row.size == 1) Spacer(Modifier.weight(1f))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         if (searchHistory.isNotEmpty() || isClearingSearchHistory) {
             item {
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
@@ -492,48 +541,49 @@ private fun SearchEmptyState(
                             clearing = isClearingSearchHistory,
                         )
                         Spacer(Modifier.height(12.dp))
-                        Column(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                            verticalArrangement = Arrangement.spacedBy(2.dp),
-                        ) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
                             searchHistory.forEach { historyItem ->
                                 Row(
                                     modifier =
                                         Modifier
                                             .fillMaxWidth()
-                                            .heightIn(min = 60.dp)
-                                            .clip(RoundedCornerShape(ComponentShapes.SearchItemCornerRadius))
                                             .combinedClickable(
                                                 onClick = { onHistoryItemClick(historyItem) },
                                                 onLongClickLabel = text.removeRecentSearchAction,
                                                 onLongClick = { historyItemToRemove = historyItem },
-                                            ).padding(horizontal = 16.dp),
+                                            ).padding(horizontal = SearchHorizontalPadding, vertical = 12.dp),
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                                 ) {
                                     Icon(
                                         MetrolistIcons.Outlined.History,
                                         contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(24.dp),
+                                        tint = MochySearchColors.Secondary,
+                                        modifier = Modifier.size(20.dp),
                                     )
+                                    Spacer(modifier = Modifier.width(14.dp))
                                     Text(
                                         text = historyItem,
-                                        style = MaterialTheme.typography.titleMedium,
+                                        fontFamily = mochyInterFontFamily(),
+                                        fontWeight = FontWeight.Medium,
+                                        fontSize = 15.sp,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                         modifier = Modifier.weight(1f),
-                                        color = MaterialTheme.colorScheme.onSurface,
+                                        color = MochySearchColors.Primary,
                                     )
-                                    IconButton(
-                                        onClick = { onHistoryItemInsert(historyItem) },
-                                        shapes = IconButtonDefaults.shapes(),
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .clip(CircleShape)
+                                            .clickable(onClick = { onHistoryItemInsert(historyItem) }),
+                                        contentAlignment = Alignment.Center,
                                     ) {
                                         Icon(
                                             imageVector = MetrolistIcons.AutoMirrored.Filled.ArrowBack,
                                             contentDescription = text.useSearchText,
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.size(22.dp).rotate(45f),
+                                            tint = MochySearchColors.Secondary,
+                                            modifier = Modifier.size(16.dp).rotate(45f),
                                         )
                                     }
                                 }
@@ -542,7 +592,7 @@ private fun SearchEmptyState(
                     }
                 }
             }
-        } else if (recentSearchItems.isEmpty()) {
+        } else if (recentSearchItems.isEmpty() && moodsAndGenres.isEmpty()) {
             item {
                 Box(
                     modifier = Modifier.fillParentMaxSize(),
@@ -2090,6 +2140,18 @@ private fun SearchResultItem(
 ) {
     val isCurrentSong = item is SongItem && item.id == currentSongId
 
+    if (!isWide && !isCurrentSong && onArtistClick == null && onAlbumClick == null && onAlbumPlay == null) {
+        MochyResultRow(
+            item = item,
+            subtitle = searchItemSubtitle(item, textData),
+            enabled = !item.isUnavailable,
+            onClick = onClick,
+            onMenuClick = onMenuClick,
+            modifier = modifier,
+        )
+        return
+    }
+
     YTListItem(
         item = item,
         onClick = onClick,
@@ -2257,6 +2319,157 @@ private fun NoResultsFound(
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+    }
+}
+
+/** a section title in Mochy's type with the rule under it, the same as the history and result headers */
+@Composable
+private fun SearchSectionTitle(title: String) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            fontFamily = mochyInterFontFamily(),
+            fontWeight = FontWeight.Bold,
+            fontSize = 22.sp,
+            color = MochySearchColors.Primary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(horizontal = SearchHorizontalPadding),
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        HorizontalDivider(
+            modifier = Modifier.padding(horizontal = SearchHorizontalPadding),
+            thickness = 1.dp,
+            color = MochySearchColors.Divider,
+        )
+    }
+}
+
+// the reference tints a tile from its stripe colour; the API gives none here, so every tile takes the reference's default tint
+private val MoodTileTint = Color(0xFF3A3A44)
+
+/** a mood or genre tile: a tinted 14dp card with its name, opening the browse page for it */
+@Composable
+private fun MochyMoodTile(
+    title: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val tileBrush =
+        Brush.linearGradient(
+            listOf(
+                blendOver(MoodTileTint.copy(alpha = 0.55f), MochySearchColors.Tile),
+                blendOver(MoodTileTint.copy(alpha = 0.16f), MochySearchColors.Tile),
+            ),
+        )
+    Box(
+        modifier = modifier
+            .height(76.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(brush = tileBrush)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Text(
+            text = title,
+            fontFamily = mochyInterFontFamily(),
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 15.sp,
+            lineHeight = 17.sp,
+            color = MochySearchColors.Primary,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(start = 14.dp, end = 14.dp),
+        )
+    }
+}
+
+private fun blendOver(
+    top: Color,
+    bottom: Color,
+): Color {
+    val a = top.alpha
+    return Color(
+        red = top.red * a + bottom.red * (1f - a),
+        green = top.green * a + bottom.green * (1f - a),
+        blue = top.blue * a + bottom.blue * (1f - a),
+        alpha = 1f,
+    )
+}
+
+/** a search result in Mochy's row: a 44dp cover, the title and a small subtitle, and a menu button that opens the same menu */
+@Composable
+private fun MochyResultRow(
+    item: YTItem,
+    subtitle: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    onMenuClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .graphicsLayer { alpha = if (enabled) 1f else 0.5f }
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = SearchHorizontalPadding, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .clip(if (item is ArtistItem) CircleShape else RoundedCornerShape(6.dp))
+                .background(MochySearchColors.TileHigh),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (item is PlaylistItem) {
+                PlaylistCoverImage(item, Modifier.fillMaxSize())
+            } else if (item.thumbnail != null) {
+                AsyncImage(
+                    url = item.displayThumbnailUrl,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = item.displayTitle,
+                fontFamily = mochyInterFontFamily(),
+                fontWeight = FontWeight.Medium,
+                fontSize = 15.sp,
+                color = MochySearchColors.Primary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (subtitle.isNotEmpty()) {
+                Text(
+                    text = subtitle,
+                    fontFamily = mochyInterFontFamily(),
+                    fontSize = 12.sp,
+                    color = MochySearchColors.Secondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .clickable(onClick = onMenuClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = MetrolistIcons.Default.MoreHoriz,
+                contentDescription = null,
+                tint = MochySearchColors.Secondary,
+                modifier = Modifier.size(20.dp),
             )
         }
     }

@@ -1207,6 +1207,7 @@ fun MobileApp(
                                 LaunchedEffect(searchViewModel) { searchViewModel.refreshSearchHistory() }
                                 SearchScreen(
                                     focusRequester = searchFocusRequester,
+                                    moodsAndGenres = homeState.moodsAndGenres,
                                     itemContainer = { item, content ->
                                         if (item is SongItem) SongSwipeActions(item, onSwipeFeedback, content = content) else content()
                                     },
