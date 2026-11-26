@@ -178,6 +178,14 @@ fun SharedIntegrationsScreen(
     val discordPresenceStrings = rememberDiscordPresenceStrings()
     // the status card on the discord page reports where it ends; once that is under the header a copy floats at the bottom
     var discordPreviewBottomPx by remember { mutableFloatStateOf(Float.MAX_VALUE) }
+    // true only while the discord page is the one on screen, so the floating copy never outlives it
+    var discordPageShown by remember { mutableStateOf(false) }
+    DisposableEffect(Unit) {
+        onDispose {
+            discordPageShown = false
+            discordPreviewBottomPx = Float.MAX_VALUE
+        }
+    }
     val density = LocalDensity.current
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val headerBottomPx = with(density) { (statusBarTop + DiscordHeaderHeight).toPx() }
@@ -211,6 +219,10 @@ fun SharedIntegrationsScreen(
                 }
             },
             refreshablePages = setOf(SettingsPageId.DISCORD),
+            onPageChanged = { pageId ->
+                discordPageShown = pageId == SettingsPageId.DISCORD
+                if (!discordPageShown) discordPreviewBottomPx = Float.MAX_VALUE
+            },
             onPageRefresh = { pageId ->
                 if (pageId == SettingsPageId.DISCORD) {
                     refreshDiscordPresence(host, discordPresenceStrings)
@@ -227,6 +239,10 @@ fun SharedIntegrationsScreen(
                 host = host,
                 revision = settingsRevision + accountRevision,
                 onPreviewBottom = { discordPreviewBottomPx = it },
+            // the card left the list: if it had scrolled past the header that is a scroll, otherwise the page is changing and nothing should float
+            onPreviewDisposed = {
+                if (discordPreviewBottomPx >= headerBottomPx) discordPreviewBottomPx = Float.MAX_VALUE
+            },
                 accessToken = accessToken,
                 connectionStatus = connectionStatus,
                 currentUser = currentUser,
@@ -243,7 +259,7 @@ fun SharedIntegrationsScreen(
         }
 
         DiscordFloatingPreview(
-            visible = Settings.shared.enableDiscordIntegration && discordPreviewBottomPx < headerBottomPx,
+            visible = Settings.shared.enableDiscordIntegration && discordPageShown && discordPreviewBottomPx < headerBottomPx,
             activity = floatingActivity,
             playback = floatingPlayback.copy(positionMs = floatingPosition),
             onOpenUrl = host.onOpenUrl,
@@ -277,6 +293,7 @@ private fun buildIntegrationsRegistry(
     currentUser: DiscordUser?,
     discordError: DiscordErrorInfo?,
     onPreviewBottom: (Float) -> Unit,
+    onPreviewDisposed: () -> Unit,
     onOpenLogin: (ScrobbleLoginProvider) -> Unit,
     onAccountsChanged: () -> Unit,
     onDisconnectScrobble: (ScrobbleProvider) -> Unit,
@@ -412,6 +429,7 @@ private fun buildIntegrationsRegistry(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
+                    DisposableEffect(Unit) { onDispose { onPreviewDisposed() } }
                     if (discordLoggedIn) {
                         DiscordProfileCard(
                             displayName = currentUser?.name?.ifBlank { null } ?: settings.discordName.ifBlank { discordUsername },
