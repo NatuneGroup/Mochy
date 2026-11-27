@@ -10,7 +10,12 @@ internal fun playbackAudioQuality(): AudioQuality {
     val cellular = Settings.shared.audioQualityCellular
     val metered =
         cellular.isNotBlank() &&
-            runCatching { App.instance.getSystemService(ConnectivityManager::class.java)?.isActiveNetworkMetered == true }.getOrDefault(false)
+            runCatching {
+                App.instance
+                    .getSystemService(
+                        ConnectivityManager::class.java,
+                    )?.isActiveNetworkMetered == true
+            }.getOrDefault(false)
     val chosen = if (metered) cellular else Settings.shared.audioQuality
     return try {
         AudioQuality.valueOf(chosen)
