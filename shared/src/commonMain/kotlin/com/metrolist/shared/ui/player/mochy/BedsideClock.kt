@@ -308,6 +308,7 @@ fun BedsideClock(
     artworkUrl: String? = null,
     onPrevious: (() -> Unit)? = null,
     onNext: (() -> Unit)? = null,
+    inDialog: Boolean = true,
 ) {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val scope = rememberCoroutineScope()
@@ -370,10 +371,7 @@ fun BedsideClock(
     val nightTintDescription = stringResource(Res.string.mochy_bedside_night_tint)
     val nowPlayingDescription = stringResource(Res.string.mochy_bedside_now_playing)
 
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
+    val face: @Composable () -> Unit = {
         Box(
             modifier =
                 Modifier
@@ -563,6 +561,15 @@ fun BedsideClock(
                 }
             }
         }
+    }
+    // the screensaver hosts the clock in its own window; inside the app it's a dialog over the player
+    if (inDialog) {
+        Dialog(
+            onDismissRequest = onDismiss,
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+        ) { face() }
+    } else {
+        face()
     }
 }
 
