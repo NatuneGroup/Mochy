@@ -133,9 +133,11 @@ import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.menu.ExpressiveSelectionMenu
 import com.metrolist.shared.ui.menu.trackPressPosition
 import com.metrolist.shared.ui.mochy.MochyModulesScreen
+import com.metrolist.shared.ui.mochy.MochyProfileHub
 import com.metrolist.shared.ui.mochy.MochyProfileSettingsScreen
 import com.metrolist.shared.ui.mochy.pressBounce
 import com.metrolist.shared.ui.navigation.LocalUseDesktopUi
+import com.metrolist.shared.ui.navigation.NavigationBackHandler
 import com.metrolist.shared.ui.navigation.PredictiveNavigationContent
 import com.metrolist.shared.ui.navigation.rememberNavigationMotion
 import com.metrolist.shared.ui.onboarding.mochy.AppSwitch
@@ -490,6 +492,19 @@ private fun CompactSettingsHome(
     // the phone floating bar's Settings tab, which is Mochy's look in any theme
     val mochyBar = rememberMochyLook().floatingNavBar && !LocalUseDesktopUi.current
     if (!isTv && host.title == null && (mochyBar || MaterialTheme.colorScheme.background.luminance() < 0.5f)) {
+        // Mochy's own tab opens on its profile page; its Settings row opens this list, and back returns to it
+        var listOpen by rememberSaveable { mutableStateOf(false) }
+        if (mochyBar && !listOpen) {
+            MochyProfileHub(
+                onOpenSettings = { listOpen = true },
+                onOpenStats = { onPageSelected(SettingsPageId.MOCHY_PROFILE) },
+                onOpenAbout = { onPageSelected(SettingsPageId.ABOUT) },
+                onOpenCredits = { onPageSelected(SettingsPageId.ABOUT) },
+                bottomPadding = host.bottomContentPadding,
+            )
+            return
+        }
+        if (mochyBar) NavigationBackHandler { listOpen = false }
         MochySettingsHome(
             registry = registry,
             host = host,

@@ -5791,6 +5791,11 @@
     <!-- Translators: Button label to close the animated silver card celebration overlay. -->
     <string name="mochy_card_celebrate_close">Tap to continue</string>
     <!-- Translators: Settings screen title for the local Mochy profile ID card. -->
+    <string name="mochy_profile_view_stats">"View Stats  &gt;"</string>
+    <string name="mochy_profile_version_about_app">Version &amp; about app</string>
+    <string name="mochy_profile_capsule_about">About app</string>
+    <string name="mochy_profile_meet_dev">meet da dev and contributors :3</string>
+    <string name="mochy_profile_open_settings">Open settings</string>
     <string name="mochy_profile_settings_title">Mochy profile</string>
     <!-- Translators: Settings screen overview subtitle for the local Mochy profile ID card. -->
     <string name="mochy_profile_settings_overview">Local display name, member card finish, and welcome card</string>
