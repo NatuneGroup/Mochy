@@ -30,5 +30,7 @@
 -dontwarn org.ietf.jgss.**
 -dontwarn javax.el.**
 -dontwarn net.engio.mbassy.**
-# smbj builds its packet handlers and crypto provider by reflection
--keep class com.hierynomus.smbj.** { *; }
+# smbj and its protocol and ASN.1 libraries build packet handlers and the crypto provider by reflection, and its event
+# bus (mbassy) constructs handler invocations by reflection too
+-keep class com.hierynomus.** { *; }
+-keep class net.engio.mbassy.** { *; }
