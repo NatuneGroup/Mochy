@@ -335,6 +335,8 @@ kotlin {
                 api(libs.components.resources)
                 implementation(libs.ui.tooling.preview)
                 implementation(libs.compose.reorderable)
+                // Liquid Glass: the lens, blur and vibrancy the Mochy chrome draws when it's switched on
+                implementation(libs.backdrop)
                 implementation(libs.swipe)
                 api(libs.markdown.renderer)
                 implementation(libs.markdown.renderer.m3)

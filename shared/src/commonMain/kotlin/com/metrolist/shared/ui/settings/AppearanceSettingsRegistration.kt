@@ -15,10 +15,13 @@ import androidx.compose.foundation.background
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.runtime.Composable
+import com.kyant.backdrop.isRuntimeShaderSupported
 import com.metrolist.shared.generated.resources.*
 import com.metrolist.shared.generated.resources.flagship_bottom_bar
 import com.metrolist.shared.generated.resources.flagship_bottom_bar_stack
 import com.metrolist.shared.generated.resources.flagship_bottom_bar_volume
+import com.metrolist.shared.generated.resources.liquid_glass
+import com.metrolist.shared.generated.resources.liquid_glass_description
 import com.metrolist.shared.generated.resources.mochy_menu_customize_player
 import com.metrolist.shared.generated.resources.mochy_pages_cover_disc_album
 import com.metrolist.shared.generated.resources.mochy_pages_cover_disc_big_full
@@ -151,6 +154,15 @@ internal fun SettingsUiRegistryBuilder.registerAppearanceSettings(host: SharedSe
                 description = stringResource(Res.string.ui_enhancements_description),
                 checked = settings.uiEnhancements,
             ) { settings.uiEnhancements = it }
+            // the bending lens needs runtime shaders (Android 13 and up, the desktop and iOS)
+            if (isRuntimeShaderSupported()) {
+                switch(
+                    id = "liquidGlass",
+                    title = stringResource(Res.string.liquid_glass),
+                    description = stringResource(Res.string.liquid_glass_description),
+                    checked = settings.liquidGlass,
+                ) { settings.liquidGlass = it }
+            }
             if (!settings.materialYouEnabled && !matugenActive) {
                 custom(
                     id = "themeColor",

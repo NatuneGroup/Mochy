@@ -186,7 +186,7 @@ fun MochyMiniPlayer(
                 ).clickable(onClick = onExpand),
     ) {
         Box(Modifier.fillMaxSize()) {
-            MochyChromeGlass(Modifier.matchParentSize())
+            MochyChromeGlass(Modifier.matchParentSize(), shape = RoundedCornerShape(MochyMiniCorner))
 
             Row(
                 modifier = Modifier.fillMaxSize().padding(start = MochyMiniArtInset, end = MochyMiniEndInset),
