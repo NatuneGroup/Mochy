@@ -83,6 +83,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -103,16 +104,21 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
 import com.metrolist.shared.generated.resources.Res
+import com.metrolist.shared.generated.resources.album
+import com.metrolist.shared.generated.resources.artist
 import com.metrolist.shared.generated.resources.clearing_search_history
 import com.metrolist.shared.generated.resources.explicit
 import com.metrolist.shared.generated.resources.loading
 import com.metrolist.shared.generated.resources.mood_and_genres
 import com.metrolist.shared.generated.resources.more_options
+import com.metrolist.shared.generated.resources.playlist
 import com.metrolist.shared.generated.resources.retry
 import com.metrolist.shared.generated.resources.saved
 import com.metrolist.shared.generated.resources.search_load_more_failed
 import com.metrolist.shared.generated.resources.search_online_failed
+import com.metrolist.shared.generated.resources.song
 import com.metrolist.shared.generated.resources.song_type
+import com.metrolist.shared.generated.resources.video
 import com.metrolist.shared.model.AlbumItem
 import com.metrolist.shared.model.ArtistItem
 import com.metrolist.shared.model.ArtistTiny
@@ -172,6 +178,7 @@ import com.metrolist.shared.ui.utils.artistArtworkShape
 import com.metrolist.shared.ui.utils.artworkBlur
 import com.metrolist.shared.ui.utils.carouselScroll
 import com.metrolist.shared.ui.utils.desktopArrowScroll
+import com.metrolist.shared.ui.utils.nativeBlurCompat
 import com.metrolist.shared.ui.utils.supportsNativeBlur
 import com.metrolist.shared.utils.formatDuration
 import com.metrolist.shared.utils.monthlyAudienceText
@@ -787,6 +794,14 @@ private fun SearchSuggestionsList(
     ) {
         if (querySuggestions.isNotEmpty()) {
             item {
+                // the dark theme heads its suggestions as Mochy heads every search section
+                if (MaterialTheme.colorScheme.background.luminance() < 0.5f) {
+                    Column {
+                        SearchSectionTitle(text.suggestions)
+                        Spacer(Modifier.height(8.dp))
+                    }
+                    return@item
+                }
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
                     Text(
                         text = text.suggestions,
@@ -1989,6 +2004,37 @@ private fun SearchResultGroup(
                 onArtistClick = onArtistClick,
                 onAlbumClick = onAlbumClick,
             )
+        } else if (isTopResults && items.isNotEmpty() && MaterialTheme.colorScheme.background.luminance() < 0.5f) {
+            // Mochy's top result: the one card, its cover blurred behind it and a white play button, the rest as rows
+            val mainItem = items.first()
+            MochyTopResultCard(
+                item = mainItem,
+                active = currentSongId == mainItem.id,
+                playing = currentSongId == mainItem.id && isPlaying,
+                onClick = { onItemClick(mainItem) },
+                onLongClick = { onItemLongClick(mainItem) },
+                onPlay =
+                    onAlbumPlay?.takeIf { mainItem is AlbumItem }?.let { play -> { play(mainItem as AlbumItem) } }
+                        ?: { onItemClick(mainItem) },
+            )
+            Spacer(Modifier.height(22.dp))
+            items.drop(1).forEach { item ->
+                itemContainer(item) {
+                    SearchResultItem(
+                        item = item,
+                        textData = text,
+                        currentSongId = currentSongId,
+                        isPlaying = isPlaying,
+                        onClick = { onItemClick(item) },
+                        onMenuClick = { onItemLongClick(item) },
+                        onArtistClick = onArtistClick,
+                        onAlbumClick = onAlbumClick,
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                        isWide = isWide,
+                        onAlbumPlay = onAlbumPlay?.let { play -> { (item as? AlbumItem)?.let(play) } },
+                    )
+                }
+            }
         } else if (isTopResults && items.isNotEmpty()) {
             val mainItem = items.first()
             val relatedItems = items.drop(1).take(3)
@@ -2590,6 +2636,156 @@ private fun MochyResultRow(
                 tint = MochySearchColors.Secondary,
                 modifier = Modifier.size(20.dp),
             )
+        }
+    }
+}
+
+/** Mochy's top result: its cover blurred and darkened behind it, the cover itself, the title, what it is, and a white play button. */
+@Composable
+private fun MochyTopResultCard(
+    item: YTItem,
+    active: Boolean,
+    playing: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    onPlay: () -> Unit,
+) {
+    val kind =
+        when (item) {
+            is SongItem -> {
+                if (item.musicVideoType != null &&
+                    item.musicVideoType != "MUSIC_VIDEO_TYPE_ATV"
+                ) {
+                    stringResource(Res.string.video)
+                } else {
+                    stringResource(Res.string.song)
+                }
+            }
+
+            is AlbumItem -> {
+                stringResource(Res.string.album)
+            }
+
+            is ArtistItem -> {
+                stringResource(Res.string.artist)
+            }
+
+            is PlaylistItem -> {
+                stringResource(Res.string.playlist)
+            }
+
+            else -> {
+                null
+            }
+        }
+    val detail =
+        when (item) {
+            is SongItem -> {
+                listOfNotNull(
+                    kind,
+                    item.artists.joinToString { it.name }.takeIf { it.isNotBlank() },
+                    item.duration?.let { seconds -> "${seconds / 60}:${(seconds % 60).toString().padStart(2, '0')}" },
+                )
+            }
+
+            is AlbumItem -> {
+                listOfNotNull(kind, item.artists?.joinToString { it.name }?.takeIf { it.isNotBlank() }, item.year?.toString())
+            }
+
+            is PlaylistItem -> {
+                listOfNotNull(kind, item.author)
+            }
+
+            else -> {
+                listOfNotNull(kind)
+            }
+        }.joinToString("  •  ")
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = SearchHorizontalPadding)
+                .clip(RoundedCornerShape(16.dp))
+                .background(MochySearchColors.Tile)
+                .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(16.dp))
+                .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+    ) {
+        if (item.thumbnail != null) {
+            AsyncImage(
+                url = item.thumbnail,
+                contentScale = ContentScale.Crop,
+                modifier =
+                    Modifier
+                        .matchParentSize()
+                        .graphicsLayer { alpha = 0.55f }
+                        .nativeBlurCompat(70f),
+            )
+            Box(
+                Modifier
+                    .matchParentSize()
+                    .background(
+                        Brush.verticalGradient(
+                            0f to Color.Black.copy(alpha = 0.35f),
+                            0.55f to Color.Black.copy(alpha = 0.62f),
+                            1f to Color.Black.copy(alpha = 0.88f),
+                        ),
+                    ),
+            )
+        }
+        Column(Modifier.padding(16.dp)) {
+            Box(
+                Modifier
+                    .size(108.dp)
+                    .clip(if (item is ArtistItem) CircleShape else RoundedCornerShape(8.dp))
+                    .background(MochySearchColors.TileHigh),
+            ) {
+                if (item.thumbnail !=
+                    null
+                ) {
+                    AsyncImage(url = item.displayThumbnailUrl, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                }
+            }
+            Spacer(Modifier.height(14.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        text = item.title,
+                        fontFamily = mochyInterFontFamily(),
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MochySearchColors.Primary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = detail,
+                        fontFamily = mochyInterFontFamily(),
+                        fontSize = 12.sp,
+                        color = MochySearchColors.Secondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                if (item !is ArtistItem) {
+                    Spacer(Modifier.width(12.dp))
+                    Box(
+                        Modifier
+                            .size(46.dp)
+                            .clip(CircleShape)
+                            .background(Color.White)
+                            .clickable(onClick = onPlay),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = if (active && playing) MetrolistIcons.Filled.Pause else MetrolistIcons.Filled.PlayArrow,
+                            contentDescription = null,
+                            tint = Color.Black,
+                            modifier = Modifier.size(24.dp),
+                        )
+                    }
+                }
+            }
         }
     }
 }
