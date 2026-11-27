@@ -5,9 +5,14 @@
 
 package com.metrolist.shared.ui.settings
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -22,15 +27,23 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,10 +58,12 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,14 +71,21 @@ import androidx.compose.ui.util.lerp
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.back
 import com.metrolist.shared.generated.resources.close
+import com.metrolist.shared.generated.resources.mochy_nav_search
 import com.metrolist.shared.generated.resources.mochy_pages_arrow_back_ios
+import com.metrolist.shared.generated.resources.pc_hide_search
+import com.metrolist.shared.generated.resources.search
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.mochy.MochyBackdrop
+import com.metrolist.shared.ui.mochy.MochyProgressiveGlass
+import com.metrolist.shared.ui.mochy.mochyBackdropSource
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import com.metrolist.shared.ui.utils.supportsNativeBlur
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.PI
 import kotlin.math.sin
+import androidx.compose.ui.unit.lerp as lerpDp
 
 private val PagePadding = 20.dp
 private val BackButtonSize = 40.dp
@@ -78,10 +100,23 @@ private val CollapseEasing = CubicBezierEasing(0.57f, 0.53f, 0f, 1f)
 private const val COLLAPSE_MILLIS = 900
 private val BackButtonColor = Color(0xFF2C2C2E)
 private val BackLabelStart = BackButtonSize + 10.dp
+private val CollapsedStickyGap = 8.dp
+private val SearchBarHeight = 52.dp
+private val OverlayEasing = CubicBezierEasing(0.22f, 1f, 0.36f, 1f)
+
+/** The space a page leaves under its header for the search pill the scaffold draws there. */
+internal val MochySettingsSearchSpace = SearchBarHeight + 16.dp
+
+/**
+ * Where a page hands the scaffold its search field. The scaffold draws it under the header and, as the title
+ * folds into the bar, warps the same shape into the round search button at the bar's right end.
+ */
+internal val LocalMochySettingsSearchSlot = staticCompositionLocalOf<MutableState<(@Composable () -> Unit)?>?> { null }
 
 /**
  * [listState] tells how far a list page has scrolled; pages that bring their own content are followed through
- * the scrolls they pass up instead. [content] gets the header's height to start below.
+ * the scrolls they pass up instead. [content] gets the expanded header's height (content starts below it inside
+ * its own scroll) and the bottom of the collapsed bar (where sticky rows pin).
  */
 @Composable
 internal fun MochySubSettingsScaffold(
@@ -94,10 +129,11 @@ internal fun MochySubSettingsScaffold(
     onClose: (() -> Unit)? = null,
     // the page this one sits under, written beside the back button
     backLabel: String? = null,
-    content: @Composable (topPadding: Dp) -> Unit,
+    content: @Composable (headerHeight: Dp, collapsedBottom: Dp) -> Unit,
 ) {
     val density = LocalDensity.current
-    var nestedOffset by remember { mutableFloatStateOf(0f) }
+    // saved with the page's own scroll, so a page opened again part way down comes back with its title folded
+    var nestedOffset by rememberSaveable { mutableFloatStateOf(0f) }
     val tracker =
         remember {
             object : NestedScrollConnection {
@@ -142,15 +178,30 @@ internal fun MochySubSettingsScaffold(
     )
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val headerHeight = statusBarTop + ExpandedHeaderHeight
+    val collapsedBottom = statusBarTop + HeaderTopPadding + BackButtonSize + CollapsedStickyGap
     val blur = remember { supportsNativeBlur() }
     var titleHeightPx by remember { mutableIntStateOf(0) }
+    val searchSlot = remember { mutableStateOf<(@Composable () -> Unit)?>(null) }
 
+    val pageBackdrop = remember { MochyBackdrop() }
     Box(modifier.fillMaxSize().background(MochySettingsColors.Page)) {
-        Box(Modifier.fillMaxSize().nestedScroll(tracker)) {
-            content(headerHeight)
+        Box(Modifier.fillMaxSize().nestedScroll(tracker).mochyBackdropSource(pageBackdrop)) {
+            CompositionLocalProvider(LocalMochySettingsSearchSlot provides searchSlot) {
+                content(headerHeight, collapsedBottom)
+            }
         }
 
-        // the black under the bar, only once the title has folded into it
+        // the frosted page under the bar, then the black over it, only once the title has folded into it
+        MochyProgressiveGlass(
+            backdrop = pageBackdrop,
+            maxBlurPx = { HEADER_GLASS_BLUR_PX * collapse },
+            foundation = MochySettingsColors.Page.copy(alpha = 0.55f),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(headerHeight)
+                    .graphicsLayer { alpha = collapse },
+        )
         Box(
             Modifier
                 .fillMaxWidth()
@@ -257,5 +308,97 @@ internal fun MochySubSettingsScaffold(
                         },
             )
         }
+
+        searchSlot.value?.let { searchBar ->
+            MochySearchPill(
+                searchBar = searchBar,
+                collapse = { collapse },
+                expandedY = headerHeight,
+                collapsedY = statusBarTop + HeaderTopPadding,
+                // beside the close button when the page has one, else at the bar's right end
+                endInset = if (onClose != null) BackButtonSize + 8.dp else 0.dp,
+            )
+        }
     }
 }
+
+// the search field resting under the header that resizes and slides into the round button in the bar: one shape
+// warping, not one thing fading out while another appears; once it's a button, a tap drops the field down again
+@Composable
+private fun MochySearchPill(
+    searchBar: @Composable () -> Unit,
+    collapse: () -> Float,
+    expandedY: Dp,
+    collapsedY: Dp,
+    endInset: Dp,
+) {
+    var overlayVisible by remember { mutableStateOf(false) }
+    val iconTappable by remember { derivedStateOf { collapse() > 0.6f } }
+    LaunchedEffect(Unit) {
+        snapshotFlow { collapse() < 0.5f }.collect { opened -> if (opened) overlayVisible = false }
+    }
+    Box(
+        modifier =
+            Modifier
+                .layout { measurable, constraints ->
+                    // the page's own width, so beside the settings list the pill stays on the page
+                    val pageWidth = constraints.maxWidth.toDp()
+                    val p = collapse()
+                    val width = lerpDp(pageWidth - PagePadding * 2, BackButtonSize, p).roundToPx()
+                    val height = lerpDp(SearchBarHeight, BackButtonSize, p).roundToPx()
+                    val placeable = measurable.measure(Constraints.fixed(width, height))
+                    layout(width, height) {
+                        placeable.place(
+                            lerpDp(PagePadding, pageWidth - PagePadding - BackButtonSize - endInset, p).roundToPx(),
+                            lerpDp(expandedY, collapsedY, p).roundToPx(),
+                        )
+                    }
+                }.graphicsLayer {
+                    shape = RoundedCornerShape(lerpDp(26.dp, BackButtonSize / 2, collapse()))
+                    clip = true
+                }.background(BackButtonColor),
+    ) {
+        if (!iconTappable && !overlayVisible) {
+            Box(Modifier.fillMaxSize().graphicsLayer { alpha = (1f - collapse() / 0.6f).coerceIn(0f, 1f) }) {
+                searchBar()
+            }
+        }
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { alpha = ((collapse() - 0.45f) / 0.55f).coerceIn(0f, 1f) }
+                    .clip(CircleShape)
+                    // clickable only once it's a button, so the invisible circle doesn't take taps meant for the field
+                    .then(if (iconTappable) Modifier.clickable { overlayVisible = !overlayVisible } else Modifier),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (overlayVisible) {
+                Icon(
+                    MetrolistIcons.Default.Close,
+                    contentDescription = stringResource(Res.string.pc_hide_search),
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp),
+                )
+            } else {
+                Icon(
+                    painter = painterResource(Res.drawable.mochy_nav_search),
+                    contentDescription = stringResource(Res.string.search),
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+        }
+    }
+    AnimatedVisibility(
+        visible = overlayVisible,
+        enter = fadeIn(tween(260, easing = OverlayEasing)) + slideInVertically(tween(260, easing = OverlayEasing)) { -it / 2 },
+        exit = fadeOut(tween(180)) + slideOutVertically(tween(180)) { -it / 2 },
+        modifier = Modifier.padding(top = collapsedY + BackButtonSize + 10.dp, start = PagePadding, end = PagePadding),
+    ) {
+        searchBar()
+    }
+}
+
+// the reference's 40px at full collapse
+private const val HEADER_GLASS_BLUR_PX = 40f

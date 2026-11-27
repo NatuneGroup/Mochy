@@ -69,6 +69,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.structuralEqualityPolicy
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -166,6 +167,8 @@ import com.metrolist.shared.ui.components.vintageOnButtonColor
 import com.metrolist.shared.ui.haptics.HapticEvent
 import com.metrolist.shared.ui.haptics.rememberMetrolistHaptics
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.mochy.lyrics.MochyLyricsScreen
+import com.metrolist.shared.ui.mochy.lyrics.PlaybackClock
 import com.metrolist.shared.ui.navigation.navigationPopupSource
 import com.metrolist.shared.ui.player.mochy.FlagshipTransport
 import com.metrolist.shared.ui.player.mochy.MochyStylePicker
@@ -1848,6 +1851,42 @@ internal fun LyricsViewWithPosition(
     val shareLyrics = LocalPlayerPlatform.current.lyricsShareAction(viewModel)
     val displayedProvider = if (isLocalLyricsProvider(provider)) stringResource(Res.string.local) else provider
     val providedByText = displayedProvider?.let { stringResource(Res.string.lyrics_provided_by, it) }
+
+    // the Flagship player shows Mochy's own lyrics page on every platform
+    if (rememberMochyLook().playerType == PlayerType.MOCHY) {
+        val offsetMs = LyricsUtils.combinedLyricsOffsetMs(timingOffsetMs, Settings.shared.globalLyricsOffsetMs)
+        val currentOffset by rememberUpdatedState(offsetMs)
+        val isPlaying by rememberUpdatedState(uiState.isPlaying && !isBuffering)
+        val speed by rememberUpdatedState(viewModel.playbackSpeed.collectAsState().value)
+        val clock =
+            remember(viewModel) {
+                PlaybackClock(
+                    readPositionMs = viewModel::currentPositionMs,
+                    readIsPlaying = { isPlaying },
+                    readSpeed = { speed },
+                    offsetMs = { currentOffset.toLong() },
+                )
+            }
+        MochyLyricsScreen(
+            lines = lyrics,
+            isLoading = isLoading,
+            positionProvider = clock,
+            onSeek = { lyricMs ->
+                onSeek(
+                    LyricsUtils.lyricsSeekPositionForOffset(lyricMs, offsetMs),
+                    PlaybackSeekSource("lyrics_tap"),
+                )
+            },
+            providerName = displayedProvider,
+            providerUrl = lyricsProviderUrl(provider, uiState.lyricsMeta?.sourceId),
+            curator = uiState.lyricsMeta?.lyricsCurator?.takeIf { it.isNotBlank() },
+            curatorUrl = lyricsCuratorUrl(provider, uiState.lyricsMeta?.lyricsCuratorId),
+            noLyricsText = stringResource(Res.string.lyrics_not_found),
+            translationLoading = uiState.lyricsTranslationProgress.isTranslating,
+            modifier = modifier,
+        )
+        return
+    }
 
     LyricsView(
         noLyricsText = stringResource(Res.string.lyrics_not_found),

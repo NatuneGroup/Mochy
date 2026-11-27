@@ -122,10 +122,13 @@ import com.metrolist.shared.generated.resources.mochy_profile_remove_photo
 import com.metrolist.shared.generated.resources.mochy_profile_total_listening_time
 import com.metrolist.shared.generated.resources.mochy_profile_unit_hour_short
 import com.metrolist.shared.generated.resources.mochy_profile_unit_minute_short
+import com.metrolist.shared.generated.resources.mochy_profile_view_stats
 import com.metrolist.shared.generated.resources.mochy_username_label
 import com.metrolist.shared.generated.resources.mochy_username_placeholder
 import com.metrolist.shared.generated.resources.mochy_welcome_to_mochy
 import com.metrolist.shared.settings.Settings
+import com.metrolist.shared.ui.settings.LocalSettingsPageHasTopBar
+import com.metrolist.shared.ui.settings.LocalSettingsPageTopPadding
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -690,7 +693,7 @@ fun MochyProfileEditorContent(
 }
 
 /** All-time listening totals and top artist for the card back. Null when the history cannot be read. */
-private suspend fun loadMochyCardStats(): MochyCardStats? =
+internal suspend fun loadMochyCardStats(): MochyCardStats? =
     runCatching {
         val database = KoinPlatform.getKoin().get<MusicDatabase>()
         val snapshot =
@@ -716,7 +719,7 @@ private val MochyPageMaxWidth = 1040.dp
 /** Wide windows put the greeting and card in one column and the listening card in the other. */
 private val MochyTwoColumnMinWidth = 720.dp
 
-private val MochyGreetingWords =
+internal val MochyGreetingWords =
     listOf(
         Res.string.mochy_profile_greeting_hello_again,
         Res.string.mochy_profile_greeting_hey,
@@ -741,6 +744,8 @@ fun MochyProfileSettingsScreen(
     val reveal = remember { Animatable(0f) }
     LaunchedEffect(Unit) { reveal.animateTo(1f, tween(durationMillis = 900, easing = MochyPageEase)) }
 
+    // on Mochy's header the top padding is inside the scroll, so content scrolls up under the header
+    val headerTop = if (LocalSettingsPageHasTopBar.current) LocalSettingsPageTopPadding.current else 0.dp
     // width is read here, outside the scroll, so nothing inside the scroll gets an unbounded width
     BoxWithConstraints(modifier = modifier.fillMaxSize().background(Color.Black)) {
         val wide = maxWidth >= MochyTwoColumnMinWidth
@@ -751,6 +756,7 @@ fun MochyProfileSettingsScreen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp, vertical = 16.dp)
+                    .padding(top = headerTop)
                     .graphicsLayer {
                         alpha = reveal.value
                         translationY = (1f - reveal.value) * 60.dp.toPx()
@@ -807,9 +813,11 @@ private fun MochyProfileHeader(
 }
 
 @Composable
-private fun MochyListeningTimeCard(
+internal fun MochyListeningTimeCard(
     totalMs: Long,
     figureScale: Float,
+    // the profile tab's card opens the stats from its foot
+    onViewStats: (() -> Unit)? = null,
 ) {
     val totalMinutes = (totalMs / 60_000L).coerceAtLeast(0L)
     val hours = totalMinutes / 60
@@ -829,6 +837,7 @@ private fun MochyListeningTimeCard(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(22.dp))
                 .background(MochyPageCard)
+                .then(if (onViewStats != null) Modifier.clickable(onClick = onViewStats) else Modifier)
                 .padding(20.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -859,6 +868,18 @@ private fun MochyListeningTimeCard(
         Spacer(Modifier.height(14.dp))
         Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF474747)))
         Spacer(Modifier.height(12.dp))
+        if (onViewStats != null) {
+            Text(
+                text = stringResource(Res.string.mochy_profile_view_stats),
+                style =
+                    TextStyle(
+                        fontFamily = mochyInterFontFamily(),
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 13.sp,
+                        color = Color(0xFF8A8A8A),
+                    ),
+            )
+        }
     }
 }
 
@@ -899,7 +920,7 @@ private fun MochyTimeValue(
 private fun mochyWidthScale(cardWidthDp: Float): Float = (cardWidthDp / 320f).coerceIn(0.72f, 1.2f)
 
 /** Total listening time in milliseconds from the history store. Null when the history cannot be read. */
-private suspend fun loadListeningTotalMs(): Long? =
+internal suspend fun loadListeningTotalMs(): Long? =
     runCatching {
         val database = KoinPlatform.getKoin().get<MusicDatabase>()
         database

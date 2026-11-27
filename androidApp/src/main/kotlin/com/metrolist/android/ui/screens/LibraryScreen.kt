@@ -39,6 +39,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -63,6 +64,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -183,6 +185,7 @@ fun LibraryScreen(
     onNavigateToPodcast: (String) -> Unit = {},
     onNavigateToAutoPlaylist: ((String) -> Unit)? = null,
     onNavigateToPlaylistImport: () -> Unit = {},
+    onNavigateToHistory: (() -> Unit)? = null,
     floatingActionsBottomInset: State<Dp>,
     scrollToTopEvents: Flow<Long> = emptyFlow(),
     viewModel: LibraryViewModel = koinViewModel(),
@@ -538,6 +541,8 @@ fun LibraryScreen(
                 contentSearchHasMore = contentSearchHasMore,
                 onLoadMoreContentMatches = viewModel::loadMoreContentMatches,
                 onSearchDescendingChange = viewModel::setSearchDescending,
+                onOpenHistory = onNavigateToHistory,
+                onOpenImport = onNavigateToPlaylistImport,
                 itemContainer = { hiddenItem, item, isGridView, onClick, itemContent ->
                     val content: @Composable () -> Unit = {
                         LibraryItemContainer(
@@ -799,40 +804,44 @@ fun LibraryScreen(
             ) { content() }
         }
 
-        ScrollingAddButton(
-            label = stringResource(Res.string.new_playlist),
-            onClick = { showNewPlaylistMenu = true },
-            state = rememberScrollingFabState(activeLibraryGridState),
-            modifier =
-                Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = floatingActionsBottomInset.value + 16.dp),
-        ) {
-            FabMenuPopup(
-                expanded = rootActive && showNewPlaylistMenu,
-                onDismissRequest = { showNewPlaylistMenu = false },
+        // Mochy's Library has no floating button; making a playlist stays on the Playlists list
+        val mochyLibrary = !LocalIsTv.current && MaterialTheme.colorScheme.background.luminance() < 0.5f
+        if (!mochyLibrary || selectedFilter == LibraryFilter.PLAYLISTS) {
+            ScrollingAddButton(
+                label = stringResource(Res.string.new_playlist),
+                onClick = { showNewPlaylistMenu = true },
+                state = rememberScrollingFabState(activeLibraryGridState),
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 16.dp, bottom = floatingActionsBottomInset.value + 16.dp),
             ) {
-                DropdownMenuGroup(shapes = MenuDefaults.groupShape(0, 1)) {
-                    DropdownMenuItem(
-                        modifier = Modifier.tvFocusHighlight(groupedMenuItemShapes(0, 2).shape).navigationPopupSource(),
-                        text = { Text(stringResource(Res.string.create_playlist)) },
-                        shape = groupedMenuItemShapes(0, 2).shape,
-                        onClick = {
-                            showNewPlaylistMenu = false
-                            remoteCreationAvailable = GlobalYouTubeRepository.instance.canManagePlaylists()
-                            createLocally = !remoteCreationAvailable
-                            showCreateDialog = true
-                        },
-                    )
-                    DropdownMenuItem(
-                        modifier = Modifier.tvFocusHighlight(groupedMenuItemShapes(1, 2).shape),
-                        text = { Text(stringResource(Res.string.import_playlist)) },
-                        shape = groupedMenuItemShapes(1, 2).shape,
-                        onClick = {
-                            showNewPlaylistMenu = false
-                            onNavigateToPlaylistImport()
-                        },
-                    )
+                FabMenuPopup(
+                    expanded = rootActive && showNewPlaylistMenu,
+                    onDismissRequest = { showNewPlaylistMenu = false },
+                ) {
+                    DropdownMenuGroup(shapes = MenuDefaults.groupShape(0, 1)) {
+                        DropdownMenuItem(
+                            modifier = Modifier.tvFocusHighlight(groupedMenuItemShapes(0, 2).shape).navigationPopupSource(),
+                            text = { Text(stringResource(Res.string.create_playlist)) },
+                            shape = groupedMenuItemShapes(0, 2).shape,
+                            onClick = {
+                                showNewPlaylistMenu = false
+                                remoteCreationAvailable = GlobalYouTubeRepository.instance.canManagePlaylists()
+                                createLocally = !remoteCreationAvailable
+                                showCreateDialog = true
+                            },
+                        )
+                        DropdownMenuItem(
+                            modifier = Modifier.tvFocusHighlight(groupedMenuItemShapes(1, 2).shape),
+                            text = { Text(stringResource(Res.string.import_playlist)) },
+                            shape = groupedMenuItemShapes(1, 2).shape,
+                            onClick = {
+                                showNewPlaylistMenu = false
+                                onNavigateToPlaylistImport()
+                            },
+                        )
+                    }
                 }
             }
         }

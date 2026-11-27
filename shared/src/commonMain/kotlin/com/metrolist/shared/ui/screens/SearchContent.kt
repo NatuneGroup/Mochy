@@ -25,6 +25,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -62,6 +63,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -71,13 +73,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -98,16 +104,21 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
 import com.metrolist.shared.generated.resources.Res
+import com.metrolist.shared.generated.resources.album
+import com.metrolist.shared.generated.resources.artist
 import com.metrolist.shared.generated.resources.clearing_search_history
 import com.metrolist.shared.generated.resources.explicit
 import com.metrolist.shared.generated.resources.loading
 import com.metrolist.shared.generated.resources.mood_and_genres
 import com.metrolist.shared.generated.resources.more_options
+import com.metrolist.shared.generated.resources.playlist
 import com.metrolist.shared.generated.resources.retry
 import com.metrolist.shared.generated.resources.saved
 import com.metrolist.shared.generated.resources.search_load_more_failed
 import com.metrolist.shared.generated.resources.search_online_failed
+import com.metrolist.shared.generated.resources.song
 import com.metrolist.shared.generated.resources.song_type
+import com.metrolist.shared.generated.resources.video
 import com.metrolist.shared.model.AlbumItem
 import com.metrolist.shared.model.ArtistItem
 import com.metrolist.shared.model.ArtistTiny
@@ -128,6 +139,7 @@ import com.metrolist.shared.settings.ArtistNameAliases
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.settings.displayName
 import com.metrolist.shared.settings.displayTitle
+import com.metrolist.shared.state.GlobalYouTubeRepository
 import com.metrolist.shared.ui.components.AlbumPlayButton
 import com.metrolist.shared.ui.components.AlertDialog
 import com.metrolist.shared.ui.components.ArtistSubtitle
@@ -166,6 +178,7 @@ import com.metrolist.shared.ui.utils.artistArtworkShape
 import com.metrolist.shared.ui.utils.artworkBlur
 import com.metrolist.shared.ui.utils.carouselScroll
 import com.metrolist.shared.ui.utils.desktopArrowScroll
+import com.metrolist.shared.ui.utils.nativeBlurCompat
 import com.metrolist.shared.ui.utils.supportsNativeBlur
 import com.metrolist.shared.utils.formatDuration
 import com.metrolist.shared.utils.monthlyAudienceText
@@ -176,6 +189,8 @@ import com.metrolist.shared.viewmodels.SearchViewModel.SearchUiState
 import com.metrolist.shared.viewmodels.searchPresentation
 import com.valentinilk.shimmer.shimmer
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import org.jetbrains.compose.resources.stringResource
 
 // Mochy's search page gutter
@@ -509,6 +524,9 @@ private fun SearchEmptyState(
                                 row.forEach { genre ->
                                     MochyMoodTile(
                                         title = genre.name,
+                                        accentColor = genre.accentColor,
+                                        browseId = genre.id,
+                                        params = genre.params,
                                         onClick = {
                                             onMoodClick(
                                                 BrowseItem(
@@ -776,6 +794,14 @@ private fun SearchSuggestionsList(
     ) {
         if (querySuggestions.isNotEmpty()) {
             item {
+                // the dark theme heads its suggestions as Mochy heads every search section
+                if (MaterialTheme.colorScheme.background.luminance() < 0.5f) {
+                    Column {
+                        SearchSectionTitle(text.suggestions)
+                        Spacer(Modifier.height(8.dp))
+                    }
+                    return@item
+                }
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
                     Text(
                         text = text.suggestions,
@@ -1978,6 +2004,37 @@ private fun SearchResultGroup(
                 onArtistClick = onArtistClick,
                 onAlbumClick = onAlbumClick,
             )
+        } else if (isTopResults && items.isNotEmpty() && MaterialTheme.colorScheme.background.luminance() < 0.5f) {
+            // Mochy's top result: the one card, its cover blurred behind it and a white play button, the rest as rows
+            val mainItem = items.first()
+            MochyTopResultCard(
+                item = mainItem,
+                active = currentSongId == mainItem.id,
+                playing = currentSongId == mainItem.id && isPlaying,
+                onClick = { onItemClick(mainItem) },
+                onLongClick = { onItemLongClick(mainItem) },
+                onPlay =
+                    onAlbumPlay?.takeIf { mainItem is AlbumItem }?.let { play -> { play(mainItem as AlbumItem) } }
+                        ?: { onItemClick(mainItem) },
+            )
+            Spacer(Modifier.height(22.dp))
+            items.drop(1).forEach { item ->
+                itemContainer(item) {
+                    SearchResultItem(
+                        item = item,
+                        textData = text,
+                        currentSongId = currentSongId,
+                        isPlaying = isPlaying,
+                        onClick = { onItemClick(item) },
+                        onMenuClick = { onItemLongClick(item) },
+                        onArtistClick = onArtistClick,
+                        onAlbumClick = onAlbumClick,
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                        isWide = isWide,
+                        onAlbumPlay = onAlbumPlay?.let { play -> { (item as? AlbumItem)?.let(play) } },
+                    )
+                }
+            }
         } else if (isTopResults && items.isNotEmpty()) {
             val mainItem = items.first()
             val relatedItems = items.drop(1).take(3)
@@ -2352,23 +2409,30 @@ private fun SearchSectionTitle(title: String) {
     }
 }
 
-// the reference tints a tile from its stripe colour; the API gives none here, so every tile takes the reference's default tint
-private val MoodTileTint = Color(0xFF3A3A44)
-
-/** a mood or genre tile: a tinted 14dp card with its name, opening the browse page for it */
+/** a mood or genre tile: a 14dp card tinted with the genre's own stripe colour, two of its covers leaning at the end */
 @Composable
 private fun MochyMoodTile(
     title: String,
+    accentColor: Long?,
+    browseId: String,
+    params: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val tint = remember(accentColor) { moodTint(accentColor) }
+    var titleWraps by remember(title) { mutableStateOf(false) }
     val tileBrush =
-        Brush.linearGradient(
-            listOf(
-                blendOver(MoodTileTint.copy(alpha = 0.55f), MochySearchColors.Tile),
-                blendOver(MoodTileTint.copy(alpha = 0.16f), MochySearchColors.Tile),
-            ),
-        )
+        remember(tint) {
+            Brush.linearGradient(
+                listOf(
+                    blendOver(tint.copy(alpha = 0.55f), MochySearchColors.Tile),
+                    blendOver(tint.copy(alpha = 0.16f), MochySearchColors.Tile),
+                ),
+            )
+        }
+    val coverKey = browseId + "|" + params.orEmpty()
+    LaunchedEffect(coverKey) { MoodCovers.request(browseId, params) }
+    val covers = MoodCovers.covers[coverKey].orEmpty()
     Box(
         modifier =
             modifier
@@ -2376,8 +2440,31 @@ private fun MochyMoodTile(
                 .clip(RoundedCornerShape(14.dp))
                 .background(brush = tileBrush)
                 .clickable(onClick = onClick),
-        contentAlignment = Alignment.CenterStart,
     ) {
+        Box(
+            modifier =
+                Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 2.dp)
+                    .size(width = 84.dp, height = 76.dp)
+                    // a wrapping title runs under the covers, so they fade from its side
+                    .graphicsLayer { compositingStrategy = if (titleWraps) CompositingStrategy.Offscreen else CompositingStrategy.Auto }
+                    .drawWithCache {
+                        val fade =
+                            Brush.horizontalGradient(
+                                0.00f to Color.Transparent,
+                                0.42f to Color.Black.copy(alpha = 0.55f),
+                                0.70f to Color.Black,
+                            )
+                        onDrawWithContent {
+                            drawContent()
+                            if (titleWraps) drawRect(brush = fade, blendMode = BlendMode.DstIn)
+                        }
+                    },
+        ) {
+            MoodLayeredCover(covers.getOrNull(1), rotation = -24f, offsetX = (-2).dp, offsetY = 2.dp, size = 44.dp)
+            MoodLayeredCover(covers.getOrNull(0), rotation = -6f, offsetX = 28.dp, offsetY = 13.dp, size = 48.dp)
+        }
         Text(
             text = title,
             fontFamily = mochyInterFontFamily(),
@@ -2387,8 +2474,78 @@ private fun MochyMoodTile(
             color = MochySearchColors.Primary,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(start = 14.dp, end = 14.dp),
+            onTextLayout = { result ->
+                val wraps = result.lineCount > 1
+                if (wraps != titleWraps) titleWraps = wraps
+            },
+            modifier = Modifier.align(Alignment.CenterStart).padding(start = 14.dp, end = 70.dp),
         )
+    }
+}
+
+@Composable
+private fun BoxScope.MoodLayeredCover(
+    url: String?,
+    rotation: Float,
+    offsetX: Dp,
+    offsetY: Dp,
+    size: Dp,
+) {
+    Box(
+        modifier =
+            Modifier
+                .align(Alignment.CenterStart)
+                .size(size)
+                .graphicsLayer {
+                    rotationZ = rotation
+                    translationX = offsetX.toPx()
+                    translationY = offsetY.toPx()
+                    shape = RoundedCornerShape(8.dp)
+                    clip = true
+                }.background(MochySearchColors.TileHigh),
+    ) {
+        if (url != null) AsyncImage(url = url, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+    }
+}
+
+// the reference lifts the genre's stripe colour toward a soft mid grey so every tint reads under white text
+private fun moodTint(stripeColor: Long?): Color {
+    val argb = stripeColor?.toInt() ?: 0
+    val r = (argb shr 16) and 0xFF
+    val g = (argb shr 8) and 0xFF
+    val b = argb and 0xFF
+    if (r == 0 && g == 0 && b == 0) return Color(0xFF3A3A44)
+    val lift = { c: Int -> (c + (170 - c) * 0.45f).toInt().coerceIn(40, 220) }
+    return Color(lift(r), lift(g), lift(b))
+}
+
+/** The first two covers of each mood's page, fetched once per run and a few at a time. */
+private object MoodCovers {
+    val covers = mutableStateMapOf<String, List<String>>()
+    private val requested = mutableSetOf<String>()
+    private val gate = Semaphore(3)
+
+    suspend fun request(
+        browseId: String,
+        params: String?,
+    ) {
+        val key = browseId + "|" + params.orEmpty()
+        if (!requested.add(key)) return
+        val urls =
+            gate.withPermit {
+                runCatching {
+                    GlobalYouTubeRepository.instance
+                        .getBrowsePageData(browseId, params, loadAllPages = false)
+                        .sections
+                        .asSequence()
+                        .flatMap { it.items.asSequence() }
+                        .mapNotNull { it.thumbnail }
+                        .distinct()
+                        .take(2)
+                        .toList()
+                }.getOrNull()
+            }
+        if (urls.isNullOrEmpty()) requested.remove(key) else covers[key] = urls
     }
 }
 
@@ -2479,6 +2636,156 @@ private fun MochyResultRow(
                 tint = MochySearchColors.Secondary,
                 modifier = Modifier.size(20.dp),
             )
+        }
+    }
+}
+
+/** Mochy's top result: its cover blurred and darkened behind it, the cover itself, the title, what it is, and a white play button. */
+@Composable
+private fun MochyTopResultCard(
+    item: YTItem,
+    active: Boolean,
+    playing: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    onPlay: () -> Unit,
+) {
+    val kind =
+        when (item) {
+            is SongItem -> {
+                if (item.musicVideoType != null &&
+                    item.musicVideoType != "MUSIC_VIDEO_TYPE_ATV"
+                ) {
+                    stringResource(Res.string.video)
+                } else {
+                    stringResource(Res.string.song)
+                }
+            }
+
+            is AlbumItem -> {
+                stringResource(Res.string.album)
+            }
+
+            is ArtistItem -> {
+                stringResource(Res.string.artist)
+            }
+
+            is PlaylistItem -> {
+                stringResource(Res.string.playlist)
+            }
+
+            else -> {
+                null
+            }
+        }
+    val detail =
+        when (item) {
+            is SongItem -> {
+                listOfNotNull(
+                    kind,
+                    item.artists.joinToString { it.name }.takeIf { it.isNotBlank() },
+                    item.duration?.let { seconds -> "${seconds / 60}:${(seconds % 60).toString().padStart(2, '0')}" },
+                )
+            }
+
+            is AlbumItem -> {
+                listOfNotNull(kind, item.artists?.joinToString { it.name }?.takeIf { it.isNotBlank() }, item.year?.toString())
+            }
+
+            is PlaylistItem -> {
+                listOfNotNull(kind, item.author)
+            }
+
+            else -> {
+                listOfNotNull(kind)
+            }
+        }.joinToString("  •  ")
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = SearchHorizontalPadding)
+                .clip(RoundedCornerShape(16.dp))
+                .background(MochySearchColors.Tile)
+                .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(16.dp))
+                .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+    ) {
+        if (item.thumbnail != null) {
+            AsyncImage(
+                url = item.thumbnail,
+                contentScale = ContentScale.Crop,
+                modifier =
+                    Modifier
+                        .matchParentSize()
+                        .graphicsLayer { alpha = 0.55f }
+                        .nativeBlurCompat(70f),
+            )
+            Box(
+                Modifier
+                    .matchParentSize()
+                    .background(
+                        Brush.verticalGradient(
+                            0f to Color.Black.copy(alpha = 0.35f),
+                            0.55f to Color.Black.copy(alpha = 0.62f),
+                            1f to Color.Black.copy(alpha = 0.88f),
+                        ),
+                    ),
+            )
+        }
+        Column(Modifier.padding(16.dp)) {
+            Box(
+                Modifier
+                    .size(108.dp)
+                    .clip(if (item is ArtistItem) CircleShape else RoundedCornerShape(8.dp))
+                    .background(MochySearchColors.TileHigh),
+            ) {
+                if (item.thumbnail !=
+                    null
+                ) {
+                    AsyncImage(url = item.displayThumbnailUrl, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                }
+            }
+            Spacer(Modifier.height(14.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        text = item.title,
+                        fontFamily = mochyInterFontFamily(),
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MochySearchColors.Primary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = detail,
+                        fontFamily = mochyInterFontFamily(),
+                        fontSize = 12.sp,
+                        color = MochySearchColors.Secondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                if (item !is ArtistItem) {
+                    Spacer(Modifier.width(12.dp))
+                    Box(
+                        Modifier
+                            .size(46.dp)
+                            .clip(CircleShape)
+                            .background(Color.White)
+                            .clickable(onClick = onPlay),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = if (active && playing) MetrolistIcons.Filled.Pause else MetrolistIcons.Filled.PlayArrow,
+                            contentDescription = null,
+                            tint = Color.Black,
+                            modifier = Modifier.size(24.dp),
+                        )
+                    }
+                }
+            }
         }
     }
 }

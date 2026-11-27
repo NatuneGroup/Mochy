@@ -5,13 +5,14 @@
 package com.metrolist.shared.ui.navigation
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -30,9 +31,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ShortNavigationBarDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -45,15 +44,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
@@ -69,6 +65,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import com.metrolist.shared.ui.components.focusOutline
+import com.metrolist.shared.ui.mochy.MochyChromeHighlightColor
+import com.metrolist.shared.ui.mochy.MochyChromeSurface
 import com.metrolist.shared.ui.mochy.press3D
 import com.metrolist.shared.ui.mochy.pressBounce
 import com.metrolist.shared.ui.mochy.smoothFrames
@@ -76,6 +74,8 @@ import com.metrolist.shared.ui.theme.rememberReducedMotion
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -84,7 +84,6 @@ val LocalFloatingNavBar = compositionLocalOf { false }
 
 private const val TAP_SETTLE_MS = 450L
 private const val PILL_SHOWN_FADE_MS = 200
-private const val CHROME_OUTLINE_WIDTH_PX = 2f
 
 private val FloatingBarHeight = 64.dp
 private val FloatingItemHeight = 48.dp
@@ -286,27 +285,6 @@ private fun Modifier.navPillDrag(
     }
 }
 
-private fun Modifier.chromeOutline(
-    color: Color,
-    cornerRadius: Dp? = null,
-): Modifier =
-    drawWithContent {
-        drawContent()
-        val half = CHROME_OUTLINE_WIDTH_PX / 2f
-        val radius = cornerRadius?.toPx() ?: (size.height / 2f)
-        drawRoundRect(
-            color = color,
-            topLeft = Offset(half, half),
-            size =
-                Size(
-                    (size.width - CHROME_OUTLINE_WIDTH_PX).coerceAtLeast(0f),
-                    (size.height - CHROME_OUTLINE_WIDTH_PX).coerceAtLeast(0f),
-                ),
-            cornerRadius = CornerRadius((radius - half).coerceAtLeast(0f)),
-            style = Stroke(CHROME_OUTLINE_WIDTH_PX),
-        )
-    }
-
 @Composable
 internal fun <T> FloatingNavigation(
     items: List<AdaptiveNavigationItem<T>>,
@@ -367,7 +345,6 @@ private fun <T> FloatingNavigationBar(
                 repeat(pillItems.size) { add(null) }
             }
         }
-    val outlineColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
 
     Row(
         modifier =
@@ -378,29 +355,25 @@ private fun <T> FloatingNavigationBar(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Surface(
+        MochyChromeSurface(
+            shape = CircleShape,
             modifier =
                 Modifier
                     .weight(1f)
                     .height(FloatingBarHeight)
                     .press3D(maxTilt = 4f, pressedScale = 0.985f, enabled = !reducedMotion),
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.surfaceContainer,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            shadowElevation = FloatingBarShadow,
         ) {
             Row(
                 modifier =
                     Modifier
                         .fillMaxWidth()
                         .height(FloatingBarHeight)
-                        .chromeOutline(outlineColor)
                         .padding(horizontal = NavRowPadding)
                         .navHighlight(
                             pill = pill,
                             tabCount = pillItems.size,
                             tabBounds = tabBounds,
-                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            color = MochyChromeHighlightColor,
                         ).navPillDrag(
                             pill = pill,
                             tabCount = pillItems.size,
@@ -437,33 +410,27 @@ private fun <T> FloatingNavigationBar(
 
         if (separateItem != null) {
             val selected = separateItem.key == selectedKey
-            val container by animateColorAsState(
-                if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainer,
-                label = "floatingSearchContainer",
-            )
-            val content by animateColorAsState(
-                if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface,
-                label = "floatingSearchContent",
-            )
-            Surface(
-                onClick = { onSelect(separateItem.key) },
+            MochyChromeSurface(
+                shape = CircleShape,
                 modifier =
                     Modifier
                         .size(FloatingBarHeight)
                         .press3D(maxTilt = 6f, pressedScale = 0.94f, enabled = !reducedMotion)
                         .then(itemModifier(separateItem.key)),
-                shape = CircleShape,
-                color = container,
-                contentColor = content,
-                shadowElevation = FloatingBarShadow,
             ) {
                 Box(
                     contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize().chromeOutline(outlineColor),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .background(if (selected) MochyChromeHighlightColor else Color.Transparent)
+                            .clickable(onClick = { onSelect(separateItem.key) })
+                            .semantics { contentDescription = separateItem.label },
                 ) {
                     Icon(
                         imageVector = if (selected) separateItem.selectedIcon else separateItem.icon,
-                        contentDescription = separateItem.label,
+                        contentDescription = null,
+                        tint = Color.White,
                     )
                 }
             }
@@ -503,10 +470,9 @@ private fun <T> FloatingNavigationItem(
                 ).semantics { contentDescription = item.label },
         contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            imageVector = item.icon,
-            contentDescription = null,
-            tint = Color.White,
+        TabIcon(
+            vector = item.icon,
+            res = item.iconRes,
             modifier =
                 Modifier
                     .size(iconSize)
@@ -515,10 +481,9 @@ private fun <T> FloatingNavigationItem(
                         compositingStrategy = CompositingStrategy.ModulateAlpha
                     },
         )
-        Icon(
-            imageVector = item.selectedIcon,
-            contentDescription = null,
-            tint = Color.White,
+        TabIcon(
+            vector = item.selectedIcon,
+            res = item.selectedIconRes,
             modifier =
                 Modifier
                     .size(iconSize)
@@ -526,6 +491,29 @@ private fun <T> FloatingNavigationItem(
                         alpha = lit
                         compositingStrategy = CompositingStrategy.ModulateAlpha
                     },
+        )
+    }
+}
+
+@Composable
+private fun TabIcon(
+    vector: ImageVector,
+    res: DrawableResource?,
+    modifier: Modifier,
+) {
+    if (res != null) {
+        Icon(
+            painter = painterResource(res),
+            contentDescription = null,
+            tint = Color.White,
+            modifier = modifier,
+        )
+    } else {
+        Icon(
+            imageVector = vector,
+            contentDescription = null,
+            tint = Color.White,
+            modifier = modifier,
         )
     }
 }

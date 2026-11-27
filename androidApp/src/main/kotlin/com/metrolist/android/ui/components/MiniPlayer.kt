@@ -110,6 +110,7 @@ import com.metrolist.android.playback.LocalPlayerConnection
 import com.metrolist.android.ui.player.MusicVideoSurface
 import com.metrolist.android.ui.theme.PlayerColorExtractor
 import com.metrolist.shared.constants.MiniPlayerHeight
+import com.metrolist.shared.constants.MochyMiniPlayerHorizontalPadding
 import com.metrolist.shared.constants.ModernMiniPlayerHorizontalPadding
 import com.metrolist.shared.constants.modernMiniPlayerHeight
 import com.metrolist.shared.db.MusicDatabase
@@ -349,7 +350,9 @@ fun MiniPlayer(
                     if (isModern || isExpressiveMiniPlayer || isMochyMiniPlayer) {
                         Modifier
                             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
-                            .padding(horizontal = ModernMiniPlayerHorizontalPadding)
+                            .padding(
+                                horizontal = if (isMochyMiniPlayer) MochyMiniPlayerHorizontalPadding else ModernMiniPlayerHorizontalPadding,
+                            )
                     } else {
                         Modifier
                     },

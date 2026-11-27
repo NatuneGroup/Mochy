@@ -152,6 +152,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.metrolist.shared.api.artwork.CanvasContentSource
+import com.metrolist.shared.api.lyrics.LyricsUtils
 import com.metrolist.shared.cast.CastState
 import com.metrolist.shared.constants.QueuePeekHeight
 import com.metrolist.shared.generated.resources.Res
@@ -187,7 +188,9 @@ import com.metrolist.shared.generated.resources.unknown
 import com.metrolist.shared.generated.resources.unlike
 import com.metrolist.shared.generated.resources.video
 import com.metrolist.shared.playback.LocalPlayerSession
+import com.metrolist.shared.playback.PlaybackSeekSource
 import com.metrolist.shared.playback.SleepTimerState
+import com.metrolist.shared.settings.FlagshipBottomBarStyle
 import com.metrolist.shared.settings.PlayerBackgroundStyle
 import com.metrolist.shared.settings.PlayerCoverStyle
 import com.metrolist.shared.settings.PlayerThumbnailStyle
@@ -229,9 +232,11 @@ import com.metrolist.shared.ui.components.vintageOnButtonColor
 import com.metrolist.shared.ui.haptics.HapticEvent
 import com.metrolist.shared.ui.haptics.rememberMetrolistHaptics
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.lyrics.natune.NatuneLyricsOverlay
 import com.metrolist.shared.ui.mochy.LikeBurstOverlay
 import com.metrolist.shared.ui.mochy.LikeBurstState
 import com.metrolist.shared.ui.mochy.LikeSlot
+import com.metrolist.shared.ui.mochy.lyrics.PlaybackClock
 import com.metrolist.shared.ui.navigation.NavigationBackHandler
 import com.metrolist.shared.ui.navigation.blockInput
 import com.metrolist.shared.ui.player.mochy.BedsideClock
@@ -239,19 +244,35 @@ import com.metrolist.shared.ui.player.mochy.FlagshipActions
 import com.metrolist.shared.ui.player.mochy.FlagshipBarBottomGap
 import com.metrolist.shared.ui.player.mochy.FlagshipBarHeight
 import com.metrolist.shared.ui.player.mochy.FlagshipBottomControls
+import com.metrolist.shared.ui.player.mochy.FlagshipCardDeck
 import com.metrolist.shared.ui.player.mochy.FlagshipControlsShade
+import com.metrolist.shared.ui.player.mochy.FlagshipDeckHeight
+import com.metrolist.shared.ui.player.mochy.FlagshipDeckPage
 import com.metrolist.shared.ui.player.mochy.FlagshipDiscCover
+import com.metrolist.shared.ui.player.mochy.FlagshipFormatBadge
 import com.metrolist.shared.ui.player.mochy.FlagshipHandle
 import com.metrolist.shared.ui.player.mochy.FlagshipLandscapePlayer
 import com.metrolist.shared.ui.player.mochy.FlagshipSidePadding
 import com.metrolist.shared.ui.player.mochy.FlagshipTransport
+import com.metrolist.shared.ui.player.mochy.MochyOnlyPlayerTypes
+import com.metrolist.shared.ui.player.mochy.MochyStylePicker
 import com.metrolist.shared.ui.player.mochy.coverBleed
 import com.metrolist.shared.ui.player.mochy.coverFadeToBottom
+import com.metrolist.shared.ui.player.mochy.flagshipCodecLabel
 import com.metrolist.shared.ui.player.mochy.flagshipFontFamily
 import com.metrolist.shared.ui.player.mochy.ipod.IpodPlayerStyle
 import com.metrolist.shared.ui.player.mochy.ipod.isIpodWholeDevice
 import com.metrolist.shared.ui.player.mochy.ipod.rememberIpodLook
 import com.metrolist.shared.ui.player.mochy.isDiscLook
+import com.metrolist.shared.ui.player.mochy.styles.AlternatePlayerStyle
+import com.metrolist.shared.ui.player.mochy.styles.AlternateStyle
+import com.metrolist.shared.ui.player.mochy.styles.LocalStyleInteractive
+import com.metrolist.shared.ui.player.mochy.styles.LocalStyleLyricLines
+import com.metrolist.shared.ui.player.mochy.styles.LocalStyleLyricsOffset
+import com.metrolist.shared.ui.player.mochy.styles.LocalStyleSeedColor
+import com.metrolist.shared.ui.player.mochy.styles.LocalStyleTrack
+import com.metrolist.shared.ui.player.mochy.styles.StyleActions
+import com.metrolist.shared.ui.player.mochy.styles.StyleTrack
 import com.metrolist.shared.ui.player.mochy.turntable.TurntableControls
 import com.metrolist.shared.ui.player.mochy.turntable.TurntableStage
 import com.metrolist.shared.ui.share.SongShareCardDialog
@@ -694,7 +715,7 @@ fun PlayerScreen(
 
     val playerType =
         rememberMochyLook().playerType.let {
-            if (isTv && (it == PlayerType.MOCHY || it == PlayerType.TURNTABLE || it == PlayerType.IPOD)) {
+            if (isTv && it in MochyOnlyPlayerTypes) {
                 PlayerType.MODERN
             } else {
                 it
@@ -703,10 +724,19 @@ fun PlayerScreen(
     val usesMochyFlagship = playerType == PlayerType.MOCHY
     val usesMochyTurntable = playerType == PlayerType.TURNTABLE
     val usesIpodPlayer = playerType == PlayerType.IPOD
+    val alternateStyle =
+        when (playerType) {
+            PlayerType.POSTER -> AlternateStyle.POSTER
+            PlayerType.TIMELINE -> AlternateStyle.TIMELINE
+            PlayerType.LYRICS_STAGE -> AlternateStyle.LYRICS
+            else -> null
+        }
+    // a style that draws the whole player itself, with no cover, controls or bottom bar of the player's own
+    val usesStylePlayer = usesIpodPlayer || alternateStyle != null
     val usesMochyChrome = usesMochyFlagship || usesMochyTurntable
     val flagshipCoverStyle = if (usesMochyFlagship) Settings.shared.playerCoverStyle else PlayerCoverStyle.SQUARED
     val flagshipFont = if (usesMochyChrome) flagshipFontFamily() else null
-    val usesFullscreenThumbnail = playerThumbnailStyle == PlayerThumbnailStyle.FULLSCREEN && !usesMochyTurntable && !usesIpodPlayer
+    val usesFullscreenThumbnail = playerThumbnailStyle == PlayerThumbnailStyle.FULLSCREEN && !usesMochyTurntable && !usesStylePlayer
     val prefersTallCover = usesFullscreenThumbnail && !isLandscape
     val playbackNetwork by PlaybackNetworkStateStore.state.collectAsState()
     val artworkAllowedOnNetwork = Settings.shared.isAnimatedArtworkAllowedOnNetwork(playbackNetwork)
@@ -875,7 +905,10 @@ fun PlayerScreen(
     var canvasMinimalUi by rememberSaveable { mutableStateOf(false) }
     if (!isCanvasBackdropVisible || !allowArtworkExpansion) canvasMinimalUi = false
     val shouldFetchLyrics = playerContentState.isActive && (uiState.isLyricsVisible || uiState.isSubtitleActive)
-    val shouldLoadLyrics = shouldFetchLyrics || (playerContentState.isActive && (Settings.shared.showLyricsOnPlayer || canvasMinimalUi))
+    // Mochy's flagship sings the current line on its bottom card, so it wants the lyrics whenever it's open
+    val flagshipDeck = usesMochyFlagship && Settings.shared.flagshipBottomBarStyle == FlagshipBottomBarStyle.STACK
+    val shouldLoadLyrics =
+        shouldFetchLyrics || (playerContentState.isActive && (Settings.shared.showLyricsOnPlayer || canvasMinimalUi || flagshipDeck))
 
     LaunchedEffect(
         currentSong?.id,
@@ -987,7 +1020,20 @@ fun PlayerScreen(
                     if (isImmersive) 16.dp else 0.dp,
                 )
             val portraitControlsHeight =
-                if (usesMochyChrome) FlagshipBarHeight + FlagshipBarBottomGap else QueuePeekHeight + 16.dp
+                when {
+                    flagshipDeck -> FlagshipDeckHeight
+                    usesMochyChrome -> FlagshipBarHeight + FlagshipBarBottomGap
+                    else -> QueuePeekHeight + 16.dp
+                }
+            // Mochy's flagship centres the transport row between the seek bar and the deck, the gap growing with
+            // the screen: (19% of the height - 37dp - the deck + the 30dp above the row + the cover's 64dp lift) / 2
+            val deckTransportGap =
+                (
+                    (
+                        maxHeight * 0.19f - 37.dp - FlagshipDeckHeight + 30.dp +
+                            (if (flagshipCoverStyle == PlayerCoverStyle.EDGE_TO_EDGE) 64.dp else 0.dp)
+                    ) / 2f
+                ).coerceAtLeast(16.dp)
             val queuePeekHeight = if (useLandscapeLayout) 0.dp else portraitControlsHeight + navigationBarBottomPadding
             val queueSheetState =
                 rememberBottomSheetState(
@@ -1417,6 +1463,35 @@ fun PlayerScreen(
                                 isCasting = castState.isConnected,
                                 isBuffering = castState.isBuffering,
                             )
+                        } else if (alternateStyle != null && !showVideoSurface && !uiState.isLyricsVisible) {
+                            val styleTrack =
+                                remember(currentSong) {
+                                    StyleTrack(
+                                        title = currentSong?.title.orEmpty(),
+                                        artist = currentSong?.artists?.joinToString { it.name }.orEmpty(),
+                                        album = currentSong?.album.orEmpty(),
+                                        artwork = currentSong?.displayThumbnail,
+                                    )
+                                }
+                            CompositionLocalProvider(
+                                LocalStyleTrack provides styleTrack,
+                                LocalStyleLyricLines provides uiState.lyrics,
+                                LocalStyleSeedColor provides (uiState.gradientColors.firstOrNull() ?: LocalStyleSeedColor.current),
+                                LocalStyleLyricsOffset provides { uiState.lyricsOffsetMs.toLong() },
+                                LocalStyleInteractive provides { playerContentState.isActive },
+                            ) {
+                                AlternatePlayerStyle(
+                                    style = alternateStyle,
+                                    actions =
+                                        StyleActions(
+                                            onOtherMenu = { showPlayerMenu = true },
+                                            onEditPlayer = MochyStylePicker::show,
+                                            onLyrics = { viewModel.setLyricsVisible(true) },
+                                            onQueue = ::openQueueSheet,
+                                        ),
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                            }
                         } else if (usesIpodPlayer && !showVideoSurface && !uiState.isLyricsVisible) {
                             IpodPlayerStyle(
                                 active = contentActive,
@@ -1714,7 +1789,8 @@ fun PlayerScreen(
                                     Spacer(modifier = Modifier.height(portraitControlsHeight + 16.dp))
                                 } else {
                                     AnimatedContent(
-                                        targetState = uiState.isLyricsVisible,
+                                        // the flagship's lyrics are Natune's sheet over the player, not this inline pane
+                                        targetState = uiState.isLyricsVisible && !(usesMochyFlagship && !useLandscapeLayout),
                                         transitionSpec = {
                                             fadeIn(animationSpec = tween(400, delayMillis = 90))
                                                 .togetherWith(fadeOut(animationSpec = tween(400)))
@@ -1741,8 +1817,9 @@ fun PlayerScreen(
                                                 modifier = Modifier.fillMaxSize(),
                                                 horizontalAlignment = Alignment.CenterHorizontally,
                                             ) {
+                                                // Mochy's flagship has nothing over its cover: cast and the audio/video switch are in its menu
                                                 AnimatedVisibility(
-                                                    visible = !canvasMinimalUi,
+                                                    visible = !canvasMinimalUi && !usesMochyFlagship,
                                                     enter = canvasControlsEnter,
                                                     exit = canvasControlsExit,
                                                 ) {
@@ -2348,45 +2425,62 @@ fun PlayerScreen(
                                                         },
                                                 ) { displayedSong ->
                                                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                                        Text(
-                                                            text = displayedSong?.title ?: stringResource(Res.string.unknown),
-                                                            style =
-                                                                (
-                                                                    if (usesCanvasThumbnail) {
-                                                                        MaterialTheme.typography.titleMedium
-                                                                    } else {
-                                                                        MaterialTheme.typography.titleLarge
-                                                                    }
-                                                                ).let { style ->
-                                                                    flagshipFont?.let { style.copy(fontFamily = it) } ?: style
-                                                                },
-                                                            fontWeight = FontWeight.Bold,
-                                                            color = textBackgroundColor,
-                                                            maxLines = 1,
-                                                            softWrap = false,
-                                                            overflow = TextOverflow.Ellipsis,
-                                                            modifier =
-                                                                Modifier
-                                                                    .clickable(
-                                                                        enabled =
-                                                                            displayedSong != null &&
-                                                                                (usesMochyChrome || displayedSong.albumId != null),
-                                                                    ) {
-                                                                        if (usesMochyChrome) {
-                                                                            showSongDetails = true
+                                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                                            Text(
+                                                                text = displayedSong?.title ?: stringResource(Res.string.unknown),
+                                                                style =
+                                                                    (
+                                                                        if (usesCanvasThumbnail) {
+                                                                            MaterialTheme.typography.titleMedium
                                                                         } else {
-                                                                            displayedSong?.albumId?.let(onNavigateToAlbum)
+                                                                            MaterialTheme.typography.titleLarge
                                                                         }
-                                                                    }.then(
-                                                                        displayedSong?.let { song ->
-                                                                            rememberTrackMarquee(
-                                                                                trackId = song.id,
-                                                                                enabled = LocalPlayerContentActive.current,
-                                                                                initialDelayMillis = 3000L,
-                                                                            )
-                                                                        } ?: Modifier,
-                                                                    ),
-                                                        )
+                                                                    ).let { style ->
+                                                                        flagshipFont?.let { style.copy(fontFamily = it) } ?: style
+                                                                    },
+                                                                fontWeight = FontWeight.Bold,
+                                                                color = textBackgroundColor,
+                                                                maxLines = 1,
+                                                                softWrap = false,
+                                                                overflow = TextOverflow.Ellipsis,
+                                                                modifier =
+                                                                    Modifier
+                                                                        .weight(1f, fill = false)
+                                                                        .clickable(
+                                                                            enabled =
+                                                                                displayedSong != null &&
+                                                                                    (usesMochyChrome || displayedSong.albumId != null),
+                                                                        ) {
+                                                                            if (usesMochyChrome) {
+                                                                                showSongDetails = true
+                                                                            } else {
+                                                                                displayedSong?.albumId?.let(onNavigateToAlbum)
+                                                                            }
+                                                                        }.then(
+                                                                            displayedSong?.let { song ->
+                                                                                rememberTrackMarquee(
+                                                                                    trackId = song.id,
+                                                                                    enabled = LocalPlayerContentActive.current,
+                                                                                    initialDelayMillis = 3000L,
+                                                                                )
+                                                                            } ?: Modifier,
+                                                                        ),
+                                                            )
+                                                            // Mochy's format tag beside the flagship's title, once the stream's codec is known
+                                                            val badge =
+                                                                if (usesMochyFlagship) {
+                                                                    flagshipCodecLabel(
+                                                                        playbackResource?.mimeType,
+                                                                        playbackResource?.codecs,
+                                                                    )
+                                                                } else {
+                                                                    null
+                                                                }
+                                                            if (badge != null) {
+                                                                Spacer(Modifier.width(8.dp))
+                                                                FlagshipFormatBadge(badge)
+                                                            }
+                                                        }
                                                         PlayerArtistLine(
                                                             artists = displayedSong?.artists,
                                                             onNavigateToArtist = onNavigateToArtist,
@@ -2566,7 +2660,16 @@ fun PlayerScreen(
                                     ) {
                                         Column {
                                             if (!isListenTogetherGuest) {
-                                                Spacer(modifier = Modifier.height(if (usesMochyChrome) 24.dp else 8.dp))
+                                                Spacer(
+                                                    modifier =
+                                                        Modifier.height(
+                                                            when {
+                                                                flagshipDeck -> deckTransportGap - 6.dp
+                                                                usesMochyChrome -> 24.dp
+                                                                else -> 8.dp
+                                                            },
+                                                        ),
+                                                )
 
                                                 when (playerType) {
                                                     PlayerType.CLASSIC -> {
@@ -2655,6 +2758,9 @@ fun PlayerScreen(
                                                     PlayerType.MOCHY,
                                                     PlayerType.TURNTABLE,
                                                     PlayerType.IPOD,
+                                                    PlayerType.POSTER,
+                                                    PlayerType.TIMELINE,
+                                                    PlayerType.LYRICS_STAGE,
                                                     -> {
                                                         FlagshipTransport(
                                                             playing = isPlaying,
@@ -2710,7 +2816,18 @@ fun PlayerScreen(
                                         enter = canvasControlsEnter,
                                         exit = canvasControlsExit,
                                     ) {
-                                        Spacer(modifier = Modifier.height(portraitControlsHeight + 16.dp))
+                                        Spacer(
+                                            modifier =
+                                                Modifier.height(
+                                                    // the deck's own room is already kept under the controls by the queue sheet's peek
+                                                    if (flagshipDeck) {
+                                                        deckTransportGap
+                                                    } else {
+                                                        portraitControlsHeight +
+                                                            16.dp
+                                                    },
+                                                ),
+                                        )
                                     }
                                     playerControlsTransition.AnimatedVisibility(
                                         visible = { (expanded, minimalUi) ->
@@ -2729,7 +2846,7 @@ fun PlayerScreen(
                         }
                     }
 
-                    if (!useLandscapeLayout && !(usesIpodPlayer && !showVideoSurface && !uiState.isLyricsVisible)) {
+                    if (!useLandscapeLayout && !(usesStylePlayer && !showVideoSurface && !uiState.isLyricsVisible)) {
                         playerControlsTransition.AnimatedVisibility(
                             visible = { (_, minimalUi) -> !minimalUi },
                             enter =
@@ -2768,7 +2885,40 @@ fun PlayerScreen(
                                     }
                                 },
                                 collapsedContent = {
-                                    if (usesMochyChrome) {
+                                    if (flagshipDeck) {
+                                        val deckOffset =
+                                            LyricsUtils.combinedLyricsOffsetMs(uiState.lyricsOffsetMs, Settings.shared.globalLyricsOffsetMs)
+                                        val deckOffsetState by rememberUpdatedState(deckOffset)
+                                        val deckPlaying by rememberUpdatedState(isPlaying)
+                                        val deckSpeed by rememberUpdatedState(viewModel.playbackSpeed.collectAsState().value)
+                                        val deckClock =
+                                            remember(viewModel) {
+                                                PlaybackClock(
+                                                    readPositionMs = viewModel::currentPositionMs,
+                                                    readIsPlaying = { deckPlaying },
+                                                    readSpeed = { deckSpeed },
+                                                    offsetMs = { deckOffsetState.toLong() },
+                                                )
+                                            }
+                                        FlagshipCardDeck(
+                                            lines = uiState.lyrics,
+                                            lyricsLoaded = !uiState.isLyricsLoading,
+                                            nextTitle = nextSong?.title,
+                                            nextArtist = nextSong?.artists,
+                                            nextArtwork = nextSong?.thumbnail,
+                                            positionProvider = deckClock,
+                                            isPlaying = { deckPlaying },
+                                            onOpen = { page ->
+                                                hapticManager.perform(HapticEvent.PRESS)
+                                                when (page) {
+                                                    FlagshipDeckPage.LYRICS -> viewModel.setLyricsVisible(true)
+                                                    FlagshipDeckPage.QUEUE -> openQueueSheet()
+                                                }
+                                            },
+                                            onLongPress = MochyStylePicker::show,
+                                            modifier = Modifier.padding(horizontal = 26.dp),
+                                        )
+                                    } else if (usesMochyChrome) {
                                         FlagshipBottomControls(
                                             volume =
                                                 platform.rememberFlagshipVolume(
@@ -2941,7 +3091,7 @@ fun PlayerScreen(
                         )
                     }
 
-                    if (useLandscapeLayout && !usesMochyChrome && !usesIpodPlayer) {
+                    if (useLandscapeLayout && !usesMochyChrome && !usesStylePlayer) {
                         Box(
                             Modifier
                                 .align(Alignment.CenterEnd)
@@ -3055,6 +3205,60 @@ fun PlayerScreen(
                             onPrevious = viewModel::previous.takeUnless { isListenTogetherGuest },
                             onNext = viewModel::next.takeUnless { isListenTogetherGuest },
                         )
+                    }
+
+                    // the flagship's lyrics open as Natune's sheet over the whole player
+                    if (usesMochyFlagship && !useLandscapeLayout) {
+                        AnimatedVisibility(
+                            visible = uiState.isLyricsVisible,
+                            enter = fadeIn(tween(220)) + slideInVertically(tween(320)) { it / 10 },
+                            exit = fadeOut(tween(180)) + slideOutVertically(tween(260)) { it / 10 },
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            val lyricsOffset =
+                                LyricsUtils.combinedLyricsOffsetMs(uiState.lyricsOffsetMs, Settings.shared.globalLyricsOffsetMs)
+                            val overlayOffset by rememberUpdatedState(lyricsOffset)
+                            val overlayPlaying by rememberUpdatedState(isPlaying)
+                            val overlaySpeed by rememberUpdatedState(viewModel.playbackSpeed.collectAsState().value)
+                            val overlayClock =
+                                remember(viewModel) {
+                                    PlaybackClock(
+                                        readPositionMs = viewModel::currentPositionMs,
+                                        readIsPlaying = { overlayPlaying },
+                                        readSpeed = { overlaySpeed },
+                                        offsetMs = { overlayOffset.toLong() },
+                                    )
+                                }
+                            NatuneLyricsOverlay(
+                                lines = uiState.lyrics,
+                                isLoading = uiState.isLyricsLoading,
+                                title = currentSong?.title.orEmpty(),
+                                artist = currentSong?.artists?.joinToString { it.name }.orEmpty(),
+                                artworkUrl = currentSong?.displayThumbnail,
+                                providerName = uiState.lyricsProvider?.takeIf { it.isNotBlank() },
+                                positionProvider = overlayClock,
+                                onSeekToLine = { lyricMs ->
+                                    viewModel.seekToPosition(
+                                        LyricsUtils.lyricsSeekPositionForOffset(lyricMs, lyricsOffset),
+                                        PlaybackSeekSource("lyrics_tap"),
+                                    )
+                                },
+                                onClose = { viewModel.setLyricsVisible(false) },
+                                onMore = { showLyricsMenu = true },
+                                controls = { controlsModifier ->
+                                    FlagshipTransport(
+                                        playing = isPlaying,
+                                        loading = isPlaybackLoading,
+                                        onPlayPause = viewModel::togglePlayPause,
+                                        onPrevious = viewModel::previous,
+                                        onNext = viewModel::next,
+                                        compact = true,
+                                        contentColor = Color.White,
+                                        modifier = controlsModifier,
+                                    )
+                                },
+                            )
+                        }
                     }
 
                     if (usesMochyChrome) {

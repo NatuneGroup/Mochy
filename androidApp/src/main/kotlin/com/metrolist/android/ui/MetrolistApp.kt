@@ -245,6 +245,7 @@ import com.metrolist.innertubex.utils.YouTubeUrlParser
 import com.metrolist.shared.auth.AuthManager
 import com.metrolist.shared.auth.YouTubeSessionState
 import com.metrolist.shared.constants.MiniPlayerHeight
+import com.metrolist.shared.constants.MochyMiniPlayerBottomSpacing
 import com.metrolist.shared.constants.ModernMiniPlayerBottomSpacing
 import com.metrolist.shared.constants.WideNavigationRailCollapsedWidth
 import com.metrolist.shared.constants.modernMiniPlayerHeight
@@ -331,6 +332,9 @@ import com.metrolist.shared.ui.menu.contextMenuAnchor
 import com.metrolist.shared.ui.menu.rememberCursorContextMenuState
 import com.metrolist.shared.ui.menu.settingsPage
 import com.metrolist.shared.ui.mobile.rememberSongsPlaylistAdder
+import com.metrolist.shared.ui.mochy.LocalMochyBackdrop
+import com.metrolist.shared.ui.mochy.MochyBackdrop
+import com.metrolist.shared.ui.mochy.mochyBackdropSource
 import com.metrolist.shared.ui.navigation.AdaptiveFormFactor
 import com.metrolist.shared.ui.navigation.AdaptiveWidthBreakpoint
 import com.metrolist.shared.ui.navigation.AlbumSeed
@@ -482,7 +486,7 @@ fun MetrolistApp(
             onRejectPairing = AndroidDeviceConnect.manager::rejectPairing,
         )
         val initialStartRoute = remember { resolveAndPersistStartupScreen() }
-        val topLevelRoutes = remember { setOf(Screen.Home, Screen.Search, Screen.Library, Screen.EasterEgg) }
+        val topLevelRoutes = remember { setOf(Screen.Home, Screen.Search, Screen.Library, Screen.Settings, Screen.EasterEgg) }
         val navigationState =
             key(navigationSaveKey) {
                 rememberNavigationState(
@@ -849,7 +853,8 @@ fun MetrolistApp(
         val shouldShowTopBar =
             navigationState.topLevelRoute in topLevelScreens &&
                 currentRoute in topLevelScreens &&
-                !(mochyHomeTop && navigationState.topLevelRoute == Screen.Home)
+                // Mochy's Home and Library draw their own big titles
+                !(mochyHomeTop && (navigationState.topLevelRoute == Screen.Home || navigationState.topLevelRoute == Screen.Library))
 
         val useFloatingTopBar = Settings.shared.floatingTopBar && !hasDesktopCaption
         val topAppBarScrollBehavior = appBarScrollBehavior()
@@ -902,7 +907,7 @@ fun MetrolistApp(
             when {
                 isExpressiveMiniPlayer -> ModernMiniPlayerBottomSpacing
                 isModernMiniPlayer -> ModernMiniPlayerBottomSpacing
-                isMochyMiniPlayer -> ModernMiniPlayerBottomSpacing
+                isMochyMiniPlayer -> MochyMiniPlayerBottomSpacing
                 else -> 0.dp
             }
         val hiddenMiniPlayerBottomOffset = safeBottomPadding + miniPlayerBottomSpacing
@@ -1429,6 +1434,7 @@ fun MetrolistApp(
                     }
 
                     Box(Modifier.fillMaxSize()) {
+                        val mochyBackdrop = remember { MochyBackdrop() }
                         val playerHandlesBack by remember(playerBottomSheetState) {
                             derivedStateOf { playerBottomSheetState.progress > 0.2f && !playerBottomSheetState.isDismissed }
                         }
@@ -1447,6 +1453,7 @@ fun MetrolistApp(
                                 }
                             }
                         CompositionLocalProvider(
+                            LocalMochyBackdrop provides mochyBackdrop,
                             LocalContentObscured provides (isInPipMode || contentObscured),
                             LocalFloatingNavBar provides useFloatingNavBar,
                             LocalPlayerExpanded provides isPlayerExpanded,
@@ -1507,6 +1514,7 @@ fun MetrolistApp(
                                     // Measure the full content slot before the import card and top inset reduce the scaffold.
                                     Modifier
                                         .fillMaxSize()
+                                        .mochyBackdropSource(mochyBackdrop)
                                         .onSizeChanged { size ->
                                             if (hasBottomNavigation && !useFloatingNavBar) {
                                                 navigationBarContentInset =
@@ -1923,46 +1931,48 @@ fun MetrolistApp(
                             morphCollapsedContainer = true,
                             collapsedContent = {
                                 if (shouldRenderMiniPlayer) {
-                                    MiniPlayer(
-                                        useDesktopLayout = useDesktopMiniPlayer,
-                                        onExpand = {
-                                            focusManager.clearFocus(force = true)
-                                            keyboardController?.hide()
-                                            focusPlayPauseOnPlayerExpand = false
-                                            playerBottomSheetState.expandSoft()
-                                        },
-                                        onDpadExpand = {
-                                            focusManager.clearFocus(force = true)
-                                            keyboardController?.hide()
-                                            focusPlayPauseOnPlayerExpand = true
-                                            playerBottomSheetState.expandSoft()
-                                        },
-                                        bottomSheetState = playerBottomSheetState,
-                                        cardFocusRequester = miniPlayerFocusRequester,
-                                        modifier =
-                                            Modifier
-                                                .windowInsetsPadding(horizontalSystemBars.only(WindowInsetsSides.Horizontal))
-                                                .semantics {
-                                                    customActions =
-                                                        listOf(
-                                                            CustomAccessibilityAction(stopPlaybackLabel) {
-                                                                playerBottomSheetState.dismiss(playerConnection.prepareDismissal())
-                                                                true
-                                                            },
-                                                        )
-                                                }.onPreviewKeyEvent { event ->
-                                                    if (isAndroidTv && event.key == Key.DirectionUp) {
-                                                        event.type == KeyEventType.KeyUp ||
-                                                            contentFocusRequester.requestFocus(FocusDirection.Up)
-                                                    } else {
-                                                        false
-                                                    }
-                                                }.layout { measurable, constraints ->
-                                                    val start = miniPlayerRailPadding().roundToPx()
-                                                    val child = measurable.measure(constraints.offset(horizontal = -start))
-                                                    layout(child.width + start, child.height) { child.placeRelative(start, 0) }
-                                                },
-                                    )
+                                    CompositionLocalProvider(LocalMochyBackdrop provides mochyBackdrop) {
+                                        MiniPlayer(
+                                            useDesktopLayout = useDesktopMiniPlayer,
+                                            onExpand = {
+                                                focusManager.clearFocus(force = true)
+                                                keyboardController?.hide()
+                                                focusPlayPauseOnPlayerExpand = false
+                                                playerBottomSheetState.expandSoft()
+                                            },
+                                            onDpadExpand = {
+                                                focusManager.clearFocus(force = true)
+                                                keyboardController?.hide()
+                                                focusPlayPauseOnPlayerExpand = true
+                                                playerBottomSheetState.expandSoft()
+                                            },
+                                            bottomSheetState = playerBottomSheetState,
+                                            cardFocusRequester = miniPlayerFocusRequester,
+                                            modifier =
+                                                Modifier
+                                                    .windowInsetsPadding(horizontalSystemBars.only(WindowInsetsSides.Horizontal))
+                                                    .semantics {
+                                                        customActions =
+                                                            listOf(
+                                                                CustomAccessibilityAction(stopPlaybackLabel) {
+                                                                    playerBottomSheetState.dismiss(playerConnection.prepareDismissal())
+                                                                    true
+                                                                },
+                                                            )
+                                                    }.onPreviewKeyEvent { event ->
+                                                        if (isAndroidTv && event.key == Key.DirectionUp) {
+                                                            event.type == KeyEventType.KeyUp ||
+                                                                contentFocusRequester.requestFocus(FocusDirection.Up)
+                                                        } else {
+                                                            false
+                                                        }
+                                                    }.layout { measurable, constraints ->
+                                                        val start = miniPlayerRailPadding().roundToPx()
+                                                        val child = measurable.measure(constraints.offset(horizontal = -start))
+                                                        layout(child.width + start, child.height) { child.placeRelative(start, 0) }
+                                                    },
+                                        )
+                                    }
                                 }
                             },
                         ) {
@@ -2496,7 +2506,7 @@ fun resolveAndPersistStartupScreen(): Screen {
 
 fun NavKey.isVisibleNavigationScreen(): Boolean =
     when (this) {
-        Screen.Home, Screen.Search, Screen.Library, Screen.EasterEgg -> true
+        Screen.Home, Screen.Search, Screen.Library, Screen.Settings, Screen.EasterEgg -> true
         else -> false
     }
 
@@ -2591,6 +2601,7 @@ fun getEntryProvider(
                 onNavigateToPlaylist = { id, thumbnail -> navigator.navigate(Screen.Playlist(id, thumbnailHint = thumbnail)) },
                 onNavigateToPodcast = { podcastId -> navigator.navigate(Screen.Podcast(podcastId)) },
                 onNavigateToPlaylistImport = { navigator.navigate(Screen.PlaylistImport) },
+                onNavigateToHistory = { navigator.navigate(Screen.History) },
                 onNavigateToAutoPlaylist = { type ->
                     // Keep podcast auto playlists on the Library stack so Back returns to the podcast library.
                     navigator.navigate(Screen.Library)

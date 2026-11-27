@@ -540,7 +540,8 @@ fun SearchBar(
                                 .weight(1f)
                                 .height(barHeight)
                                 .focusRequester(focusRequester)
-                                .tvFocusHighlight(scale = 1f)
+                                // the field is already a pill; only TV, driven by a remote, needs the focus ring round it
+                                .then(if (isTv) Modifier.tvFocusHighlight(scale = 1f) else Modifier)
                                 .onFocusChanged {
                                     isFocused = it.isFocused
                                     if (!it.isFocused) tvKeyboardRequested = false

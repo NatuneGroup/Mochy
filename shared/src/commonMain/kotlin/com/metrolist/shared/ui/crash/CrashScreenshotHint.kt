@@ -1,7 +1,6 @@
 package com.metrolist.shared.ui.crash
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -22,10 +21,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun CrashScreenshotHintText() {
-    Text(
-        stringResource(Res.string.crash_screenshot_hint),
-        style = MaterialTheme.typography.bodyMedium,
-    )
+    MochyCrashBodyText(stringResource(Res.string.crash_screenshot_hint))
 }
 
 @Composable

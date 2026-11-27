@@ -133,13 +133,17 @@ import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.menu.ExpressiveSelectionMenu
 import com.metrolist.shared.ui.menu.trackPressPosition
 import com.metrolist.shared.ui.mochy.MochyModulesScreen
+import com.metrolist.shared.ui.mochy.MochyProfileHub
 import com.metrolist.shared.ui.mochy.MochyProfileSettingsScreen
 import com.metrolist.shared.ui.mochy.pressBounce
+import com.metrolist.shared.ui.navigation.LocalUseDesktopUi
+import com.metrolist.shared.ui.navigation.NavigationBackHandler
 import com.metrolist.shared.ui.navigation.PredictiveNavigationContent
 import com.metrolist.shared.ui.navigation.rememberNavigationMotion
 import com.metrolist.shared.ui.onboarding.mochy.AppSwitch
 import com.metrolist.shared.ui.settings.transition.TransitionSettingsScreen
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
+import com.metrolist.shared.ui.theme.rememberMochyLook
 import com.metrolist.shared.ui.theme.rememberReducedMotion
 import com.metrolist.shared.ui.utils.DragScrollableColumn
 import com.metrolist.shared.ui.utils.desktopArrowScroll
@@ -164,9 +168,12 @@ fun SharedSettingsScreen(
                     SettingsPageId.AUDIO_LAB +
                     SettingsPageId.TRANSITION +
                     SettingsPageId.MOCHY_PROFILE +
-                    SettingsPageId.MOCHY_MODULES,
+                    SettingsPageId.MOCHY_MODULES +
+                    MochyCategoryPageIds,
             pageContent = { page, onBack, onNavigate ->
-                if (page == SettingsPageId.EQUALIZER) {
+                if (page in MochyCategoryPageIds) {
+                    MochyCategoryPage(page, onNavigate)
+                } else if (page == SettingsPageId.EQUALIZER) {
                     MetroEqScreen(
                         rememberProfilePicker = host.rememberMetroEqProfilePicker,
                         isAudioProcessingAvailable = host.isAudioProcessingAvailable,
@@ -208,6 +215,16 @@ val LocalSettingsPageBottomPadding = compositionLocalOf { 0.dp }
 
 val LocalSettingsPageHasTopBar = compositionLocalOf { false }
 
+// Mochy's expanded header height: a custom page starts its own scroll content below it, so content scrolls up under the header
+val LocalSettingsPageTopPadding = compositionLocalOf { 0.dp }
+
+// bottom of Mochy's collapsed header bar: sticky rows pin here instead of at the expanded header
+val LocalSettingsPageCollapsedBottom = compositionLocalOf { 0.dp }
+
+// the top padding a custom page's scroll content starts at on Mochy's header, 0 everywhere else
+@Composable
+fun settingsPageHeaderTop(): Dp = if (LocalSettingsPageHasTopBar.current) LocalSettingsPageTopPadding.current else 0.dp
+
 @Composable
 fun rememberSettingsPageScrollBehavior(compactTopBar: Boolean = false): TopAppBarScrollBehavior? =
     if (LocalSettingsPageHasTopBar.current || compactTopBar) {
@@ -242,11 +259,21 @@ internal fun SharedSettingsRegistryScreen(
     val homeListState = rememberLazyListState()
     val pageListStates = registry.pages.associate { page -> key(page.id) { page.id to rememberLazyListState() } }
 
+    // wide windows in the dark theme take Mochy's list-and-page pane
+    val mochyLook = !LocalIsTv.current && MaterialTheme.colorScheme.background.luminance() < 0.5f
+
     fun openPage(
         pageId: SettingsPageId,
         parentPageId: SettingsPageId? = null,
         highlightedId: String? = null,
     ) {
+        // Mochy's look keeps these settings on its own category pages, so a search result lands there
+        val category = if (mochyLook) mochyCategoryFor(pageId)?.takeIf { registry[it] != null } else null
+        if (category != null) {
+            highlightedItemId = highlightedId?.let { "${pageId.name}:$it" }
+            pageStack = registry.settingsPageStackOnNavigate(pageStack, category, null, host.externalPages) ?: return
+            return
+        }
         if (registry[pageId] == null) return
         val nextStack = registry.settingsPageStackOnNavigate(pageStack, pageId, parentPageId, host.externalPages)
         if (nextStack == null) {
@@ -265,184 +292,185 @@ internal fun SharedSettingsRegistryScreen(
     var containerWidth by remember { mutableIntStateOf(0) }
     val expanded =
         !host.singlePane && with(LocalDensity.current) { containerWidth.toDp() >= 840.dp }
-    // wide windows in the dark theme take Mochy's list-and-page pane
-    val mochyLook = !LocalIsTv.current && MaterialTheme.colorScheme.background.luminance() < 0.5f
-    Box(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .onSizeChanged { containerWidth = it.width },
-    ) {
-        val previousPageId = pageStack.dropLast(1).lastOrNull()?.let { runCatching { SettingsPageId.valueOf(it) }.getOrNull() }
-        if (expanded && mochyLook) {
-            MochySettingsPane(
-                registry = registry,
-                host = host,
-                listSelectedPageId = registry.pages.firstOrNull { it.id.name == pageStack.firstOrNull() }?.id,
-                detailPageId = selectedPageId,
-                onPageSelected = { openPage(it) },
-                onSearchResultSelected = { pageId, itemId ->
-                    openPage(pageId, highlightedId = itemId)
-                },
-                detail = { pageId ->
-                    PredictiveNavigationContent(
-                        targetState = pageId,
-                        previousState = previousPageId ?: pageId,
-                        backEnabled = canNavigateBackFromSettings(pageStack, expanded = false),
-                        onBack = ::closePage,
-                        modifier = Modifier.fillMaxSize(),
-                    ) { shownId ->
-                        registry[shownId]?.let { page ->
-                            // the page's own header carries back and close here, so the pane adds no title row
+    val mochyPageContext = MochySettingsPageContext(registry) { settingsRevision++ }
+    CompositionLocalProvider(LocalMochySettingsPageContext provides mochyPageContext) {
+        Box(
+            modifier =
+                modifier
+                    .fillMaxSize()
+                    .onSizeChanged { containerWidth = it.width },
+        ) {
+            val previousPageId = pageStack.dropLast(1).lastOrNull()?.let { runCatching { SettingsPageId.valueOf(it) }.getOrNull() }
+            if (expanded && mochyLook) {
+                MochySettingsPane(
+                    registry = registry,
+                    host = host,
+                    listSelectedPageId = registry.pages.firstOrNull { it.id.name == pageStack.firstOrNull() }?.id,
+                    detailPageId = selectedPageId,
+                    onPageSelected = { openPage(it) },
+                    onSearchResultSelected = { pageId, itemId ->
+                        openPage(pageId, highlightedId = itemId)
+                    },
+                    detail = { pageId ->
+                        PredictiveNavigationContent(
+                            targetState = pageId,
+                            previousState = previousPageId ?: pageId,
+                            backEnabled = canNavigateBackFromSettings(pageStack, expanded = false),
+                            onBack = ::closePage,
+                            modifier = Modifier.fillMaxSize(),
+                        ) { shownId ->
+                            registry[shownId]?.let { page ->
+                                // the page's own header carries back and close here, so the pane adds no title row
+                                CompactSettingsDetail(
+                                    page = page,
+                                    listState = pageListStates.getValue(page.id),
+                                    bottomContentPadding = host.bottomContentPadding,
+                                    pageContent = host.pageContent,
+                                    lyricsPreview = host.lyricsPreview,
+                                    highlightedItemId = highlightedItemId,
+                                    onBack = ::closePage,
+                                    onNavigate = { openPage(it, parentPageId = page.id) },
+                                    onSettingValueChanged = { settingsRevision++ },
+                                    onRefresh = host.pageRefresh(page.id),
+                                    onClose = host.onClose,
+                                )
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing),
+                )
+            } else if (expanded) {
+                val detailPageId = selectedPageId ?: registry.pages.firstOrNull { !it.custom }?.id
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.surface)
+                            .windowInsetsPadding(WindowInsets.safeDrawing),
+                ) {
+                    val paneSelection = registry.pages.firstOrNull { it.id.name == pageStack.firstOrNull() }?.id ?: detailPageId
+                    SettingsNavigationPane(
+                        registry = registry,
+                        selectedPageId = paneSelection,
+                        bottomContentPadding = host.bottomContentPadding,
+                        onPageSelected = { openPage(it) },
+                        onSearchResultSelected = { pageId, itemId ->
+                            openPage(pageId, highlightedId = itemId)
+                        },
+                        modifier = Modifier.width(360.dp).fillMaxHeight(),
+                    )
+                    Column(
+                        modifier = Modifier.weight(1f).fillMaxHeight().padding(end = 12.dp, bottom = 12.dp),
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().height(80.dp).padding(start = 32.dp, end = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            if (canNavigateBackFromSettings(pageStack, expanded = true)) {
+                                IconButton(onClick = ::closePage, shapes = IconButtonDefaults.shapes()) {
+                                    Icon(MetrolistIcons.AutoMirrored.Filled.ArrowBack, stringResource(Res.string.back))
+                                }
+                            }
+                            AnimatedContent(
+                                targetState = detailPageId,
+                                transitionSpec = { navigationMotion.transition() },
+                                contentAlignment = Alignment.CenterStart,
+                                label = "desktopSettingsTitle",
+                                modifier = Modifier.weight(1f),
+                            ) { pageId ->
+                                Text(
+                                    text = pageId?.let(registry::get)?.title.orEmpty(),
+                                    style = MaterialTheme.typography.headlineMediumEmphasized,
+                                    fontFamily = mochyInterFontFamily(),
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = (-0.02).em,
+                                    maxLines = 1,
+                                    modifier = Modifier.singleLineMarquee(),
+                                )
+                            }
+                            IconButton(onClick = host.onClose, shapes = IconButtonDefaults.shapes()) {
+                                Icon(MetrolistIcons.Default.Close, stringResource(Res.string.close))
+                            }
+                        }
+                        Surface(
+                            modifier = Modifier.fillMaxWidth().weight(1f),
+                            shape = RoundedCornerShape(28.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerLow,
+                        ) {
+                            PredictiveNavigationContent(
+                                targetState = detailPageId,
+                                previousState = previousPageId ?: registry.pages.firstOrNull { !it.custom }?.id,
+                                backEnabled = canNavigateBackFromSettings(pageStack, expanded = true),
+                                onBack = ::closePage,
+                                modifier = Modifier.fillMaxSize(),
+                            ) { pageId ->
+                                Box(Modifier.fillMaxSize()) {
+                                    pageId?.let(registry::get)?.let { page ->
+                                        SettingsDetailPane(
+                                            page = page,
+                                            listState = pageListStates.getValue(page.id),
+                                            host = host,
+                                            onBack = ::closePage,
+                                            highlightedItemId = highlightedItemId,
+                                            onNavigate = { openPage(it, parentPageId = page.id) },
+                                            onSettingValueChanged = { settingsRevision++ },
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                val compactContent: @Composable (SettingsPageId?, String?) -> Unit = { pageId, itemId ->
+                    if (pageId == null) {
+                        CompactSettingsHome(
+                            registry = registry,
+                            listState = homeListState,
+                            host = host,
+                            onPageSelected = { openPage(it) },
+                            onSearchResultSelected = { resultPageId, resultItemId ->
+                                openPage(resultPageId, highlightedId = resultItemId)
+                            },
+                        )
+                    } else {
+                        registry[pageId]?.let { page ->
                             CompactSettingsDetail(
                                 page = page,
                                 listState = pageListStates.getValue(page.id),
                                 bottomContentPadding = host.bottomContentPadding,
                                 pageContent = host.pageContent,
                                 lyricsPreview = host.lyricsPreview,
-                                highlightedItemId = highlightedItemId,
+                                highlightedItemId = itemId,
                                 onBack = ::closePage,
                                 onNavigate = { openPage(it, parentPageId = page.id) },
                                 onSettingValueChanged = { settingsRevision++ },
                                 onRefresh = host.pageRefresh(page.id),
-                                onClose = host.onClose,
                             )
                         }
                     }
-                },
-                modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing),
-            )
-        } else if (expanded) {
-            val detailPageId = selectedPageId ?: registry.pages.firstOrNull { !it.custom }?.id
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surface)
-                        .windowInsetsPadding(WindowInsets.safeDrawing),
-            ) {
-                val paneSelection = registry.pages.firstOrNull { it.id.name == pageStack.firstOrNull() }?.id ?: detailPageId
-                SettingsNavigationPane(
-                    registry = registry,
-                    selectedPageId = paneSelection,
-                    bottomContentPadding = host.bottomContentPadding,
-                    onPageSelected = { openPage(it) },
-                    onSearchResultSelected = { pageId, itemId ->
-                        openPage(pageId, highlightedId = itemId)
-                    },
-                    modifier = Modifier.width(360.dp).fillMaxHeight(),
-                )
-                Column(
-                    modifier = Modifier.weight(1f).fillMaxHeight().padding(end = 12.dp, bottom = 12.dp),
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().height(80.dp).padding(start = 32.dp, end = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        if (canNavigateBackFromSettings(pageStack, expanded = true)) {
-                            IconButton(onClick = ::closePage, shapes = IconButtonDefaults.shapes()) {
-                                Icon(MetrolistIcons.AutoMirrored.Filled.ArrowBack, stringResource(Res.string.back))
-                            }
-                        }
-                        AnimatedContent(
-                            targetState = detailPageId,
-                            transitionSpec = { navigationMotion.transition() },
-                            contentAlignment = Alignment.CenterStart,
-                            label = "desktopSettingsTitle",
-                            modifier = Modifier.weight(1f),
-                        ) { pageId ->
-                            Text(
-                                text = pageId?.let(registry::get)?.title.orEmpty(),
-                                style = MaterialTheme.typography.headlineMediumEmphasized,
-                                fontFamily = mochyInterFontFamily(),
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = (-0.02).em,
-                                maxLines = 1,
-                                modifier = Modifier.singleLineMarquee(),
-                            )
-                        }
-                        IconButton(onClick = host.onClose, shapes = IconButtonDefaults.shapes()) {
-                            Icon(MetrolistIcons.Default.Close, stringResource(Res.string.close))
-                        }
-                    }
-                    Surface(
-                        modifier = Modifier.fillMaxWidth().weight(1f),
-                        shape = RoundedCornerShape(28.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerLow,
-                    ) {
-                        PredictiveNavigationContent(
-                            targetState = detailPageId,
-                            previousState = previousPageId ?: registry.pages.firstOrNull { !it.custom }?.id,
-                            backEnabled = canNavigateBackFromSettings(pageStack, expanded = true),
-                            onBack = ::closePage,
-                            modifier = Modifier.fillMaxSize(),
-                        ) { pageId ->
-                            Box(Modifier.fillMaxSize()) {
-                                pageId?.let(registry::get)?.let { page ->
-                                    SettingsDetailPane(
-                                        page = page,
-                                        listState = pageListStates.getValue(page.id),
-                                        host = host,
-                                        onBack = ::closePage,
-                                        highlightedItemId = highlightedItemId,
-                                        onNavigate = { openPage(it, parentPageId = page.id) },
-                                        onSettingValueChanged = { settingsRevision++ },
-                                    )
-                                }
-                            }
-                        }
-                    }
                 }
-            }
-        } else {
-            val compactContent: @Composable (SettingsPageId?, String?) -> Unit = { pageId, itemId ->
-                if (pageId == null) {
-                    CompactSettingsHome(
-                        registry = registry,
-                        listState = homeListState,
-                        host = host,
-                        onPageSelected = { openPage(it) },
-                        onSearchResultSelected = { resultPageId, resultItemId ->
-                            openPage(resultPageId, highlightedId = resultItemId)
-                        },
-                    )
-                } else {
-                    registry[pageId]?.let { page ->
-                        CompactSettingsDetail(
-                            page = page,
-                            listState = pageListStates.getValue(page.id),
-                            bottomContentPadding = host.bottomContentPadding,
-                            pageContent = host.pageContent,
-                            lyricsPreview = host.lyricsPreview,
-                            highlightedItemId = itemId,
-                            onBack = ::closePage,
-                            onNavigate = { openPage(it, parentPageId = page.id) },
-                            onSettingValueChanged = { settingsRevision++ },
-                            onRefresh = host.pageRefresh(page.id),
-                        )
-                    }
+                val previousContent: @Composable () -> Unit = {
+                    compactContent(previousPageId, null)
                 }
-            }
-            val previousContent: @Composable () -> Unit = {
-                compactContent(previousPageId, null)
-            }
-            PredictiveNavigationContent(
-                targetState = selectedPageId,
-                previousState = previousPageId,
-                backEnabled = canNavigateBackFromSettings(pageStack, expanded = false),
-                onBack = ::closePage,
-                modifier = Modifier.fillMaxSize(),
-            ) { pageId ->
-                compactStateHolder.SaveableStateProvider(pageId?.name ?: "settingsRoot") {
-                    if (pageId == null) {
-                        compactContent(null, highlightedItemId)
-                    } else {
-                        SwipeBackLayout(
-                            enabled = host.platform == SettingsPlatform.IOS,
-                            onBack = ::closePage,
-                            previousContent = previousContent,
-                        ) {
-                            compactContent(pageId, highlightedItemId)
+                PredictiveNavigationContent(
+                    targetState = selectedPageId,
+                    previousState = previousPageId,
+                    backEnabled = canNavigateBackFromSettings(pageStack, expanded = false),
+                    onBack = ::closePage,
+                    modifier = Modifier.fillMaxSize(),
+                ) { pageId ->
+                    compactStateHolder.SaveableStateProvider(pageId?.name ?: "settingsRoot") {
+                        if (pageId == null) {
+                            compactContent(null, highlightedItemId)
+                        } else {
+                            SwipeBackLayout(
+                                enabled = host.platform == SettingsPlatform.IOS,
+                                onBack = ::closePage,
+                                previousContent = previousContent,
+                            ) {
+                                compactContent(pageId, highlightedItemId)
+                            }
                         }
                     }
                 }
@@ -460,8 +488,23 @@ private fun CompactSettingsHome(
     onSearchResultSelected: (SettingsPageId, String?) -> Unit,
 ) {
     val isTv = LocalIsTv.current
-    // the dark theme gets Mochy's own settings list, on narrow desktop windows too
-    if (!isTv && host.title == null && MaterialTheme.colorScheme.background.luminance() < 0.5f) {
+    // the dark theme gets Mochy's own settings list, on narrow desktop windows too; so does
+    // the phone floating bar's Settings tab, which is Mochy's look in any theme
+    val mochyBar = rememberMochyLook().floatingNavBar && !LocalUseDesktopUi.current
+    if (!isTv && host.title == null && (mochyBar || MaterialTheme.colorScheme.background.luminance() < 0.5f)) {
+        // Mochy's own tab opens on its profile page; its Settings row opens this list, and back returns to it
+        var listOpen by rememberSaveable { mutableStateOf(false) }
+        if (mochyBar && !listOpen) {
+            MochyProfileHub(
+                onOpenSettings = { listOpen = true },
+                onOpenStats = { onPageSelected(SettingsPageId.MOCHY_PROFILE) },
+                onOpenAbout = { onPageSelected(SettingsPageId.ABOUT) },
+                onOpenCredits = { onPageSelected(SettingsPageId.ABOUT) },
+                bottomPadding = host.bottomContentPadding,
+            )
+            return
+        }
+        if (mochyBar) NavigationBackHandler { listOpen = false }
         MochySettingsHome(
             registry = registry,
             host = host,
@@ -588,12 +631,15 @@ private fun CompactSettingsDetail(
             onBack = onBack,
             listState = if (page.custom) null else listState,
             onClose = onClose,
-        ) { headerHeight ->
+        ) { headerHeight, collapsedBottom ->
             if (page.custom) {
-                Box(Modifier.fillMaxSize().padding(top = headerHeight)) {
+                Box(Modifier.fillMaxSize()) {
                     CompositionLocalProvider(
                         LocalSettingsPageBottomPadding provides bottomContentPadding,
                         LocalSettingsPageHasTopBar provides true,
+                        LocalSettingsPageTopPadding provides headerHeight,
+                        LocalSettingsPageCollapsedBottom provides collapsedBottom,
+                        LocalMochySettingsHighlight provides remember(highlightedItemId) { MochySettingsHighlight(highlightedItemId) },
                     ) {
                         pageContent(page.id, onBack, onNavigate)
                     }
@@ -867,9 +913,8 @@ private fun SettingsPageList(
         if (highlightedGroupIndex >= 0) listState.scrollToItem(highlightedGroupIndex)
     }
     val hasPreview = page.id == SettingsPageId.LYRICS
-    val fixedPreview = hasPreview && !LocalIsTv.current
     val effectiveOnRefresh = onRefresh.takeIf { isPullToRefreshSupported && !LocalIsTv.current }
-    BoxWithConstraints(Modifier.fillMaxSize().padding(top = if (fixedPreview) contentPadding.calculateTopPadding() else 0.dp)) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
         val previewHeight = minOf(300.dp, maxHeight * 0.4f)
         val listContent: LazyListScope.() -> Unit = {
             groups.forEachIndexed { groupIndex, group ->
@@ -995,7 +1040,7 @@ private fun SettingsPageList(
                     }
                 }
             }
-            if (hasPreview && !fixedPreview) {
+            if (hasPreview) {
                 item("lyrics_preview") {
                     lyricsPreview(
                         Modifier
@@ -1007,36 +1052,19 @@ private fun SettingsPageList(
                 }
             }
         }
-        Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(if (fixedPreview) 16.dp else 0.dp)) {
-            if (fixedPreview) {
-                lyricsPreview(Modifier.fillMaxWidth().height(previewHeight).padding(horizontal = 16.dp))
-            }
+        Column(Modifier.fillMaxSize()) {
             if (effectiveOnRefresh != null) {
                 SettingsPullToRefreshPageList(
                     effectiveOnRefresh,
                     listState,
-                    contentPadding =
-                        if (fixedPreview) {
-                            PaddingValues(
-                                bottom = contentPadding.calculateBottomPadding(),
-                            )
-                        } else {
-                            contentPadding
-                        },
+                    contentPadding = contentPadding,
                     content = listContent,
                 )
             } else {
                 DragScrollableColumn(
                     state = listState,
                     modifier = Modifier.weight(1f).fillMaxWidth().desktopArrowScroll(listState),
-                    contentPadding =
-                        if (fixedPreview) {
-                            PaddingValues(
-                                bottom = contentPadding.calculateBottomPadding(),
-                            )
-                        } else {
-                            contentPadding
-                        },
+                    contentPadding = contentPadding,
                     content = listContent,
                 )
             }

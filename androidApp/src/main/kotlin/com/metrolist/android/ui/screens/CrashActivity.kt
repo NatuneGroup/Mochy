@@ -15,44 +15,22 @@ import android.os.Process
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ButtonGroup
-import androidx.compose.material3.ButtonGroupDefaults
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -67,16 +45,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModel
@@ -124,6 +99,13 @@ import com.metrolist.shared.ui.components.ContainedLoadingIndicator
 import com.metrolist.shared.ui.crash.CrashLogsScreen
 import com.metrolist.shared.ui.crash.CrashScreenshotHint
 import com.metrolist.shared.ui.crash.CrashScreenshotHintText
+import com.metrolist.shared.ui.crash.MochyCrashBodyText
+import com.metrolist.shared.ui.crash.MochyCrashCard
+import com.metrolist.shared.ui.crash.MochyCrashErrorText
+import com.metrolist.shared.ui.crash.MochyCrashLogText
+import com.metrolist.shared.ui.crash.MochyCrashMark
+import com.metrolist.shared.ui.crash.MochyCrashPage
+import com.metrolist.shared.ui.crash.MochyPromptButton
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.tv.tvHorizontalScrollFocus
 import com.metrolist.shared.ui.tv.tvVerticalScrollFocus
@@ -164,7 +146,8 @@ class CrashActivity : ComponentActivity() {
         }
 
         setContent {
-            val darkTheme = isSystemInDarkTheme()
+            // Mochy is a dark app, and its crash page is drawn on its black
+            val darkTheme = true
             val colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme()
             SideEffect {
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
@@ -295,7 +278,7 @@ class CrashActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+// the crash page in Mochy's look: its mark, what happened, the update prompt's pill buttons and the log on a card
 @Composable
 private fun CrashScreen(
     crashLog: String,
@@ -314,136 +297,52 @@ private fun CrashScreen(
     val pasteIdLine = stringResource(Res.string.crash_paste_id, paste?.id.orEmpty())
     val pasteUrlLine = stringResource(Res.string.crash_paste_url, paste?.url.orEmpty())
     CrashScreenshotHint(onCopy = onCopy, onShare = { onShare(paste) })
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(Res.string.crash_title),
-                        style = MaterialTheme.typography.headlineSmall,
-                    )
-                },
-                actions = {
-                    IconButton(onClick = onClose, shapes = IconButtonDefaults.shapes()) {
-                        Icon(
-                            MetrolistIcons.Outlined.Close,
-                            contentDescription = stringResource(Res.string.crash_close),
-                        )
-                    }
-                },
-                colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                    ),
-            )
-        },
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = { onShare(paste) },
-                icon = {
-                    Icon(
-                        MetrolistIcons.Outlined.Share,
-                        contentDescription = null,
-                    )
-                },
-                text = { Text(stringResource(Res.string.crash_share_logs)) },
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.surface,
-    ) { paddingValues ->
+    MochyCrashPage(
+        title = stringResource(Res.string.crash_title),
+        headerIcon = MetrolistIcons.Outlined.Close,
+        headerIconDescription = stringResource(Res.string.crash_close),
+        onHeaderClick = onClose,
+    ) {
         Column(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 16.dp)
                     .verticalScroll(verticalScrollState)
                     .tvVerticalScrollFocus(verticalScrollState),
         ) {
-            Text(
-                text = stringResource(Res.string.crash_description),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
+            MochyCrashMark()
+            Spacer(modifier = Modifier.height(18.dp))
+            MochyCrashBodyText(stringResource(Res.string.crash_description))
+            Spacer(modifier = Modifier.height(8.dp))
             CrashScreenshotHintText()
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            val labels =
-                listOf(
-                    stringResource(Res.string.crash_restart),
-                    stringResource(Res.string.crash_copy_logs),
-                    stringResource(Res.string.crash_logs),
+            Spacer(modifier = Modifier.height(22.dp))
+            MochyPromptButton(label = stringResource(Res.string.crash_restart), onClick = onRestart)
+            Spacer(modifier = Modifier.height(10.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                MochyPromptButton(
+                    label = stringResource(Res.string.crash_copy_logs),
+                    onClick = onCopy,
+                    modifier = Modifier.weight(1f),
                 )
-            val actions = listOf(onRestart, onCopy, onLogs)
-            ButtonGroup(
-                overflowIndicator = { ButtonGroupDefaults.OverflowIndicator(it) },
-                modifier = Modifier.fillMaxWidth(),
-                expandedRatio = 1f,
-                horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                labels.forEachIndexed { index, label ->
-                    customItem(
-                        buttonGroupContent = {
-                            val interactionSource = remember { MutableInteractionSource() }
-                            val shapes =
-                                when (index) {
-                                    0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                                    labels.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                                    else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-                                }
-                            Button(
-                                onClick = actions[index],
-                                modifier = Modifier.weight(1f).animateWidth(interactionSource, 12.dp),
-                                interactionSource = interactionSource,
-                                shapes = ButtonDefaults.shapes(shape = shapes.shape, pressedShape = shapes.pressedShape),
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 12.dp),
-                            ) {
-                                Text(label, textAlign = TextAlign.Center)
-                            }
-                        },
-                        menuContent = {
-                            DropdownMenuItem(text = { Text(label) }, onClick = actions[index])
-                        },
-                    )
-                }
+                MochyPromptButton(
+                    label = stringResource(Res.string.crash_share_logs),
+                    onClick = { onShare(paste) },
+                    modifier = Modifier.weight(1f),
+                )
             }
+            Spacer(modifier = Modifier.height(10.dp))
+            MochyPromptButton(label = stringResource(Res.string.crash_logs), onClick = onLogs)
+            Spacer(modifier = Modifier.height(10.dp))
             CrashUpdateButton(onUpdate)
-            CrashUploadStatus(
-                state = uploadState,
-                onRetry = onRetryUpload,
-            )
-
+            CrashUploadStatus(state = uploadState, onRetry = onRetryUpload)
             Spacer(modifier = Modifier.height(16.dp))
-
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                        .padding(16.dp),
-            ) {
-                Text(
+            MochyCrashCard {
+                MochyCrashLogText(
                     text = crashLogWithPaste(crashLog, paste, pasteIdLine, pasteUrlLine),
-                    style =
-                        MaterialTheme.typography.bodySmall.copy(
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 11.sp,
-                            lineHeight = 16.sp,
-                        ),
-                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.horizontalScroll(horizontalScrollState).tvHorizontalScrollFocus(horizontalScrollState),
                 )
             }
-
-            Spacer(modifier = Modifier.height(88.dp))
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
@@ -455,50 +354,27 @@ private fun CrashUploadStatus(
 ) {
     // The paste ID and URL sit at the top of the log itself, so screenshots of the log carry them.
     if (state is CrashUploadState.Uploaded) return
-    Surface(
-        modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-    ) {
+    Spacer(modifier = Modifier.height(16.dp))
+    MochyCrashCard(Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
         when (state) {
             CrashUploadState.Idle -> {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = stringResource(Res.string.crash_upload_disclosure),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    TextButton(onClick = onRetry, shapes = ButtonDefaults.shapes()) {
-                        Text(stringResource(Res.string.crash_upload))
-                    }
-                }
+                MochyCrashBodyText(stringResource(Res.string.crash_upload_disclosure), color = Color.White)
+                Spacer(modifier = Modifier.height(12.dp))
+                MochyPromptButton(label = stringResource(Res.string.crash_upload), onClick = onRetry)
             }
 
             CrashUploadState.Uploading -> {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    ContainedLoadingIndicator(
-                        modifier = Modifier.size(20.dp),
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    ContainedLoadingIndicator(modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = stringResource(Res.string.crash_uploading),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
+                    MochyCrashBodyText(stringResource(Res.string.crash_uploading), color = Color.White)
                 }
             }
 
             CrashUploadState.Failed -> {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = stringResource(Res.string.crash_upload_failed),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    TextButton(onClick = onRetry, shapes = ButtonDefaults.shapes()) {
-                        Text(stringResource(Res.string.crash_retry))
-                    }
-                }
+                MochyCrashBodyText(stringResource(Res.string.crash_upload_failed), color = MochyCrashErrorText)
+                Spacer(modifier = Modifier.height(12.dp))
+                MochyPromptButton(label = stringResource(Res.string.crash_retry), onClick = onRetry)
             }
 
             is CrashUploadState.Uploaded -> {
@@ -584,15 +460,16 @@ private fun CrashUpdateButton(onUpdate: () -> Unit) {
             is AppUpdateState.Downloaded -> value.release
             else -> null
         }
-    TextButton(onClick = onUpdate, shapes = ButtonDefaults.shapes()) {
-        Text(
+    MochyPromptButton(
+        label =
             when {
-                release != null -> "${stringResource(Res.string.crash_updates_action)} ·\u00a0${release.version}"
+                release != null -> "${stringResource(Res.string.crash_updates_action)} \u00b7\u00a0${release.version}"
                 state is AppUpdateState.Checking -> stringResource(Res.string.crash_updates_checking)
                 state is AppUpdateState.Error -> stringResource(Res.string.crash_updates_error)
                 state is AppUpdateState.UpToDate -> stringResource(Res.string.crash_updates_no_updates)
                 else -> stringResource(Res.string.crash_updates_check)
             },
-        )
-    }
+        onClick = onUpdate,
+        dimmed = release == null && state !is AppUpdateState.Error,
+    )
 }

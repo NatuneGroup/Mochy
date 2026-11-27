@@ -56,7 +56,13 @@ internal fun SettingsGroupRegistryBuilder.inlineSlider(
     enabled: Boolean = true,
     onValueChange: (Float) -> Unit,
 ) {
-    custom(id, title, description, enabled) { onSettingValueChanged ->
+    custom(
+        id = id,
+        title = title,
+        description = description,
+        enabled = enabled,
+        slider = SettingsCustomSlider(valueLabel, value, range, steps, onValueChange),
+    ) { onSettingValueChanged ->
         // Mochy's slider rows: the title with its value on the right, the slider under it, inside the row's card
         val mochy = MaterialTheme.colorScheme.isDark
         Column(

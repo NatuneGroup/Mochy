@@ -233,6 +233,8 @@ data class BrowseItem(
     override val thumbnail: String? = null,
     val params: String? = null,
     val subtitle: String? = null,
+    // a mood or genre button's colour stripe, ARGB, as YouTube Music paints it
+    val accentColor: Long? = null,
 ) : YTItem()
 
 @Serializable

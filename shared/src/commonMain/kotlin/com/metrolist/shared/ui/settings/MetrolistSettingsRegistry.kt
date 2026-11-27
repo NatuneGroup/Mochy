@@ -194,6 +194,49 @@ fun rememberMetrolistSettingsRegistry(
         MetrolistIcons.Outlined.Extension,
         SettingsTone.CYAN,
     )
+    // Mochy's own categories; its settings list shows these in place of the pages above
+    customPage(
+        SettingsPageId.MOCHY_PLAYBACK,
+        stringResource(Res.string.settings_playback_category),
+        null,
+        MetrolistIcons.Outlined.PlayArrow,
+        SettingsTone.ROSE,
+    )
+    customPage(
+        SettingsPageId.MOCHY_NOW_PLAYING,
+        stringResource(Res.string.settings_now_playing),
+        null,
+        MetrolistIcons.Outlined.PlayArrow,
+        SettingsTone.ROSE,
+    )
+    customPage(
+        SettingsPageId.MOCHY_APP_BEHAVIOUR,
+        stringResource(Res.string.settings_app_behaviour),
+        null,
+        MetrolistIcons.Outlined.Settings,
+        SettingsTone.NEUTRAL,
+    )
+    customPage(
+        SettingsPageId.MOCHY_CUSTOMISATION,
+        stringResource(Res.string.settings_customisation_category),
+        null,
+        MetrolistIcons.Outlined.Tune,
+        SettingsTone.PURPLE,
+    )
+    customPage(
+        SettingsPageId.MOCHY_INTEGRATIONS,
+        stringResource(Res.string.integrations),
+        null,
+        MetrolistIcons.Outlined.Extension,
+        SettingsTone.BLUE,
+    )
+    customPage(
+        SettingsPageId.MOCHY_DEVICES,
+        stringResource(Res.string.devices_title),
+        null,
+        MetrolistIcons.Outlined.Settings,
+        SettingsTone.CYAN,
+    )
     customPage(
         SettingsPageId.ANDROID_AUTO,
         stringResource(Res.string.android_auto_title),

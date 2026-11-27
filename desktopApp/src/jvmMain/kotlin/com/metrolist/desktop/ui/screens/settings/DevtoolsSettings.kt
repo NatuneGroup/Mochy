@@ -55,6 +55,7 @@ import com.metrolist.shared.ui.settings.CapabilityStatusKey
 import com.metrolist.shared.ui.settings.ClientAccessKey
 import com.metrolist.shared.ui.settings.ClientAccessLabel
 import com.metrolist.shared.ui.settings.ClientCapabilityChips
+import com.metrolist.shared.ui.settings.settingsPageHeaderTop
 import com.metrolist.shared.ui.utils.DragScrollableColumn
 import org.jetbrains.compose.resources.stringResource
 
@@ -110,7 +111,7 @@ fun DevtoolsSettingsScreen(colorScheme: ColorScheme) {
 
     DragScrollableColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = 28.dp),
+        contentPadding = PaddingValues(top = 28.dp + settingsPageHeaderTop(), bottom = 28.dp),
     ) {
         item {
             Material3SettingsGroup(

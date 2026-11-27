@@ -74,6 +74,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
 import com.metrolist.shared.constants.MiniPlayerHeight
+import com.metrolist.shared.constants.MochyMiniPlayerHorizontalPadding
 import com.metrolist.shared.constants.ModernMiniPlayerHorizontalPadding
 import com.metrolist.shared.constants.modernMiniPlayerHeight
 import com.metrolist.shared.generated.resources.Res
@@ -145,7 +146,7 @@ fun MiniPlayer(
             canSkipPrevious = canSkipPrevious,
             playbackEnabled = playbackEnabled,
             swipeThresholdPx = with(LocalDensity.current) { 80.dp.toPx() } * pixelSensitivity,
-            modifier = modifier,
+            modifier = modifier.padding(horizontal = MochyMiniPlayerHorizontalPadding),
         )
         return
     }

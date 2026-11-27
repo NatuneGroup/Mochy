@@ -108,6 +108,7 @@ import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import com.metrolist.shared.ui.theme.rememberMochyLook
 import com.metrolist.shared.ui.utils.DragScrollableColumn
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.stringResource
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -118,6 +119,9 @@ class AdaptiveNavigationItem<T>(
     val icon: ImageVector,
     val selectedIcon: ImageVector = icon,
     val visible: Boolean = true,
+    // the floating bar draws these drawables in place of the vectors above when they are set
+    val iconRes: DrawableResource? = null,
+    val selectedIconRes: DrawableResource? = null,
 )
 
 enum class AdaptiveFormFactor {

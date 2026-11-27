@@ -5791,6 +5791,20 @@
     <!-- Translators: Button label to close the animated silver card celebration overlay. -->
     <string name="mochy_card_celebrate_close">Tap to continue</string>
     <!-- Translators: Settings screen title for the local Mochy profile ID card. -->
+    <string name="natune_lyrics_from_source">Lyrics from %1$s</string>
+    <string name="mochy_library_tab_all">All</string>
+    <string name="mochy_library_tab_local">Local &amp; downloaded</string>
+    <string name="mochy_library_tab_cached">Cached</string>
+    <string name="mochy_library_tab_history">History</string>
+    <string name="mochy_library_import_banner">Import your music here!</string>
+    <string name="mochy_library_recently_added">Recently added</string>
+    <string name="mochy_library_empty_import">Nothing here yet. Import your music above to fill your library.</string>
+    <string name="mochy_profile_view_stats">View Stats  &gt;</string>
+    <string name="mochy_profile_settings_header">Settings</string>
+    <string name="mochy_profile_version_about_app">Version &amp; about app</string>
+    <string name="mochy_profile_capsule_about">About app</string>
+    <string name="mochy_profile_meet_dev">meet da dev and contributors :3</string>
+    <string name="mochy_profile_open_settings">Open settings</string>
     <string name="mochy_profile_settings_title">Mochy profile</string>
     <!-- Translators: Settings screen overview subtitle for the local Mochy profile ID card. -->
     <string name="mochy_profile_settings_overview">Local display name, member card finish, and welcome card</string>
@@ -6216,4 +6230,52 @@
     <string name="mochy_menu_style_vintage">Vintage</string>
     <string name="mochy_menu_style_classic">Classic</string>
     <string name="mochy_menu_customize_player">Customize player</string>
+    <!-- Mochy Audio Lab fixes -->
+    <string name="mochy_lab_fine_tune">FINE TUNE</string>
+    <string name="mochy_lab_reverb_custom">Custom</string>
+    <string name="mochy_lab_spatial_speakers_note">Two virtual speakers in front of a modelled head: the far ear hears each one a little later and darker, as in a room. 30° is a studio pair.</string>
+    <string name="mochy_lab_stage_spatial_note">3D Sims is on, so it places the sound instead.</string>
+    <string name="mochy_lab_eightd_reset">Reset 8D Audio settings</string>
+    <string name="mochy_lab_eightd_rotation_value">%1$s Hz (~%2$ss/round)</string>
+    <!-- Mochy lyrics -->
+    <string name="mochy_lyrics_source">Source</string>
+    <string name="mochy_lyrics_submitted_by">Submitted by</string>
+    <string name="mochy_lyrics_switch">Switch</string>
+    <!-- Mochy settings pages -->
+    <string name="settings_clear_search">Clear search</string>
+    <string name="pc_hide_search">Hide search</string>
+    <string name="settings_playback_category">Playback</string>
+    <string name="settings_now_playing">Now playing</string>
+    <string name="settings_app_behaviour">App behaviour</string>
+    <string name="settings_customisation_category">Customisation</string>
+    <string name="devices_title">Device integration</string>
+    <string name="settings_related">Related</string>
+    <string name="settings_on_the_player">On the player</string>
+    <string name="settings_section_listening">While you listen</string>
+    <string name="settings_section_failures">When a song won't play</string>
+    <string name="settings_section_lyrics">Lyrics</string>
+    <string name="settings_section_videos">Videos</string>
+    <string name="settings_section_canvas">Canvas</string>
+    <string name="settings_section_network">Network &amp; data</string>
+    <string name="settings_section_library_privacy">Library &amp; privacy</string>
+    <string name="general_app_settings">General app settings</string>
+    <string name="settings_transition_link_desc">Crossfade and mixing between songs, in Audio Lab</string>
+    <string name="integration_discord_desc">Rich Presence</string>
+    <string name="integration_scrobbling_desc">%1$s scrobbling</string>
+    <string name="integration_backup_desc">Keep your library and stats safe in your own cloud</string>
+    <string name="module_youtube_desc">Sync likes, library, playlists and history</string>
+    <!-- Mochy player styles -->
+    <string name="menu_edit_player">Edit player</string>
+    <string name="ps_action_other_menu">Other menu</string>
+    <string name="ps_style_repeat_one">Repeat one</string>
+    <string name="ps_style_no_synced_lyrics">No synced lyrics for this song</string>
+    <string name="pc_next_song">Next Song</string>
+    <string name="pc_end_of_queue">End of queue</string>
+    <string name="video_mode_no_lyrics">No lyrics for this song</string>
+    <string name="flagship_bottom_bar">Bottom bar</string>
+    <string name="flagship_bottom_bar_stack">Stack</string>
+    <string name="flagship_bottom_bar_volume">Volume</string>
+    <string name="player_type_poster">Poster</string>
+    <string name="player_type_timeline">Timeline</string>
+    <string name="player_type_lyrics_stage">Lyrics stage</string>
 </resources>

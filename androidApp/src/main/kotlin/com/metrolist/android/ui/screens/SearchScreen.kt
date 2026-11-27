@@ -35,7 +35,6 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -386,14 +385,8 @@ fun SearchScreen(
     }
 
     LaunchedEffect(isQuerySubmitted, initialQuery, isTv, isPlayerExpanded) {
-        if (isTv || isPlayerExpanded) {
-            keyboardController?.hide()
-        } else if (!isQuerySubmitted && initialQuery.isNullOrBlank()) {
-            if (!searchViewModel.hasRequestedInitialFocus && query.isEmpty()) {
-                searchViewModel.hasRequestedInitialFocus = true
-                focusRequester.requestFocus()
-            }
-        }
+        // Mochy's search page opens on its moods with the keyboard down; the field focuses when it's tapped
+        if (isTv || isPlayerExpanded) keyboardController?.hide()
     }
 
     LaunchedEffect(isQuerySubmitted) {
@@ -435,7 +428,6 @@ fun SearchScreen(
                         Modifier
                             .fillMaxSize()
                             .widthIn(max = 1400.dp)
-                            .windowInsetsPadding(WindowInsets.statusBars)
                             .then(
                                 if (isResultsPage) {
                                     Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))

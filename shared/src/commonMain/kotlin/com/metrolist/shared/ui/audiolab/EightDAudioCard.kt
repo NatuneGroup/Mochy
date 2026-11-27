@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,15 +41,19 @@ import com.metrolist.shared.generated.resources.audio_lab_eightd_description
 import com.metrolist.shared.generated.resources.audio_lab_eightd_preset_balanced
 import com.metrolist.shared.generated.resources.audio_lab_eightd_preset_chill
 import com.metrolist.shared.generated.resources.audio_lab_eightd_preset_extreme
-import com.metrolist.shared.generated.resources.audio_lab_hz_decimal
 import com.metrolist.shared.generated.resources.audio_lab_rotation_speed
+import com.metrolist.shared.generated.resources.mochy_lab_eightd_reset
+import com.metrolist.shared.generated.resources.mochy_lab_eightd_rotation_value
+import com.metrolist.shared.generated.resources.mochy_lab_refresh
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import kotlinx.coroutines.flow.first
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.PI
 import kotlin.math.cos
+import kotlin.math.roundToInt
 import kotlin.math.sin
 
 @Composable
@@ -78,6 +85,17 @@ internal fun EightDAudioCard() {
                     color = LabColors.Secondary,
                 )
             }
+            IconButton(
+                onClick = { saveEightD(EightDSettings()) },
+                modifier = Modifier.size(44.dp),
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.mochy_lab_refresh),
+                    contentDescription = stringResource(Res.string.mochy_lab_eightd_reset),
+                    tint = LabColors.Secondary,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
             LabSwitch(
                 checked = enabled,
                 onCheckedChange = { on -> saveEightD(settings.copy(enabled = on)) },
@@ -100,7 +118,12 @@ internal fun EightDAudioCard() {
         LabPanel {
             LabSlider(
                 label = stringResource(Res.string.audio_lab_rotation_speed),
-                valueText = stringResource(Res.string.audio_lab_hz_decimal, roundedText(settings.rotationSpeedHz, 100f)),
+                valueText =
+                    stringResource(
+                        Res.string.mochy_lab_eightd_rotation_value,
+                        fixedText(settings.rotationSpeedHz, 2),
+                        fixedText(1f / settings.rotationSpeedHz, 1),
+                    ),
                 value = settings.rotationSpeedHz,
                 valueRange = 0.05f..0.5f,
                 enabled = enabled,
@@ -204,6 +227,17 @@ private fun OrbitIndicator(
             size = Size(5.dp.toPx(), 13.dp.toPx()),
         )
     }
+}
+
+/** a number with a fixed count of decimals, written without a printf format (Compose resources have none) */
+private fun fixedText(
+    value: Float,
+    decimals: Int,
+): String {
+    var factor = 1
+    repeat(decimals) { factor *= 10 }
+    val scaled = (value * factor).roundToInt()
+    return "${scaled / factor}.${(scaled % factor).toString().padStart(decimals, '0')}"
 }
 
 private fun EightDSettings.matches(preset: EightDPreset): Boolean = rotationSpeedHz == preset.rotationSpeedHz && depth == preset.depth

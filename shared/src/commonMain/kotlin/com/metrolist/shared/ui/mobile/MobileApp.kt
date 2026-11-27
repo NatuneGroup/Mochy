@@ -144,6 +144,14 @@ import com.metrolist.shared.generated.resources.library
 import com.metrolist.shared.generated.resources.liked_songs
 import com.metrolist.shared.generated.resources.listen_together
 import com.metrolist.shared.generated.resources.logo
+import com.metrolist.shared.generated.resources.mochy_nav_home
+import com.metrolist.shared.generated.resources.mochy_nav_home_filled
+import com.metrolist.shared.generated.resources.mochy_nav_library
+import com.metrolist.shared.generated.resources.mochy_nav_library_filled
+import com.metrolist.shared.generated.resources.mochy_nav_search
+import com.metrolist.shared.generated.resources.mochy_nav_search_filled
+import com.metrolist.shared.generated.resources.mochy_nav_settings
+import com.metrolist.shared.generated.resources.mochy_nav_settings_filled
 import com.metrolist.shared.generated.resources.mysterious_fourth_tab
 import com.metrolist.shared.generated.resources.mysterious_fourth_tab_description
 import com.metrolist.shared.generated.resources.offline_mode
@@ -156,6 +164,7 @@ import com.metrolist.shared.generated.resources.removed_downloads
 import com.metrolist.shared.generated.resources.retry
 import com.metrolist.shared.generated.resources.search
 import com.metrolist.shared.generated.resources.search_history_removal_failed
+import com.metrolist.shared.generated.resources.settings
 import com.metrolist.shared.generated.resources.settings_diagnostic_logging_description
 import com.metrolist.shared.generated.resources.settings_storage_summary
 import com.metrolist.shared.generated.resources.share
@@ -267,6 +276,7 @@ import com.metrolist.shared.ui.settings.applyIosAppLanguage
 import com.metrolist.shared.ui.settings.rememberIosAppIconActions
 import com.metrolist.shared.ui.settings.rememberIosFontActions
 import com.metrolist.shared.ui.settings.rememberIosLogExportAction
+import com.metrolist.shared.ui.settings.settingsPageHeaderTop
 import com.metrolist.shared.ui.theme.MdSpacing
 import com.metrolist.shared.ui.theme.MetrolistTheme
 import com.metrolist.shared.ui.theme.rememberArtworkSeedColor
@@ -417,6 +427,8 @@ fun MobileApp(
             if (Settings.shared.showBottomNavHome) add(MobileRoute.Home)
             if (Settings.shared.showBottomNavSearch) add(MobileRoute.Search)
             if (Settings.shared.showBottomNavLibrary) add(MobileRoute.Library)
+            // Mochy's bar always ends in Settings
+            add(MobileRoute.Settings())
             if (isEmpty()) add(MobileRoute.EasterEgg)
         }
     val defaultTab =
@@ -434,6 +446,16 @@ fun MobileApp(
         }
     val containers = remember { NavigationContainerState() }
     val currentRoute = routeStack.lastOrNull()?.route ?: selectedTab
+    // the tab the page on screen belongs to: the nearest tab page in the stack, else the selected tab
+    val litTab =
+        routeStack.asReversed().firstNotNullOfOrNull { entry ->
+            entry.route.takeIf { route ->
+                route is MobileRoute.Home ||
+                    route is MobileRoute.Search ||
+                    route is MobileRoute.Library ||
+                    route is MobileRoute.Settings
+            }
+        } ?: selectedTab
     val detailSession by GlobalYouTube.innerTube.sessionFlow.collectAsState()
     val detailStates = remember(scope, detailSession) { MobileDetailStateStore(scope) }
     DisposableEffect(detailStates) { onDispose { detailStates.close() } }
@@ -610,7 +632,7 @@ fun MobileApp(
         setPlayerVisible(false)
         cancelVideoLookup()
         dismissKeyboard()
-        if (selectedTab == route && routeStack.isEmpty()) {
+        if (litTab == route && routeStack.isEmpty()) {
             when (route) {
                 MobileRoute.Home -> {
                     scope.launch { homeListState.animateScrollToItem(0) }
@@ -627,6 +649,7 @@ fun MobileApp(
                 else -> {}
             }
         } else {
+            // a tab pressed from one of its pages (or another tab's page) goes back to that tab's root
             containers.pendingPopup = null
             routeStack.clear()
             selectedTab = route
@@ -762,18 +785,32 @@ fun MobileApp(
                 stringResource(Res.string.home),
                 MetrolistIcons.Outlined.Home,
                 MetrolistIcons.Filled.Home,
+                iconRes = Res.drawable.mochy_nav_home,
+                selectedIconRes = Res.drawable.mochy_nav_home_filled,
             ),
             AdaptiveNavigationItem<MobileRoute>(
                 MobileRoute.Search,
                 stringResource(Res.string.search),
                 MetrolistIcons.Outlined.Search,
                 MetrolistIcons.Filled.Search,
+                iconRes = Res.drawable.mochy_nav_search,
+                selectedIconRes = Res.drawable.mochy_nav_search_filled,
             ),
             AdaptiveNavigationItem<MobileRoute>(
                 MobileRoute.Library,
                 stringResource(Res.string.library),
                 MetrolistIcons.Outlined.LibraryMusic,
                 MetrolistIcons.Filled.LibraryMusic,
+                iconRes = Res.drawable.mochy_nav_library,
+                selectedIconRes = Res.drawable.mochy_nav_library_filled,
+            ),
+            AdaptiveNavigationItem<MobileRoute>(
+                MobileRoute.Settings(),
+                stringResource(Res.string.settings),
+                MetrolistIcons.Outlined.Settings,
+                MetrolistIcons.Filled.Settings,
+                iconRes = Res.drawable.mochy_nav_settings,
+                selectedIconRes = Res.drawable.mochy_nav_settings_filled,
             ),
             AdaptiveNavigationItem<MobileRoute>(
                 MobileRoute.EasterEgg,
@@ -882,11 +919,12 @@ fun MobileApp(
             AdaptiveNavigationScaffold(
                 layout = adaptiveLayout,
                 items = navigationItems,
-                selectedKey = selectedTab,
+                selectedKey = litTab,
                 onSelect = ::selectTab,
                 navigationVisible = routeStack.isEmpty(),
                 floatingNavigation = useFloatingNavBar,
-                floatingSeparateKey = MobileRoute.Search.takeIf { it in visibleTabRoutes },
+                // Mochy's bar keeps Search inside the pill, in tab order
+                floatingSeparateKey = null,
                 onFloatingNavigationHeightChanged = { floatingNavBarHeight = it },
                 navigationSuiteType = adaptiveLayout.navigationSuiteType,
                 navigationItemVerticalArrangement = Arrangement.Center,
@@ -1431,7 +1469,7 @@ fun MobileApp(
                                         initialPage = route.initialPage,
                                         isAudioProcessingAvailable = playerState.isAudioProcessingAvailable,
                                         rememberMochyProfilePhotoPicker = rememberMochyProfilePhotoPicker,
-                                        onClose = ::back,
+                                        onClose = { if (routeStack.isEmpty()) selectTab(defaultTab) else back() },
                                         onOpenArtist = { open(MobileRoute.Artist(it, "")) },
                                         onSeedColorSelected = { appRevision++ },
                                         onClearSearchHistory = searchViewModel::clearSearchHistory,
@@ -1501,6 +1539,7 @@ fun MobileApp(
                                                         Modifier
                                                             .fillMaxSize()
                                                             .verticalScroll(rememberScrollState())
+                                                            .padding(top = settingsPageHeaderTop())
                                                             .padding(bottom = LocalSettingsPageBottomPadding.current),
                                                     ) {
                                                         DevtoolsEnabledSwitch(

@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -53,6 +54,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.BlurEffect
@@ -252,6 +254,23 @@ private fun MochySettingsTopBar(
                 }
             },
         )
+        // a status-bar-high band of the same fade, so whatever scrolls under the clock and icons is covered
+        Box(
+            Modifier.fillMaxWidth().height(statusBar).drawWithCache {
+                onDrawBehind {
+                    val p = collapse().coerceIn(0f, 1f)
+                    if (p <= 0.01f) return@onDrawBehind
+                    drawRect(
+                        Brush.verticalGradient(
+                            0f to page.copy(alpha = p * 0.95f),
+                            0.45f to page.copy(alpha = p * 0.72f),
+                            0.78f to page.copy(alpha = p * 0.34f),
+                            1f to Color.Transparent,
+                        ),
+                    )
+                }
+            },
+        )
         Column(Modifier.padding(top = statusBar + TopClearance)) {
             Row(
                 modifier =
@@ -261,37 +280,44 @@ private fun MochySettingsTopBar(
                         .padding(horizontal = SidePadding),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Column(
-                    modifier =
-                        Modifier.weight(1f).graphicsLayer {
-                            val p = collapse().coerceIn(0f, 1f)
-                            alpha = (1f - p * 1.6f).coerceIn(0f, 1f)
-                            translationY = -p * travel
-                            val scale = 1f - p * 0.18f
-                            scaleX = scale
-                            scaleY = scale
-                            transformOrigin = TransformOrigin(0f, 0.5f)
-                            // the reference blurs the folding title in 3px steps up to 12px, clamped at the edges
-                            val blurPx = (((p * 14f) / 3f).toInt() * 3).toFloat()
-                            renderEffect = if (blur && blurPx > 0f) BlurEffect(blurPx, blurPx, TileMode.Clamp) else null
-                        },
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                // clipped to its own row, so the folding title never draws over the status bar
+                Box(
+                    modifier = Modifier.weight(1f).fillMaxHeight().clipToBounds(),
+                    contentAlignment = Alignment.CenterStart,
                 ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.mochy_mark),
-                        contentDescription = stringResource(Res.string.app_name),
-                        tint = Color.White,
-                        modifier = Modifier.size(MarkSize),
-                    )
-                    Text(
-                        text = stringResource(Res.string.settings),
-                        fontFamily = mochyInterFontFamily(),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 34.sp,
-                        lineHeight = 40.sp,
-                        color = Color.White,
-                        maxLines = 1,
-                    )
+                    Column(
+                        modifier =
+                            Modifier.graphicsLayer {
+                                val p = collapse().coerceIn(0f, 1f)
+                                // gone well before the title could climb past the top of its row
+                                alpha = (1f - p * 2.5f).coerceIn(0f, 1f)
+                                translationY = -p * travel
+                                val scale = 1f - p * 0.18f
+                                scaleX = scale
+                                scaleY = scale
+                                transformOrigin = TransformOrigin(0f, 0.5f)
+                                // the reference blurs the folding title in 3px steps up to 12px, clamped at the edges
+                                val blurPx = (((p * 14f) / 3f).toInt() * 3).toFloat()
+                                renderEffect = if (blur && blurPx > 0f) BlurEffect(blurPx, blurPx, TileMode.Clamp) else null
+                            },
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.mochy_mark),
+                            contentDescription = stringResource(Res.string.app_name),
+                            tint = Color.White,
+                            modifier = Modifier.size(MarkSize),
+                        )
+                        Text(
+                            text = stringResource(Res.string.settings),
+                            fontFamily = mochyInterFontFamily(),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 34.sp,
+                            lineHeight = 40.sp,
+                            color = Color.White,
+                            maxLines = 1,
+                        )
+                    }
                 }
                 // beside the mark at rest, it drops to the search field's middle as the header folds
                 MochySettingsAvatar(
@@ -416,32 +442,25 @@ private fun MochySearchField(
     }
 }
 
-// the reference's order for the bubbles it has; pages it doesn't name follow in the registry's order
+// Mochy's category bubbles, in the reference's order: sound first, then how the app acts and looks, then the rest
 private val MochyHomePageOrder =
     listOf(
         SettingsPageId.AUDIO_LAB,
-        SettingsPageId.PLAYER,
-        SettingsPageId.LYRICS,
-        SettingsPageId.CONTENT,
-        SettingsPageId.APPEARANCE,
+        SettingsPageId.MOCHY_PLAYBACK,
+        SettingsPageId.MOCHY_NOW_PLAYING,
+        SettingsPageId.MOCHY_APP_BEHAVIOUR,
+        SettingsPageId.MOCHY_CUSTOMISATION,
         SettingsPageId.STORAGE,
-        SettingsPageId.DISCORD,
-        SettingsPageId.LAST_FM,
-        SettingsPageId.LISTEN_BRAINZ,
-        SettingsPageId.LISTEN_TOGETHER,
-        SettingsPageId.DEVICE_CONNECT,
+        SettingsPageId.MOCHY_INTEGRATIONS,
+        SettingsPageId.MOCHY_DEVICES,
         SettingsPageId.MOCHY_MODULES,
     )
 
-// the pages on Mochy's list: the registry's root groups, plus the reference's own bubbles that live outside them
+// the bubbles on Mochy's list; every other page is reached from inside one of them
 internal fun mochyHomePages(
     registry: SettingsUiRegistry,
     host: SharedSettingsHost,
-): List<SettingsPageId> {
-    val rootPages = registry.rootGroups.flatMap { it.pages }.filter { registry[it] != null }
-    val named = MochyHomePageOrder.filter { it in host.availablePages && registry[it] != null }
-    return (named + rootPages).distinct().sortedBy { MochyHomePageOrder.indexOf(it).takeIf { index -> index >= 0 } ?: Int.MAX_VALUE }
-}
+): List<SettingsPageId> = MochyHomePageOrder.filter { it in host.availablePages && registry[it] != null }
 
 // the reference's drawable for each bubble it has one for; other pages keep the registry icon
 private fun mochyPageDrawable(pageId: SettingsPageId): DrawableResource? =
@@ -450,19 +469,19 @@ private fun mochyPageDrawable(pageId: SettingsPageId): DrawableResource? =
             Res.drawable.mochy_settings_equalizer
         }
 
-        SettingsPageId.PLAYER -> {
+        SettingsPageId.PLAYER, SettingsPageId.MOCHY_PLAYBACK -> {
             Res.drawable.mochy_settings_play
         }
 
-        SettingsPageId.LYRICS -> {
+        SettingsPageId.LYRICS, SettingsPageId.MOCHY_NOW_PLAYING -> {
             Res.drawable.mochy_settings_lyrics
         }
 
-        SettingsPageId.CONTENT -> {
+        SettingsPageId.CONTENT, SettingsPageId.MOCHY_APP_BEHAVIOUR -> {
             Res.drawable.mochy_settings_settings
         }
 
-        SettingsPageId.APPEARANCE -> {
+        SettingsPageId.APPEARANCE, SettingsPageId.MOCHY_CUSTOMISATION -> {
             Res.drawable.mochy_settings_palette
         }
 
@@ -470,11 +489,16 @@ private fun mochyPageDrawable(pageId: SettingsPageId): DrawableResource? =
             Res.drawable.mochy_settings_storage
         }
 
-        SettingsPageId.DISCORD, SettingsPageId.LAST_FM, SettingsPageId.LISTEN_BRAINZ, SettingsPageId.LISTEN_TOGETHER -> {
+        SettingsPageId.DISCORD,
+        SettingsPageId.LAST_FM,
+        SettingsPageId.LISTEN_BRAINZ,
+        SettingsPageId.LISTEN_TOGETHER,
+        SettingsPageId.MOCHY_INTEGRATIONS,
+        -> {
             Res.drawable.mochy_settings_integration
         }
 
-        SettingsPageId.DEVICE_CONNECT -> {
+        SettingsPageId.DEVICE_CONNECT, SettingsPageId.MOCHY_DEVICES -> {
             Res.drawable.mochy_settings_cast_connected
         }
 

@@ -25,12 +25,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.changedToDown
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Dp
@@ -50,13 +44,9 @@ private const val MOCHY_LYRICS_IMMERSIVE_DELAY_MS = 3_500L
 private const val MOCHY_LYRICS_IMMERSION_MS = 420
 private val MochyLyricsImmersionEase = CubicBezierEasing(0.4f, 0f, 0.2f, 1f)
 
-// the lyrics melt into the page at the top and the bottom
-private const val MOCHY_LYRICS_TOP_FADE = 0.10f
-private const val MOCHY_LYRICS_BOTTOM_FADE = 0.62f
-
 /**
  * Full-screen Mochy lyrics page: the cover tile in the header (a tap closes the page), the lyrics
- * under it, faded at both edges, and the chrome that steps away while the lyrics are read.
+ * under it, and the chrome that steps away while the lyrics are read.
  * [lyrics] is the existing lyrics view, so providers and sync are unchanged.
  */
 @Composable
@@ -114,21 +104,7 @@ fun MochyLyricsPage(
                 Modifier
                     .fillMaxSize()
                     .padding(top = statusTop + MochyLyricsArtTop + MochyLyricsArtSize + MochyLyricsArtGap)
-                    .padding(bottom = contentBottomInset * (1f - immersion))
-                    .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
-                    .drawWithCache {
-                        val fade =
-                            Brush.verticalGradient(
-                                0f to Color.Transparent,
-                                MOCHY_LYRICS_TOP_FADE to Color.Black,
-                                MOCHY_LYRICS_BOTTOM_FADE to Color.Black,
-                                1f to Color.Transparent,
-                            )
-                        onDrawWithContent {
-                            drawContent()
-                            drawRect(brush = fade, blendMode = BlendMode.DstIn)
-                        }
-                    },
+                    .padding(bottom = contentBottomInset * (1f - immersion)),
             )
         }
     }

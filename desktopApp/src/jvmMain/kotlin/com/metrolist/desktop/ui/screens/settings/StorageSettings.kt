@@ -84,6 +84,7 @@ import com.metrolist.shared.ui.settings.StorageSettingRow
 import com.metrolist.shared.ui.settings.StorageSliderRow
 import com.metrolist.shared.ui.settings.StorageSummary
 import com.metrolist.shared.ui.settings.StorageUsageRow
+import com.metrolist.shared.ui.settings.settingsPageHeaderTop
 import com.metrolist.shared.ui.settings.settingsPageSubtitle
 import com.metrolist.shared.ui.utils.rememberFileSizeFormatter
 import com.metrolist.shared.ui.utils.verticalScrollWithDrag
@@ -308,7 +309,8 @@ fun StorageSettingsScreen(
                 Modifier
                     .fillMaxSize()
                     .verticalScrollWithDrag(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 28.dp),
+                    .padding(horizontal = 16.dp, vertical = 28.dp)
+                    .padding(top = settingsPageHeaderTop()),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             if (busy) LinearWavyProgressIndicator(Modifier.fillMaxWidth())
