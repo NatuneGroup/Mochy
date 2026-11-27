@@ -33,6 +33,9 @@ data class RemoteEntry(
 /** Whether this platform can browse remote libraries: Android and the desktop, not iOS. */
 expect val remoteLibrariesSupported: Boolean
 
+/** Whether this app may reach [host] over plain http; Android allows https only. */
+expect fun remotePlainHttpAllowed(host: String): Boolean
+
 /** The folder at [url] on [server], folders first, audio files only. */
 expect suspend fun listRemoteFolder(
     server: RemoteServer,

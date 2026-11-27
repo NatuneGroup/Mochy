@@ -5840,6 +5840,7 @@
     <string name="remote_library_name">Name</string>
     <string name="remote_library_address">Folder address</string>
     <string name="remote_library_address_invalid">Starts with https:// or http://</string>
+    <string name="remote_library_https_only">This app only connects to servers over https://</string>
     <string name="remote_library_username">Username</string>
     <string name="remote_library_password">Password</string>
     <string name="remote_library_save">Save</string>

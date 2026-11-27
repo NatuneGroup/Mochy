@@ -58,6 +58,7 @@ import com.metrolist.shared.generated.resources.remote_library_address
 import com.metrolist.shared.generated.resources.remote_library_address_invalid
 import com.metrolist.shared.generated.resources.remote_library_empty_folder
 import com.metrolist.shared.generated.resources.remote_library_failed
+import com.metrolist.shared.generated.resources.remote_library_https_only
 import com.metrolist.shared.generated.resources.remote_library_name
 import com.metrolist.shared.generated.resources.remote_library_none
 import com.metrolist.shared.generated.resources.remote_library_password
@@ -71,6 +72,7 @@ import com.metrolist.shared.remote.RemoteEntry
 import com.metrolist.shared.remote.RemoteLibraries
 import com.metrolist.shared.remote.RemoteServer
 import com.metrolist.shared.remote.listRemoteFolder
+import com.metrolist.shared.remote.remotePlainHttpAllowed
 import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import com.metrolist.shared.utils.MetrolistClock
@@ -219,7 +221,12 @@ private fun AddServerForm(
     var address by remember { mutableStateOf("https://") }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    val valid = (address.startsWith("https://") || address.startsWith("http://")) && address.substringAfter("://").isNotBlank()
+    val host = address.substringAfter("://").substringBefore('/').substringBefore(':')
+    val plainHttp = address.startsWith("http://")
+    val plainHttpRefused = plainHttp && host.isNotBlank() && !remotePlainHttpAllowed(host)
+    val valid = (address.startsWith("https://") || plainHttp) && host.isNotBlank() && !plainHttpRefused
+    // no complaint until there's an address to judge
+    val showError = (!valid && host.isNotBlank()) || plainHttpRefused
     Column(Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         OutlinedTextField(name, {
             name = it
@@ -229,8 +236,13 @@ private fun AddServerForm(
             { address = it.trim() },
             label = { Text(stringResource(Res.string.remote_library_address)) },
             singleLine = true,
-            isError = !valid,
-            supportingText = if (valid) null else ({ Text(stringResource(Res.string.remote_library_address_invalid)) }),
+            isError = showError,
+            supportingText =
+                when {
+                    plainHttpRefused -> ({ Text(stringResource(Res.string.remote_library_https_only)) })
+                    showError -> ({ Text(stringResource(Res.string.remote_library_address_invalid)) })
+                    else -> null
+                },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
             modifier = Modifier.fillMaxWidth(),
         )
