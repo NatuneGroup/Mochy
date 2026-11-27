@@ -6227,4 +6227,27 @@
     <string name="mochy_lyrics_source">Source</string>
     <string name="mochy_lyrics_submitted_by">Submitted by</string>
     <string name="mochy_lyrics_switch">Switch</string>
+    <!-- Mochy settings pages -->
+    <string name="settings_clear_search">Clear search</string>
+    <string name="pc_hide_search">Hide search</string>
+    <string name="settings_playback_category">Playback</string>
+    <string name="settings_now_playing">Now playing</string>
+    <string name="settings_app_behaviour">App behaviour</string>
+    <string name="settings_customisation_category">Customisation</string>
+    <string name="devices_title">Device integration</string>
+    <string name="settings_related">Related</string>
+    <string name="settings_on_the_player">On the player</string>
+    <string name="settings_section_listening">While you listen</string>
+    <string name="settings_section_failures">When a song won\'t play</string>
+    <string name="settings_section_lyrics">Lyrics</string>
+    <string name="settings_section_videos">Videos</string>
+    <string name="settings_section_canvas">Canvas</string>
+    <string name="settings_section_network">Network &amp; data</string>
+    <string name="settings_section_library_privacy">Library &amp; privacy</string>
+    <string name="general_app_settings">General app settings</string>
+    <string name="settings_transition_link_desc">Crossfade and mixing between songs, in Audio Lab</string>
+    <string name="integration_discord_desc">Rich Presence</string>
+    <string name="integration_scrobbling_desc">%1$s scrobbling</string>
+    <string name="integration_backup_desc">Keep your library and stats safe in your own cloud</string>
+    <string name="module_youtube_desc">Sync likes, library, playlists and history</string>
 </resources>

@@ -69,6 +69,12 @@ enum class SettingsPageId {
     TRANSITION,
     MOCHY_PROFILE,
     MOCHY_MODULES,
+    MOCHY_PLAYBACK,
+    MOCHY_NOW_PLAYING,
+    MOCHY_APP_BEHAVIOUR,
+    MOCHY_CUSTOMISATION,
+    MOCHY_INTEGRATIONS,
+    MOCHY_DEVICES,
 }
 
 enum class SettingsChangeEffect {

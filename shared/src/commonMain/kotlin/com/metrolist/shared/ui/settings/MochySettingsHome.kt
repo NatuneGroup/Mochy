@@ -442,32 +442,25 @@ private fun MochySearchField(
     }
 }
 
-// the reference's order for the bubbles it has; pages it doesn't name follow in the registry's order
+// Mochy's category bubbles, in the reference's order: sound first, then how the app acts and looks, then the rest
 private val MochyHomePageOrder =
     listOf(
         SettingsPageId.AUDIO_LAB,
-        SettingsPageId.PLAYER,
-        SettingsPageId.LYRICS,
-        SettingsPageId.CONTENT,
-        SettingsPageId.APPEARANCE,
+        SettingsPageId.MOCHY_PLAYBACK,
+        SettingsPageId.MOCHY_NOW_PLAYING,
+        SettingsPageId.MOCHY_APP_BEHAVIOUR,
+        SettingsPageId.MOCHY_CUSTOMISATION,
         SettingsPageId.STORAGE,
-        SettingsPageId.DISCORD,
-        SettingsPageId.LAST_FM,
-        SettingsPageId.LISTEN_BRAINZ,
-        SettingsPageId.LISTEN_TOGETHER,
-        SettingsPageId.DEVICE_CONNECT,
+        SettingsPageId.MOCHY_INTEGRATIONS,
+        SettingsPageId.MOCHY_DEVICES,
         SettingsPageId.MOCHY_MODULES,
     )
 
-// the pages on Mochy's list: the registry's root groups, plus the reference's own bubbles that live outside them
+// the bubbles on Mochy's list; every other page is reached from inside one of them
 internal fun mochyHomePages(
     registry: SettingsUiRegistry,
     host: SharedSettingsHost,
-): List<SettingsPageId> {
-    val rootPages = registry.rootGroups.flatMap { it.pages }.filter { registry[it] != null }
-    val named = MochyHomePageOrder.filter { it in host.availablePages && registry[it] != null }
-    return (named + rootPages).distinct().sortedBy { MochyHomePageOrder.indexOf(it).takeIf { index -> index >= 0 } ?: Int.MAX_VALUE }
-}
+): List<SettingsPageId> = MochyHomePageOrder.filter { it in host.availablePages && registry[it] != null }
 
 // the reference's drawable for each bubble it has one for; other pages keep the registry icon
 private fun mochyPageDrawable(pageId: SettingsPageId): DrawableResource? =
@@ -476,19 +469,19 @@ private fun mochyPageDrawable(pageId: SettingsPageId): DrawableResource? =
             Res.drawable.mochy_settings_equalizer
         }
 
-        SettingsPageId.PLAYER -> {
+        SettingsPageId.PLAYER, SettingsPageId.MOCHY_PLAYBACK -> {
             Res.drawable.mochy_settings_play
         }
 
-        SettingsPageId.LYRICS -> {
+        SettingsPageId.LYRICS, SettingsPageId.MOCHY_NOW_PLAYING -> {
             Res.drawable.mochy_settings_lyrics
         }
 
-        SettingsPageId.CONTENT -> {
+        SettingsPageId.CONTENT, SettingsPageId.MOCHY_APP_BEHAVIOUR -> {
             Res.drawable.mochy_settings_settings
         }
 
-        SettingsPageId.APPEARANCE -> {
+        SettingsPageId.APPEARANCE, SettingsPageId.MOCHY_CUSTOMISATION -> {
             Res.drawable.mochy_settings_palette
         }
 
@@ -496,11 +489,16 @@ private fun mochyPageDrawable(pageId: SettingsPageId): DrawableResource? =
             Res.drawable.mochy_settings_storage
         }
 
-        SettingsPageId.DISCORD, SettingsPageId.LAST_FM, SettingsPageId.LISTEN_BRAINZ, SettingsPageId.LISTEN_TOGETHER -> {
+        SettingsPageId.DISCORD,
+        SettingsPageId.LAST_FM,
+        SettingsPageId.LISTEN_BRAINZ,
+        SettingsPageId.LISTEN_TOGETHER,
+        SettingsPageId.MOCHY_INTEGRATIONS,
+        -> {
             Res.drawable.mochy_settings_integration
         }
 
-        SettingsPageId.DEVICE_CONNECT -> {
+        SettingsPageId.DEVICE_CONNECT, SettingsPageId.MOCHY_DEVICES -> {
             Res.drawable.mochy_settings_cast_connected
         }
 
