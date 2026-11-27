@@ -465,6 +465,8 @@ class SettingsGroupRegistryBuilder internal constructor(
         description: String? = null,
         enabled: Boolean = true,
         icon: DrawableResource? = null,
+        // a custom slider row also states its slider, so a page that draws its own rows can draw it as one
+        slider: SettingsCustomSlider? = null,
         content: @Composable (onSettingValueChanged: () -> Unit) -> Unit,
     ) {
         items +=
@@ -476,6 +478,11 @@ class SettingsGroupRegistryBuilder internal constructor(
                 control = SettingsControl.CUSTOM,
                 enabled = enabled,
                 customContent = content,
+                valueLabel = slider?.valueLabel,
+                sliderValue = slider?.value,
+                sliderRange = slider?.range,
+                sliderSteps = slider?.steps ?: 0,
+                onSliderChanged = slider?.onValueChange,
             )
     }
 
@@ -485,6 +492,14 @@ class SettingsGroupRegistryBuilder internal constructor(
 
     internal fun build() = SettingsGroupRegistration(id, title, description, items.toList(), enabled, footer)
 }
+
+class SettingsCustomSlider(
+    val valueLabel: String,
+    val value: Float,
+    val range: ClosedFloatingPointRange<Float>,
+    val steps: Int,
+    val onValueChange: (Float) -> Unit,
+)
 
 internal class SettingsUiRegistryBuilder {
     private val pages = mutableListOf<SettingsPageRegistration>()

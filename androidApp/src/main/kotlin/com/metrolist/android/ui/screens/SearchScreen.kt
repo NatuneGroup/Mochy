@@ -35,7 +35,6 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -435,7 +434,6 @@ fun SearchScreen(
                         Modifier
                             .fillMaxSize()
                             .widthIn(max = 1400.dp)
-                            .windowInsetsPadding(WindowInsets.statusBars)
                             .then(
                                 if (isResultsPage) {
                                     Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))

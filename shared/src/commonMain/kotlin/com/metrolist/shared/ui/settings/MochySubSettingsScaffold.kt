@@ -40,6 +40,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -75,6 +76,9 @@ import com.metrolist.shared.generated.resources.mochy_pages_arrow_back_ios
 import com.metrolist.shared.generated.resources.pc_hide_search
 import com.metrolist.shared.generated.resources.search
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.mochy.MochyBackdrop
+import com.metrolist.shared.ui.mochy.MochyProgressiveGlass
+import com.metrolist.shared.ui.mochy.mochyBackdropSource
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import com.metrolist.shared.ui.utils.supportsNativeBlur
 import org.jetbrains.compose.resources.painterResource
@@ -128,7 +132,8 @@ internal fun MochySubSettingsScaffold(
     content: @Composable (headerHeight: Dp, collapsedBottom: Dp) -> Unit,
 ) {
     val density = LocalDensity.current
-    var nestedOffset by remember { mutableFloatStateOf(0f) }
+    // saved with the page's own scroll, so a page opened again part way down comes back with its title folded
+    var nestedOffset by rememberSaveable { mutableFloatStateOf(0f) }
     val tracker =
         remember {
             object : NestedScrollConnection {
@@ -178,14 +183,25 @@ internal fun MochySubSettingsScaffold(
     var titleHeightPx by remember { mutableIntStateOf(0) }
     val searchSlot = remember { mutableStateOf<(@Composable () -> Unit)?>(null) }
 
+    val pageBackdrop = remember { MochyBackdrop() }
     Box(modifier.fillMaxSize().background(MochySettingsColors.Page)) {
-        Box(Modifier.fillMaxSize().nestedScroll(tracker)) {
+        Box(Modifier.fillMaxSize().nestedScroll(tracker).mochyBackdropSource(pageBackdrop)) {
             CompositionLocalProvider(LocalMochySettingsSearchSlot provides searchSlot) {
                 content(headerHeight, collapsedBottom)
             }
         }
 
-        // the black under the bar, only once the title has folded into it
+        // the frosted page under the bar, then the black over it, only once the title has folded into it
+        MochyProgressiveGlass(
+            backdrop = pageBackdrop,
+            maxBlurPx = { HEADER_GLASS_BLUR_PX * collapse },
+            foundation = MochySettingsColors.Page.copy(alpha = 0.55f),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(headerHeight)
+                    .graphicsLayer { alpha = collapse },
+        )
         Box(
             Modifier
                 .fillMaxWidth()
@@ -383,3 +399,6 @@ private fun MochySearchPill(
         searchBar()
     }
 }
+
+// the reference's 40px at full collapse
+private const val HEADER_GLASS_BLUR_PX = 40f

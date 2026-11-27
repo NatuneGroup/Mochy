@@ -235,7 +235,7 @@ internal fun MochyCategoryPage(
         if (leftover.isNotEmpty()) {
             val items =
                 leftover.map { (page, item) ->
-                    key(page, item.id) { item.toMochyItem(page, null, null, context, onNavigate) }
+                    key(page, item.id) { item.toMochyItem(page, leftoverIcon(page), null, context, onNavigate) }
                 }
             MochySettingsSection(stringResource(Res.string.more), items.matching(query.value))
         }
@@ -313,7 +313,8 @@ private fun SettingsItemRegistration.toMochyItem(
     val highlightKey = "${page.name}:${item.id}"
     val visible = parentOn != false
     val isSub = parentOn != null
-    return when (item.control) {
+    val control = if (item.control == SettingsControl.CUSTOM && item.sliderRange != null) SettingsControl.SLIDER else item.control
+    return when (control) {
         SettingsControl.SWITCH, SettingsControl.MAIN_SWITCH -> {
             mochySwitchItem(
                 key = highlightKey,
@@ -460,6 +461,17 @@ private fun SettingsItemRegistration.toMochyItem(
 }
 
 private const val SLIDER_SETTLE_MS = 300L
+
+// every Mochy row has an icon; a row no section places takes its page's
+private fun leftoverIcon(page: SettingsPageId): DrawableResource =
+    when (page) {
+        SettingsPageId.PLAYER_QUEUE -> Res.drawable.mochy_set_queue_music
+        SettingsPageId.LYRICS -> Res.drawable.mochy_set_lyrics
+        SettingsPageId.PLAYER_ARTWORK -> Res.drawable.mochy_set_image
+        SettingsPageId.PRIVACY -> Res.drawable.mochy_set_lock
+        SettingsPageId.APPEARANCE -> Res.drawable.mochy_set_palette
+        else -> Res.drawable.mochy_set_settings
+    }
 
 @Composable
 private fun MochyRowValue(value: String?) {

@@ -24,11 +24,17 @@ import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.BlurEffect
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
@@ -162,5 +168,48 @@ fun MochyChromeSurface(
     ) {
         MochyChromeGlass(Modifier.matchParentSize(), pureBlack)
         content()
+    }
+}
+
+/**
+ * Mochy's progressive glass under a top bar: the page behind blurred up to [maxBlurPx], strongest at the top and
+ * fading out down the bar, over [foundation] faded the same way. Where the device can't blur, only the foundation.
+ */
+@Composable
+fun MochyProgressiveGlass(
+    backdrop: MochyBackdrop?,
+    maxBlurPx: () -> Float,
+    foundation: Color,
+    modifier: Modifier = Modifier,
+) {
+    val blur = remember { supportsNativeBlur() }
+    Box(
+        modifier
+            .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+            .drawWithContent {
+                drawContent()
+                drawRect(
+                    Brush.verticalGradient(0f to Color.Black, 0.55f to Color.Black.copy(alpha = 0.6f), 1f to Color.Transparent),
+                    blendMode = BlendMode.DstIn,
+                )
+            },
+    ) {
+        if (blur && backdrop != null) {
+            var position by remember { mutableStateOf(Offset.Zero) }
+            Box(
+                Modifier
+                    .matchParentSize()
+                    .onGloballyPositioned { position = it.positionInWindow() }
+                    .graphicsLayer {
+                        val radius = maxBlurPx()
+                        renderEffect = if (radius > 0.5f) BlurEffect(radius, radius, TileMode.Clamp) else null
+                    }.drawBehind {
+                        backdrop.version
+                        val layer = backdrop.layer ?: return@drawBehind
+                        translate(backdrop.origin.x - position.x, backdrop.origin.y - position.y) { drawLayer(layer) }
+                    },
+            )
+        }
+        Box(Modifier.matchParentSize().drawBehind { drawRect(foundation) })
     }
 }
