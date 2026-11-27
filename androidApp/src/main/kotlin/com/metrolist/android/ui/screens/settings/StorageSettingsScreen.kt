@@ -11,6 +11,7 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.StatFs
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
@@ -41,6 +42,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -115,9 +117,13 @@ import com.metrolist.shared.storage.SongCacheLimitsMb
 import com.metrolist.shared.storage.cacheAllocationBytes
 import com.metrolist.shared.storage.imageCacheLimitOptions
 import com.metrolist.shared.storage.songCacheLimitIndex
+import com.metrolist.shared.ui.LocalIsTv
 import com.metrolist.shared.ui.components.AlertDialog
 import com.metrolist.shared.ui.components.PopupVisibility
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.settings.MochyStorageAction
+import com.metrolist.shared.ui.settings.MochyStorageOverview
+import com.metrolist.shared.ui.settings.MochyStorageUsage
 import com.metrolist.shared.ui.settings.StorageConfirmationDialog
 import com.metrolist.shared.ui.settings.StorageSliderRow
 import com.metrolist.shared.ui.settings.StorageSummary
@@ -623,55 +629,104 @@ fun StorageSettingsScreen(
             modifier = Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally).widthIn(max = 640.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                StorageSummary(
-                    usedBytes = songCacheSize + imageCacheSize + animatedCoverCacheSize,
-                    totalBytes = cacheAllocationBytes(maxSongCacheSize, maxImageCacheSize, maxAnimatedCoverCacheSize),
-                    loading = isCalculatingSizes,
+            // the dark theme shows Mochy's storage page: the phone's room, what Mochy's share is made of, and what to clear
+            if (!LocalIsTv.current && MaterialTheme.colorScheme.background.luminance() < 0.5f) {
+                val phoneRoom = remember { runCatching { StatFs(context.filesDir.path) }.getOrNull() }
+                MochyStorageOverview(
+                    usage =
+                        if (isCalculatingSizes) {
+                            null
+                        } else {
+                            MochyStorageUsage(
+                                songCache = songCacheSize,
+                                downloads = downloadSize,
+                                imageCache = imageCacheSize,
+                                animatedCache = animatedCoverCacheSize,
+                                phoneTotal = phoneRoom?.totalBytes ?: 0L,
+                                phoneFree = phoneRoom?.availableBytes ?: 0L,
+                            )
+                        },
+                    actions =
+                        listOf(
+                            MochyStorageAction(
+                                label = stringResource(Res.string.clear_all_downloads),
+                                onClick = { clearDownloadsDialog = true },
+                                danger = true,
+                                enabled = downloadSize > 0L,
+                            ),
+                            MochyStorageAction(
+                                label = stringResource(Res.string.clear_song_cache),
+                                onClick = { clearSongCacheDialog = true },
+                                danger = true,
+                                enabled = songCacheSize > 0L,
+                            ),
+                            MochyStorageAction(
+                                label = stringResource(Res.string.clear_image_cache),
+                                onClick = { clearImageCacheDialog = true },
+                                danger = true,
+                                enabled = imageCacheSize > 0L,
+                            ),
+                            MochyStorageAction(
+                                label = stringResource(Res.string.clear_animated_artwork_cache),
+                                onClick = { clearAnimatedCoverCacheDialog = true },
+                                danger = true,
+                                enabled = animatedCoverCacheSize > 0L,
+                            ),
+                            MochyStorageAction(label = stringResource(Res.string.downloaded_songs), onClick = onNavigateToDownloads),
+                        ),
+                    modifier = Modifier.padding(horizontal = 16.dp),
                 )
-            }
+            } else {
+                Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                    StorageSummary(
+                        usedBytes = songCacheSize + imageCacheSize + animatedCoverCacheSize,
+                        totalBytes = cacheAllocationBytes(maxSongCacheSize, maxImageCacheSize, maxAnimatedCoverCacheSize),
+                        loading = isCalculatingSizes,
+                    )
+                }
 
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(3.dp),
-            ) {
-                CacheInfoCard(
-                    icon = MetrolistIcons.Outlined.Download,
-                    label = stringResource(Res.string.downloads),
-                    sizeText = downloadSizeText,
-                    progress = downloadProgress,
-                    isFirst = true,
-                    onClick = { clearDownloadsDialog = true },
-                    onClickLabel = stringResource(Res.string.clear_all_downloads),
-                )
-                CacheInfoCard(
-                    icon = MetrolistIcons.Outlined.MusicNote,
-                    label = stringResource(Res.string.song_cache),
-                    sizeText = songCacheSizeText,
-                    progress = songCacheProgress,
-                    onClick = { clearSongCacheDialog = true },
-                    onClickLabel = stringResource(Res.string.clear_song_cache),
-                )
-                CacheInfoCard(
-                    icon = MetrolistIcons.Outlined.Image,
-                    label = stringResource(Res.string.image_cache),
-                    sizeText = imageCacheSizeText,
-                    progress = imageCacheProgress,
-                    onClick = { clearImageCacheDialog = true },
-                    onClickLabel = stringResource(Res.string.clear_image_cache),
-                )
-                CacheInfoCard(
-                    icon = MetrolistIcons.Outlined.Equalizer,
-                    label = stringResource(Res.string.animated_artwork_cache),
-                    sizeText = animatedCoverCacheSizeText,
-                    progress = animatedCoverProgress,
-                    isLast = true,
-                    onClick = { clearAnimatedCoverCacheDialog = true },
-                    onClickLabel = stringResource(Res.string.clear_animated_artwork_cache),
-                )
+                Column(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(3.dp),
+                ) {
+                    CacheInfoCard(
+                        icon = MetrolistIcons.Outlined.Download,
+                        label = stringResource(Res.string.downloads),
+                        sizeText = downloadSizeText,
+                        progress = downloadProgress,
+                        isFirst = true,
+                        onClick = { clearDownloadsDialog = true },
+                        onClickLabel = stringResource(Res.string.clear_all_downloads),
+                    )
+                    CacheInfoCard(
+                        icon = MetrolistIcons.Outlined.MusicNote,
+                        label = stringResource(Res.string.song_cache),
+                        sizeText = songCacheSizeText,
+                        progress = songCacheProgress,
+                        onClick = { clearSongCacheDialog = true },
+                        onClickLabel = stringResource(Res.string.clear_song_cache),
+                    )
+                    CacheInfoCard(
+                        icon = MetrolistIcons.Outlined.Image,
+                        label = stringResource(Res.string.image_cache),
+                        sizeText = imageCacheSizeText,
+                        progress = imageCacheProgress,
+                        onClick = { clearImageCacheDialog = true },
+                        onClickLabel = stringResource(Res.string.clear_image_cache),
+                    )
+                    CacheInfoCard(
+                        icon = MetrolistIcons.Outlined.Equalizer,
+                        label = stringResource(Res.string.animated_artwork_cache),
+                        sizeText = animatedCoverCacheSizeText,
+                        progress = animatedCoverProgress,
+                        isLast = true,
+                        onClick = { clearAnimatedCoverCacheDialog = true },
+                        onClickLabel = stringResource(Res.string.clear_animated_artwork_cache),
+                    )
+                }
             }
 
             SettingsSubScreenGroup(
