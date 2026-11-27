@@ -5791,6 +5791,7 @@
     <!-- Translators: Button label to close the animated silver card celebration overlay. -->
     <string name="mochy_card_celebrate_close">Tap to continue</string>
     <!-- Translators: Settings screen title for the local Mochy profile ID card. -->
+    <string name="natune_lyrics_from_source">Lyrics from %1$s</string>
     <string name="mochy_library_tab_all">All</string>
     <string name="mochy_library_tab_local">Local &amp; downloaded</string>
     <string name="mochy_library_tab_cached">Cached</string>

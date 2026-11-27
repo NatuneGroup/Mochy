@@ -188,6 +188,7 @@ import com.metrolist.shared.generated.resources.unknown
 import com.metrolist.shared.generated.resources.unlike
 import com.metrolist.shared.generated.resources.video
 import com.metrolist.shared.playback.LocalPlayerSession
+import com.metrolist.shared.playback.PlaybackSeekSource
 import com.metrolist.shared.playback.SleepTimerState
 import com.metrolist.shared.settings.FlagshipBottomBarStyle
 import com.metrolist.shared.settings.PlayerBackgroundStyle
@@ -231,6 +232,7 @@ import com.metrolist.shared.ui.components.vintageOnButtonColor
 import com.metrolist.shared.ui.haptics.HapticEvent
 import com.metrolist.shared.ui.haptics.rememberMetrolistHaptics
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.lyrics.natune.NatuneLyricsOverlay
 import com.metrolist.shared.ui.mochy.LikeBurstOverlay
 import com.metrolist.shared.ui.mochy.LikeBurstState
 import com.metrolist.shared.ui.mochy.LikeSlot
@@ -1787,7 +1789,8 @@ fun PlayerScreen(
                                     Spacer(modifier = Modifier.height(portraitControlsHeight + 16.dp))
                                 } else {
                                     AnimatedContent(
-                                        targetState = uiState.isLyricsVisible,
+                                        // the flagship's lyrics are Natune's sheet over the player, not this inline pane
+                                        targetState = uiState.isLyricsVisible && !(usesMochyFlagship && !useLandscapeLayout),
                                         transitionSpec = {
                                             fadeIn(animationSpec = tween(400, delayMillis = 90))
                                                 .togetherWith(fadeOut(animationSpec = tween(400)))
@@ -2816,8 +2819,9 @@ fun PlayerScreen(
                                         Spacer(
                                             modifier =
                                                 Modifier.height(
+                                                    // the deck's own room is already kept under the controls by the queue sheet's peek
                                                     if (flagshipDeck) {
-                                                        portraitControlsHeight + deckTransportGap
+                                                        deckTransportGap
                                                     } else {
                                                         portraitControlsHeight +
                                                             16.dp
@@ -3201,6 +3205,60 @@ fun PlayerScreen(
                             onPrevious = viewModel::previous.takeUnless { isListenTogetherGuest },
                             onNext = viewModel::next.takeUnless { isListenTogetherGuest },
                         )
+                    }
+
+                    // the flagship's lyrics open as Natune's sheet over the whole player
+                    if (usesMochyFlagship && !useLandscapeLayout) {
+                        AnimatedVisibility(
+                            visible = uiState.isLyricsVisible,
+                            enter = fadeIn(tween(220)) + slideInVertically(tween(320)) { it / 10 },
+                            exit = fadeOut(tween(180)) + slideOutVertically(tween(260)) { it / 10 },
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            val lyricsOffset =
+                                LyricsUtils.combinedLyricsOffsetMs(uiState.lyricsOffsetMs, Settings.shared.globalLyricsOffsetMs)
+                            val overlayOffset by rememberUpdatedState(lyricsOffset)
+                            val overlayPlaying by rememberUpdatedState(isPlaying)
+                            val overlaySpeed by rememberUpdatedState(viewModel.playbackSpeed.collectAsState().value)
+                            val overlayClock =
+                                remember(viewModel) {
+                                    PlaybackClock(
+                                        readPositionMs = viewModel::currentPositionMs,
+                                        readIsPlaying = { overlayPlaying },
+                                        readSpeed = { overlaySpeed },
+                                        offsetMs = { overlayOffset.toLong() },
+                                    )
+                                }
+                            NatuneLyricsOverlay(
+                                lines = uiState.lyrics,
+                                isLoading = uiState.isLyricsLoading,
+                                title = currentSong?.title.orEmpty(),
+                                artist = currentSong?.artists?.joinToString { it.name }.orEmpty(),
+                                artworkUrl = currentSong?.displayThumbnail,
+                                providerName = uiState.lyricsProvider?.takeIf { it.isNotBlank() },
+                                positionProvider = overlayClock,
+                                onSeekToLine = { lyricMs ->
+                                    viewModel.seekToPosition(
+                                        LyricsUtils.lyricsSeekPositionForOffset(lyricMs, lyricsOffset),
+                                        PlaybackSeekSource("lyrics_tap"),
+                                    )
+                                },
+                                onClose = { viewModel.setLyricsVisible(false) },
+                                onMore = { showLyricsMenu = true },
+                                controls = { controlsModifier ->
+                                    FlagshipTransport(
+                                        playing = isPlaying,
+                                        loading = isPlaybackLoading,
+                                        onPlayPause = viewModel::togglePlayPause,
+                                        onPrevious = viewModel::previous,
+                                        onNext = viewModel::next,
+                                        compact = true,
+                                        contentColor = Color.White,
+                                        modifier = controlsModifier,
+                                    )
+                                },
+                            )
+                        }
                     }
 
                     if (usesMochyChrome) {
