@@ -42,6 +42,7 @@ import com.metrolist.shared.constants.AppleMusicArtistVideoResolutionKey
 import com.metrolist.shared.constants.AppleMusicArtistVideosKey
 import com.metrolist.shared.constants.ArtistNameAliasesJsonKey
 import com.metrolist.shared.constants.AudioBoostDbKey
+import com.metrolist.shared.constants.AudioQualityCellularKey
 import com.metrolist.shared.constants.AudioTrackPlaybackParamsKey
 import com.metrolist.shared.constants.AutoBackupEnabledKey
 import com.metrolist.shared.constants.AutoBackupFrequencyKey
@@ -81,7 +82,10 @@ import com.metrolist.shared.constants.DevtoolsUnlockedKey
 import com.metrolist.shared.constants.DisableAnimatedArtworkOnMobileDataKey
 import com.metrolist.shared.constants.DiscordAlbumTemplateKey
 import com.metrolist.shared.constants.DiscordPendingAuthSessionKey
+import com.metrolist.shared.constants.DnsOverHttpsCustomUrlKey
+import com.metrolist.shared.constants.DnsOverHttpsProviderKey
 import com.metrolist.shared.constants.DownloadQueueJsonKey
+import com.metrolist.shared.constants.DownloadWifiOnlyKey
 import com.metrolist.shared.constants.DownloadedCollectionSortDirectionKey
 import com.metrolist.shared.constants.DownloadedCollectionSortKey
 import com.metrolist.shared.constants.EightDDepthKey
@@ -97,6 +101,7 @@ import com.metrolist.shared.constants.ExplicitOnlyKey
 import com.metrolist.shared.constants.ExpressiveMiniPlayerArtworkPlaybackKey
 import com.metrolist.shared.constants.ExpressiveMiniPlayerCookieArtworkKey
 import com.metrolist.shared.constants.ExpressiveMiniPlayerShapeMotionKey
+import com.metrolist.shared.constants.ExternalDownloaderPackageKey
 import com.metrolist.shared.constants.FlagshipBottomBarStyleKey
 import com.metrolist.shared.constants.FloatingNavBarKey
 import com.metrolist.shared.constants.FloatingTopBarKey
@@ -155,8 +160,6 @@ import com.metrolist.shared.constants.LyricsShowOriginalLyricsKey
 import com.metrolist.shared.constants.MatugenThemeKey
 import com.metrolist.shared.constants.MinimumSongDurationSecondsKey
 import com.metrolist.shared.constants.MochyCoverRadiusKey
-import com.metrolist.shared.constants.DownloadWifiOnlyKey
-import com.metrolist.shared.constants.ExternalDownloaderPackageKey
 import com.metrolist.shared.constants.MochyModulesStateJsonKey
 import com.metrolist.shared.constants.MochyProfileCardNumberKey
 import com.metrolist.shared.constants.MochyProfileCardSilverKey
@@ -186,6 +189,9 @@ import com.metrolist.shared.constants.PlaylistPickerSortKey
 import com.metrolist.shared.constants.PlaylistSongSortingsKey
 import com.metrolist.shared.constants.PreferWordSyncedLyricsKey
 import com.metrolist.shared.constants.PromptContinuePlaybackKey
+import com.metrolist.shared.constants.ProxyHostKey
+import com.metrolist.shared.constants.ProxyPortKey
+import com.metrolist.shared.constants.ProxyTypeKey
 import com.metrolist.shared.constants.QueuedYouTubeHistoryJsonKey
 import com.metrolist.shared.constants.RecentPlayedSearchSongsJsonKey
 import com.metrolist.shared.constants.ResumeOnBluetoothConnectKey
@@ -560,8 +566,21 @@ class Settings(
 
     // Mochy's cover rounding, in dp: the corners of the covers on Home and in the Library
     var mochyCoverRadius by preference(MochyCoverRadiusKey, 25f)
+
     // downloads wait for an unmetered network
     var downloadWifiOnly by preference(DownloadWifiOnlyKey, false)
+
+    // the quality on mobile data; blank plays at the main audio quality there too
+    var audioQualityCellular by preference(AudioQualityCellularKey, "")
+
+    // DNS over HTTPS: OFF, CLOUDFLARE, GOOGLE, QUAD9, ADGUARD or CUSTOM with its own URL
+    var dnsOverHttpsProvider by preference(DnsOverHttpsProviderKey, "OFF")
+    var dnsOverHttpsCustomUrl by preference(DnsOverHttpsCustomUrlKey, "")
+
+    // the proxy every request goes through: OFF, HTTP or SOCKS
+    var proxyType by preference(ProxyTypeKey, "OFF")
+    var proxyHost by preference(ProxyHostKey, "")
+    var proxyPort by preference(ProxyPortKey, 0)
 
     // the app the download button hands a song's YouTube address to instead of saving it, blank for none
     var externalDownloaderPackage by preference(ExternalDownloaderPackageKey, "")

@@ -22,7 +22,22 @@ import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import com.metrolist.shared.generated.resources.*
+import com.metrolist.shared.generated.resources.audio_quality_auto
+import com.metrolist.shared.generated.resources.audio_quality_high
+import com.metrolist.shared.generated.resources.audio_quality_low
+import com.metrolist.shared.generated.resources.audio_quality_on_mobile_data
+import com.metrolist.shared.generated.resources.audio_quality_same_as_wifi
+import com.metrolist.shared.generated.resources.dns_over_https
+import com.metrolist.shared.generated.resources.dns_over_https_custom
+import com.metrolist.shared.generated.resources.dns_over_https_custom_url
+import com.metrolist.shared.generated.resources.dns_over_https_desc
+import com.metrolist.shared.generated.resources.dns_over_https_off
+import com.metrolist.shared.generated.resources.internet
 import com.metrolist.shared.generated.resources.mochy_pages_translate
+import com.metrolist.shared.generated.resources.proxy
+import com.metrolist.shared.generated.resources.proxy_host
+import com.metrolist.shared.generated.resources.proxy_off
+import com.metrolist.shared.generated.resources.proxy_port
 import com.metrolist.shared.settings.AiSlopBlocklist
 import com.metrolist.shared.settings.BlockedContent
 import com.metrolist.shared.settings.Settings
@@ -68,6 +83,81 @@ internal fun SettingsUiRegistryBuilder.registerContentSettings(host: SharedSetti
                     description = settings.accountChannelHandle.ifBlank { settings.accountName },
                     onClick = switchChannel,
                 )
+            }
+        }
+        // Sora's Internet page: quality on mobile data, DNS over HTTPS and the proxy; iOS's own network stack has neither of the last two
+        if (host.platform != SettingsPlatform.IOS) {
+            group("internet", stringResource(Res.string.internet)) {
+                if (host.platform == SettingsPlatform.ANDROID) {
+                    val qualityChoices =
+                        listOf(
+                            SettingsChoice("", stringResource(Res.string.audio_quality_same_as_wifi)),
+                            SettingsChoice("LOW", stringResource(Res.string.audio_quality_low)),
+                            SettingsChoice("AUTO", stringResource(Res.string.audio_quality_auto)),
+                            SettingsChoice("HIGH", stringResource(Res.string.audio_quality_high)),
+                        )
+                    choice(
+                        id = "audioQualityCellular",
+                        title = stringResource(Res.string.audio_quality_on_mobile_data),
+                        valueLabel = qualityChoices.firstOrNull { it.id == settings.audioQualityCellular }?.label,
+                        choices = qualityChoices,
+                        selectedChoiceId = settings.audioQualityCellular,
+                    ) { settings.audioQualityCellular = it }
+                }
+                val dohChoices =
+                    listOf(
+                        SettingsChoice("OFF", stringResource(Res.string.dns_over_https_off)),
+                        SettingsChoice("CLOUDFLARE", "Cloudflare"),
+                        SettingsChoice("GOOGLE", "Google"),
+                        SettingsChoice("QUAD9", "Quad9"),
+                        SettingsChoice("ADGUARD", "AdGuard"),
+                        SettingsChoice("CUSTOM", stringResource(Res.string.dns_over_https_custom)),
+                    )
+                choice(
+                    id = "dnsOverHttps",
+                    title = stringResource(Res.string.dns_over_https),
+                    description = stringResource(Res.string.dns_over_https_desc),
+                    valueLabel = dohChoices.firstOrNull { it.id == settings.dnsOverHttpsProvider }?.label,
+                    choices = dohChoices,
+                    selectedChoiceId = settings.dnsOverHttpsProvider,
+                ) { settings.dnsOverHttpsProvider = it }
+                if (settings.dnsOverHttpsProvider == "CUSTOM") {
+                    text(
+                        id = "dnsOverHttpsCustomUrl",
+                        title = stringResource(Res.string.dns_over_https_custom_url),
+                        value = settings.dnsOverHttpsCustomUrl,
+                        placeholder = "https://",
+                    ) { settings.dnsOverHttpsCustomUrl = it.trim() }
+                }
+                val proxyChoices =
+                    listOf(
+                        SettingsChoice("OFF", stringResource(Res.string.proxy_off)),
+                        SettingsChoice("HTTP", "HTTP"),
+                        SettingsChoice("SOCKS", "SOCKS5"),
+                    )
+                choice(
+                    id = "proxyType",
+                    title = stringResource(Res.string.proxy),
+                    valueLabel = proxyChoices.firstOrNull { it.id == settings.proxyType }?.label,
+                    choices = proxyChoices,
+                    selectedChoiceId = settings.proxyType,
+                ) { settings.proxyType = it }
+                if (settings.proxyType != "OFF") {
+                    text(
+                        id = "proxyHost",
+                        title = stringResource(Res.string.proxy_host),
+                        value = settings.proxyHost,
+                    ) { settings.proxyHost = it.trim() }
+                    text(
+                        id = "proxyPort",
+                        title = stringResource(Res.string.proxy_port),
+                        value =
+                            settings.proxyPort
+                                .takeIf { it > 0 }
+                                ?.toString()
+                                .orEmpty(),
+                    ) { settings.proxyPort = it.trim().toIntOrNull()?.takeIf { port -> port in 1..65535 } ?: 0 }
+                }
             }
         }
         val contentLanguageChoices = host.hostChoices[SettingsHostChoice.CONTENT_LANGUAGE].orEmpty()

@@ -29,6 +29,9 @@ val sharedOkHttpClient: OkHttpClient by lazy {
     OkHttpClient
         .Builder()
         .connectionPool(ConnectionPool(10, 5, TimeUnit.MINUTES))
+        // the Internet page's DNS over HTTPS and proxy, read on every connection
+        .dns(SettingsDns)
+        .proxySelector(SettingsProxySelector)
         .eventListenerFactory {
             object : EventListener() {
                 override fun callFailed(

@@ -403,6 +403,7 @@ kotlin {
                     implementation(libs.ktor.client.logging)
                     implementation(libs.ktor.client.cio)
                     implementation(libs.okhttp)
+                    implementation(libs.okhttp.dnsoverhttps)
                     // Natune's karaoke lyrics view; it publishes no iOS simulator build, so iOS keeps Mochy's lyrics
                     implementation(libs.accompanist.lyrics.ui)
                     implementation(libs.accompanist.lyrics.core)

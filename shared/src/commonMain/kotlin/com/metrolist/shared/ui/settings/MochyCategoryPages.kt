@@ -108,6 +108,7 @@ import com.metrolist.shared.generated.resources.settings_section_failures
 import com.metrolist.shared.generated.resources.settings_section_library_privacy
 import com.metrolist.shared.generated.resources.settings_section_listening
 import com.metrolist.shared.generated.resources.settings_section_lyrics
+import com.metrolist.shared.generated.resources.settings_section_network
 import com.metrolist.shared.generated.resources.settings_section_videos
 import com.metrolist.shared.generated.resources.settings_sound
 import com.metrolist.shared.generated.resources.settings_transition_link_desc
@@ -684,6 +685,10 @@ private val AppBehaviourSpec =
                         MochyRow(C, "contentCountry", Res.drawable.mochy_set_language),
                         MochyGroupRows(C, "sharing", Res.drawable.mochy_set_share),
                     ),
+                ),
+                MochySection(
+                    Res.string.settings_section_network,
+                    listOf(MochyGroupRows(C, "internet", Res.drawable.mochy_set_link)),
                 ),
                 MochySection(
                     Res.string.settings_section_library_privacy,
