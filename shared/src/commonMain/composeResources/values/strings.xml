@@ -5791,6 +5791,13 @@
     <!-- Translators: Button label to close the animated silver card celebration overlay. -->
     <string name="mochy_card_celebrate_close">Tap to continue</string>
     <!-- Translators: Settings screen title for the local Mochy profile ID card. -->
+    <string name="mochy_library_tab_all">All</string>
+    <string name="mochy_library_tab_local">Local &amp; downloaded</string>
+    <string name="mochy_library_tab_cached">Cached</string>
+    <string name="mochy_library_tab_history">History</string>
+    <string name="mochy_library_import_banner">Import your music here!</string>
+    <string name="mochy_library_recently_added">Recently added</string>
+    <string name="mochy_library_empty_import">Nothing here yet. Import your music above to fill your library.</string>
     <string name="mochy_profile_view_stats">"View Stats  &gt;"</string>
     <string name="mochy_profile_version_about_app">Version &amp; about app</string>
     <string name="mochy_profile_capsule_about">About app</string>

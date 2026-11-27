@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -85,13 +86,25 @@ import com.metrolist.shared.constants.GridTileSpacing
 import com.metrolist.shared.constants.currentGridCells
 import com.metrolist.shared.constants.gridTileColumns
 import com.metrolist.shared.generated.resources.Res
+import com.metrolist.shared.generated.resources.albums
+import com.metrolist.shared.generated.resources.artists
 import com.metrolist.shared.generated.resources.display_density
 import com.metrolist.shared.generated.resources.filter_downloaded
 import com.metrolist.shared.generated.resources.library
 import com.metrolist.shared.generated.resources.library_load_failed
+import com.metrolist.shared.generated.resources.liked
+import com.metrolist.shared.generated.resources.mochy_library_empty_import
+import com.metrolist.shared.generated.resources.mochy_library_import_banner
+import com.metrolist.shared.generated.resources.mochy_library_recently_added
+import com.metrolist.shared.generated.resources.mochy_library_tab_all
+import com.metrolist.shared.generated.resources.mochy_library_tab_cached
+import com.metrolist.shared.generated.resources.mochy_library_tab_history
+import com.metrolist.shared.generated.resources.mochy_library_tab_local
 import com.metrolist.shared.generated.resources.playlist_direction_ascending
 import com.metrolist.shared.generated.resources.playlist_direction_descending
+import com.metrolist.shared.generated.resources.playlists
 import com.metrolist.shared.generated.resources.song_count
+import com.metrolist.shared.generated.resources.songs
 import com.metrolist.shared.generated.resources.try_again
 import com.metrolist.shared.model.AlbumItem
 import com.metrolist.shared.model.ArtistItem
@@ -140,21 +153,30 @@ import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.icons.SongStatusIcons
 import com.metrolist.shared.ui.menu.ExpressiveSelectionMenu
 import com.metrolist.shared.ui.menu.trackPressPosition
+import com.metrolist.shared.ui.mochy.MochyLibraryCard
+import com.metrolist.shared.ui.mochy.MochyLibraryCardGrid
 import com.metrolist.shared.ui.mochy.MochyLibraryChipRow
+import com.metrolist.shared.ui.mochy.MochyLibraryEmptyState
 import com.metrolist.shared.ui.mochy.MochyLibraryGridGap
 import com.metrolist.shared.ui.mochy.MochyLibraryGridRowGap
 import com.metrolist.shared.ui.mochy.MochyLibraryGridTile
+import com.metrolist.shared.ui.mochy.MochyLibraryImportBanner
 import com.metrolist.shared.ui.mochy.MochyLibraryIndexRail
 import com.metrolist.shared.ui.mochy.MochyLibraryListRow
 import com.metrolist.shared.ui.mochy.MochyLibraryPillButton
 import com.metrolist.shared.ui.mochy.MochyLibraryRoundButton
 import com.metrolist.shared.ui.mochy.MochyLibrarySectionDivider
+import com.metrolist.shared.ui.mochy.MochyLibraryTab
+import com.metrolist.shared.ui.mochy.MochyLibraryTabChips
 import com.metrolist.shared.ui.mochy.MochyLibraryTitleBlockHeight
 import com.metrolist.shared.ui.mochy.MochyLibraryTopBar
+import com.metrolist.shared.ui.mochy.MochyLibraryWide
+import com.metrolist.shared.ui.mochy.MochyLibraryWideCard
 import com.metrolist.shared.ui.mochy.buildLibraryIndex
 import com.metrolist.shared.ui.mochy.rememberMochyLibraryCollapse
 import com.metrolist.shared.ui.navigation.LocalRootContentActive
 import com.metrolist.shared.ui.navigation.LocalUseDesktopUi
+import com.metrolist.shared.ui.navigation.NavigationBackHandler
 import com.metrolist.shared.ui.navigation.blockInput
 import com.metrolist.shared.ui.player.staticConnectedLeadingButtonShapes
 import com.metrolist.shared.ui.player.staticConnectedTrailingButtonShapes
@@ -276,6 +298,9 @@ fun LibraryContent(
     onSearchDescendingChange: (Boolean) -> Unit = {},
     onPlayAlbum: ((AlbumItem) -> Unit)? = null,
     presentation: LibraryPresentation = remember { LibraryPresentation() },
+    // Mochy's landing page links to these when the host has them
+    onOpenHistory: (() -> Unit)? = null,
+    onOpenImport: (() -> Unit)? = null,
 ) {
     val currentSongIdState = rememberUpdatedState(currentSongId)
     val isPlayingState = rememberUpdatedState(isPlaying)
@@ -436,6 +461,25 @@ fun LibraryContent(
                 )
             haptics.perform(HapticEvent.DRAG_SNAP)
             onManualOrderChange(reorderOrder)
+        }
+        // Mochy's Library opens on its own landing page: the tabs, the import banner and the category cards,
+        // each card opening the filtered list below; back from a list returns here
+        if (mochyLook && selectedFilter == null && searchQuery.isBlank() && !isSearchOpen) {
+            MochyLibraryLanding(
+                items = items,
+                state = scrollState,
+                topPadding = statusBarTop + MochyLibraryTitleBlockHeight,
+                bottomPadding = bottomPadding + extraBottomPadding,
+                onFilterChange = onFilterChange,
+                onAutoPlaylistClick = onAutoPlaylistClick,
+                onOpenHistory = onOpenHistory,
+                onOpenImport = onOpenImport,
+            )
+            mochyTopBar()
+            return@Box
+        }
+        if (mochyLook && selectedFilter != null && searchQuery.isBlank()) {
+            NavigationBackHandler { onFilterChange(null) }
         }
         val currentGridView = isGridView
         val retainedScrollState = scrollState
@@ -1484,5 +1528,116 @@ internal fun dispatchLibraryItemClick(
     } else {
         CollectionPreviews.record(item)
         onOpenItem(item)
+    }
+}
+
+@Composable
+private fun MochyLibraryLanding(
+    items: List<YTItem>,
+    state: LazyGridState,
+    topPadding: Dp,
+    bottomPadding: Dp,
+    onFilterChange: (LibraryFilter?) -> Unit,
+    onAutoPlaylistClick: (String) -> Unit,
+    onOpenHistory: (() -> Unit)?,
+    onOpenImport: (() -> Unit)?,
+) {
+    val songs = remember(items) { items.filterIsInstance<SongItem>().filterNot { it.isPodcast } }
+    val playlists = remember(items) { items.filterIsInstance<PlaylistItem>() }
+    val albums = remember(items) { items.filterIsInstance<AlbumItem>() }
+    val artists = remember(items) { items.filterIsInstance<ArtistItem>() }
+    val tabs =
+        buildList {
+            add(MochyLibraryTab(stringResource(Res.string.mochy_library_tab_all)) {})
+            add(MochyLibraryTab(stringResource(Res.string.mochy_library_tab_local)) { onAutoPlaylistClick("downloaded") })
+            add(MochyLibraryTab(stringResource(Res.string.mochy_library_tab_cached)) { onAutoPlaylistClick("cached") })
+            if (onOpenHistory != null) add(MochyLibraryTab(stringResource(Res.string.mochy_library_tab_history), onOpenHistory))
+        }
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(1),
+        state = state,
+        contentPadding = PaddingValues(top = topPadding, bottom = bottomPadding),
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        item(key = "tabs") {
+            Column {
+                MochyLibraryTabChips(tabs, selectedIndex = 0, modifier = Modifier.padding(horizontal = 24.dp))
+                Spacer(Modifier.height(14.dp))
+            }
+        }
+        if (onOpenImport != null && !Settings.shared.mochyHideImportBanner) {
+            item(key = "import_banner") {
+                Column {
+                    MochyLibraryImportBanner(
+                        title = stringResource(Res.string.mochy_library_import_banner),
+                        onClick = onOpenImport,
+                        onDismiss = { Settings.shared.mochyHideImportBanner = true },
+                        modifier = Modifier.padding(horizontal = 24.dp),
+                    )
+                    Spacer(Modifier.height(16.dp))
+                }
+            }
+        }
+        if (items.isEmpty()) {
+            item(key = "empty") { MochyLibraryEmptyState(stringResource(Res.string.mochy_library_empty_import)) }
+            return@LazyVerticalGrid
+        }
+        item(key = "categories") {
+            Column {
+                MochyLibraryCardGrid(
+                    listOf(
+                        MochyLibraryCard(
+                            stringResource(Res.string.songs),
+                            songs.size,
+                            songs.take(4).map {
+                                it.thumbnail
+                            },
+                            { onFilterChange(LibraryFilter.TRACKS) },
+                        ),
+                        MochyLibraryCard(
+                            stringResource(Res.string.playlists),
+                            playlists.size,
+                            playlists.take(4).map {
+                                it.thumbnail
+                            },
+                            { onFilterChange(LibraryFilter.PLAYLISTS) },
+                        ),
+                        MochyLibraryCard(
+                            stringResource(Res.string.albums),
+                            albums.size,
+                            albums.take(4).map {
+                                it.thumbnail
+                            },
+                            { onFilterChange(LibraryFilter.ALBUMS) },
+                        ),
+                        MochyLibraryCard(
+                            stringResource(Res.string.artists),
+                            artists.size,
+                            artists.take(4).map { it.thumbnail },
+                            { onFilterChange(LibraryFilter.ARTISTS) },
+                            roundCovers = true,
+                        ),
+                    ),
+                )
+                Spacer(Modifier.height(10.dp))
+            }
+        }
+        if (songs.isNotEmpty()) {
+            item(key = "recently_added") {
+                Column {
+                    MochyLibraryWideCard(
+                        MochyLibraryWide(
+                            stringResource(Res.string.mochy_library_recently_added),
+                            songs.size,
+                            songs.take(4).map { it.thumbnail },
+                        ) { onFilterChange(LibraryFilter.TRACKS) },
+                    )
+                    Spacer(Modifier.height(10.dp))
+                }
+            }
+        }
+        item(key = "liked") {
+            MochyLibraryWideCard(MochyLibraryWide(stringResource(Res.string.liked), null, emptyList()) { onAutoPlaylistClick("liked") })
+        }
     }
 }

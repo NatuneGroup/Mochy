@@ -372,6 +372,7 @@ class Settings(
     var accountChannelHandle by preference("")
     var accountThumbnail by preference("")
     var mochyUsername by preference(MochyUsernameKey, "")
+    var mochyHideImportBanner by preference(false)
     var mochyProfilePhotoUri by preference(MochyProfilePhotoUriKey, "")
     var mochyProfileCardNumber by preference(MochyProfileCardNumberKey, "")
     var mochyProfileCardSilver by preference(MochyProfileCardSilverKey, false)

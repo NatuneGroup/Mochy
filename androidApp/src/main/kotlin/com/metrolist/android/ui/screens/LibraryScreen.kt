@@ -183,6 +183,7 @@ fun LibraryScreen(
     onNavigateToPodcast: (String) -> Unit = {},
     onNavigateToAutoPlaylist: ((String) -> Unit)? = null,
     onNavigateToPlaylistImport: () -> Unit = {},
+    onNavigateToHistory: (() -> Unit)? = null,
     floatingActionsBottomInset: State<Dp>,
     scrollToTopEvents: Flow<Long> = emptyFlow(),
     viewModel: LibraryViewModel = koinViewModel(),
@@ -538,6 +539,8 @@ fun LibraryScreen(
                 contentSearchHasMore = contentSearchHasMore,
                 onLoadMoreContentMatches = viewModel::loadMoreContentMatches,
                 onSearchDescendingChange = viewModel::setSearchDescending,
+                onOpenHistory = onNavigateToHistory,
+                onOpenImport = onNavigateToPlaylistImport,
                 itemContainer = { hiddenItem, item, isGridView, onClick, itemContent ->
                     val content: @Composable () -> Unit = {
                         LibraryItemContainer(

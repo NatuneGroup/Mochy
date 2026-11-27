@@ -853,7 +853,8 @@ fun MetrolistApp(
         val shouldShowTopBar =
             navigationState.topLevelRoute in topLevelScreens &&
                 currentRoute in topLevelScreens &&
-                !(mochyHomeTop && navigationState.topLevelRoute == Screen.Home)
+                // Mochy's Home and Library draw their own big titles
+                !(mochyHomeTop && (navigationState.topLevelRoute == Screen.Home || navigationState.topLevelRoute == Screen.Library))
 
         val useFloatingTopBar = Settings.shared.floatingTopBar && !hasDesktopCaption
         val topAppBarScrollBehavior = appBarScrollBehavior()
@@ -2600,6 +2601,7 @@ fun getEntryProvider(
                 onNavigateToPlaylist = { id, thumbnail -> navigator.navigate(Screen.Playlist(id, thumbnailHint = thumbnail)) },
                 onNavigateToPodcast = { podcastId -> navigator.navigate(Screen.Podcast(podcastId)) },
                 onNavigateToPlaylistImport = { navigator.navigate(Screen.PlaylistImport) },
+                onNavigateToHistory = { navigator.navigate(Screen.History) },
                 onNavigateToAutoPlaylist = { type ->
                     // Keep podcast auto playlists on the Library stack so Back returns to the podcast library.
                     navigator.navigate(Screen.Library)
