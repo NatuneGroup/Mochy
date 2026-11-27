@@ -88,9 +88,11 @@ import com.metrolist.shared.ui.theme.rememberReducedMotion
 import org.jetbrains.compose.resources.stringResource
 
 private val HomeInset = 36.dp
-private val CoverRadius = 25.dp
+private val CoverRadius get() = Settings.shared.mochyCoverRadius.dp
 private val TrackArtworkSize = 54.dp
-private val TrackArtworkShape = RoundedCornerShape(14.dp)
+
+// the covers follow Customisation's cover rounding, the small track covers a little over half as round
+private val TrackArtworkShape get() = RoundedCornerShape((Settings.shared.mochyCoverRadius * 0.56f).coerceIn(0f, 20f).dp)
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

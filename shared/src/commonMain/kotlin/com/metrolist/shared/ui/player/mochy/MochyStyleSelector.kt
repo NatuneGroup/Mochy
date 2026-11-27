@@ -293,6 +293,13 @@ private fun StyleCard(
     }
 }
 
+/** A style's moving card picture, for the Customisation page's row of styles. */
+@Composable
+internal fun MochyStylePreviewCard(
+    style: PlayerType,
+    modifier: Modifier,
+) = StylePreview(style, modifier)
+
 // a looping drawing of each player: the disc turns, the wheel pulses, the bars move, so a card shows its style at rest
 @Composable
 private fun StylePreview(

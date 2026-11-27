@@ -82,6 +82,7 @@ import androidx.compose.ui.util.lerp
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.mochy_library_index_scrubber
 import com.metrolist.shared.model.YTItem
+import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.components.Artwork
 import com.metrolist.shared.ui.components.squareArtworkSlot
 import com.metrolist.shared.ui.haptics.HapticEvent
@@ -424,11 +425,12 @@ private fun MochyLibraryChipPill(
 
 // Library cards and rows, Mochy's way: the shared artwork (cover, local art, play overlay, now-playing marks)
 // drawn at the reference's corner radii and type. The grid's card corner is the reference's HomeCardCornerRadius.
-internal val MochyLibraryCardCorner = 25.dp
+// the Library's covers follow Customisation's cover rounding too
+internal val MochyLibraryCardCorner get() = Settings.shared.mochyCoverRadius.dp
 internal val MochyLibraryGridGap = 15.dp
 internal val MochyLibraryGridRowGap = 18.dp
 private val MochyLibraryRowArt = 54.dp
-private val MochyLibraryRowCorner = 14.dp
+private val MochyLibraryRowCorner get() = (Settings.shared.mochyCoverRadius * 0.56f).coerceIn(0f, 20f).dp
 private val MochyLibraryRowTextInset = 13.dp
 
 @Composable
