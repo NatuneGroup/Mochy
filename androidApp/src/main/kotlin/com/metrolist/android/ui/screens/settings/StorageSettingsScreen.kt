@@ -8,6 +8,7 @@
 package com.metrolist.android.ui.screens.settings
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -82,10 +83,14 @@ import com.metrolist.shared.generated.resources.disable
 import com.metrolist.shared.generated.resources.download_folder_access_failed
 import com.metrolist.shared.generated.resources.download_location
 import com.metrolist.shared.generated.resources.download_migration_failed
+import com.metrolist.shared.generated.resources.download_wifi_only
+import com.metrolist.shared.generated.resources.download_wifi_only_desc
 import com.metrolist.shared.generated.resources.downloaded_songs
 import com.metrolist.shared.generated.resources.downloads
 import com.metrolist.shared.generated.resources.error_title
 import com.metrolist.shared.generated.resources.error_unknown
+import com.metrolist.shared.generated.resources.external_downloader
+import com.metrolist.shared.generated.resources.external_downloader_off
 import com.metrolist.shared.generated.resources.image_cache
 import com.metrolist.shared.generated.resources.library_offline_songs
 import com.metrolist.shared.generated.resources.max_animated_artwork_cache_size
@@ -837,9 +842,41 @@ fun StorageSettingsScreen(
                                     onClick = { customFolderPickerLauncher.launch(null) },
                                 ),
                             isFirst = false,
-                            isLast = true,
+                            isLast = false,
                         )
                     }
+                    // downloads wait for Wi-Fi, and a single song can go to another downloader app instead
+                    SettingsSubScreenItemRow(
+                        item =
+                            switchSettingsItem(
+                                title = stringResource(Res.string.download_wifi_only),
+                                description = stringResource(Res.string.download_wifi_only_desc),
+                                checked = Settings.shared.downloadWifiOnly,
+                                onCheckedChange = { Settings.shared.downloadWifiOnly = it },
+                            ),
+                        isFirst = false,
+                        isLast = false,
+                    )
+                    val downloaderApps = remember { externalDownloaderApps(context) }
+                    SettingsSubScreenItemRow(
+                        item =
+                            listChooserSettingsItem(
+                                title = stringResource(Res.string.external_downloader),
+                                description =
+                                    downloaderApps
+                                        .firstOrNull { it.first == Settings.shared.externalDownloaderPackage }
+                                        ?.second ?: stringResource(Res.string.external_downloader_off),
+                                options = listOf("") + downloaderApps.map { it.first },
+                                selectedOption = Settings.shared.externalDownloaderPackage,
+                                optionToString = { pkg ->
+                                    downloaderApps.firstOrNull { it.first == pkg }?.second
+                                        ?: stringResource(Res.string.external_downloader_off)
+                                },
+                                onOptionSelected = { Settings.shared.externalDownloaderPackage = it },
+                            ),
+                        isFirst = false,
+                        isLast = true,
+                    )
                 }
             }
 
@@ -1119,4 +1156,16 @@ private fun File.calculateDirectorySize(): Long {
             }
     }
     return size
+}
+
+// the apps a song's address can be shared to, other than this one, as package and label, by label
+private fun externalDownloaderApps(context: Context): List<Pair<String, String>> {
+    val share = Intent(Intent.ACTION_SEND).setType("text/plain")
+    val pm = context.packageManager
+    return pm
+        .queryIntentActivities(share, 0)
+        .map { it.activityInfo.packageName to it.loadLabel(pm).toString() }
+        .filter { it.first != context.packageName }
+        .distinctBy { it.first }
+        .sortedBy { it.second.lowercase() }
 }

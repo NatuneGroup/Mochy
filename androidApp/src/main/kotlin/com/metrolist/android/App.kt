@@ -448,6 +448,7 @@ class App :
         observeWidgetThemeChanges()
         SongMetadataState.bind(get<MusicDatabase>(), get<CoroutineScope>())
         get<SongDownloadManager>().observeTrackedPlaylists(get<CoroutineScope>())
+        get<SongDownloadManager>().watchWifi(get<CoroutineScope>())
         get<CoroutineScope>().launch {
             PlaybackNetworkStateStore.state
                 .map { it.connected }

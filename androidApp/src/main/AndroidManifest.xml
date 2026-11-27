@@ -63,6 +63,15 @@
         <intent>
             <action android:name="android.media.action.DISPLAY_AUDIO_EFFECT_CONTROL_PANEL" />
         </intent>
+        <!-- the external downloader setting lists the apps a song's address can be handed to -->
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="text/plain" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" android:host="music.youtube.com" />
+        </intent>
     </queries>
 
     <!-- PiP is explicitly user-entered and replaces the player layout, so automatic entry and a persistent source rect do not apply. -->
@@ -621,5 +630,16 @@
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
+        <!-- the bedside clock as the phone's screensaver, picked in the system's screen saver settings -->
+        <service
+            android:name="com.metrolist.android.bedside.BedsideDreamService"
+            android:exported="true"
+            android:label="@string/player_type_bedside"
+            android:permission="android.permission.BIND_DREAM_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.dreams.DreamService" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>

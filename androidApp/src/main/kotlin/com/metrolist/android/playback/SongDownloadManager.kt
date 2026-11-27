@@ -11,6 +11,9 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
 import android.os.Build
 import android.system.ErrnoException
 import android.system.OsConstants
@@ -144,6 +147,11 @@ class SongDownloadManager(
     suspend fun download(song: SongItem): Boolean =
         withContext(Dispatchers.IO) {
             if (song.id.isBlank() || audioCacheManager.isDownloaded(song.id)) return@withContext false
+            // with an external downloader set, one song goes to that app as its YouTube Music address
+            val externalApp = Settings.shared.externalDownloaderPackage
+            if (externalApp.isNotBlank() && !song.isLocal) {
+                return@withContext withContext(Dispatchers.Main) { handToExternalDownloader(context, externalApp, song.id) }
+            }
             val added = enqueue(listOf(song))
             persistence.flush()
             if (added == 0) return@withContext false
@@ -168,6 +176,26 @@ class SongDownloadManager(
         songs: List<SongItem>,
         playlistId: String,
     ): Int = enqueueMissingTracked(songs, playlistId, synchronized(queueLock) { cancellationRevision })
+
+    private fun heldForWifi(): Boolean =
+        Settings.shared.downloadWifiOnly &&
+            context.getSystemService(ConnectivityManager::class.java)?.isActiveNetworkMetered == true
+
+    /** Starts the queue again when the phone gets back on an unmetered network, for downloads held to Wi-Fi. */
+    fun watchWifi(scope: CoroutineScope) {
+        val manager = context.getSystemService(ConnectivityManager::class.java) ?: return
+        val callback =
+            object : ConnectivityManager.NetworkCallback() {
+                override fun onCapabilitiesChanged(
+                    network: Network,
+                    capabilities: NetworkCapabilities,
+                ) {
+                    if (!Settings.shared.downloadWifiOnly || manager.isActiveNetworkMetered) return
+                    scope.launch { if (hasRunnableDownloads()) DownloadService.start(context) }
+                }
+            }
+        runCatching { manager.registerDefaultNetworkCallback(callback) }
+    }
 
     fun observeTrackedPlaylists(scope: CoroutineScope) {
         DownloadedPlaylists.observe(scope, database) { id, songs -> downloadMissing(songs, id) }
@@ -231,6 +259,8 @@ class SongDownloadManager(
     internal suspend fun processNext(resolve: suspend (SongItem, Boolean) -> PlaybackResource? = ::resolvePlaybackResource): Boolean =
         withContext(Dispatchers.IO) {
             queueRestored.await()
+            // downloads held to Wi-Fi wait in the queue on a metered network; watchWifi starts them again
+            if (heldForWifi()) return@withContext false
             val (request, task, previousTask) =
                 synchronized(queueLock) {
                     val next =
