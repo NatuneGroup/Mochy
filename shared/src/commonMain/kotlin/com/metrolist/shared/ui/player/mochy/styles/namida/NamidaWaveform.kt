@@ -22,6 +22,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -57,7 +58,7 @@ private fun rememberWaveformBars(
             val out =
                 FloatArray(barCount) { i ->
                     val raw = abs(noise(i) % 1.0).toFloat()
-                    val envelope = sin(Math.PI * (i + 0.5) / barCount).toFloat().coerceIn(0.25f, 1f)
+                    val envelope = sin(PI * (i + 0.5) / barCount).toFloat().coerceIn(0.25f, 1f)
                     (0.22f + raw * 0.78f) * envelope
                 }
             BarsValue(out.toList())

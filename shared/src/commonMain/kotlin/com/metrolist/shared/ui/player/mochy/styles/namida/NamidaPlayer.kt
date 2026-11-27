@@ -671,5 +671,7 @@ internal fun namidaFormatMillis(ms: Long): String {
     val h = totalSec / 3600
     val m = (totalSec % 3600) / 60
     val s = totalSec % 60
-    return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%d:%02d".format(m, s)
+
+    fun two(n: Long) = n.toString().padStart(2, '0')
+    return if (h > 0) "$h:${two(m)}:${two(s)}" else "$m:${two(s)}"
 }
