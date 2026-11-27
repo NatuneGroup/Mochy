@@ -184,6 +184,9 @@ enum class PlayerType {
     // Mochy's bedside clock as the player, and the song's video filling the screen sideways
     BEDSIDE,
     VIDEO,
+
+    // Sora's port of namida's player
+    NAMIDA,
 }
 
 // the flagship's bottom: Mochy's lyric and queue cards one behind the other, or the phone's volume with the

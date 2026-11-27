@@ -76,6 +76,7 @@ import com.metrolist.shared.generated.resources.mochy_menu_style_turntable
 import com.metrolist.shared.generated.resources.mochy_menu_style_vintage
 import com.metrolist.shared.generated.resources.player_type_bedside
 import com.metrolist.shared.generated.resources.player_type_lyrics_stage
+import com.metrolist.shared.generated.resources.player_type_namida
 import com.metrolist.shared.generated.resources.player_type_poster
 import com.metrolist.shared.generated.resources.player_type_timeline
 import com.metrolist.shared.generated.resources.player_type_video
@@ -108,6 +109,7 @@ internal val MochyStyleColumns: List<List<Pair<PlayerType, StringResource>>> =
             PlayerType.TURNTABLE to Res.string.mochy_menu_style_turntable,
         ),
         listOf(PlayerType.IPOD to Res.string.mochy_menu_style_ipod),
+        listOf(PlayerType.NAMIDA to Res.string.player_type_namida),
         // the bedside clock and the full video, Mochy's two styles that fill the whole screen
         listOf(
             PlayerType.BEDSIDE to Res.string.player_type_bedside,
@@ -137,6 +139,7 @@ internal val MochyOnlyPlayerTypes =
         PlayerType.LYRICS_STAGE,
         PlayerType.BEDSIDE,
         PlayerType.VIDEO,
+        PlayerType.NAMIDA,
     )
 
 private val CardWidth = 170.dp
@@ -415,6 +418,25 @@ private fun StylePreview(
                 drawPath(path, Color.White.copy(alpha = 0.85f))
                 drawRect(Color.White.copy(alpha = 0.25f), Offset(w * 0.08f, h * 0.76f), Size(w * 0.84f, 4f))
                 drawRect(Color.White, Offset(w * 0.08f, h * 0.76f), Size(w * 0.84f * phase, 4f))
+            }
+
+            PlayerType.NAMIDA -> {
+                // namida's tinted panel: the cover card on top, the waveform under it filling as the song plays
+                drawRect(Brush.verticalGradient(listOf(Color(0xFF3A4C6B), Color(0xFF15181F))))
+                drawRoundRect(Color(0xFF8FA8D6), Offset(w * 0.14f, h * 0.1f), Size(w * 0.72f, w * 0.72f), CornerRadius(14f))
+                val bars = 24
+                val gap = w * 0.76f / bars
+                for (i in 0 until bars) {
+                    val x = w * 0.12f + i * gap
+                    val height = h * (0.03f + 0.05f * pulse((phase + i / bars.toFloat()) % 1f))
+                    val played = i / bars.toFloat() < phase
+                    drawRect(
+                        if (played) Color(0xFFDCE6FF) else Color.White.copy(alpha = 0.3f),
+                        Offset(x, h * 0.72f - height / 2f),
+                        Size(gap * 0.55f, height),
+                    )
+                }
+                drawCircle(Color(0xFFDCE6FF), w * 0.08f, Offset(w / 2f, h * 0.86f))
             }
 
             else -> {

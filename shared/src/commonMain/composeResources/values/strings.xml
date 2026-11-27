@@ -5830,6 +5830,10 @@
     <string name="proxy">Proxy</string>
     <string name="proxy_host">Proxy host</string>
     <string name="proxy_port">Proxy port</string>
+    <string name="player_type_namida">Namida</string>
+    <string name="namida_remove_like">Remove like</string>
+    <string name="namida_queue">Queue</string>
+    <string name="namida_queue_items">items</string>
     <string name="mochy_library_tab_all">All</string>
     <string name="mochy_library_tab_local">Local &amp; downloaded</string>
     <string name="mochy_library_tab_cached">Cached</string>

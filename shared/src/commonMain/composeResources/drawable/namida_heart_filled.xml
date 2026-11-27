@@ -1,0 +1,15 @@
+<!-- namida heart_filled icon, extracted verbatim from its broken_filled.ttf -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="1024"
+    android:viewportHeight="1024">
+    <group
+        android:scaleX="1"
+        android:scaleY="-1"
+        android:translateY="1024">
+        <path
+            android:fillColor="#FF000000"
+            android:pathData="M716 856Q653 856 600.0 828.5Q547 801 512 754Q477 801 424.0 828.5Q371 856 308 856Q238 856 180.0 821.5Q122 787 87.5 729.0Q53 671 53 600Q53 559 59.5 521.0Q66 483 77 448Q104 362 154.5 293.5Q205 225 265.5 174.0Q326 123 384.0 90.5Q442 58 484 44Q495 39 512.0 39.0Q529 39 540 44Q582 58 640.0 90.5Q698 123 758.5 174.0Q819 225 869.5 293.5Q920 362 947 448Q958 483 964.5 521.0Q971 559 971 600Q971 671 936.5 729.0Q902 787 844.0 821.5Q786 856 716 856Z" />
+    </group>
+</vector>

@@ -1,0 +1,15 @@
+<!-- namida arrow_up icon, extracted verbatim from its broken.ttf -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="1024"
+    android:viewportHeight="1024">
+    <group
+        android:scaleX="1"
+        android:scaleY="-1"
+        android:translateY="1024">
+        <path
+            android:fillColor="#FF000000"
+            android:pathData="M489 833 230 574Q226 570 223.5 564.0Q221 558 221 552Q221 545 223.5 539.0Q226 533 230 529Q235 525 240.5 522.5Q246 520 253 520Q260 520 265.5 522.5Q271 525 276 529L512 765L748 529Q753 525 758.5 522.5Q764 520 771 520Q778 520 783.5 522.5Q789 525 794 529Q798 533 800.5 539.0Q803 545 803 552Q803 558 800.5 564.0Q798 570 794 574L535 833Q530 838 524.5 840.5Q519 843 512 843Q505 843 499.5 840.5Q494 838 489 833ZM512 835Q499 835 489.5 826.0Q480 817 480 803V448Q480 435 489.5 425.5Q499 416 512 416Q525 416 534.5 425.5Q544 435 544 448V803Q544 817 534.5 826.0Q525 835 512 835ZM512 311Q499 311 489.5 301.5Q480 292 480 279V85Q480 72 489.5 62.5Q499 53 512 53Q525 53 534.5 62.5Q544 72 544 85V279Q544 292 534.5 301.5Q525 311 512 311Z" />
+    </group>
+</vector>

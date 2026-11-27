@@ -277,6 +277,7 @@ import com.metrolist.shared.ui.player.mochy.styles.LocalStyleSeedColor
 import com.metrolist.shared.ui.player.mochy.styles.LocalStyleTrack
 import com.metrolist.shared.ui.player.mochy.styles.StyleActions
 import com.metrolist.shared.ui.player.mochy.styles.StyleTrack
+import com.metrolist.shared.ui.player.mochy.styles.namida.NamidaPlayerStyle
 import com.metrolist.shared.ui.player.mochy.turntable.TurntableControls
 import com.metrolist.shared.ui.player.mochy.turntable.TurntableStage
 import com.metrolist.shared.ui.share.SongShareCardDialog
@@ -731,6 +732,7 @@ fun PlayerScreen(
     val usesIpodPlayer = playerType == PlayerType.IPOD
     val usesBedsidePlayer = playerType == PlayerType.BEDSIDE
     val usesVideoPlayer = playerType == PlayerType.VIDEO
+    val usesNamidaPlayer = playerType == PlayerType.NAMIDA
     val alternateStyle =
         when (playerType) {
             PlayerType.POSTER -> AlternateStyle.POSTER
@@ -739,7 +741,7 @@ fun PlayerScreen(
             else -> null
         }
     // a style that draws the whole player itself, with no cover, controls or bottom bar of the player's own
-    val usesStylePlayer = usesIpodPlayer || usesBedsidePlayer || alternateStyle != null
+    val usesStylePlayer = usesIpodPlayer || usesBedsidePlayer || usesNamidaPlayer || alternateStyle != null
     val usesMochyChrome = usesMochyFlagship || usesMochyTurntable
     val flagshipCoverStyle = if (usesMochyFlagship) Settings.shared.playerCoverStyle else PlayerCoverStyle.SQUARED
     val flagshipFont = if (usesMochyChrome) flagshipFontFamily() else null
@@ -1480,7 +1482,7 @@ fun PlayerScreen(
                                 isCasting = castState.isConnected,
                                 isBuffering = castState.isBuffering,
                             )
-                        } else if (alternateStyle != null && !showVideoSurface && !uiState.isLyricsVisible) {
+                        } else if ((alternateStyle != null || usesNamidaPlayer) && !showVideoSurface && !uiState.isLyricsVisible) {
                             val styleTrack =
                                 remember(currentSong) {
                                     StyleTrack(
@@ -1497,17 +1499,31 @@ fun PlayerScreen(
                                 LocalStyleLyricsOffset provides { uiState.lyricsOffsetMs.toLong() },
                                 LocalStyleInteractive provides { playerContentState.isActive },
                             ) {
-                                AlternatePlayerStyle(
-                                    style = alternateStyle,
-                                    actions =
-                                        StyleActions(
-                                            onOtherMenu = { showPlayerMenu = true },
-                                            onEditPlayer = MochyStylePicker::show,
-                                            onLyrics = { viewModel.setLyricsVisible(true) },
-                                            onQueue = ::openQueueSheet,
-                                        ),
-                                    modifier = Modifier.fillMaxSize(),
-                                )
+                                val styleActions =
+                                    StyleActions(
+                                        onOtherMenu = { showPlayerMenu = true },
+                                        onEditPlayer = MochyStylePicker::show,
+                                        onLyrics = { viewModel.setLyricsVisible(true) },
+                                        onQueue = ::openQueueSheet,
+                                    )
+                                if (alternateStyle != null) {
+                                    AlternatePlayerStyle(
+                                        style = alternateStyle,
+                                        actions = styleActions,
+                                        modifier = Modifier.fillMaxSize(),
+                                    )
+                                } else {
+                                    // Sora's namida style keeps its own lyrics and queue pages inside itself
+                                    NamidaPlayerStyle(
+                                        actions = styleActions,
+                                        modifier = Modifier.fillMaxSize(),
+                                        preview = false,
+                                        onCollapse = {
+                                            hapticManager.perform(HapticEvent.PRESS)
+                                            onClose()
+                                        },
+                                    )
+                                }
                             }
                         } else if (usesBedsidePlayer && !showVideoSurface && !uiState.isLyricsVisible) {
                             // Mochy's bedside style: the player is the clock on the nightstand, its tiles the song. The clock is
@@ -2797,6 +2813,7 @@ fun PlayerScreen(
                                                     PlayerType.LYRICS_STAGE,
                                                     PlayerType.BEDSIDE,
                                                     PlayerType.VIDEO,
+                                                    PlayerType.NAMIDA,
                                                     -> {
                                                         FlagshipTransport(
                                                             playing = isPlaying,

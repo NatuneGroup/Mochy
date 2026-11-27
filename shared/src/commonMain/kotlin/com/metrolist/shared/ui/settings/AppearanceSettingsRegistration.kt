@@ -31,6 +31,7 @@ import com.metrolist.shared.generated.resources.mochy_pages_info
 import com.metrolist.shared.generated.resources.mochy_pages_slow_motion_video
 import com.metrolist.shared.generated.resources.mochy_pages_sparks
 import com.metrolist.shared.generated.resources.player_type_bedside
+import com.metrolist.shared.generated.resources.player_type_namida
 import com.metrolist.shared.generated.resources.player_type_video
 import com.metrolist.shared.settings.AnimatedCoverResolution
 import com.metrolist.shared.settings.AppLayout
@@ -635,6 +636,7 @@ internal fun SettingsUiRegistryBuilder.registerAppearanceSettings(host: SharedSe
                     SettingsChoice(PlayerType.LYRICS_STAGE.name, stringResource(Res.string.player_type_lyrics_stage)),
                     SettingsChoice(PlayerType.BEDSIDE.name, stringResource(Res.string.player_type_bedside)),
                     SettingsChoice(PlayerType.VIDEO.name, stringResource(Res.string.player_type_video)),
+                    SettingsChoice(PlayerType.NAMIDA.name, stringResource(Res.string.player_type_namida)),
                 )
             }
         val selectedPlayerType =
@@ -645,7 +647,8 @@ internal fun SettingsUiRegistryBuilder.registerAppearanceSettings(host: SharedSe
 
                 // the desktop draws the flagship and the alternate styles, not the turntable or the ipod
                 settings.playerType == PlayerType.TURNTABLE || settings.playerType == PlayerType.IPOD ||
-                    settings.playerType == PlayerType.BEDSIDE || settings.playerType == PlayerType.VIDEO -> PlayerType.MODERN
+                    settings.playerType == PlayerType.BEDSIDE || settings.playerType == PlayerType.VIDEO ||
+                    settings.playerType == PlayerType.NAMIDA -> PlayerType.MODERN
 
                 else -> settings.playerType
             }
