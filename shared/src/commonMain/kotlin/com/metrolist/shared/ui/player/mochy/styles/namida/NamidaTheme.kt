@@ -127,8 +127,10 @@ val LocalNamidaPalette =
 
 @Composable
 fun rememberNamidaPalette(seed: Color): NamidaPalette {
-    val dark = MaterialTheme.colorScheme.background.luminanceAwareDark()
-    val scaffold = MaterialTheme.colorScheme.background
+    // the page colour, solid: the theme's background can be see-through over the app's own backdrop, and namida's
+    // panel tones are mixed from it
+    val scaffold = MaterialTheme.colorScheme.background.let { if (it.alpha < 1f) Color.Black else it }
+    val dark = scaffold.luminanceAwareDark()
     return remember(seed, scaffold, dark) { NamidaPalette.fromArtwork(seed, scaffold, dark) }
 }
 
