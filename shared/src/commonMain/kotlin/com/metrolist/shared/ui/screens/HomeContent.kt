@@ -49,6 +49,7 @@ import androidx.compose.material3.carousel.CarouselItemDrawInfo
 import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
@@ -117,10 +118,13 @@ import com.metrolist.shared.ui.components.YTGridItem
 import com.metrolist.shared.ui.components.YTListItem
 import com.metrolist.shared.ui.components.carouselArtworkShape
 import com.metrolist.shared.ui.components.rememberItemPlayback
+import com.metrolist.shared.ui.mochy.LocalMochyHomeBackdrop
+import com.metrolist.shared.ui.mochy.MochyBackdrop
 import com.metrolist.shared.ui.mochy.MochyHeroCarousel
 import com.metrolist.shared.ui.mochy.MochyHomeCoverShelf
 import com.metrolist.shared.ui.mochy.MochyHomeTopGlow
 import com.metrolist.shared.ui.mochy.MochyHomeTrackShelf
+import com.metrolist.shared.ui.mochy.mochyBackdropSource
 import com.metrolist.shared.ui.mochy.mochyHeroItems
 import com.metrolist.shared.ui.mochy.mochyLaunchRise
 import com.metrolist.shared.ui.navigation.LocalContentObscured
@@ -313,13 +317,15 @@ fun HomeContent(
                 }
             }
         val mochyTopRoom = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 78.dp
+        // the page the Mochy bar frosts behind its title once the hero has scrolled away
+        val homeBackdrop = remember { MochyBackdrop() }
 
         DragScrollableColumn(
             state = listState,
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .then(if (mochyTopBar != null) Modifier.mochyLaunchRise(order = 1) else Modifier)
+                    .then(if (mochyTopBar != null) Modifier.mochyLaunchRise(order = 1).mochyBackdropSource(homeBackdrop) else Modifier)
                     .nestedScroll(paginationScrollConnection)
                     .desktopArrowScroll(listState),
             contentPadding = contentPadding,
@@ -401,7 +407,7 @@ fun HomeContent(
                 }
             }
         }
-        mochyTopBar?.invoke(heroScrollProgress)
+        CompositionLocalProvider(LocalMochyHomeBackdrop provides homeBackdrop) { mochyTopBar?.invoke(heroScrollProgress) }
 
         HomeRevalidationIndicator(
             visible = uiState.isRevalidating,

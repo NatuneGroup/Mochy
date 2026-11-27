@@ -5811,6 +5811,9 @@
     <string name="mochy_storage_legend_images">Image cache</string>
     <string name="mochy_storage_legend_animated">Animated artwork</string>
     <string name="mochy_storage_junk_title">So, here is a list of things you can do to cut the junk</string>
+    <string name="mochy_library_tab_genres">Genres</string>
+    <string name="mochy_library_tab_imported">Imported</string>
+    <string name="mochy_library_nothing_imported">Nothing imported yet</string>
     <string name="mochy_library_tab_all">All</string>
     <string name="mochy_library_tab_local">Local &amp; downloaded</string>
     <string name="mochy_library_tab_cached">Cached</string>

@@ -2602,6 +2602,7 @@ fun getEntryProvider(
                 onNavigateToPodcast = { podcastId -> navigator.navigate(Screen.Podcast(podcastId)) },
                 onNavigateToPlaylistImport = { navigator.navigate(Screen.PlaylistImport) },
                 onNavigateToHistory = { navigator.navigate(Screen.History) },
+                onNavigateToBrowse = { id, params, title -> navigator.navigate(Screen.Browse(id, params, title)) },
                 onNavigateToAutoPlaylist = { type ->
                     // Keep podcast auto playlists on the Library stack so Back returns to the podcast library.
                     navigator.navigate(Screen.Library)
