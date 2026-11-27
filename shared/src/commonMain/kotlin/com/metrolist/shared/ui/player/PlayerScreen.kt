@@ -244,8 +244,10 @@ import com.metrolist.shared.ui.player.mochy.FlagshipBarHeight
 import com.metrolist.shared.ui.player.mochy.FlagshipBottomControls
 import com.metrolist.shared.ui.player.mochy.FlagshipCardDeck
 import com.metrolist.shared.ui.player.mochy.FlagshipControlsShade
+import com.metrolist.shared.ui.player.mochy.FlagshipDeckHeight
 import com.metrolist.shared.ui.player.mochy.FlagshipDeckPage
 import com.metrolist.shared.ui.player.mochy.FlagshipDiscCover
+import com.metrolist.shared.ui.player.mochy.FlagshipFormatBadge
 import com.metrolist.shared.ui.player.mochy.FlagshipHandle
 import com.metrolist.shared.ui.player.mochy.FlagshipLandscapePlayer
 import com.metrolist.shared.ui.player.mochy.FlagshipSidePadding
@@ -254,6 +256,7 @@ import com.metrolist.shared.ui.player.mochy.MochyOnlyPlayerTypes
 import com.metrolist.shared.ui.player.mochy.MochyStylePicker
 import com.metrolist.shared.ui.player.mochy.coverBleed
 import com.metrolist.shared.ui.player.mochy.coverFadeToBottom
+import com.metrolist.shared.ui.player.mochy.flagshipCodecLabel
 import com.metrolist.shared.ui.player.mochy.flagshipFontFamily
 import com.metrolist.shared.ui.player.mochy.ipod.IpodPlayerStyle
 import com.metrolist.shared.ui.player.mochy.ipod.isIpodWholeDevice
@@ -1015,7 +1018,20 @@ fun PlayerScreen(
                     if (isImmersive) 16.dp else 0.dp,
                 )
             val portraitControlsHeight =
-                if (usesMochyChrome) FlagshipBarHeight + FlagshipBarBottomGap else QueuePeekHeight + 16.dp
+                when {
+                    flagshipDeck -> FlagshipDeckHeight
+                    usesMochyChrome -> FlagshipBarHeight + FlagshipBarBottomGap
+                    else -> QueuePeekHeight + 16.dp
+                }
+            // Mochy's flagship centres the transport row between the seek bar and the deck, the gap growing with
+            // the screen: (19% of the height - 37dp - the deck + the 30dp above the row + the cover's 64dp lift) / 2
+            val deckTransportGap =
+                (
+                    (
+                        maxHeight * 0.19f - 37.dp - FlagshipDeckHeight + 30.dp +
+                            (if (flagshipCoverStyle == PlayerCoverStyle.EDGE_TO_EDGE) 64.dp else 0.dp)
+                    ) / 2f
+                ).coerceAtLeast(16.dp)
             val queuePeekHeight = if (useLandscapeLayout) 0.dp else portraitControlsHeight + navigationBarBottomPadding
             val queueSheetState =
                 rememberBottomSheetState(
@@ -2406,45 +2422,62 @@ fun PlayerScreen(
                                                         },
                                                 ) { displayedSong ->
                                                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                                        Text(
-                                                            text = displayedSong?.title ?: stringResource(Res.string.unknown),
-                                                            style =
-                                                                (
-                                                                    if (usesCanvasThumbnail) {
-                                                                        MaterialTheme.typography.titleMedium
-                                                                    } else {
-                                                                        MaterialTheme.typography.titleLarge
-                                                                    }
-                                                                ).let { style ->
-                                                                    flagshipFont?.let { style.copy(fontFamily = it) } ?: style
-                                                                },
-                                                            fontWeight = FontWeight.Bold,
-                                                            color = textBackgroundColor,
-                                                            maxLines = 1,
-                                                            softWrap = false,
-                                                            overflow = TextOverflow.Ellipsis,
-                                                            modifier =
-                                                                Modifier
-                                                                    .clickable(
-                                                                        enabled =
-                                                                            displayedSong != null &&
-                                                                                (usesMochyChrome || displayedSong.albumId != null),
-                                                                    ) {
-                                                                        if (usesMochyChrome) {
-                                                                            showSongDetails = true
+                                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                                            Text(
+                                                                text = displayedSong?.title ?: stringResource(Res.string.unknown),
+                                                                style =
+                                                                    (
+                                                                        if (usesCanvasThumbnail) {
+                                                                            MaterialTheme.typography.titleMedium
                                                                         } else {
-                                                                            displayedSong?.albumId?.let(onNavigateToAlbum)
+                                                                            MaterialTheme.typography.titleLarge
                                                                         }
-                                                                    }.then(
-                                                                        displayedSong?.let { song ->
-                                                                            rememberTrackMarquee(
-                                                                                trackId = song.id,
-                                                                                enabled = LocalPlayerContentActive.current,
-                                                                                initialDelayMillis = 3000L,
-                                                                            )
-                                                                        } ?: Modifier,
-                                                                    ),
-                                                        )
+                                                                    ).let { style ->
+                                                                        flagshipFont?.let { style.copy(fontFamily = it) } ?: style
+                                                                    },
+                                                                fontWeight = FontWeight.Bold,
+                                                                color = textBackgroundColor,
+                                                                maxLines = 1,
+                                                                softWrap = false,
+                                                                overflow = TextOverflow.Ellipsis,
+                                                                modifier =
+                                                                    Modifier
+                                                                        .weight(1f, fill = false)
+                                                                        .clickable(
+                                                                            enabled =
+                                                                                displayedSong != null &&
+                                                                                    (usesMochyChrome || displayedSong.albumId != null),
+                                                                        ) {
+                                                                            if (usesMochyChrome) {
+                                                                                showSongDetails = true
+                                                                            } else {
+                                                                                displayedSong?.albumId?.let(onNavigateToAlbum)
+                                                                            }
+                                                                        }.then(
+                                                                            displayedSong?.let { song ->
+                                                                                rememberTrackMarquee(
+                                                                                    trackId = song.id,
+                                                                                    enabled = LocalPlayerContentActive.current,
+                                                                                    initialDelayMillis = 3000L,
+                                                                                )
+                                                                            } ?: Modifier,
+                                                                        ),
+                                                            )
+                                                            // Mochy's format tag beside the flagship's title, once the stream's codec is known
+                                                            val badge =
+                                                                if (usesMochyFlagship) {
+                                                                    flagshipCodecLabel(
+                                                                        playbackResource?.mimeType,
+                                                                        playbackResource?.codecs,
+                                                                    )
+                                                                } else {
+                                                                    null
+                                                                }
+                                                            if (badge != null) {
+                                                                Spacer(Modifier.width(8.dp))
+                                                                FlagshipFormatBadge(badge)
+                                                            }
+                                                        }
                                                         PlayerArtistLine(
                                                             artists = displayedSong?.artists,
                                                             onNavigateToArtist = onNavigateToArtist,
@@ -2624,7 +2657,16 @@ fun PlayerScreen(
                                     ) {
                                         Column {
                                             if (!isListenTogetherGuest) {
-                                                Spacer(modifier = Modifier.height(if (usesMochyChrome) 24.dp else 8.dp))
+                                                Spacer(
+                                                    modifier =
+                                                        Modifier.height(
+                                                            when {
+                                                                flagshipDeck -> deckTransportGap - 6.dp
+                                                                usesMochyChrome -> 24.dp
+                                                                else -> 8.dp
+                                                            },
+                                                        ),
+                                                )
 
                                                 when (playerType) {
                                                     PlayerType.CLASSIC -> {
@@ -2771,7 +2813,17 @@ fun PlayerScreen(
                                         enter = canvasControlsEnter,
                                         exit = canvasControlsExit,
                                     ) {
-                                        Spacer(modifier = Modifier.height(portraitControlsHeight + 16.dp))
+                                        Spacer(
+                                            modifier =
+                                                Modifier.height(
+                                                    if (flagshipDeck) {
+                                                        portraitControlsHeight + deckTransportGap
+                                                    } else {
+                                                        portraitControlsHeight +
+                                                            16.dp
+                                                    },
+                                                ),
+                                        )
                                     }
                                     playerControlsTransition.AnimatedVisibility(
                                         visible = { (expanded, minimalUi) ->

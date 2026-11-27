@@ -1921,7 +1921,7 @@ class HomeViewModel(
         return genreSections
             .flatMap { section ->
                 section.items.filterIsInstance<BrowseItem>().map { item ->
-                    Genre(item.title, item.id, item.thumbnail, item.params)
+                    Genre(item.title, item.id, item.thumbnail, item.params, item.accentColor)
                 }
             }.distinctBy { it.id to it.params }
     }
@@ -2018,6 +2018,7 @@ class HomeViewModel(
         val id: String,
         val thumbnail: String? = null,
         val params: String? = null,
+        val accentColor: Long? = null,
     )
 
     @Serializable

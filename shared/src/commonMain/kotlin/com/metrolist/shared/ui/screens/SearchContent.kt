@@ -25,6 +25,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -62,6 +63,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -71,12 +73,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -128,6 +133,7 @@ import com.metrolist.shared.settings.ArtistNameAliases
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.settings.displayName
 import com.metrolist.shared.settings.displayTitle
+import com.metrolist.shared.state.GlobalYouTubeRepository
 import com.metrolist.shared.ui.components.AlbumPlayButton
 import com.metrolist.shared.ui.components.AlertDialog
 import com.metrolist.shared.ui.components.ArtistSubtitle
@@ -176,6 +182,8 @@ import com.metrolist.shared.viewmodels.SearchViewModel.SearchUiState
 import com.metrolist.shared.viewmodels.searchPresentation
 import com.valentinilk.shimmer.shimmer
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import org.jetbrains.compose.resources.stringResource
 
 // Mochy's search page gutter
@@ -509,6 +517,9 @@ private fun SearchEmptyState(
                                 row.forEach { genre ->
                                     MochyMoodTile(
                                         title = genre.name,
+                                        accentColor = genre.accentColor,
+                                        browseId = genre.id,
+                                        params = genre.params,
                                         onClick = {
                                             onMoodClick(
                                                 BrowseItem(
@@ -2352,23 +2363,30 @@ private fun SearchSectionTitle(title: String) {
     }
 }
 
-// the reference tints a tile from its stripe colour; the API gives none here, so every tile takes the reference's default tint
-private val MoodTileTint = Color(0xFF3A3A44)
-
-/** a mood or genre tile: a tinted 14dp card with its name, opening the browse page for it */
+/** a mood or genre tile: a 14dp card tinted with the genre's own stripe colour, two of its covers leaning at the end */
 @Composable
 private fun MochyMoodTile(
     title: String,
+    accentColor: Long?,
+    browseId: String,
+    params: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val tint = remember(accentColor) { moodTint(accentColor) }
+    var titleWraps by remember(title) { mutableStateOf(false) }
     val tileBrush =
-        Brush.linearGradient(
-            listOf(
-                blendOver(MoodTileTint.copy(alpha = 0.55f), MochySearchColors.Tile),
-                blendOver(MoodTileTint.copy(alpha = 0.16f), MochySearchColors.Tile),
-            ),
-        )
+        remember(tint) {
+            Brush.linearGradient(
+                listOf(
+                    blendOver(tint.copy(alpha = 0.55f), MochySearchColors.Tile),
+                    blendOver(tint.copy(alpha = 0.16f), MochySearchColors.Tile),
+                ),
+            )
+        }
+    val coverKey = browseId + "|" + params.orEmpty()
+    LaunchedEffect(coverKey) { MoodCovers.request(browseId, params) }
+    val covers = MoodCovers.covers[coverKey].orEmpty()
     Box(
         modifier =
             modifier
@@ -2376,8 +2394,31 @@ private fun MochyMoodTile(
                 .clip(RoundedCornerShape(14.dp))
                 .background(brush = tileBrush)
                 .clickable(onClick = onClick),
-        contentAlignment = Alignment.CenterStart,
     ) {
+        Box(
+            modifier =
+                Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 2.dp)
+                    .size(width = 84.dp, height = 76.dp)
+                    // a wrapping title runs under the covers, so they fade from its side
+                    .graphicsLayer { compositingStrategy = if (titleWraps) CompositingStrategy.Offscreen else CompositingStrategy.Auto }
+                    .drawWithCache {
+                        val fade =
+                            Brush.horizontalGradient(
+                                0.00f to Color.Transparent,
+                                0.42f to Color.Black.copy(alpha = 0.55f),
+                                0.70f to Color.Black,
+                            )
+                        onDrawWithContent {
+                            drawContent()
+                            if (titleWraps) drawRect(brush = fade, blendMode = BlendMode.DstIn)
+                        }
+                    },
+        ) {
+            MoodLayeredCover(covers.getOrNull(1), rotation = -24f, offsetX = (-2).dp, offsetY = 2.dp, size = 44.dp)
+            MoodLayeredCover(covers.getOrNull(0), rotation = -6f, offsetX = 28.dp, offsetY = 13.dp, size = 48.dp)
+        }
         Text(
             text = title,
             fontFamily = mochyInterFontFamily(),
@@ -2387,8 +2428,78 @@ private fun MochyMoodTile(
             color = MochySearchColors.Primary,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(start = 14.dp, end = 14.dp),
+            onTextLayout = { result ->
+                val wraps = result.lineCount > 1
+                if (wraps != titleWraps) titleWraps = wraps
+            },
+            modifier = Modifier.align(Alignment.CenterStart).padding(start = 14.dp, end = 70.dp),
         )
+    }
+}
+
+@Composable
+private fun BoxScope.MoodLayeredCover(
+    url: String?,
+    rotation: Float,
+    offsetX: Dp,
+    offsetY: Dp,
+    size: Dp,
+) {
+    Box(
+        modifier =
+            Modifier
+                .align(Alignment.CenterStart)
+                .size(size)
+                .graphicsLayer {
+                    rotationZ = rotation
+                    translationX = offsetX.toPx()
+                    translationY = offsetY.toPx()
+                    shape = RoundedCornerShape(8.dp)
+                    clip = true
+                }.background(MochySearchColors.TileHigh),
+    ) {
+        if (url != null) AsyncImage(url = url, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+    }
+}
+
+// the reference lifts the genre's stripe colour toward a soft mid grey so every tint reads under white text
+private fun moodTint(stripeColor: Long?): Color {
+    val argb = stripeColor?.toInt() ?: 0
+    val r = (argb shr 16) and 0xFF
+    val g = (argb shr 8) and 0xFF
+    val b = argb and 0xFF
+    if (r == 0 && g == 0 && b == 0) return Color(0xFF3A3A44)
+    val lift = { c: Int -> (c + (170 - c) * 0.45f).toInt().coerceIn(40, 220) }
+    return Color(lift(r), lift(g), lift(b))
+}
+
+/** The first two covers of each mood's page, fetched once per run and a few at a time. */
+private object MoodCovers {
+    val covers = mutableStateMapOf<String, List<String>>()
+    private val requested = mutableSetOf<String>()
+    private val gate = Semaphore(3)
+
+    suspend fun request(
+        browseId: String,
+        params: String?,
+    ) {
+        val key = browseId + "|" + params.orEmpty()
+        if (!requested.add(key)) return
+        val urls =
+            gate.withPermit {
+                runCatching {
+                    GlobalYouTubeRepository.instance
+                        .getBrowsePageData(browseId, params, loadAllPages = false)
+                        .sections
+                        .asSequence()
+                        .flatMap { it.items.asSequence() }
+                        .mapNotNull { it.thumbnail }
+                        .distinct()
+                        .take(2)
+                        .toList()
+                }.getOrNull()
+            }
+        if (urls.isNullOrEmpty()) requested.remove(key) else covers[key] = urls
     }
 }
 

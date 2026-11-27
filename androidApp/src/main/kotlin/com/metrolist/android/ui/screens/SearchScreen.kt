@@ -385,14 +385,8 @@ fun SearchScreen(
     }
 
     LaunchedEffect(isQuerySubmitted, initialQuery, isTv, isPlayerExpanded) {
-        if (isTv || isPlayerExpanded) {
-            keyboardController?.hide()
-        } else if (!isQuerySubmitted && initialQuery.isNullOrBlank()) {
-            if (!searchViewModel.hasRequestedInitialFocus && query.isEmpty()) {
-                searchViewModel.hasRequestedInitialFocus = true
-                focusRequester.requestFocus()
-            }
-        }
+        // Mochy's search page opens on its moods with the keyboard down; the field focuses when it's tapped
+        if (isTv || isPlayerExpanded) keyboardController?.hide()
     }
 
     LaunchedEffect(isQuerySubmitted) {

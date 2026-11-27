@@ -121,7 +121,13 @@ internal object YouTubeItemParser {
         val title = item["buttonText"]?.jsonObject.runText() ?: item["text"]?.jsonObject.runText() ?: return null
         val endpoint = item["clickCommand"]?.jsonObject ?: item["navigationEndpoint"]?.jsonObject
         val browseId = endpoint.browseId() ?: return null
-        return BrowseItem(browseId, title, params = endpoint.browseParams())
+        val stripe =
+            item["solid"]
+                ?.jsonObject
+                ?.get("leftStripeColor")
+                ?.jsonPrimitive
+                ?.longOrNull
+        return BrowseItem(browseId, title, params = endpoint.browseParams(), accentColor = stripe)
     }
 
     private fun parseCategoryItem(item: JsonObject): BrowseItem? {
