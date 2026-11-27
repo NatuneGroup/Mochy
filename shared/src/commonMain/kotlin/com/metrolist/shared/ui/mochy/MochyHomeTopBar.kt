@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
@@ -69,7 +70,17 @@ fun MochyHomeTopBar(
     val blur = supportsNativeBlur()
     val scrimColor = MaterialTheme.colorScheme.background
     val titleColor = MaterialTheme.colorScheme.onBackground
+    val backdrop = LocalMochyHomeBackdrop.current
     Box(modifier = modifier.fillMaxWidth()) {
+        // Mochy's glass under the bar: the page blurred over the solid page colour, fading out down the bar
+        if (backdrop != null) {
+            MochyProgressiveGlass(
+                backdrop = backdrop,
+                maxBlurPx = { HOME_BAR_BLUR_PX * scrollProgress().coerceIn(0f, 1f) },
+                foundation = scrimColor,
+                modifier = Modifier.matchParentSize().graphicsLayer { alpha = scrollProgress().coerceIn(0f, 1f) },
+            )
+        }
         Box(
             modifier =
                 Modifier
@@ -152,3 +163,9 @@ private const val MOCHY_MARK_WIDTH = 31
 private const val MOCHY_MARK_HEIGHT = 34
 
 private fun mochyBlur(radiusPx: Float): RenderEffect? = if (radiusPx < 0.5f) null else BlurEffect(radiusPx, radiusPx, TileMode.Decal)
+
+/** The page under Mochy's home bar, for the bar's glass; Home provides it, other hosts leave it unset. */
+val LocalMochyHomeBackdrop = staticCompositionLocalOf<MochyBackdrop?> { null }
+
+// the reference's 50px at full scroll
+private const val HOME_BAR_BLUR_PX = 50f
