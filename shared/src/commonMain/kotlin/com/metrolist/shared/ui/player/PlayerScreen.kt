@@ -1510,18 +1510,22 @@ fun PlayerScreen(
                                 )
                             }
                         } else if (usesBedsidePlayer && !showVideoSurface && !uiState.isLyricsVisible) {
-                            // Mochy's bedside style: the player is the clock on the nightstand, its tiles the song
+                            // Mochy's bedside style: the player is the clock on the nightstand, its tiles the song. The clock is
+                            // its own window, so it only shows while the player is fully up; black stands in while it slides
+                            Box(Modifier.fillMaxSize().background(Color.Black))
                             val bedsideSong = uiState.currentSong
-                            BedsideClock(
-                                title = bedsideSong?.title,
-                                artist = bedsideSong?.artists?.joinToString { it.name },
-                                isPlaying = isPlaying,
-                                onTogglePlay = viewModel::togglePlayPause.takeUnless { isListenTogetherGuest },
-                                onDismiss = onClose,
-                                artworkUrl = bedsideSong?.displayThumbnail,
-                                onPrevious = viewModel::previous.takeUnless { isListenTogetherGuest },
-                                onNext = viewModel::next.takeUnless { isListenTogetherGuest },
-                            )
+                            if (bottomSheetState.isExpanded) {
+                                BedsideClock(
+                                    title = bedsideSong?.title,
+                                    artist = bedsideSong?.artists?.joinToString { it.name },
+                                    isPlaying = isPlaying,
+                                    onTogglePlay = viewModel::togglePlayPause.takeUnless { isListenTogetherGuest },
+                                    onDismiss = onClose,
+                                    artworkUrl = bedsideSong?.displayThumbnail,
+                                    onPrevious = viewModel::previous.takeUnless { isListenTogetherGuest },
+                                    onNext = viewModel::next.takeUnless { isListenTogetherGuest },
+                                )
+                            }
                         } else if (usesIpodPlayer && !showVideoSurface && !uiState.isLyricsVisible) {
                             IpodPlayerStyle(
                                 active = contentActive,
