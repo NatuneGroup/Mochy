@@ -121,6 +121,7 @@ import com.metrolist.shared.generated.resources.mochy_library_tab_local
 import com.metrolist.shared.generated.resources.playlist_direction_ascending
 import com.metrolist.shared.generated.resources.playlist_direction_descending
 import com.metrolist.shared.generated.resources.playlists
+import com.metrolist.shared.generated.resources.remote_library_title
 import com.metrolist.shared.generated.resources.song_count
 import com.metrolist.shared.generated.resources.songs
 import com.metrolist.shared.generated.resources.try_again
@@ -142,6 +143,7 @@ import com.metrolist.shared.model.isSystemPlaylist
 import com.metrolist.shared.model.parseDisplayCount
 import com.metrolist.shared.model.thumbnailAspectRatio
 import com.metrolist.shared.playlistimport.ImportSourceType
+import com.metrolist.shared.remote.remoteLibrariesSupported
 import com.metrolist.shared.settings.ArtistNameAliases
 import com.metrolist.shared.settings.BlockedContent
 import com.metrolist.shared.settings.HiddenLibraryItem
@@ -204,6 +206,7 @@ import com.metrolist.shared.ui.navigation.NavigationBackHandler
 import com.metrolist.shared.ui.navigation.blockInput
 import com.metrolist.shared.ui.player.staticConnectedLeadingButtonShapes
 import com.metrolist.shared.ui.player.staticConnectedTrailingButtonShapes
+import com.metrolist.shared.ui.remote.RemoteLibraryBrowser
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import com.metrolist.shared.ui.tv.tvFocusHighlight
 import com.metrolist.shared.ui.utils.DragScrollableGrid
@@ -1577,6 +1580,10 @@ private fun MochyLibraryLanding(
 ) {
     // Mochy's tabs: All is the landing page, the others list their songs right here under the chips
     var tab by rememberSaveable { mutableIntStateOf(0) }
+    var showRemoteLibraries by rememberSaveable { mutableStateOf(false) }
+    if (showRemoteLibraries) {
+        RemoteLibraryBrowser(onDismiss = { showRemoteLibraries = false }, onPlaySongs = onPlaySongs)
+    }
     val shelf = rememberMochyLibraryShelf(tab)
     val genres = if (tab == 4) rememberMochyGenres() else null
     val imported = if (tab == 5) rememberImportedPlaylists() else null
@@ -1635,6 +1642,14 @@ private fun MochyLibraryLanding(
                     isPlaying = song.id == currentSongId && isPlaying,
                     modifier = Modifier.clickable { onPlaySongs(shelfSongs, index) }.padding(horizontal = 24.dp),
                 )
+            }
+            // the listener's own WebDAV servers, browsed from the Local tab
+            if (tab == 1 && remoteLibrariesSupported) {
+                item(key = "remote_libraries") {
+                    Box(Modifier.fillMaxWidth().padding(top = 16.dp), contentAlignment = Alignment.Center) {
+                        MochyLibraryPillButton(stringResource(Res.string.remote_library_title), onClick = { showRemoteLibraries = true })
+                    }
+                }
             }
             if (tab == 3 && onOpenHistory != null) {
                 item(key = "history_all") {
