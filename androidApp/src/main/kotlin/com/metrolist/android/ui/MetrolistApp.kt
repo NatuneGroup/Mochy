@@ -528,8 +528,6 @@ fun MetrolistApp(
                 else -> Unit
             }
         }
-        // Mochy's style picker, opened from the player's cards and from Customisation; it shows itself as a popup
-        MochyStylePickerHost()
         PopupVisibility(visible = YouTubeSessionState.showExpiredSessionNotice) {
             AlertDialog(
                 onDismissRequest = YouTubeSessionState::dismissExpiredSessionNotice,
@@ -2071,6 +2069,8 @@ fun MetrolistApp(
                     }
 
                     BottomSheetMenu(state = menuState)
+                    // Mochy's style picker, opened from the player's cards and from Customisation, over everything else
+                    MochyStylePickerHost()
 
                     if (isInPipMode) {
                         Box(
