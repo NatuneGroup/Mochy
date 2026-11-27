@@ -24,3 +24,11 @@
 -keepclassmembers class rikka.shizuku.Shizuku {
     private static rikka.shizuku.ShizukuRemoteProcess newProcess(java.lang.String[], java.lang.String[], java.lang.String);
 }
+
+# SMB remote libraries (smbj): its Kerberos sign-in reaches for org.ietf.jgss, which Android doesn't ship, and its
+# event bus (mbassy) for javax.el; neither path is taken (guest and NTLM sign-in only)
+-dontwarn org.ietf.jgss.**
+-dontwarn javax.el.**
+-dontwarn net.engio.mbassy.**
+# smbj builds its packet handlers and crypto provider by reflection
+-keep class com.hierynomus.smbj.** { *; }

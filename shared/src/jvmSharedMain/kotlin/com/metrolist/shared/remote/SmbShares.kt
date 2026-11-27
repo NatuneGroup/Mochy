@@ -10,12 +10,14 @@ import com.hierynomus.msfscc.FileAttributes
 import com.hierynomus.mssmb2.SMB2CreateDisposition
 import com.hierynomus.mssmb2.SMB2ShareAccess
 import com.hierynomus.smbj.SMBClient
+import com.hierynomus.smbj.SmbConfig
 import com.hierynomus.smbj.auth.AuthenticationContext
 import com.hierynomus.smbj.session.Session
 import com.hierynomus.smbj.share.DiskShare
 import com.hierynomus.smbj.share.File
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 
 /** An smb:// address taken apart: the host, its port, the share and the path inside it. */
 internal data class SmbLocation(
@@ -44,7 +46,17 @@ internal data class SmbLocation(
 }
 
 internal object SmbShares {
-    private val client by lazy { SMBClient() }
+    // a share that stops answering fails within half a minute instead of holding the player
+    private val client by lazy {
+        SMBClient(
+            SmbConfig
+                .builder()
+                .withTimeout(20, TimeUnit.SECONDS)
+                .withReadTimeout(30, TimeUnit.SECONDS)
+                .withTransactTimeout(30, TimeUnit.SECONDS)
+                .build(),
+        )
+    }
     private val sessions = ConcurrentHashMap<String, Session>()
 
     private fun key(
