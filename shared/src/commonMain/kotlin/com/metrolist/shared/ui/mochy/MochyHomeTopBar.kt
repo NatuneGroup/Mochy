@@ -68,6 +68,8 @@ fun MochyHomeTopBar(
         label = "mochyHomeTopBar",
     )
     val blur = supportsNativeBlur()
+    // how far the glass and scrim have come in, read in composition like the title's progress so they follow the scroll
+    val barAlpha by remember(scrollProgress) { derivedStateOf { scrollProgress().coerceIn(0f, 1f) } }
     // the page's colour, solid: the theme's background can be see-through over the app's own backdrop
     val scrimColor = MaterialTheme.colorScheme.background.let { if (it.alpha < 1f) Color.Black else it }
     val titleColor = MaterialTheme.colorScheme.onBackground
@@ -77,9 +79,9 @@ fun MochyHomeTopBar(
         if (backdrop != null) {
             MochyProgressiveGlass(
                 backdrop = backdrop,
-                maxBlurPx = { HOME_BAR_BLUR_PX * scrollProgress().coerceIn(0f, 1f) },
+                maxBlurPx = { HOME_BAR_BLUR_PX * barAlpha },
                 foundation = scrimColor,
-                modifier = Modifier.matchParentSize().graphicsLayer { alpha = scrollProgress().coerceIn(0f, 1f) },
+                modifier = Modifier.matchParentSize().graphicsLayer { alpha = barAlpha },
             )
         }
         Box(
@@ -95,7 +97,7 @@ fun MochyHomeTopBar(
                                 0.6f to scrimColor.copy(alpha = 0.3f),
                                 1f to Color.Transparent,
                             )
-                        onDrawBehind { drawRect(brush = fade, alpha = scrollProgress().coerceIn(0f, 1f)) }
+                        onDrawBehind { drawRect(brush = fade, alpha = barAlpha) }
                     },
         )
         Row(

@@ -361,6 +361,7 @@ import com.metrolist.shared.ui.navigation.withPointerInput
 import com.metrolist.shared.ui.playback.LocalPlaybackController
 import com.metrolist.shared.ui.player.LocalPlayerPlatform
 import com.metrolist.shared.ui.player.PlayerScreen
+import com.metrolist.shared.ui.player.mochy.MochyStylePickerHost
 import com.metrolist.shared.ui.player.shouldShowMusicVideoSurface
 import com.metrolist.shared.ui.screens.SupportPrompt
 import com.metrolist.shared.ui.screens.pageKey
@@ -527,6 +528,8 @@ fun MetrolistApp(
                 else -> Unit
             }
         }
+        // Mochy's style picker, opened from the player's cards and from Customisation; it shows itself as a popup
+        MochyStylePickerHost()
         PopupVisibility(visible = YouTubeSessionState.showExpiredSessionNotice) {
             AlertDialog(
                 onDismissRequest = YouTubeSessionState::dismissExpiredSessionNotice,

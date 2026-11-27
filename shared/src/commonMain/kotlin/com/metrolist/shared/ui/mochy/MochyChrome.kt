@@ -194,6 +194,8 @@ fun MochyProgressiveGlass(
                 )
             },
     ) {
+        // the solid page colour first, the blurred page over it
+        Box(Modifier.matchParentSize().drawBehind { drawRect(foundation) })
         if (blur && backdrop != null) {
             var position by remember { mutableStateOf(Offset.Zero) }
             Box(
@@ -210,6 +212,5 @@ fun MochyProgressiveGlass(
                     },
             )
         }
-        Box(Modifier.matchParentSize().drawBehind { drawRect(foundation) })
     }
 }
