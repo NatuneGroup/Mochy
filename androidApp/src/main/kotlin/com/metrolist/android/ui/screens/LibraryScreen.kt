@@ -186,6 +186,8 @@ fun LibraryScreen(
     onNavigateToAutoPlaylist: ((String) -> Unit)? = null,
     onNavigateToPlaylistImport: () -> Unit = {},
     onNavigateToHistory: (() -> Unit)? = null,
+    // the Genres tab opens a genre's page
+    onNavigateToBrowse: (String, String?, String) -> Unit = { _, _, _ -> },
     floatingActionsBottomInset: State<Dp>,
     scrollToTopEvents: Flow<Long> = emptyFlow(),
     viewModel: LibraryViewModel = koinViewModel(),
@@ -516,6 +518,7 @@ fun LibraryScreen(
                         onNavigateToPodcast,
                         playerConnection,
                         scope,
+                        onNavigateToBrowse = onNavigateToBrowse,
                     )
                 },
                 onPlaySongs = { songs, index -> playerConnection?.playQueue(songs, index) },

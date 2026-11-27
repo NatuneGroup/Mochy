@@ -2411,7 +2411,7 @@ private fun SearchSectionTitle(title: String) {
 
 /** a mood or genre tile: a 14dp card tinted with the genre's own stripe colour, two of its covers leaning at the end */
 @Composable
-private fun MochyMoodTile(
+internal fun MochyMoodTile(
     title: String,
     accentColor: Long?,
     browseId: String,

@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -49,6 +50,7 @@ import androidx.compose.material3.ToggleButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -64,6 +66,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -82,6 +85,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.round
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.metrolist.shared.constants.GridRowSpacing
 import com.metrolist.shared.constants.GridScreenPadding
@@ -89,6 +93,7 @@ import com.metrolist.shared.constants.GridTileSpacing
 import com.metrolist.shared.constants.currentGridCells
 import com.metrolist.shared.constants.gridTileColumns
 import com.metrolist.shared.db.MusicDatabase
+import com.metrolist.shared.db.daos.ImportedPlaylist
 import com.metrolist.shared.db.entities.KIND_CACHE
 import com.metrolist.shared.db.entities.KIND_DOWNLOAD
 import com.metrolist.shared.db.entities.toSongItem
@@ -105,10 +110,13 @@ import com.metrolist.shared.generated.resources.liked
 import com.metrolist.shared.generated.resources.mochy_library_empty_import
 import com.metrolist.shared.generated.resources.mochy_library_import_banner
 import com.metrolist.shared.generated.resources.mochy_library_nothing_here
+import com.metrolist.shared.generated.resources.mochy_library_nothing_imported
 import com.metrolist.shared.generated.resources.mochy_library_recently_added
 import com.metrolist.shared.generated.resources.mochy_library_tab_all
 import com.metrolist.shared.generated.resources.mochy_library_tab_cached
+import com.metrolist.shared.generated.resources.mochy_library_tab_genres
 import com.metrolist.shared.generated.resources.mochy_library_tab_history
+import com.metrolist.shared.generated.resources.mochy_library_tab_imported
 import com.metrolist.shared.generated.resources.mochy_library_tab_local
 import com.metrolist.shared.generated.resources.playlist_direction_ascending
 import com.metrolist.shared.generated.resources.playlist_direction_descending
@@ -119,7 +127,9 @@ import com.metrolist.shared.generated.resources.try_again
 import com.metrolist.shared.model.AlbumItem
 import com.metrolist.shared.model.ArtistItem
 import com.metrolist.shared.model.ArtistTiny
+import com.metrolist.shared.model.BrowseItem
 import com.metrolist.shared.model.EpisodeItem
+import com.metrolist.shared.model.HomeSection
 import com.metrolist.shared.model.PlaylistItem
 import com.metrolist.shared.model.PodcastItem
 import com.metrolist.shared.model.SongItem
@@ -131,6 +141,7 @@ import com.metrolist.shared.model.isPodcast
 import com.metrolist.shared.model.isSystemPlaylist
 import com.metrolist.shared.model.parseDisplayCount
 import com.metrolist.shared.model.thumbnailAspectRatio
+import com.metrolist.shared.playlistimport.ImportSourceType
 import com.metrolist.shared.settings.ArtistNameAliases
 import com.metrolist.shared.settings.BlockedContent
 import com.metrolist.shared.settings.HiddenLibraryItem
@@ -146,6 +157,7 @@ import com.metrolist.shared.settings.displayName
 import com.metrolist.shared.settings.displayTitle
 import com.metrolist.shared.settings.moveLibraryItems
 import com.metrolist.shared.settings.orderLibraryItems
+import com.metrolist.shared.state.GlobalYouTubeRepository
 import com.metrolist.shared.storage.isAvailableDownload
 import com.metrolist.shared.ui.LocalIsTv
 import com.metrolist.shared.ui.components.CollectionPreviews
@@ -490,6 +502,7 @@ fun LibraryContent(
                 onPlaySongs = onPlaySongs,
                 currentSongId = currentSongId,
                 isPlaying = isPlaying,
+                onItemClick = onItemClick,
             )
             mochyTopBar()
             return@Box
@@ -1560,10 +1573,13 @@ private fun MochyLibraryLanding(
     onPlaySongs: (List<SongItem>, Int) -> Unit,
     currentSongId: String?,
     isPlaying: Boolean,
+    onItemClick: (YTItem) -> Unit,
 ) {
     // Mochy's tabs: All is the landing page, the others list their songs right here under the chips
     var tab by rememberSaveable { mutableIntStateOf(0) }
     val shelf = rememberMochyLibraryShelf(tab)
+    val genres = if (tab == 4) rememberMochyGenres() else null
+    val imported = if (tab == 5) rememberImportedPlaylists() else null
     val songs = remember(items) { items.filterIsInstance<SongItem>().filterNot { it.isPodcast } }
     val playlists = remember(items) { items.filterIsInstance<PlaylistItem>() }
     val albums = remember(items) { items.filterIsInstance<AlbumItem>() }
@@ -1574,6 +1590,8 @@ private fun MochyLibraryLanding(
             add(MochyLibraryTab(stringResource(Res.string.mochy_library_tab_local)) { tab = 1 })
             add(MochyLibraryTab(stringResource(Res.string.mochy_library_tab_cached)) { tab = 2 })
             add(MochyLibraryTab(stringResource(Res.string.mochy_library_tab_history)) { tab = 3 })
+            add(MochyLibraryTab(stringResource(Res.string.mochy_library_tab_genres)) { tab = 4 })
+            add(MochyLibraryTab(stringResource(Res.string.mochy_library_tab_imported)) { tab = 5 })
         }
     LazyVerticalGrid(
         columns = GridCells.Fixed(1),
@@ -1586,6 +1604,14 @@ private fun MochyLibraryLanding(
                 MochyLibraryTabChips(tabs, selectedIndex = tab, modifier = Modifier.padding(horizontal = 24.dp))
                 Spacer(Modifier.height(14.dp))
             }
+        }
+        if (tab == 4) {
+            mochyGenresTab(genres, onItemClick)
+            return@LazyVerticalGrid
+        }
+        if (tab == 5) {
+            mochyImportedTab(imported, onItemClick, onOpenImport)
+            return@LazyVerticalGrid
         }
         if (tab != 0) {
             val shelfSongs = shelf ?: emptyList()
@@ -1735,3 +1761,135 @@ private fun rememberMochyLibraryShelf(tab: Int): List<SongItem>? {
 
 // the History tab lists the latest plays, the full history is a tap away
 private const val MOCHY_HISTORY_TAB_ROWS = 100
+
+/** YouTube Music's genres and moods, as their own sections; null while they're read. */
+@Composable
+private fun rememberMochyGenres(): List<HomeSection>? {
+    val sections by produceState<List<HomeSection>?>(initialValue = null) {
+        value =
+            runCatching {
+                GlobalYouTubeRepository.instance
+                    .getBrowsePageData(MOODS_AND_GENRES_BROWSE_ID, loadAllPages = false)
+                    .sections
+                    .filter { section -> section.items.any { it is BrowseItem } }
+            }.getOrDefault(emptyList())
+    }
+    return sections
+}
+
+private const val MOODS_AND_GENRES_BROWSE_ID = "FEmusic_moods_and_genres"
+
+/** The playlists imports filled, with the service each came from; null while they're read. */
+@Composable
+private fun rememberImportedPlaylists(): List<ImportedPlaylist>? {
+    val database = remember { KoinPlatform.getKoin().get<MusicDatabase>() }
+    val playlists by remember(database) { database.importTrackMatchDao().importedPlaylists() }.collectAsState(initial = null)
+    return playlists
+}
+
+// the Genres tab: each section's genres two to a row, tinted with their own colours, opening their pages
+private fun LazyGridScope.mochyGenresTab(
+    sections: List<HomeSection>?,
+    onItemClick: (YTItem) -> Unit,
+) {
+    if (sections == null) return
+    if (sections.isEmpty()) {
+        item(key = "genres_empty") { MochyLibraryEmptyState(stringResource(Res.string.mochy_library_nothing_here)) }
+        return
+    }
+    sections.forEachIndexed { sectionIndex, section ->
+        item(key = "genres_title_$sectionIndex") {
+            Text(
+                text = section.title,
+                fontFamily = mochyInterFontFamily(),
+                fontWeight = FontWeight.Bold,
+                fontSize = 17.sp,
+                color = Color.White,
+                modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = if (sectionIndex == 0) 4.dp else 18.dp, bottom = 8.dp),
+            )
+        }
+        val genres = section.items.filterIsInstance<BrowseItem>()
+        genres.chunked(2).forEachIndexed { rowIndex, row ->
+            item(key = "genres_${sectionIndex}_$rowIndex") {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 5.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    row.forEach { genre ->
+                        MochyMoodTile(
+                            title = genre.title,
+                            accentColor = genre.accentColor,
+                            browseId = genre.id,
+                            params = genre.params,
+                            onClick = { onItemClick(genre) },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    if (row.size == 1) Spacer(Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+// the Imported tab: each service an import came from, with its playlists under it
+private fun LazyGridScope.mochyImportedTab(
+    playlists: List<ImportedPlaylist>?,
+    onItemClick: (YTItem) -> Unit,
+    onOpenImport: (() -> Unit)?,
+) {
+    if (playlists == null) return
+    if (playlists.isEmpty()) {
+        item(key = "imported_empty") { MochyLibraryEmptyState(stringResource(Res.string.mochy_library_nothing_imported)) }
+        if (onOpenImport != null) {
+            item(key = "imported_start") {
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    MochyLibraryPillButton(stringResource(Res.string.mochy_library_import_banner), onClick = onOpenImport)
+                }
+            }
+        }
+        return
+    }
+    playlists.groupBy { it.provider }.forEach { (provider, group) ->
+        item(key = "imported_header_$provider") {
+            Text(
+                text = ImportSourceType.entries.firstOrNull { it.name == provider }?.displayName ?: provider,
+                fontFamily = mochyInterFontFamily(),
+                fontWeight = FontWeight.Bold,
+                fontSize = 17.sp,
+                color = Color.White,
+                modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 6.dp),
+            )
+        }
+        group.distinctBy { it.playlistId }.forEach { playlist ->
+            item(key = "imported_${provider}_${playlist.playlistId}") {
+                MochyLibraryListRow(
+                    title = playlist.name,
+                    subtitle = ImportSourceType.entries.firstOrNull { it.name == provider }?.displayName ?: provider,
+                    thumbnail = playlist.thumbnailUrl,
+                    icon = MetrolistIcons.Outlined.LibraryMusic,
+                    artistId = null,
+                    cover = null,
+                    localArtwork = null,
+                    artworkOverlay = null,
+                    artworkAspectRatio = 1f,
+                    isPlaylistArtwork = true,
+                    isCurrent = false,
+                    isPlaying = false,
+                    modifier =
+                        Modifier
+                            .clickable {
+                                onItemClick(
+                                    PlaylistItem(
+                                        id = playlist.playlistId,
+                                        title = playlist.name,
+                                        thumbnail = playlist.thumbnailUrl,
+                                        isLocal = true,
+                                    ),
+                                )
+                            }.padding(horizontal = 24.dp),
+                )
+            }
+        }
+    }
+}

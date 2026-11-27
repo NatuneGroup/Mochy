@@ -4,6 +4,7 @@ import androidx.room3.Dao
 import androidx.room3.Query
 import androidx.room3.Upsert
 import com.metrolist.shared.db.entities.ImportTrackMatch
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ImportTrackMatchDao {
@@ -17,4 +18,17 @@ interface ImportTrackMatchDao {
 
     @Upsert
     suspend fun upsert(matches: List<ImportTrackMatch>)
+
+    // every playlist an import filled, with the service it came from, for the Library's Imported tab
+    @Query(
+        "SELECT DISTINCT import_track_match.playlistId AS playlistId, import_track_match.provider AS provider, playlist.name AS name, playlist.thumbnailUrl AS thumbnailUrl FROM import_track_match JOIN playlist ON playlist.id = import_track_match.playlistId ORDER BY playlist.name",
+    )
+    fun importedPlaylists(): Flow<List<ImportedPlaylist>>
 }
+
+data class ImportedPlaylist(
+    val playlistId: String,
+    val provider: String,
+    val name: String,
+    val thumbnailUrl: String?,
+)
