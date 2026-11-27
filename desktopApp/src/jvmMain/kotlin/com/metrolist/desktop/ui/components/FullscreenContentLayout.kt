@@ -37,6 +37,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,6 +67,7 @@ import com.metrolist.shared.model.LyricsTranslationProgress
 import com.metrolist.shared.model.SongItem
 import com.metrolist.shared.model.lyricsCuratorUrl
 import com.metrolist.shared.model.lyricsProviderUrl
+import com.metrolist.shared.playback.PlaybackSeekSource
 import com.metrolist.shared.repository.isLocalLyricsProvider
 import com.metrolist.shared.settings.PlayerBackgroundStyle
 import com.metrolist.shared.settings.PlayerType
@@ -75,6 +77,8 @@ import com.metrolist.shared.ui.components.lyrics.LyricsSelectionState
 import com.metrolist.shared.ui.components.lyrics.LyricsShareDialog
 import com.metrolist.shared.ui.components.lyrics.LyricsView
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.lyrics.natune.NatuneLyricsPane
+import com.metrolist.shared.ui.mochy.lyrics.PlaybackClock
 import com.metrolist.shared.ui.theme.rememberMochyLook
 import com.metrolist.shared.ui.utils.verticalScrollWithDrag
 import org.jetbrains.compose.resources.stringResource
@@ -326,6 +330,31 @@ internal fun DesktopLyricsContent(
     }
     val lyricsProvidedByFmt = stringResource(Res.string.lyrics_provided_by)
 
+    // the Flagship sings its lyrics with Natune's karaoke view, the same one the phone's lyrics sheet draws
+    if (rememberMochyLook().playerType == PlayerType.MOCHY) {
+        val offsetMs = if (isMatchingTrack) LyricsState.currentLyricsOffsetMs else 0
+        val playing by rememberUpdatedState(PlayerState.isPlaying)
+        val clock =
+            remember {
+                PlaybackClock(
+                    readPositionMs = PlayerState::currentMediaPositionMs,
+                    readIsPlaying = { playing },
+                    readSpeed = { PlayerState.player.playbackSpeed.value },
+                    offsetMs = { offsetMs.toLong() },
+                )
+            }
+        NatuneLyricsPane(
+            lines = lyrics,
+            isLoading = LyricsState.isLyricsLoading || (currentSongId != null && currentSongId != LyricsState.currentLyricsSongId),
+            positionProvider = clock,
+            onSeekToLine = { ms ->
+                if (Settings.shared.lyricsClickToSeek) PlayerState.seekToPosition(ms, PlaybackSeekSource("lyrics_tap"))
+            },
+            textColor = textColor,
+            modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
+        )
+        return
+    }
     Box(modifier = Modifier.fillMaxSize()) {
         LyricsView(
             noLyricsText = stringResource(Res.string.no_lyrics_for_this_track),
