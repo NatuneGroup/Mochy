@@ -84,6 +84,7 @@ import com.metrolist.shared.playback.playbackFailureCategoryFromSabr
 import com.metrolist.shared.playback.playbackNormalizationGain
 import com.metrolist.shared.playback.playbackOutputGain
 import com.metrolist.shared.playback.songsShareAlbum
+import com.metrolist.shared.remote.openRemoteMediaSource
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.state.GlobalYouTube
 import com.metrolist.shared.state.GlobalYouTubeRepository
@@ -4090,6 +4091,11 @@ private fun buildDirectDataSourceFactory(
 ): DataSource.Factory {
     val size = if (video) resource.videoContentLengthBytes else resource.contentLengthBytes
     val url = if (video) checkNotNull(resource.videoUrl) else resource.url
+    // a file on an SMB share of a saved remote library; ExoPlayer has no smb:// source of its own
+    openRemoteMediaSource(url)?.let { source ->
+        onSourceOpened(source)
+        return DataSource.Factory { SeekableMediaDataSource(source) }
+    }
     if (url.startsWith("${LegacyAudioFile.SCHEME}:")) {
         val path = checkNotNull(Uri.parse(url).path)
         val manifest = checkNotNull(LegacyAudioFile.fromPath(context, path))

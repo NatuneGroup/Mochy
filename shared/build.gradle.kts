@@ -406,6 +406,8 @@ kotlin {
                     implementation(libs.ktor.client.cio)
                     implementation(libs.okhttp)
                     implementation(libs.okhttp.dnsoverhttps)
+                    // SMB shares in the remote libraries
+                    implementation(libs.smbj)
                     // Natune's karaoke lyrics view; it publishes no iOS simulator build, so iOS keeps Mochy's lyrics
                     implementation(libs.accompanist.lyrics.ui)
                     implementation(libs.accompanist.lyrics.core)

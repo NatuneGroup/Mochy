@@ -17,7 +17,7 @@ import kotlin.io.encoding.Base64
 data class RemoteServer(
     val id: String,
     val name: String,
-    // the WebDAV folder the library starts at, as a full http or https URL
+    // the folder the library starts at: an http(s):// WebDAV folder or an smb://host/share/folder
     val address: String,
     val username: String = "",
     val password: String = "",
@@ -61,6 +61,15 @@ object RemoteLibraries {
     fun upsert(server: RemoteServer) = save(servers().filterNot { it.id == server.id } + server)
 
     fun remove(id: String) = save(servers().filterNot { it.id == id })
+
+    /** The saved server a file address belongs to: the one whose folder address is the longest start of it. */
+    fun serverFor(url: String): RemoteServer? =
+        servers()
+            .filter { url.startsWith(it.address.trimEnd('/') + "/") || url == it.address }
+            .maxByOrNull { it.address.length }
+
+    /** Whether [address] names an SMB share rather than a WebDAV folder. */
+    fun isSmb(address: String): Boolean = address.startsWith("smb://", ignoreCase = true)
 
     fun isAudioFile(name: String): Boolean = name.substringAfterLast('.', "").lowercase() in audioExtensions
 
@@ -110,7 +119,8 @@ object RemoteLibraries {
         return PlaybackResource(
             videoId = song.id,
             url = url,
-            headers = authHeaders(server),
+            // an smb:// file is opened by the players through the share's own sign-in
+            headers = if (isSmb(url)) emptyMap() else authHeaders(server),
             loudnessDb = null,
             expiresAt = null,
             durationSeconds = song.duration,

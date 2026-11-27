@@ -5835,11 +5835,11 @@
     <string name="namida_queue">Queue</string>
     <string name="namida_queue_items">items</string>
     <string name="remote_library_title">Your servers</string>
-    <string name="remote_library_add">Add a WebDAV server</string>
-    <string name="remote_library_none">No servers yet. Add a WebDAV folder, such as one on Nextcloud or a home server, to play the music in it.</string>
+    <string name="remote_library_add">Add a server</string>
+    <string name="remote_library_none">No servers yet. Add a WebDAV folder, such as one on Nextcloud, or an SMB share on a home server or NAS, to play the music in it.</string>
     <string name="remote_library_name">Name</string>
     <string name="remote_library_address">Folder address</string>
-    <string name="remote_library_address_invalid">Starts with https:// or http://</string>
+    <string name="remote_library_address_invalid">An https:// or http:// WebDAV folder, or smb://host/share</string>
     <string name="remote_library_https_only">This app only connects to servers over https://</string>
     <string name="remote_library_username">Username</string>
     <string name="remote_library_password">Password</string>

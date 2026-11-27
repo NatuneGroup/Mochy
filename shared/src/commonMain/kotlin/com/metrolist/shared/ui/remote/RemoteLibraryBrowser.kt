@@ -224,7 +224,16 @@ private fun AddServerForm(
     val host = address.substringAfter("://").substringBefore('/').substringBefore(':')
     val plainHttp = address.startsWith("http://")
     val plainHttpRefused = plainHttp && host.isNotBlank() && !remotePlainHttpAllowed(host)
-    val valid = (address.startsWith("https://") || plainHttp) && host.isNotBlank() && !plainHttpRefused
+    val smb = RemoteLibraries.isSmb(address)
+    // an SMB address needs a share after the host
+    val smbShareMissing =
+        smb &&
+            address
+                .substringAfter("://")
+                .substringAfter('/', "")
+                .trim('/')
+                .isEmpty()
+    val valid = (address.startsWith("https://") || plainHttp || smb) && host.isNotBlank() && !plainHttpRefused && !smbShareMissing
     // no complaint until there's an address to judge
     val showError = (!valid && host.isNotBlank()) || plainHttpRefused
     Column(Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
