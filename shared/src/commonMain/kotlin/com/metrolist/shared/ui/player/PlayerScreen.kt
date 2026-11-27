@@ -724,6 +724,8 @@ fun PlayerScreen(
     val usesMochyFlagship = playerType == PlayerType.MOCHY
     val usesMochyTurntable = playerType == PlayerType.TURNTABLE
     val usesIpodPlayer = playerType == PlayerType.IPOD
+    val usesBedsidePlayer = playerType == PlayerType.BEDSIDE
+    val usesVideoPlayer = playerType == PlayerType.VIDEO
     val alternateStyle =
         when (playerType) {
             PlayerType.POSTER -> AlternateStyle.POSTER
@@ -732,7 +734,7 @@ fun PlayerScreen(
             else -> null
         }
     // a style that draws the whole player itself, with no cover, controls or bottom bar of the player's own
-    val usesStylePlayer = usesIpodPlayer || alternateStyle != null
+    val usesStylePlayer = usesIpodPlayer || usesBedsidePlayer || alternateStyle != null
     val usesMochyChrome = usesMochyFlagship || usesMochyTurntable
     val flagshipCoverStyle = if (usesMochyFlagship) Settings.shared.playerCoverStyle else PlayerCoverStyle.SQUARED
     val flagshipFont = if (usesMochyChrome) flagshipFontFamily() else null
@@ -817,6 +819,16 @@ fun PlayerScreen(
         wasLyricsOffsetEditorOpen = showLyricsOffsetEditor
     }
 
+    // Mochy's video style: opening the player plays the song's video and fills the screen with it sideways
+    LaunchedEffect(usesVideoPlayer, bottomSheetState.isExpanded, currentSong?.id) {
+        if (!usesVideoPlayer) return@LaunchedEffect
+        if (bottomSheetState.isExpanded) {
+            viewModel.setVideoMode(true)
+            viewModel.setFullscreen(true)
+        } else {
+            viewModel.setFullscreen(false)
+        }
+    }
     LaunchedEffect(bottomSheetState.isExpanded, requestPlayPauseFocus, currentSong?.id, controlsVisible) {
         if (bottomSheetState.isExpanded && requestPlayPauseFocus && controlsVisible) {
             runCatching { playPauseFocusRequester.requestFocus() }
@@ -1492,6 +1504,19 @@ fun PlayerScreen(
                                     modifier = Modifier.fillMaxSize(),
                                 )
                             }
+                        } else if (usesBedsidePlayer && !showVideoSurface && !uiState.isLyricsVisible) {
+                            // Mochy's bedside style: the player is the clock on the nightstand, its tiles the song
+                            val bedsideSong = uiState.currentSong
+                            BedsideClock(
+                                title = bedsideSong?.title,
+                                artist = bedsideSong?.artists?.joinToString { it.name },
+                                isPlaying = isPlaying,
+                                onTogglePlay = viewModel::togglePlayPause.takeUnless { isListenTogetherGuest },
+                                onDismiss = onClose,
+                                artworkUrl = bedsideSong?.displayThumbnail,
+                                onPrevious = viewModel::previous.takeUnless { isListenTogetherGuest },
+                                onNext = viewModel::next.takeUnless { isListenTogetherGuest },
+                            )
                         } else if (usesIpodPlayer && !showVideoSurface && !uiState.isLyricsVisible) {
                             IpodPlayerStyle(
                                 active = contentActive,
@@ -2761,6 +2786,8 @@ fun PlayerScreen(
                                                     PlayerType.POSTER,
                                                     PlayerType.TIMELINE,
                                                     PlayerType.LYRICS_STAGE,
+                                                    PlayerType.BEDSIDE,
+                                                    PlayerType.VIDEO,
                                                     -> {
                                                         FlagshipTransport(
                                                             playing = isPlaying,

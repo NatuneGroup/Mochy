@@ -55,6 +55,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
@@ -73,9 +74,11 @@ import com.metrolist.shared.generated.resources.mochy_menu_style_ipod
 import com.metrolist.shared.generated.resources.mochy_menu_style_modern
 import com.metrolist.shared.generated.resources.mochy_menu_style_turntable
 import com.metrolist.shared.generated.resources.mochy_menu_style_vintage
+import com.metrolist.shared.generated.resources.player_type_bedside
 import com.metrolist.shared.generated.resources.player_type_lyrics_stage
 import com.metrolist.shared.generated.resources.player_type_poster
 import com.metrolist.shared.generated.resources.player_type_timeline
+import com.metrolist.shared.generated.resources.player_type_video
 import com.metrolist.shared.playback.LocalPlayerSession
 import com.metrolist.shared.settings.PlayerType
 import com.metrolist.shared.settings.Settings
@@ -105,6 +108,11 @@ internal val MochyStyleColumns: List<List<Pair<PlayerType, StringResource>>> =
             PlayerType.TURNTABLE to Res.string.mochy_menu_style_turntable,
         ),
         listOf(PlayerType.IPOD to Res.string.mochy_menu_style_ipod),
+        // the bedside clock and the full video, Mochy's two styles that fill the whole screen
+        listOf(
+            PlayerType.BEDSIDE to Res.string.player_type_bedside,
+            PlayerType.VIDEO to Res.string.player_type_video,
+        ),
         listOf(PlayerType.POSTER to Res.string.player_type_poster),
         // the lyrics stage sits under the timeline
         listOf(
@@ -127,6 +135,8 @@ internal val MochyOnlyPlayerTypes =
         PlayerType.POSTER,
         PlayerType.TIMELINE,
         PlayerType.LYRICS_STAGE,
+        PlayerType.BEDSIDE,
+        PlayerType.VIDEO,
     )
 
 private val CardWidth = 170.dp
@@ -362,6 +372,42 @@ private fun StylePreview(
                 drawRect(Color(0xFF2E5E4E), Offset((w - s) / 2f, h * 0.14f), Size(s, s))
                 drawRect(Color.White.copy(alpha = 0.25f), Offset(w * 0.15f, h * 0.8f), Size(w * 0.7f, 4f))
                 drawRect(Color.White, Offset(w * 0.15f, h * 0.8f), Size(w * 0.7f * phase, 4f))
+            }
+
+            PlayerType.BEDSIDE -> {
+                // the nightstand clock: two big dim digits, its colon breathing, the song tile glowing under them
+                drawRect(Color.Black)
+                val digit = Size(w * 0.3f, h * 0.24f)
+                drawRoundRect(Color(0xFF2A1B12), Offset(w * 0.08f, h * 0.22f), digit, CornerRadius(10f))
+                drawRoundRect(Color(0xFF2A1B12), Offset(w * 0.62f, h * 0.22f), digit, CornerRadius(10f))
+                val colon = Color(0xFFE8A33D).copy(alpha = 0.35f + 0.5f * pulse(phase))
+                drawCircle(colon, 5f, Offset(w / 2f, h * 0.29f))
+                drawCircle(colon, 5f, Offset(w / 2f, h * 0.39f))
+                drawRoundRect(Color(0xFF1A1A1C), Offset(w * 0.08f, h * 0.62f), Size(w * 0.84f, h * 0.2f), CornerRadius(18f))
+                drawRoundRect(
+                    Color(0xFFE8A33D).copy(alpha = 0.6f),
+                    Offset(w * 0.12f, h * 0.65f),
+                    Size(h * 0.14f, h * 0.14f),
+                    CornerRadius(8f),
+                )
+            }
+
+            PlayerType.VIDEO -> {
+                // the picture filling the card sideways, a play mark and the bar along its foot running
+                drawRect(Color.Black)
+                drawRect(Brush.linearGradient(listOf(Color(0xFF283A5C), Color(0xFF5C2838))), Offset(0f, h * 0.18f), Size(w, h * 0.64f))
+                val c = Offset(w / 2f, h / 2f)
+                val t = w * 0.09f
+                val path =
+                    Path().apply {
+                        moveTo(c.x - t * 0.6f, c.y - t)
+                        lineTo(c.x + t, c.y)
+                        lineTo(c.x - t * 0.6f, c.y + t)
+                        close()
+                    }
+                drawPath(path, Color.White.copy(alpha = 0.85f))
+                drawRect(Color.White.copy(alpha = 0.25f), Offset(w * 0.08f, h * 0.76f), Size(w * 0.84f, 4f))
+                drawRect(Color.White, Offset(w * 0.08f, h * 0.76f), Size(w * 0.84f * phase, 4f))
             }
 
             else -> {

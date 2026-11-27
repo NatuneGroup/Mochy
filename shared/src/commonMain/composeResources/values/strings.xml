@@ -6275,6 +6275,8 @@
     <string name="flagship_bottom_bar">Bottom bar</string>
     <string name="flagship_bottom_bar_stack">Stack</string>
     <string name="flagship_bottom_bar_volume">Volume</string>
+    <string name="player_type_bedside">Bedside</string>
+    <string name="player_type_video">Full video</string>
     <string name="player_type_poster">Poster</string>
     <string name="player_type_timeline">Timeline</string>
     <string name="player_type_lyrics_stage">Lyrics stage</string>

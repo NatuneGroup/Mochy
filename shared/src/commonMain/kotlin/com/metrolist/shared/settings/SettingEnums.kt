@@ -180,6 +180,10 @@ enum class PlayerType {
     POSTER,
     TIMELINE,
     LYRICS_STAGE,
+
+    // Mochy's bedside clock as the player, and the song's video filling the screen sideways
+    BEDSIDE,
+    VIDEO,
 }
 
 // the flagship's bottom: Mochy's lyric and queue cards one behind the other, or the phone's volume with the
