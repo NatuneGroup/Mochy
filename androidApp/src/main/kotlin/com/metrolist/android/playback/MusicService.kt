@@ -126,6 +126,7 @@ import com.metrolist.shared.playback.findPlaybackHttpStatusCode
 import com.metrolist.shared.playback.observePlaybackCheckpoints
 import com.metrolist.shared.playback.shouldSkipAfterPlaybackFailure
 import com.metrolist.shared.playback.sponsorblock.observeSponsorBlockSkipping
+import com.metrolist.shared.remote.RemoteLibraries
 import com.metrolist.shared.scrobble.ScrobbleManager
 import com.metrolist.shared.scrobble.ScrobbleSessions
 import com.metrolist.shared.settings.BlockedContent
@@ -3015,6 +3016,8 @@ class MusicService :
         allowMochyModules: Boolean = true,
     ): PlaybackFetchResult =
         withContext(Dispatchers.IO) {
+            // a song from a remote library plays straight from its server, which may be on the local network
+            RemoteLibraries.playbackResource(song)?.let { return@withContext PlaybackFetchResult(resource = it) }
             val connected = PlaybackNetworkStateStore.current.connected
             // Video mode stays on across songs, but a plain song has no video of its own, so its saved file wins.
             val skipSavedAudio = wantVideo && connected && (song.isVideoSong || song.isPodcast)

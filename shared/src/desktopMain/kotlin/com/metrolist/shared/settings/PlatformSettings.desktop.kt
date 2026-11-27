@@ -78,6 +78,7 @@ private val secretKeys =
         "accountChannelHandle",
         "accountThumbnail",
         "discordAccessToken",
+        "remoteLibraries",
         "discordRefreshToken",
         "listenTogetherDesktopSession",
         "deviceConnectPairedDevices",

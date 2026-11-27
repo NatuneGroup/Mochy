@@ -194,6 +194,7 @@ import com.metrolist.shared.constants.ProxyPortKey
 import com.metrolist.shared.constants.ProxyTypeKey
 import com.metrolist.shared.constants.QueuedYouTubeHistoryJsonKey
 import com.metrolist.shared.constants.RecentPlayedSearchSongsJsonKey
+import com.metrolist.shared.constants.RemoteLibrariesKey
 import com.metrolist.shared.constants.ResumeOnBluetoothConnectKey
 import com.metrolist.shared.constants.ReverbDampingKey
 import com.metrolist.shared.constants.ReverbDryKey
@@ -581,6 +582,9 @@ class Settings(
     var proxyType by preference(ProxyTypeKey, "OFF")
     var proxyHost by preference(ProxyHostKey, "")
     var proxyPort by preference(ProxyPortKey, 0)
+
+    // the WebDAV servers in the remote libraries, as JSON; a secure setting, since it holds their passwords
+    var remoteLibraries by preference(RemoteLibrariesKey, "")
 
     // the app the download button hands a song's YouTube address to instead of saving it, blank for none
     var externalDownloaderPackage by preference(ExternalDownloaderPackageKey, "")

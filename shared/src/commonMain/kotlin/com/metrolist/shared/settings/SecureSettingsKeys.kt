@@ -27,6 +27,7 @@ internal val secureSettingsKeys =
         "listenTogetherDesktopSession",
         "listenTogetherServerUrl",
         "listenTogetherCustomServers",
+        "remoteLibraries",
         "listenTogetherServerMetadata",
         "deviceConnectPairedDevices",
         "listenTogetherPairedRoomCode",

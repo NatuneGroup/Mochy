@@ -104,6 +104,7 @@ import com.metrolist.shared.playback.shouldPlayAfterSongChange
 import com.metrolist.shared.playback.shouldSkipAfterPlaybackFailure
 import com.metrolist.shared.playback.songsShareAlbum
 import com.metrolist.shared.playback.sponsorblock.observeSponsorBlockSkipping
+import com.metrolist.shared.remote.RemoteLibraries
 import com.metrolist.shared.scrobble.ScrobbleManager
 import com.metrolist.shared.settings.BlockedContent
 import com.metrolist.shared.settings.Settings
@@ -2864,7 +2865,8 @@ object PlayerState {
             showError = showError,
             storedAudio = {
                 withContext(Dispatchers.IO) {
-                    DownloadManager.getLocalPlaybackResource(song.id, song)
+                    RemoteLibraries.playbackResource(song)
+                        ?: DownloadManager.getLocalPlaybackResource(song.id, song)
                         ?: try {
                             SongCacheManager.getCachedPlaybackResource(song.id, song)
                         } catch (error: CancellationException) {
