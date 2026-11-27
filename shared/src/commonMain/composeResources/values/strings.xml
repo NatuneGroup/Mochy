@@ -5792,6 +5792,7 @@
     <string name="mochy_card_celebrate_close">Tap to continue</string>
     <!-- Translators: Settings screen title for the local Mochy profile ID card. -->
     <string name="natune_lyrics_from_source">Lyrics from %1$s</string>
+    <string name="mochy_library_nothing_here">Nothing here yet</string>
     <string name="mochy_library_tab_all">All</string>
     <string name="mochy_library_tab_local">Local &amp; downloaded</string>
     <string name="mochy_library_tab_cached">Cached</string>
