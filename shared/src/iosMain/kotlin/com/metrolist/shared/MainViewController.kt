@@ -565,7 +565,8 @@ fun MetrolistIOSApp() {
                                             .fillMaxSize()
                                             .verticalScroll(
                                                 rememberScrollState(),
-                                            ).padding(top = settingsPageHeaderTop()).padding(bottom = LocalSettingsPageBottomPadding.current),
+                                            ).padding(top = settingsPageHeaderTop())
+                                            .padding(bottom = LocalSettingsPageBottomPadding.current),
                                     ) {
                                         IosStorageSettingsPage(downloadManager, onDownloads)
                                     }
@@ -577,7 +578,8 @@ fun MetrolistIOSApp() {
                                             .fillMaxSize()
                                             .verticalScroll(
                                                 rememberScrollState(),
-                                            ).padding(top = settingsPageHeaderTop()).padding(bottom = LocalSettingsPageBottomPadding.current),
+                                            ).padding(top = settingsPageHeaderTop())
+                                            .padding(bottom = LocalSettingsPageBottomPadding.current),
                                     ) {
                                         if (showPlaylistImporter) {
                                             TextButton(onClick = { showPlaylistImporter = false }, shapes = ButtonDefaults.shapes()) {

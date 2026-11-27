@@ -1539,7 +1539,8 @@ fun MobileApp(
                                                         Modifier
                                                             .fillMaxSize()
                                                             .verticalScroll(rememberScrollState())
-                                                            .padding(top = settingsPageHeaderTop()).padding(bottom = LocalSettingsPageBottomPadding.current),
+                                                            .padding(top = settingsPageHeaderTop())
+                                                            .padding(bottom = LocalSettingsPageBottomPadding.current),
                                                     ) {
                                                         DevtoolsEnabledSwitch(
                                                             enabled = devtoolsEnabled,

@@ -55,21 +55,49 @@ internal fun isSeparateLetterScript(codePoint: Int): Boolean {
     if (isHangul(codePoint)) return true
     if (isHanOrKana(codePoint)) return false
     return when (codePoint) {
-        in 0x0590..0x08FF -> false // Hebrew, Arabic, Syriac, Thaana, N'Ko, Samaritan, Mandaic
-        in 0x0900..0x0DFF -> false // Devanagari to Sinhala
-        in 0x0E00..0x0FFF -> false // Thai, Lao, Tibetan
-        in 0x1000..0x109F -> false // Myanmar
-        in 0x1200..0x139F -> false // Ethiopic
-        in 0x1780..0x18AF -> false // Khmer, Mongolian
-        in 0x1A00..0x1AAF -> false // Buginese, Tai Tham
-        in 0x1B00..0x1BFF -> false // Balinese, Sundanese, Batak
-        in 0xA800..0xA8FF -> false // Syloti Nagri, Phags-pa, Saurashtra
-        in 0xA980..0xAADF -> false // Javanese, Myanmar extended, Tai Viet
-        in 0xFB1D..0xFDFF -> false // Hebrew and Arabic presentation forms
+        in 0x0590..0x08FF -> false
+
+        // Hebrew, Arabic, Syriac, Thaana, N'Ko, Samaritan, Mandaic
+        in 0x0900..0x0DFF -> false
+
+        // Devanagari to Sinhala
+        in 0x0E00..0x0FFF -> false
+
+        // Thai, Lao, Tibetan
+        in 0x1000..0x109F -> false
+
+        // Myanmar
+        in 0x1200..0x139F -> false
+
+        // Ethiopic
+        in 0x1780..0x18AF -> false
+
+        // Khmer, Mongolian
+        in 0x1A00..0x1AAF -> false
+
+        // Buginese, Tai Tham
+        in 0x1B00..0x1BFF -> false
+
+        // Balinese, Sundanese, Batak
+        in 0xA800..0xA8FF -> false
+
+        // Syloti Nagri, Phags-pa, Saurashtra
+        in 0xA980..0xAADF -> false
+
+        // Javanese, Myanmar extended, Tai Viet
+        in 0xFB1D..0xFDFF -> false
+
+        // Hebrew and Arabic presentation forms
         in 0xFE70..0xFEFF -> false
-        in 0x10800..0x10FFF -> false // historic right-to-left scripts
-        in 0x11000..0x11FFF -> false // historic Indic scripts
+
+        in 0x10800..0x10FFF -> false
+
+        // historic right-to-left scripts
+        in 0x11000..0x11FFF -> false
+
+        // historic Indic scripts
         in 0x1E800..0x1EFFF -> false
+
         else -> true
     }
 }

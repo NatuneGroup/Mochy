@@ -284,7 +284,11 @@ private fun ProfilesPage(
     // on Mochy's header the top padding is inside the scroll, so content scrolls up under the header
     val headerTop = if (LocalSettingsPageHasTopBar.current) LocalSettingsPageTopPadding.current else 0.dp
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(vertical = 16.dp).padding(top = headerTop),
+        Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(vertical = 16.dp)
+            .padding(top = headerTop),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Surface(

@@ -79,9 +79,18 @@ internal fun ReverbCard() {
         expanded = reverb.enabled,
         options = {
             LabChips(
-                chips = ReverbPresets.All.map { LabChip(it.id, stringResource(reverbPresetName(it.id))) } +
-                    (if (isCustom) listOf(LabChip(CustomChipKey, stringResource(Res.string.mochy_lab_reverb_custom))) else emptyList()),
-                selectedKey = if (isCustom) CustomChipKey else presetId,
+                chips =
+                    ReverbPresets.All.map { LabChip(it.id, stringResource(reverbPresetName(it.id))) } +
+                        (
+                            if (isCustom) {
+                                listOf(
+                                    LabChip(CUSTOM_CHIP_KEY, stringResource(Res.string.mochy_lab_reverb_custom)),
+                                )
+                            } else {
+                                emptyList()
+                            }
+                        ),
+                selectedKey = if (isCustom) CUSTOM_CHIP_KEY else presetId,
                 onSelect = { id ->
                     ReverbPresets.All.firstOrNull { it.id == id }?.let { preset ->
                         saveReverb(reverb.withPreset(preset), preset.id)
@@ -131,7 +140,7 @@ internal fun ReverbCard() {
     )
 }
 
-private const val CustomChipKey = "custom"
+private const val CUSTOM_CHIP_KEY = "custom"
 
 private fun reverbPresetName(id: String): StringResource =
     when (id) {

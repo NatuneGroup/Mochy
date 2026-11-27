@@ -755,13 +755,16 @@ private fun rememberRubyOverlay(
             // next line.
             val y =
                 when (placement) {
-                    RubyPlacement.ABOVE ->
+                    RubyPlacement.ABOVE -> {
                         layout.getLineTop(line).coerceAtMost(
                             layout.getLineBaseline(line) - measured.size.height - RUBY_BASELINE_GAP_PX,
                         )
-                    RubyPlacement.BELOW ->
+                    }
+
+                    RubyPlacement.BELOW -> {
                         (layout.getLineBaseline(line) + RUBY_BASELINE_GAP_PX)
                             .coerceAtMost(layout.getLineBottom(line) - measured.size.height)
+                    }
                 }
 
             // Same fill the sweep uses, one word at a time: fully lit once the head is past the
@@ -1407,16 +1410,21 @@ internal fun splitBackingVocal(
                 depth++
                 inBracket[i] = true
             }
+
             (ch == ')' || ch == ']') && depth > 0 -> {
                 depth--
                 inBracket[i] = true
                 if (depth == 0) backing.append(' ')
             }
+
             depth > 0 -> {
                 inBracket[i] = true
                 backing.append(ch)
             }
-            else -> lead.append(ch)
+
+            else -> {
+                lead.append(ch)
+            }
         }
     }
 
@@ -1570,12 +1578,19 @@ private fun rememberBackingExpand(
                         0f
                     } else {
                         when {
-                            sec >= firstStart && sec <= lastEnd -> 1f
-                            sec < firstStart ->
+                            sec >= firstStart && sec <= lastEnd -> {
+                                1f
+                            }
+
+                            sec < firstStart -> {
                                 smoothstep(
                                     ((sec - (firstStart - BACKING_LEAD_IN_SEC)) / BACKING_LEAD_IN_SEC).toFloat(),
                                 )
-                            else -> 1f - smoothstep(((sec - lastEnd) / BACKING_TAIL_SEC).toFloat())
+                            }
+
+                            else -> {
+                                1f - smoothstep(((sec - lastEnd) / BACKING_TAIL_SEC).toFloat())
+                            }
                         }
                     }
                 // Timed backing vocals follow their own words: they open just before they are sung
@@ -2025,12 +2040,16 @@ internal fun visualWords(text: String): Pair<IntArray, IntArray> {
         val cp = text.codePointAtIndex(i)
         val width = charCountOf(cp)
         when {
-            isWhitespaceCodePoint(cp) -> i += width
+            isWhitespaceCodePoint(cp) -> {
+                i += width
+            }
+
             isSingleGlyphWord(cp) -> {
                 starts += i
                 ends += i + width
                 i += width
             }
+
             else -> {
                 val start = i
                 while (i < text.length) {
@@ -2133,7 +2152,10 @@ internal fun karaokeFilledChars(
     words.forEachIndexed { index, word ->
         val range = ranges.getOrNull(index) ?: return@forEachIndexed
         when {
-            positionSec >= word.endTime -> filled = range.second
+            positionSec >= word.endTime -> {
+                filled = range.second
+            }
+
             positionSec >= word.startTime -> {
                 val span = (word.endTime - word.startTime).takeIf { it > 0.0 } ?: return@forEachIndexed
                 val within = ((positionSec - word.startTime) / span).coerceIn(0.0, 1.0)

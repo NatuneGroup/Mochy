@@ -118,11 +118,12 @@ internal fun EightDAudioCard() {
         LabPanel {
             LabSlider(
                 label = stringResource(Res.string.audio_lab_rotation_speed),
-                valueText = stringResource(
-                    Res.string.mochy_lab_eightd_rotation_value,
-                    fixedText(settings.rotationSpeedHz, 2),
-                    fixedText(1f / settings.rotationSpeedHz, 1),
-                ),
+                valueText =
+                    stringResource(
+                        Res.string.mochy_lab_eightd_rotation_value,
+                        fixedText(settings.rotationSpeedHz, 2),
+                        fixedText(1f / settings.rotationSpeedHz, 1),
+                    ),
                 value = settings.rotationSpeedHz,
                 valueRange = 0.05f..0.5f,
                 enabled = enabled,
@@ -229,7 +230,10 @@ private fun OrbitIndicator(
 }
 
 /** a number with a fixed count of decimals, written without a printf format (Compose resources have none) */
-private fun fixedText(value: Float, decimals: Int): String {
+private fun fixedText(
+    value: Float,
+    decimals: Int,
+): String {
     var factor = 1
     repeat(decimals) { factor *= 10 }
     val scaled = (value * factor).roundToInt()
