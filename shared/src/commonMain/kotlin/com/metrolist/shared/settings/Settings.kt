@@ -97,6 +97,7 @@ import com.metrolist.shared.constants.ExplicitOnlyKey
 import com.metrolist.shared.constants.ExpressiveMiniPlayerArtworkPlaybackKey
 import com.metrolist.shared.constants.ExpressiveMiniPlayerCookieArtworkKey
 import com.metrolist.shared.constants.ExpressiveMiniPlayerShapeMotionKey
+import com.metrolist.shared.constants.FlagshipBottomBarStyleKey
 import com.metrolist.shared.constants.FloatingNavBarKey
 import com.metrolist.shared.constants.FloatingTopBarKey
 import com.metrolist.shared.constants.ForceBottomNavBarKey
@@ -551,6 +552,7 @@ class Settings(
 
     // the reference defaults to the full-bleed cover (it falls back to squared only below Android 12)
     var playerCoverStyle by preference(PlayerCoverStyleKey, PlayerCoverStyle.EDGE_TO_EDGE)
+    var flagshipBottomBarStyle by preference(FlagshipBottomBarStyleKey, FlagshipBottomBarStyle.STACK)
     var ipodTheme by preference(IpodTheme.SILVER)
     var ipodWheelColor by preference(IpodWheelColor.THEME)
     var ipodShadow by preference(true)
@@ -559,7 +561,9 @@ class Settings(
     var useRoundedRectPlayButton by preference(false)
     var cropAlbumArt by preference(true)
     var swapPlayerControls by preference(false)
-    var immersivePlayer by preference(false)
+
+    // Mochy hides the status and navigation bars over every player
+    var immersivePlayer by preference(true)
     var isExpanded by preference(false)
     var densityScaleFactor by preference(DensityScaleKey, 1f)
     var enableLandscapeScaling by preference(EnableLandscapeScalingKey, false)

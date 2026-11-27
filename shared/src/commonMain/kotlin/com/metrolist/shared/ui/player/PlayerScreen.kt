@@ -152,6 +152,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.metrolist.shared.api.artwork.CanvasContentSource
+import com.metrolist.shared.api.lyrics.LyricsUtils
 import com.metrolist.shared.cast.CastState
 import com.metrolist.shared.constants.QueuePeekHeight
 import com.metrolist.shared.generated.resources.Res
@@ -188,6 +189,7 @@ import com.metrolist.shared.generated.resources.unlike
 import com.metrolist.shared.generated.resources.video
 import com.metrolist.shared.playback.LocalPlayerSession
 import com.metrolist.shared.playback.SleepTimerState
+import com.metrolist.shared.settings.FlagshipBottomBarStyle
 import com.metrolist.shared.settings.PlayerBackgroundStyle
 import com.metrolist.shared.settings.PlayerCoverStyle
 import com.metrolist.shared.settings.PlayerThumbnailStyle
@@ -232,6 +234,7 @@ import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.mochy.LikeBurstOverlay
 import com.metrolist.shared.ui.mochy.LikeBurstState
 import com.metrolist.shared.ui.mochy.LikeSlot
+import com.metrolist.shared.ui.mochy.lyrics.PlaybackClock
 import com.metrolist.shared.ui.navigation.NavigationBackHandler
 import com.metrolist.shared.ui.navigation.blockInput
 import com.metrolist.shared.ui.player.mochy.BedsideClock
@@ -239,7 +242,9 @@ import com.metrolist.shared.ui.player.mochy.FlagshipActions
 import com.metrolist.shared.ui.player.mochy.FlagshipBarBottomGap
 import com.metrolist.shared.ui.player.mochy.FlagshipBarHeight
 import com.metrolist.shared.ui.player.mochy.FlagshipBottomControls
+import com.metrolist.shared.ui.player.mochy.FlagshipCardDeck
 import com.metrolist.shared.ui.player.mochy.FlagshipControlsShade
+import com.metrolist.shared.ui.player.mochy.FlagshipDeckPage
 import com.metrolist.shared.ui.player.mochy.FlagshipDiscCover
 import com.metrolist.shared.ui.player.mochy.FlagshipHandle
 import com.metrolist.shared.ui.player.mochy.FlagshipLandscapePlayer
@@ -895,7 +900,10 @@ fun PlayerScreen(
     var canvasMinimalUi by rememberSaveable { mutableStateOf(false) }
     if (!isCanvasBackdropVisible || !allowArtworkExpansion) canvasMinimalUi = false
     val shouldFetchLyrics = playerContentState.isActive && (uiState.isLyricsVisible || uiState.isSubtitleActive)
-    val shouldLoadLyrics = shouldFetchLyrics || (playerContentState.isActive && (Settings.shared.showLyricsOnPlayer || canvasMinimalUi))
+    // Mochy's flagship sings the current line on its bottom card, so it wants the lyrics whenever it's open
+    val flagshipDeck = usesMochyFlagship && Settings.shared.flagshipBottomBarStyle == FlagshipBottomBarStyle.STACK
+    val shouldLoadLyrics =
+        shouldFetchLyrics || (playerContentState.isActive && (Settings.shared.showLyricsOnPlayer || canvasMinimalUi || flagshipDeck))
 
     LaunchedEffect(
         currentSong?.id,
@@ -1790,8 +1798,9 @@ fun PlayerScreen(
                                                 modifier = Modifier.fillMaxSize(),
                                                 horizontalAlignment = Alignment.CenterHorizontally,
                                             ) {
+                                                // Mochy's flagship has nothing over its cover: cast and the audio/video switch are in its menu
                                                 AnimatedVisibility(
-                                                    visible = !canvasMinimalUi,
+                                                    visible = !canvasMinimalUi && !usesMochyFlagship,
                                                     enter = canvasControlsEnter,
                                                     exit = canvasControlsExit,
                                                 ) {
@@ -2820,7 +2829,40 @@ fun PlayerScreen(
                                     }
                                 },
                                 collapsedContent = {
-                                    if (usesMochyChrome) {
+                                    if (flagshipDeck) {
+                                        val deckOffset =
+                                            LyricsUtils.combinedLyricsOffsetMs(uiState.lyricsOffsetMs, Settings.shared.globalLyricsOffsetMs)
+                                        val deckOffsetState by rememberUpdatedState(deckOffset)
+                                        val deckPlaying by rememberUpdatedState(isPlaying)
+                                        val deckSpeed by rememberUpdatedState(viewModel.playbackSpeed.collectAsState().value)
+                                        val deckClock =
+                                            remember(viewModel) {
+                                                PlaybackClock(
+                                                    readPositionMs = viewModel::currentPositionMs,
+                                                    readIsPlaying = { deckPlaying },
+                                                    readSpeed = { deckSpeed },
+                                                    offsetMs = { deckOffsetState.toLong() },
+                                                )
+                                            }
+                                        FlagshipCardDeck(
+                                            lines = uiState.lyrics,
+                                            lyricsLoaded = !uiState.isLyricsLoading,
+                                            nextTitle = nextSong?.title,
+                                            nextArtist = nextSong?.artists,
+                                            nextArtwork = nextSong?.thumbnail,
+                                            positionProvider = deckClock,
+                                            isPlaying = { deckPlaying },
+                                            onOpen = { page ->
+                                                hapticManager.perform(HapticEvent.PRESS)
+                                                when (page) {
+                                                    FlagshipDeckPage.LYRICS -> viewModel.setLyricsVisible(true)
+                                                    FlagshipDeckPage.QUEUE -> openQueueSheet()
+                                                }
+                                            },
+                                            onLongPress = MochyStylePicker::show,
+                                            modifier = Modifier.padding(horizontal = 26.dp),
+                                        )
+                                    } else if (usesMochyChrome) {
                                         FlagshipBottomControls(
                                             volume =
                                                 platform.rememberFlagshipVolume(

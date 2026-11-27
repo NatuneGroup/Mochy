@@ -16,6 +16,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.runtime.Composable
 import com.metrolist.shared.generated.resources.*
+import com.metrolist.shared.generated.resources.flagship_bottom_bar
+import com.metrolist.shared.generated.resources.flagship_bottom_bar_stack
+import com.metrolist.shared.generated.resources.flagship_bottom_bar_volume
 import com.metrolist.shared.generated.resources.mochy_menu_customize_player
 import com.metrolist.shared.generated.resources.mochy_pages_cover_disc_album
 import com.metrolist.shared.generated.resources.mochy_pages_cover_disc_big_full
@@ -30,6 +33,7 @@ import com.metrolist.shared.generated.resources.mochy_pages_sparks
 import com.metrolist.shared.settings.AnimatedCoverResolution
 import com.metrolist.shared.settings.AppLayout
 import com.metrolist.shared.settings.DensityScale
+import com.metrolist.shared.settings.FlagshipBottomBarStyle
 import com.metrolist.shared.settings.IpodTheme
 import com.metrolist.shared.settings.IpodWheelColor
 import com.metrolist.shared.settings.LibraryGridColumnsRange
@@ -726,6 +730,19 @@ internal fun SettingsUiRegistryBuilder.registerAppearanceSettings(host: SharedSe
                         selectedChoiceId = selectedCoverStyle.name,
                         enabled = settings.playerType == PlayerType.MOCHY,
                     ) { settings.playerCoverStyle = PlayerCoverStyle.valueOf(it) }
+                    val bottomBarChoices =
+                        listOf(
+                            SettingsChoice(FlagshipBottomBarStyle.STACK.name, stringResource(Res.string.flagship_bottom_bar_stack)),
+                            SettingsChoice(FlagshipBottomBarStyle.VOLUME.name, stringResource(Res.string.flagship_bottom_bar_volume)),
+                        )
+                    choice(
+                        id = "flagshipBottomBar",
+                        title = stringResource(Res.string.flagship_bottom_bar),
+                        valueLabel = bottomBarChoices.first { it.id == settings.flagshipBottomBarStyle.name }.label,
+                        choices = bottomBarChoices,
+                        selectedChoiceId = settings.flagshipBottomBarStyle.name,
+                        enabled = settings.playerType == PlayerType.MOCHY,
+                    ) { settings.flagshipBottomBarStyle = FlagshipBottomBarStyle.valueOf(it) }
                 }
                 if (host.platform != SettingsPlatform.DESKTOP) {
                     switch(

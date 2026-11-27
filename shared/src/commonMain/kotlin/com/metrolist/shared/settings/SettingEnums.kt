@@ -182,6 +182,13 @@ enum class PlayerType {
     LYRICS_STAGE,
 }
 
+// the flagship's bottom: Mochy's lyric and queue cards one behind the other, or the phone's volume with the
+// lyrics and queue buttons under it
+enum class FlagshipBottomBarStyle {
+    STACK,
+    VOLUME,
+}
+
 // the flagship's cover: the square card, the artwork bled to both screen edges, or a spinning record
 enum class PlayerCoverStyle {
     SQUARED,

@@ -6255,6 +6255,12 @@
     <string name="ps_action_other_menu">Other menu</string>
     <string name="ps_style_repeat_one">Repeat one</string>
     <string name="ps_style_no_synced_lyrics">No synced lyrics for this song</string>
+    <string name="pc_next_song">Next Song</string>
+    <string name="pc_end_of_queue">End of queue</string>
+    <string name="video_mode_no_lyrics">No lyrics for this song</string>
+    <string name="flagship_bottom_bar">Bottom bar</string>
+    <string name="flagship_bottom_bar_stack">Stack</string>
+    <string name="flagship_bottom_bar_volume">Volume</string>
     <string name="player_type_poster">Poster</string>
     <string name="player_type_timeline">Timeline</string>
     <string name="player_type_lyrics_stage">Lyrics stage</string>
