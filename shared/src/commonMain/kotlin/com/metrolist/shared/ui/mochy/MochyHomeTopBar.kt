@@ -68,7 +68,8 @@ fun MochyHomeTopBar(
         label = "mochyHomeTopBar",
     )
     val blur = supportsNativeBlur()
-    val scrimColor = MaterialTheme.colorScheme.background
+    // the page's colour, solid: the theme's background can be see-through over the app's own backdrop
+    val scrimColor = MaterialTheme.colorScheme.background.let { if (it.alpha < 1f) Color.Black else it }
     val titleColor = MaterialTheme.colorScheme.onBackground
     val backdrop = LocalMochyHomeBackdrop.current
     Box(modifier = modifier.fillMaxWidth()) {
