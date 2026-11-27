@@ -42,14 +42,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.metrolist.shared.playback.LocalPlayerSession
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.abs
@@ -135,7 +133,7 @@ fun CoverRing(
     modifier: Modifier = Modifier,
     side: RingSide = RingSide.Bottom,
 ) {
-    val session = LocalPlayerSession.current
+    val playback = rememberStylePlayback()
     val haptics = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
     val measurer = rememberTextMeasurer(cacheSize = 24)
@@ -150,11 +148,11 @@ fun CoverRing(
     val duration = rememberDurationMs()
 
     // out for a few seconds whenever the music starts: play pressed, or the next song begun; not while collapsed
-    LaunchedEffect(session, live) {
-        if (!live || session == null) return@LaunchedEffect
-        var wasPlaying = session.isPlaying.value
-        var lastId = session.currentSong.value?.id
-        combine(session.isPlaying, session.currentSong.map { it?.id }.distinctUntilChanged()) { playing, id -> playing to id }
+    LaunchedEffect(playback, live) {
+        if (!live || playback == null) return@LaunchedEffect
+        var wasPlaying = playback.isPlaying.value
+        var lastId: String? = null
+        combine(playback.isPlaying, playback.songId.distinctUntilChanged()) { playing, id -> playing to id }
             .collect { (playing, id) ->
                 val started = playing && (!wasPlaying || id != lastId)
                 wasPlaying = playing
@@ -167,10 +165,10 @@ fun CoverRing(
         modifier =
             modifier
                 .then(
-                    if (!live || session == null) {
+                    if (!live || playback == null) {
                         Modifier
                     } else {
-                        Modifier.pointerInput(session, interactive) {
+                        Modifier.pointerInput(playback, interactive) {
                             val slop = viewConfiguration.touchSlop
                             awaitEachGesture {
                                 val down = awaitFirstDown(requireUnconsumed = true, pass = PointerEventPass.Main)
@@ -178,7 +176,7 @@ fun CoverRing(
                                 if (!interactive()) return@awaitEachGesture
                                 val geometry = RingGeometry(currentCircle, Size(size.width.toFloat(), size.height.toFloat()), density, side)
                                 if (!geometry.onBand(down.position)) return@awaitEachGesture
-                                val length = session.duration.value.takeIf { it > 0 } ?: return@awaitEachGesture
+                                val length = playback.duration.value.takeIf { it > 0 } ?: return@awaitEachGesture
                                 state.grab()
                                 // a swipe along the bar scrubs; one across it (down, to close the player) is left alone
                                 var travel = Offset.Zero
@@ -208,7 +206,7 @@ fun CoverRing(
                                         lastTick = tick
                                     }
                                 }
-                                if (scrubbing && state.scrubMs >= 0L) session.seekTo(state.scrubMs.coerceIn(0L, length))
+                                if (scrubbing && state.scrubMs >= 0L) playback.seekTo(state.scrubMs.coerceIn(0L, length))
                                 state.letGo(RELEASE_PEEK_MS)
                                 scope.launch {
                                     // the bar keeps the dragged time until the player has caught up with it

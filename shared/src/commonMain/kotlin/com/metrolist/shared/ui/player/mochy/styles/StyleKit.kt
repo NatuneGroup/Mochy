@@ -87,8 +87,6 @@ import com.metrolist.shared.generated.resources.ps_style_repeat_one
 import com.metrolist.shared.generated.resources.queue
 import com.metrolist.shared.generated.resources.repeat
 import com.metrolist.shared.generated.resources.shuffle
-import com.metrolist.shared.playback.LocalPlayerSession
-import com.metrolist.shared.playback.PlayerSession
 import com.metrolist.shared.ui.LocalIsTv
 import com.metrolist.shared.ui.mochy.lyrics.PlaybackClock
 import com.metrolist.shared.ui.player.LocalPlayerContentActive
@@ -251,12 +249,12 @@ fun LivePosition.withLyricsOffset(): LivePosition {
  */
 @Composable
 fun rememberLivePosition(animated: Boolean = true): LivePosition {
-    val session = LocalPlayerSession.current
+    val playback = rememberStylePlayback()
     val tick = remember { mutableLongStateOf(0L) }
     val showing = rememberStyleShowing()
-    LaunchedEffect(session, animated, showing) {
-        if (session == null) return@LaunchedEffect
-        combine(session.isPlaying, session.currentPosition, snapshotFlow { showing() }) { playing, _, shown -> playing to shown }
+    LaunchedEffect(playback, animated, showing) {
+        if (playback == null) return@LaunchedEffect
+        combine(playback.isPlaying, playback.reportedPosition, snapshotFlow { showing() }) { playing, _, shown -> playing to shown }
             .collectLatest { (playing, shown) ->
                 if (!shown) return@collectLatest
                 // a seek or a pause still moves the boundary once; playing, it moves every frame
@@ -264,16 +262,16 @@ fun rememberLivePosition(animated: Boolean = true): LivePosition {
                 while (playing && animated) withFrameMillis { tick.longValue = it }
             }
     }
-    return remember(session) {
+    return remember(playback) {
         // the player's own position only moves every so often, which judders at 120 hz; this one moves on the frame's time
         val clock =
-            if (session == null) {
+            if (playback == null) {
                 { 0L }
             } else {
                 PlaybackClock(
-                    readPositionMs = session::currentPositionMs,
-                    readIsPlaying = { session.isPlaying.value },
-                    readSpeed = { session.playbackSpeedFlow.value },
+                    readPositionMs = playback.positionMs,
+                    readIsPlaying = { playback.isPlaying.value },
+                    readSpeed = playback.speed,
                 )
             }
         LivePosition(read = clock, tick = { tick.longValue })
@@ -294,8 +292,8 @@ internal fun rememberStyleShowing(): () -> Boolean {
 /** the song's length in ms, never 0 */
 @Composable
 fun rememberDurationMs(): Long {
-    val session = LocalPlayerSession.current ?: return 1L
-    val duration by session.duration.collectAsState()
+    val playback = rememberStylePlayback() ?: return 1L
+    val duration by playback.duration.collectAsState()
     return duration.takeIf { it > 0L } ?: 1L
 }
 
@@ -413,8 +411,8 @@ fun TransportCircles(
 ) {
     // a tv's remote plays and skips, buttons on the screen are only more things for focus to land on
     if (LocalIsTv.current) return
-    val session = LocalPlayerSession.current ?: return
-    val playing by session.isPlaying.collectAsState()
+    val playback = rememberStylePlayback() ?: return
+    val playing by playback.isPlaying.collectAsState()
     val scope = rememberCoroutineScope()
     val previous = remember { SkipCycleState() }
     val next = remember { SkipCycleState() }
@@ -424,7 +422,7 @@ fun TransportCircles(
             size = size,
             onClick = {
                 scope.launch { previous.step() }
-                session.skipToPrevious()
+                playback.previous()
             },
             glyph = { tint -> AnimatedSkipGlyph(cycle = previous, backwards = true, color = tint, width = size * CIRCLE_SKIP_WIDTH) },
         )
@@ -432,14 +430,14 @@ fun TransportCircles(
             tones = tones,
             size = size,
             glyph = { tint -> AnimatedPlayGlyph(playing = playing, color = tint, height = size * CIRCLE_PLAY_HEIGHT) },
-            onClick = { session.togglePlayPause() },
+            onClick = playback.togglePlayPause,
         )
         StyleCircle(
             tones = tones,
             size = size,
             onClick = {
                 scope.launch { next.step() }
-                session.skipToNext()
+                playback.next()
             },
             glyph = { tint -> AnimatedSkipGlyph(cycle = next, backwards = false, color = tint, width = size * CIRCLE_SKIP_WIDTH) },
         )
@@ -470,7 +468,7 @@ fun Modifier.styleGestures(
     enabled: Boolean,
     interactive: () -> Boolean,
     onToggle: () -> Unit,
-    session: () -> PlayerSession?,
+    playback: () -> StylePlayback?,
 ): Modifier =
     if (!enabled) {
         this
@@ -478,13 +476,13 @@ fun Modifier.styleGestures(
         this
             .pointerInput(enabled, interactive) {
                 whileStyleInteractive(interactive) { detectTapGestures(onDoubleTap = { onToggle() }) }
-            }.styleSongSwipe(interactive, session)
+            }.styleSongSwipe(interactive, playback)
     }
 
 // the sideways swipe alone, for a style that wants its own taps
 fun Modifier.styleSongSwipe(
     interactive: () -> Boolean,
-    session: () -> PlayerSession?,
+    playback: () -> StylePlayback?,
 ): Modifier =
     pointerInput(interactive) {
         val tracker = VelocityTracker()
@@ -501,7 +499,7 @@ fun Modifier.styleSongSwipe(
                     // a third of the way across, or a flick, changes the song
                     val far = abs(travelled) > size.width / 3f || abs(velocity) > flingPx
                     if (far) {
-                        if (travelled < 0f) session()?.skipToNext() else session()?.skipToPrevious()
+                        if (travelled < 0f) playback()?.next() else playback()?.previous()
                     }
                 },
                 onHorizontalDrag = { change, amount ->
@@ -567,21 +565,21 @@ fun BoxScope.StyleMenu(
                     .drawBehind { drawRect(Color.Black.copy(alpha = CHEVRON_MENU_DIM * reveal.value.coerceIn(0f, 1f))) }
                     .pointerInput(Unit) { detectTapGestures { onOpenChange(false) } },
         )
-        val session = LocalPlayerSession.current
-        val shuffle = session?.shuffleModeEnabled?.collectAsState()?.value == true
-        val repeatMode = session?.repeatMode?.collectAsState()?.value ?: REPEAT_OFF
+        val playback = rememberStylePlayback()
+        val shuffle = playback?.shuffleOn?.invoke() == true
+        val repeatMode = playback?.repeatMode?.invoke() ?: REPEAT_OFF
         // the styles have no shuffle or repeat buttons of their own, so each is a row here, staying open when tapped
         val shuffleAndRepeat =
-            if (session != null) {
+            if (playback != null) {
                 listOf(
                     MenuItem(stringResource(Res.string.shuffle), Res.drawable.mochy_set_shuffle, active = shuffle) {
-                        session.toggleShuffle()
+                        playback.toggleShuffle()
                     },
                     MenuItem(
                         label = stringResource(if (repeatMode == REPEAT_ONE) Res.string.ps_style_repeat_one else Res.string.repeat),
                         icon = if (repeatMode == REPEAT_ONE) Res.drawable.mochy_set_repeat_one else Res.drawable.mochy_set_repeat,
                         active = repeatMode != REPEAT_OFF,
-                    ) { session.cycleRepeatMode() },
+                    ) { playback.cycleRepeat() },
                 )
             } else {
                 emptyList()

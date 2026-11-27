@@ -79,7 +79,6 @@ import androidx.compose.ui.unit.dp
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.ps_style_no_synced_lyrics
 import com.metrolist.shared.model.LyricsEntry
-import com.metrolist.shared.playback.LocalPlayerSession
 import com.metrolist.shared.ui.components.images.AsyncImage
 import com.metrolist.shared.ui.mochy.lyrics.LyricsTiming
 import com.metrolist.shared.ui.player.PlayerBlurredArtworkBackground
@@ -144,7 +143,7 @@ internal fun StyleFrame(
     background: (@Composable BoxScope.() -> Unit)? = null,
     content: @Composable BoxScope.(landscape: Boolean, menuOpen: Boolean, setMenuOpen: (Boolean) -> Unit) -> Unit,
 ) {
-    val session = LocalPlayerSession.current
+    val playback = rememberStylePlayback()
     var menuOpen by remember { mutableStateOf(false) }
     StyleStage(
         tones = tones,
@@ -168,10 +167,10 @@ internal fun StyleFrame(
                 Modifier
                     .fillMaxSize()
                     .styleGestures(
-                        enabled = !preview && session != null,
+                        enabled = !preview && playback != null,
                         interactive = LocalStyleInteractive.current,
-                        onToggle = { session?.togglePlayPause() },
-                        session = { session },
+                        onToggle = { playback?.togglePlayPause?.invoke() },
+                        playback = { playback },
                     ),
         ) {
             // Inter and nothing else, in every style

@@ -50,7 +50,6 @@ import com.metrolist.shared.settings.isDesktopMac
 import com.metrolist.shared.settings.normalizeDefaultOpenTab
 import com.metrolist.shared.settings.updateDefaultOpenTab
 import com.metrolist.shared.ui.icons.MetrolistIcons
-import com.metrolist.shared.ui.player.mochy.MochyOnlyPlayerTypes
 import com.metrolist.shared.ui.player.mochy.MochyStylePicker
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
@@ -612,6 +611,10 @@ internal fun SettingsUiRegistryBuilder.registerAppearanceSettings(host: SharedSe
                 listOf(
                     SettingsChoice(PlayerType.MODERN.name, stringResource(Res.string.player_type_modern)),
                     SettingsChoice(PlayerType.VINTAGE.name, stringResource(Res.string.player_type_vintage)),
+                    SettingsChoice(PlayerType.MOCHY.name, stringResource(Res.string.player_type_mochy)),
+                    SettingsChoice(PlayerType.POSTER.name, stringResource(Res.string.player_type_poster)),
+                    SettingsChoice(PlayerType.TIMELINE.name, stringResource(Res.string.player_type_timeline)),
+                    SettingsChoice(PlayerType.LYRICS_STAGE.name, stringResource(Res.string.player_type_lyrics_stage)),
                 )
             } else {
                 listOf(
@@ -629,8 +632,12 @@ internal fun SettingsUiRegistryBuilder.registerAppearanceSettings(host: SharedSe
         val selectedPlayerType =
             when {
                 host.platform != SettingsPlatform.DESKTOP -> settings.playerType
+
                 settings.playerType == PlayerType.CLASSIC -> PlayerType.VINTAGE
-                settings.playerType in MochyOnlyPlayerTypes -> PlayerType.MODERN
+
+                // the desktop draws the flagship and the alternate styles, not the turntable or the ipod
+                settings.playerType == PlayerType.TURNTABLE || settings.playerType == PlayerType.IPOD -> PlayerType.MODERN
+
                 else -> settings.playerType
             }
         val playerBackgroundChoices =

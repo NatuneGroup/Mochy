@@ -95,6 +95,12 @@ fun FullscreenContentLayout(
         label = "lyricsFraction",
     )
 
+    // the phone's alternate styles fill the whole expanded player, as they fill the phone's
+    val alternateStyle = alternateStyleOf(rememberMochyLook().playerType)
+    if (alternateStyle != null) {
+        DesktopAlternatePlayerStyle(style = alternateStyle, currentTrack = currentTrack)
+        return
+    }
     BoxWithConstraints(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,
