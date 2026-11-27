@@ -154,6 +154,7 @@ import com.metrolist.shared.constants.LyricsShareImageStyleKey
 import com.metrolist.shared.constants.LyricsShowOriginalLyricsKey
 import com.metrolist.shared.constants.MatugenThemeKey
 import com.metrolist.shared.constants.MinimumSongDurationSecondsKey
+import com.metrolist.shared.constants.MochyCoverRadiusKey
 import com.metrolist.shared.constants.MochyModulesStateJsonKey
 import com.metrolist.shared.constants.MochyProfileCardNumberKey
 import com.metrolist.shared.constants.MochyProfileCardSilverKey
@@ -554,6 +555,9 @@ class Settings(
     // the reference defaults to the full-bleed cover (it falls back to squared only below Android 12)
     var playerCoverStyle by preference(PlayerCoverStyleKey, PlayerCoverStyle.EDGE_TO_EDGE)
     var flagshipBottomBarStyle by preference(FlagshipBottomBarStyleKey, FlagshipBottomBarStyle.STACK)
+
+    // Mochy's cover rounding, in dp: the corners of the covers on Home and in the Library
+    var mochyCoverRadius by preference(MochyCoverRadiusKey, 25f)
     var ipodTheme by preference(IpodTheme.SILVER)
     var ipodWheelColor by preference(IpodWheelColor.THEME)
     var ipodShadow by preference(true)

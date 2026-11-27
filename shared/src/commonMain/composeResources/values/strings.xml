@@ -5792,6 +5792,25 @@
     <string name="mochy_card_celebrate_close">Tap to continue</string>
     <!-- Translators: Settings screen title for the local Mochy profile ID card. -->
     <string name="natune_lyrics_from_source">Lyrics from %1$s</string>
+    <string name="mochy_library_nothing_here">Nothing here yet</string>
+    <string name="mochy_customise_reset">Reset to default</string>
+    <string name="mochy_customise_cover_rounding">Cover\nrounding</string>
+    <string name="mochy_customise_customize_it">customize it</string>
+    <string name="mochy_customise_square">square</string>
+    <string name="mochy_customise_more_rounded">more rounded</string>
+    <string name="mochy_customise_player_styles">Player styles</string>
+    <string name="mochy_storage_overall">Overall</string>
+    <string name="mochy_storage_legend_mochy">Mochy</string>
+    <string name="mochy_storage_legend_yours">Your storage</string>
+    <string name="mochy_storage_free">%1$s free</string>
+    <string name="mochy_storage_measuring">Working out how much room Mochy takes…</string>
+    <string name="mochy_storage_uses">Mochy uses %1$s of your storage (%2$s), which is split into</string>
+    <string name="mochy_storage_breakdown_title">Mochy app data usage</string>
+    <string name="mochy_storage_legend_cache">Song cache</string>
+    <string name="mochy_storage_legend_downloads">Downloaded music</string>
+    <string name="mochy_storage_legend_images">Image cache</string>
+    <string name="mochy_storage_legend_animated">Animated artwork</string>
+    <string name="mochy_storage_junk_title">So, here is a list of things you can do to cut the junk</string>
     <string name="mochy_library_tab_all">All</string>
     <string name="mochy_library_tab_local">Local &amp; downloaded</string>
     <string name="mochy_library_tab_cached">Cached</string>
@@ -6275,6 +6294,8 @@
     <string name="flagship_bottom_bar">Bottom bar</string>
     <string name="flagship_bottom_bar_stack">Stack</string>
     <string name="flagship_bottom_bar_volume">Volume</string>
+    <string name="player_type_bedside">Bedside</string>
+    <string name="player_type_video">Full video</string>
     <string name="player_type_poster">Poster</string>
     <string name="player_type_timeline">Timeline</string>
     <string name="player_type_lyrics_stage">Lyrics stage</string>

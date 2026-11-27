@@ -4,6 +4,7 @@ package com.metrolist.shared.ui.screens
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculateZoom
@@ -50,11 +51,13 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -85,16 +88,23 @@ import com.metrolist.shared.constants.GridScreenPadding
 import com.metrolist.shared.constants.GridTileSpacing
 import com.metrolist.shared.constants.currentGridCells
 import com.metrolist.shared.constants.gridTileColumns
+import com.metrolist.shared.db.MusicDatabase
+import com.metrolist.shared.db.entities.KIND_CACHE
+import com.metrolist.shared.db.entities.KIND_DOWNLOAD
+import com.metrolist.shared.db.entities.toSongItem
+import com.metrolist.shared.db.history
 import com.metrolist.shared.generated.resources.Res
 import com.metrolist.shared.generated.resources.albums
 import com.metrolist.shared.generated.resources.artists
 import com.metrolist.shared.generated.resources.display_density
 import com.metrolist.shared.generated.resources.filter_downloaded
+import com.metrolist.shared.generated.resources.history
 import com.metrolist.shared.generated.resources.library
 import com.metrolist.shared.generated.resources.library_load_failed
 import com.metrolist.shared.generated.resources.liked
 import com.metrolist.shared.generated.resources.mochy_library_empty_import
 import com.metrolist.shared.generated.resources.mochy_library_import_banner
+import com.metrolist.shared.generated.resources.mochy_library_nothing_here
 import com.metrolist.shared.generated.resources.mochy_library_recently_added
 import com.metrolist.shared.generated.resources.mochy_library_tab_all
 import com.metrolist.shared.generated.resources.mochy_library_tab_cached
@@ -108,6 +118,7 @@ import com.metrolist.shared.generated.resources.songs
 import com.metrolist.shared.generated.resources.try_again
 import com.metrolist.shared.model.AlbumItem
 import com.metrolist.shared.model.ArtistItem
+import com.metrolist.shared.model.ArtistTiny
 import com.metrolist.shared.model.EpisodeItem
 import com.metrolist.shared.model.PlaylistItem
 import com.metrolist.shared.model.PodcastItem
@@ -135,6 +146,7 @@ import com.metrolist.shared.settings.displayName
 import com.metrolist.shared.settings.displayTitle
 import com.metrolist.shared.settings.moveLibraryItems
 import com.metrolist.shared.settings.orderLibraryItems
+import com.metrolist.shared.storage.isAvailableDownload
 import com.metrolist.shared.ui.LocalIsTv
 import com.metrolist.shared.ui.components.CollectionPreviews
 import com.metrolist.shared.ui.components.ContainedLoadingIndicator
@@ -191,6 +203,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.mp.KoinPlatform
 import sh.calvin.reorderable.DragGestureDetector
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.ScrollMoveMode
@@ -474,6 +487,9 @@ fun LibraryContent(
                 onAutoPlaylistClick = onAutoPlaylistClick,
                 onOpenHistory = onOpenHistory,
                 onOpenImport = onOpenImport,
+                onPlaySongs = onPlaySongs,
+                currentSongId = currentSongId,
+                isPlaying = isPlaying,
             )
             mochyTopBar()
             return@Box
@@ -1541,17 +1557,23 @@ private fun MochyLibraryLanding(
     onAutoPlaylistClick: (String) -> Unit,
     onOpenHistory: (() -> Unit)?,
     onOpenImport: (() -> Unit)?,
+    onPlaySongs: (List<SongItem>, Int) -> Unit,
+    currentSongId: String?,
+    isPlaying: Boolean,
 ) {
+    // Mochy's tabs: All is the landing page, the others list their songs right here under the chips
+    var tab by rememberSaveable { mutableIntStateOf(0) }
+    val shelf = rememberMochyLibraryShelf(tab)
     val songs = remember(items) { items.filterIsInstance<SongItem>().filterNot { it.isPodcast } }
     val playlists = remember(items) { items.filterIsInstance<PlaylistItem>() }
     val albums = remember(items) { items.filterIsInstance<AlbumItem>() }
     val artists = remember(items) { items.filterIsInstance<ArtistItem>() }
     val tabs =
         buildList {
-            add(MochyLibraryTab(stringResource(Res.string.mochy_library_tab_all)) {})
-            add(MochyLibraryTab(stringResource(Res.string.mochy_library_tab_local)) { onAutoPlaylistClick("downloaded") })
-            add(MochyLibraryTab(stringResource(Res.string.mochy_library_tab_cached)) { onAutoPlaylistClick("cached") })
-            if (onOpenHistory != null) add(MochyLibraryTab(stringResource(Res.string.mochy_library_tab_history), onOpenHistory))
+            add(MochyLibraryTab(stringResource(Res.string.mochy_library_tab_all)) { tab = 0 })
+            add(MochyLibraryTab(stringResource(Res.string.mochy_library_tab_local)) { tab = 1 })
+            add(MochyLibraryTab(stringResource(Res.string.mochy_library_tab_cached)) { tab = 2 })
+            add(MochyLibraryTab(stringResource(Res.string.mochy_library_tab_history)) { tab = 3 })
         }
     LazyVerticalGrid(
         columns = GridCells.Fixed(1),
@@ -1561,9 +1583,41 @@ private fun MochyLibraryLanding(
     ) {
         item(key = "tabs") {
             Column {
-                MochyLibraryTabChips(tabs, selectedIndex = 0, modifier = Modifier.padding(horizontal = 24.dp))
+                MochyLibraryTabChips(tabs, selectedIndex = tab, modifier = Modifier.padding(horizontal = 24.dp))
                 Spacer(Modifier.height(14.dp))
             }
+        }
+        if (tab != 0) {
+            val shelfSongs = shelf ?: emptyList()
+            if (shelf != null && shelfSongs.isEmpty()) {
+                item(key = "shelf_empty") { MochyLibraryEmptyState(stringResource(Res.string.mochy_library_nothing_here)) }
+            }
+            items(shelfSongs.size, key = { "shelf_${tab}_$it" }) { index ->
+                val song = shelfSongs[index]
+                MochyLibraryListRow(
+                    title = song.title,
+                    subtitle = song.artists.joinToString { it.name },
+                    thumbnail = song.thumbnail,
+                    icon = null,
+                    artistId = null,
+                    cover = null,
+                    localArtwork = null,
+                    artworkOverlay = null,
+                    artworkAspectRatio = 1f,
+                    isPlaylistArtwork = false,
+                    isCurrent = song.id == currentSongId,
+                    isPlaying = song.id == currentSongId && isPlaying,
+                    modifier = Modifier.clickable { onPlaySongs(shelfSongs, index) }.padding(horizontal = 24.dp),
+                )
+            }
+            if (tab == 3 && onOpenHistory != null) {
+                item(key = "history_all") {
+                    Box(Modifier.fillMaxWidth().padding(top = 16.dp), contentAlignment = Alignment.Center) {
+                        MochyLibraryPillButton(stringResource(Res.string.history), onClick = onOpenHistory)
+                    }
+                }
+            }
+            return@LazyVerticalGrid
         }
         if (onOpenImport != null && !Settings.shared.mochyHideImportBanner) {
             item(key = "import_banner") {
@@ -1641,3 +1695,43 @@ private fun MochyLibraryLanding(
         }
     }
 }
+
+/** The songs a Library tab lists: downloads, the player's cache or the latest plays; null while they're read. */
+@Composable
+private fun rememberMochyLibraryShelf(tab: Int): List<SongItem>? {
+    val database = remember { KoinPlatform.getKoin().get<MusicDatabase>() }
+    val songs by produceState<List<SongItem>?>(initialValue = null, tab) {
+        value = null
+        when (tab) {
+            1, 2 -> {
+                val kind = if (tab == 1) KIND_DOWNLOAD else KIND_CACHE
+                database.dao().cachedAudioByKind(kind).collect { entries ->
+                    val stored = database.dao().getSongsByIds(entries.map { it.songId }).associateBy { it.id }
+                    value = entries.filter { tab != 1 || isAvailableDownload(it) }.map { it.toSongItem(stored[it.songId]) }
+                }
+            }
+
+            3 -> {
+                value =
+                    database.history().distinctBy { it.songId }.take(MOCHY_HISTORY_TAB_ROWS).map { row ->
+                        SongItem(
+                            id = row.songId,
+                            title = row.title,
+                            thumbnail = row.thumbnailUrl,
+                            artists = listOf(ArtistTiny(id = null, name = row.artists)),
+                            album = null,
+                            duration = row.duration,
+                        )
+                    }
+            }
+
+            else -> {
+                value = emptyList()
+            }
+        }
+    }
+    return songs
+}
+
+// the History tab lists the latest plays, the full history is a tap away
+private const val MOCHY_HISTORY_TAB_ROWS = 100

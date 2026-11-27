@@ -218,6 +218,8 @@ internal fun MochyCategoryPage(
             searchBar()
             Spacer(Modifier.height(16.dp))
         }
+        // Customisation opens on Mochy's cards: cover rounding and the player styles
+        if (pageId == SettingsPageId.MOCHY_CUSTOMISATION && query.value.isBlank()) MochyCustomiseCards()
         val named = mutableSetOf<Pair<SettingsPageId, String>>()
         spec.sections.forEach { section ->
             val items = section.entries.flatMap { entry -> resolveEntry(entry, context, onNavigate, named) }

@@ -59,6 +59,7 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
@@ -71,6 +72,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -152,6 +155,8 @@ internal fun FlagshipCardDeck(
     onOpen: (FlagshipDeckPage) -> Unit,
     onLongPress: () -> Unit,
     modifier: Modifier = Modifier,
+    // where the deck sits in the root, so the page a card opens can grow out of it
+    onBounds: (Rect) -> Unit = {},
     motionStyle: LyricsMotionStyle = LyricsMotionStyle.MOTION,
     highBloom: Boolean = true,
 ) {
@@ -180,6 +185,7 @@ internal fun FlagshipCardDeck(
             modifier
                 .fillMaxWidth()
                 .height(FlagshipDeckHeight)
+                .onGloballyPositioned { onBounds(it.boundsInRoot()) }
                 // directional on purpose: the flip only runs upward, so a downward drag is left for the sheet
                 .pointerInput(Unit) {
                     val slop = viewConfiguration.touchSlop

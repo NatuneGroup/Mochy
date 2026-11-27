@@ -70,6 +70,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonGroup
@@ -114,7 +115,10 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
@@ -651,6 +655,7 @@ fun PlayerScreen(
 
     var showPlayerMenu by remember { mutableStateOf(false) }
     var showBedsideClock by remember { mutableStateOf(false) }
+    var deckBounds by remember { mutableStateOf<Rect?>(null) }
     var showSongCard by remember { mutableStateOf(false) }
     val likeBurstState = remember { LikeBurstState() }
     var flagshipLandscapeQueueVisible by rememberSaveable { mutableStateOf(false) }
@@ -724,6 +729,8 @@ fun PlayerScreen(
     val usesMochyFlagship = playerType == PlayerType.MOCHY
     val usesMochyTurntable = playerType == PlayerType.TURNTABLE
     val usesIpodPlayer = playerType == PlayerType.IPOD
+    val usesBedsidePlayer = playerType == PlayerType.BEDSIDE
+    val usesVideoPlayer = playerType == PlayerType.VIDEO
     val alternateStyle =
         when (playerType) {
             PlayerType.POSTER -> AlternateStyle.POSTER
@@ -732,7 +739,7 @@ fun PlayerScreen(
             else -> null
         }
     // a style that draws the whole player itself, with no cover, controls or bottom bar of the player's own
-    val usesStylePlayer = usesIpodPlayer || alternateStyle != null
+    val usesStylePlayer = usesIpodPlayer || usesBedsidePlayer || alternateStyle != null
     val usesMochyChrome = usesMochyFlagship || usesMochyTurntable
     val flagshipCoverStyle = if (usesMochyFlagship) Settings.shared.playerCoverStyle else PlayerCoverStyle.SQUARED
     val flagshipFont = if (usesMochyChrome) flagshipFontFamily() else null
@@ -817,6 +824,16 @@ fun PlayerScreen(
         wasLyricsOffsetEditorOpen = showLyricsOffsetEditor
     }
 
+    // Mochy's video style: opening the player plays the song's video and fills the screen with it sideways
+    LaunchedEffect(usesVideoPlayer, bottomSheetState.isExpanded, currentSong?.id) {
+        if (!usesVideoPlayer) return@LaunchedEffect
+        if (bottomSheetState.isExpanded) {
+            viewModel.setVideoMode(true)
+            viewModel.setFullscreen(true)
+        } else {
+            viewModel.setFullscreen(false)
+        }
+    }
     LaunchedEffect(bottomSheetState.isExpanded, requestPlayPauseFocus, currentSong?.id, controlsVisible) {
         if (bottomSheetState.isExpanded && requestPlayPauseFocus && controlsVisible) {
             runCatching { playPauseFocusRequester.requestFocus() }
@@ -1490,6 +1507,23 @@ fun PlayerScreen(
                                             onQueue = ::openQueueSheet,
                                         ),
                                     modifier = Modifier.fillMaxSize(),
+                                )
+                            }
+                        } else if (usesBedsidePlayer && !showVideoSurface && !uiState.isLyricsVisible) {
+                            // Mochy's bedside style: the player is the clock on the nightstand, its tiles the song. The clock is
+                            // its own window, so it only shows while the player is fully up; black stands in while it slides
+                            Box(Modifier.fillMaxSize().background(Color.Black))
+                            val bedsideSong = uiState.currentSong
+                            if (bottomSheetState.isExpanded) {
+                                BedsideClock(
+                                    title = bedsideSong?.title,
+                                    artist = bedsideSong?.artists?.joinToString { it.name },
+                                    isPlaying = isPlaying,
+                                    onTogglePlay = viewModel::togglePlayPause.takeUnless { isListenTogetherGuest },
+                                    onDismiss = onClose,
+                                    artworkUrl = bedsideSong?.displayThumbnail,
+                                    onPrevious = viewModel::previous.takeUnless { isListenTogetherGuest },
+                                    onNext = viewModel::next.takeUnless { isListenTogetherGuest },
                                 )
                             }
                         } else if (usesIpodPlayer && !showVideoSurface && !uiState.isLyricsVisible) {
@@ -2761,6 +2795,8 @@ fun PlayerScreen(
                                                     PlayerType.POSTER,
                                                     PlayerType.TIMELINE,
                                                     PlayerType.LYRICS_STAGE,
+                                                    PlayerType.BEDSIDE,
+                                                    PlayerType.VIDEO,
                                                     -> {
                                                         FlagshipTransport(
                                                             playing = isPlaying,
@@ -2916,6 +2952,7 @@ fun PlayerScreen(
                                                 }
                                             },
                                             onLongPress = MochyStylePicker::show,
+                                            onBounds = { deckBounds = it },
                                             modifier = Modifier.padding(horizontal = 26.dp),
                                         )
                                     } else if (usesMochyChrome) {
@@ -3207,13 +3244,40 @@ fun PlayerScreen(
                         )
                     }
 
-                    // the flagship's lyrics open as Natune's sheet over the whole player
-                    if (usesMochyFlagship && !useLandscapeLayout) {
-                        AnimatedVisibility(
-                            visible = uiState.isLyricsVisible,
-                            enter = fadeIn(tween(220)) + slideInVertically(tween(320)) { it / 10 },
-                            exit = fadeOut(tween(180)) + slideOutVertically(tween(260)) { it / 10 },
-                            modifier = Modifier.fillMaxSize(),
+                    // the flagship's lyrics open as Natune's sheet over the whole player, growing out of the lyric card
+                    // the way Mochy's pages grow out of the deck, and shrinking back into it as they close
+                    val lyricsGrow by animateFloatAsState(
+                        targetValue = if (uiState.isLyricsVisible) 1f else 0f,
+                        animationSpec = spring(dampingRatio = 0.88f, stiffness = 380f),
+                        label = "flagshipLyricsGrow",
+                    )
+                    if (usesMochyFlagship && !useLandscapeLayout && lyricsGrow > 0.001f) {
+                        var sheetOrigin by remember { mutableStateOf(Offset.Zero) }
+                        val cardCorner = with(LocalDensity.current) { 24.dp.toPx() }
+                        Box(
+                            Modifier
+                                .fillMaxSize()
+                                .onGloballyPositioned { sheetOrigin = it.positionInRoot() }
+                                .graphicsLayer {
+                                    val card = deckBounds?.translate(-sheetOrigin.x, -sheetOrigin.y)
+                                    val t = lyricsGrow
+                                    clip = true
+                                    shape =
+                                        GenericShape { full, _ ->
+                                            val from = card ?: Rect(0f, full.height * 0.9f, full.width, full.height)
+                                            addRoundRect(
+                                                RoundRect(
+                                                    left = from.left * (1f - t),
+                                                    top = from.top * (1f - t),
+                                                    right = from.right + (full.width - from.right) * t,
+                                                    bottom = from.bottom + (full.height - from.bottom) * t,
+                                                    cornerRadius = CornerRadius(cardCorner * (1f - t)),
+                                                ),
+                                            )
+                                        }
+                                    // the card's content hands over to the page's as it grows
+                                    alpha = (t * 1.6f).coerceIn(0f, 1f)
+                                },
                         ) {
                             val lyricsOffset =
                                 LyricsUtils.combinedLyricsOffsetMs(uiState.lyricsOffsetMs, Settings.shared.globalLyricsOffsetMs)
