@@ -76,7 +76,7 @@ import com.metrolist.shared.generated.resources.mochy_profile_greeting_fallback
 import com.metrolist.shared.generated.resources.mochy_profile_greeting_format
 import com.metrolist.shared.generated.resources.mochy_profile_meet_dev
 import com.metrolist.shared.generated.resources.mochy_profile_open_settings
-import com.metrolist.shared.generated.resources.mochy_profile_settings_title
+import com.metrolist.shared.generated.resources.mochy_profile_settings_header
 import com.metrolist.shared.generated.resources.mochy_profile_version_about_app
 import com.metrolist.shared.generated.resources.mochy_set_settings
 import com.metrolist.shared.settings.Settings
@@ -223,7 +223,7 @@ fun MochyProfileHub(
                 CreditsCard(onClick = onOpenCredits)
                 Spacer(Modifier.height(28.dp))
                 Text(
-                    stringResource(Res.string.mochy_profile_settings_title),
+                    stringResource(Res.string.mochy_profile_settings_header),
                     style = PageTitle.copy(fontFamily = font, fontSize = 15.sp),
                     modifier = Modifier.padding(start = 2.dp, bottom = 10.dp),
                 )

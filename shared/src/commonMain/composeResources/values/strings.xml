@@ -5799,7 +5799,8 @@
     <string name="mochy_library_import_banner">Import your music here!</string>
     <string name="mochy_library_recently_added">Recently added</string>
     <string name="mochy_library_empty_import">Nothing here yet. Import your music above to fill your library.</string>
-    <string name="mochy_profile_view_stats">"View Stats  &gt;"</string>
+    <string name="mochy_profile_view_stats">View Stats  &gt;</string>
+    <string name="mochy_profile_settings_header">Settings</string>
     <string name="mochy_profile_version_about_app">Version &amp; about app</string>
     <string name="mochy_profile_capsule_about">About app</string>
     <string name="mochy_profile_meet_dev">meet da dev and contributors :3</string>

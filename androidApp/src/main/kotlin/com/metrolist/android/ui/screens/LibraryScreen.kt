@@ -6,6 +6,8 @@
 
 package com.metrolist.android.ui.screens
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.luminance
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
@@ -802,7 +804,9 @@ fun LibraryScreen(
             ) { content() }
         }
 
-        ScrollingAddButton(
+        // Mochy's Library has no floating button; making a playlist stays on the Playlists list
+        val mochyLibrary = !LocalIsTv.current && MaterialTheme.colorScheme.background.luminance() < 0.5f
+        if (!mochyLibrary || selectedFilter == LibraryFilter.PLAYLISTS) ScrollingAddButton(
             label = stringResource(Res.string.new_playlist),
             onClick = { showNewPlaylistMenu = true },
             state = rememberScrollingFabState(activeLibraryGridState),
