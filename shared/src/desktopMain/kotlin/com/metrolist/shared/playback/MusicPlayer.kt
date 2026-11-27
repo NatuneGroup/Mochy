@@ -24,6 +24,7 @@ import com.metrolist.shared.playback.playbackFailureCategoryFromSabr
 import com.metrolist.shared.playback.sponsorblock.SponsorBlockClient
 import com.metrolist.shared.playback.sponsorblock.SponsorBlockSegment
 import com.metrolist.shared.playback.sponsorblock.canSkipPodcastSegments
+import com.metrolist.shared.remote.openRemoteMediaSource
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.state.GlobalYouTube
 import com.metrolist.shared.state.GlobalYouTubeRepository
@@ -61,6 +62,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.OkHttpClient
 import java.io.File
 import java.io.IOException
+import java.io.InputStream
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.abs
@@ -1940,6 +1942,13 @@ class MusicPlayer(
             prepareStream(input, resource.maximumSabrInputSize(), startPaused)
         } ?: resource.httpRangeInputStream()?.let { input ->
             prepareStream(input, resource.maximumDirectInputSize(), startPaused)
+        } ?: (openRemoteMediaSource(resource.url) as? InputStream)?.let { input ->
+            // a file on an SMB share of a saved remote library, which FFmpeg can't open by address
+            prepareStream(
+                input,
+                (input as SeekableMediaSource).mediaSize?.coerceIn(1L, Int.MAX_VALUE.toLong() - 8L)?.toInt() ?: 1,
+                startPaused,
+            )
         } ?: prepareFile(resource.url, resource.headers, startPaused, resource.moduleStream)
 
     private fun PlaybackResource.httpRangeInputStream(): HttpRangeInputStream? {

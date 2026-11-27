@@ -38,6 +38,7 @@ actual suspend fun listRemoteFolder(
 ): Result<List<RemoteEntry>> =
     withContext(Dispatchers.IO) {
         runCatching {
+            if (RemoteLibraries.isSmb(url)) return@runCatching SmbShares.list(server, url)
             val folder = (if (url.endsWith("/")) url else "$url/").toHttpUrlOrNull() ?: throw IOException("Not a web address: $url")
             val request =
                 Request
