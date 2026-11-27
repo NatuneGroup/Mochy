@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -37,11 +38,19 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
-import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.unit.dp
+import com.kyant.backdrop.backdrops.LayerBackdrop
+import com.kyant.backdrop.backdrops.layerBackdrop
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.kyant.backdrop.drawBackdrop
+import com.kyant.backdrop.effects.blur
+import com.kyant.backdrop.effects.lens
+import com.kyant.backdrop.effects.vibrancy
+import com.kyant.backdrop.isRuntimeShaderSupported
+import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.utils.nativeBlurCompat
 import com.metrolist.shared.ui.utils.supportsNativeBlur
 
@@ -71,6 +80,9 @@ val MochyChromeOutlineColor = Color.White.copy(alpha = 0.05f)
 @Stable
 class MochyBackdrop {
     internal var layer by mutableStateOf<GraphicsLayer?>(null)
+
+    // the same recording as liquid glass reads it
+    internal var liquid by mutableStateOf<LayerBackdrop?>(null)
     internal var origin by mutableStateOf(Offset.Zero)
 
     // bumped each time the content re-records, so chrome on a platform that copies the recording redraws too
@@ -86,17 +98,23 @@ val LocalMochyBackdrop = staticCompositionLocalOf<MochyBackdrop?> { null }
 @Composable
 fun Modifier.mochyBackdropSource(backdrop: MochyBackdrop?): Modifier {
     if (backdrop == null || !supportsNativeBlur()) return this
-    val layer = rememberGraphicsLayer()
-    DisposableEffect(backdrop, layer) {
-        backdrop.layer = layer
-        onDispose { if (backdrop.layer === layer) backdrop.layer = null }
+    // recorded once, by the liquid glass library's modifier; the frosted glass draws the same layer
+    val liquid = rememberLayerBackdrop()
+    DisposableEffect(backdrop, liquid) {
+        backdrop.layer = liquid.graphicsLayer
+        backdrop.liquid = liquid
+        onDispose {
+            if (backdrop.liquid === liquid) {
+                backdrop.layer = null
+                backdrop.liquid = null
+            }
+        }
     }
     return onGloballyPositioned { backdrop.origin = it.positionInWindow() }
         .drawWithContent {
-            layer.record { this@drawWithContent.drawContent() }
-            drawLayer(layer)
+            drawContent()
             backdrop.version++
-        }
+        }.layerBackdrop(liquid)
 }
 
 /**
@@ -108,9 +126,16 @@ fun Modifier.mochyBackdropSource(backdrop: MochyBackdrop?): Modifier {
 fun MochyChromeGlass(
     modifier: Modifier = Modifier,
     pureBlack: Boolean = false,
+    // the chrome's outline, which liquid glass bends the page along
+    shape: Shape = RectangleShape,
 ) {
     val backdrop = LocalMochyBackdrop.current
     val color = if (pureBlack) Color.Black else MochyChromeColor
+    val liquid = backdrop?.liquid
+    if (Settings.shared.liquidGlass && liquid != null && isRuntimeShaderSupported()) {
+        MochyLiquidGlass(liquid, shape, color, modifier)
+        return
+    }
     val blur = remember { supportsNativeBlur() }
     Box(modifier.drawBehind { drawRect(color) }) {
         if (blur && backdrop != null) {
@@ -166,7 +191,7 @@ fun MochyChromeSurface(
                     drawMochyChromeOutline()
                 },
     ) {
-        MochyChromeGlass(Modifier.matchParentSize(), pureBlack)
+        MochyChromeGlass(Modifier.matchParentSize(), pureBlack, shape)
         content()
     }
 }
@@ -214,3 +239,33 @@ fun MochyProgressiveGlass(
         }
     }
 }
+
+// Liquid glass: the page behind lifted in vibrancy, blurred and bent at the edges like a lens, under a light tint of the
+// chrome's colour so its contents stay readable
+@Composable
+private fun MochyLiquidGlass(
+    backdrop: LayerBackdrop,
+    shape: Shape,
+    tint: Color,
+    modifier: Modifier,
+) {
+    Box(
+        modifier.drawBackdrop(
+            backdrop = backdrop,
+            shape = { shape },
+            effects = {
+                vibrancy()
+                blur(LIQUID_GLASS_BLUR.toPx())
+                lens(LIQUID_GLASS_REFRACTION_HEIGHT.toPx(), LIQUID_GLASS_REFRACTION_AMOUNT.toPx(), chromaticAberration = true)
+            },
+            // the chrome draws its own drop shadow
+            shadow = null,
+            onDrawSurface = { drawRect(tint.copy(alpha = LIQUID_GLASS_TINT_ALPHA)) },
+        ),
+    )
+}
+
+private val LIQUID_GLASS_BLUR = 4.dp
+private val LIQUID_GLASS_REFRACTION_HEIGHT = 16.dp
+private val LIQUID_GLASS_REFRACTION_AMOUNT = 32.dp
+private const val LIQUID_GLASS_TINT_ALPHA = 0.35f

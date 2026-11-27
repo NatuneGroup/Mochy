@@ -145,6 +145,7 @@ import com.metrolist.shared.constants.LikedSongsCustomOrdersJsonKey
 import com.metrolist.shared.constants.LikedSongsOrderAccountKey
 import com.metrolist.shared.constants.LikedSongsOrderCustomizedKey
 import com.metrolist.shared.constants.LikedSongsRecencyJsonKey
+import com.metrolist.shared.constants.LiquidGlassKey
 import com.metrolist.shared.constants.ListenBrainzApiUrlKey
 import com.metrolist.shared.constants.ListenTogetherEnabledKey
 import com.metrolist.shared.constants.ListenTogetherServerMetadataKey
@@ -585,6 +586,9 @@ class Settings(
 
     // the WebDAV servers in the remote libraries, as JSON; a secure setting, since it holds their passwords
     var remoteLibraries by preference(RemoteLibrariesKey, "")
+
+    // the Mochy chrome (the navigation pill and the mini player) as liquid glass instead of frosted glass
+    var liquidGlass by preference(LiquidGlassKey, false)
 
     // the app the download button hands a song's YouTube address to instead of saving it, blank for none
     var externalDownloaderPackage by preference(ExternalDownloaderPackageKey, "")

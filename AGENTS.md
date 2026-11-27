@@ -22,7 +22,6 @@ Metrolist is a YouTube Music client for Android, desktop and iOS.
 
 Do not propose or implement these additions:
 
-- Liquid Glass UI.
 - Other streaming services as music-playback backends.
 - Google Play Store publication or distribution support.
 - Comment sections.

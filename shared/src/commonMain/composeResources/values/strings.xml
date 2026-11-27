@@ -5847,6 +5847,8 @@
     <string name="remote_library_remove">Remove server</string>
     <string name="remote_library_failed">Couldn't open this folder: %1$s</string>
     <string name="remote_library_empty_folder">No folders or audio files here</string>
+    <string name="liquid_glass">Liquid glass</string>
+    <string name="liquid_glass_description">The navigation pill and the mini player bend and lift the page behind them like glass, instead of frosting it</string>
     <string name="mochy_library_tab_all">All</string>
     <string name="mochy_library_tab_local">Local &amp; downloaded</string>
     <string name="mochy_library_tab_cached">Cached</string>
