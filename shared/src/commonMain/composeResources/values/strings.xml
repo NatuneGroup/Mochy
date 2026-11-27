@@ -5814,6 +5814,10 @@
     <string name="mochy_library_tab_genres">Genres</string>
     <string name="mochy_library_tab_imported">Imported</string>
     <string name="mochy_library_nothing_imported">Nothing imported yet</string>
+    <string name="download_wifi_only">Download only on Wi-Fi</string>
+    <string name="download_wifi_only_desc">On mobile data, downloads wait in the queue until the phone is back on Wi-Fi</string>
+    <string name="external_downloader">External downloader</string>
+    <string name="external_downloader_off">Off: download here</string>
     <string name="mochy_library_tab_all">All</string>
     <string name="mochy_library_tab_local">Local &amp; downloaded</string>
     <string name="mochy_library_tab_cached">Cached</string>

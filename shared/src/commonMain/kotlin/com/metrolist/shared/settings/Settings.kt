@@ -155,6 +155,8 @@ import com.metrolist.shared.constants.LyricsShowOriginalLyricsKey
 import com.metrolist.shared.constants.MatugenThemeKey
 import com.metrolist.shared.constants.MinimumSongDurationSecondsKey
 import com.metrolist.shared.constants.MochyCoverRadiusKey
+import com.metrolist.shared.constants.DownloadWifiOnlyKey
+import com.metrolist.shared.constants.ExternalDownloaderPackageKey
 import com.metrolist.shared.constants.MochyModulesStateJsonKey
 import com.metrolist.shared.constants.MochyProfileCardNumberKey
 import com.metrolist.shared.constants.MochyProfileCardSilverKey
@@ -558,6 +560,11 @@ class Settings(
 
     // Mochy's cover rounding, in dp: the corners of the covers on Home and in the Library
     var mochyCoverRadius by preference(MochyCoverRadiusKey, 25f)
+    // downloads wait for an unmetered network
+    var downloadWifiOnly by preference(DownloadWifiOnlyKey, false)
+
+    // the app the download button hands a song's YouTube address to instead of saving it, blank for none
+    var externalDownloaderPackage by preference(ExternalDownloaderPackageKey, "")
     var ipodTheme by preference(IpodTheme.SILVER)
     var ipodWheelColor by preference(IpodWheelColor.THEME)
     var ipodShadow by preference(true)
