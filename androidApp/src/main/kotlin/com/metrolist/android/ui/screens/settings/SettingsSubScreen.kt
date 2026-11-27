@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -55,9 +56,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -72,6 +75,7 @@ import com.metrolist.shared.ui.icons.MetrolistIcons
 import com.metrolist.shared.ui.settings.LocalSettingsPageHasTopBar
 import com.metrolist.shared.ui.settings.LocalSettingsPageTopPadding
 import com.metrolist.shared.ui.settings.rememberSettingsPageScrollBehavior
+import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import com.metrolist.shared.ui.tv.tvFocusHighlight
 import com.metrolist.shared.ui.utils.segmentedGroupShape
 import org.jetbrains.compose.resources.stringResource
@@ -144,7 +148,13 @@ fun SettingsSubScreen(
         // on Mochy's header the top padding sits inside the scroll, so content scrolls up under the header
         val headerTopPadding = if (LocalSettingsPageHasTopBar.current) LocalSettingsPageTopPadding.current else 0.dp
         Column(Modifier.fillMaxSize().padding(paddingValues)) {
-            Box(Modifier.padding(top = headerTopPadding)) { persistentHeader() }
+            // the pinned header only takes the header's room when it has something in it, or Mochy's page opens on a gap
+            Layout(content = persistentHeader) { measurables, constraints ->
+                val placeables = measurables.map { it.measure(constraints.copy(minHeight = 0)) }
+                val height = placeables.maxOfOrNull { it.height } ?: 0
+                val top = if (height > 0) headerTopPadding.roundToPx() else 0
+                layout(constraints.maxWidth, if (height > 0) height + top else 0) { placeables.forEach { it.place(0, top) } }
+            }
             Column(
                 modifier =
                     Modifier
@@ -175,14 +185,25 @@ fun SettingsSubScreenGroup(
     titleColor: Color = MaterialTheme.colorScheme.primary,
     content: @Composable () -> Unit,
 ) {
+    // the dark theme titles each group as Mochy does: bold white, just inside its card's edge
+    val mochy = !LocalIsTv.current && MaterialTheme.colorScheme.background.luminance() < 0.5f
     Column(
         modifier = Modifier.fillMaxWidth().focusGroup(),
     ) {
         title?.let {
             Text(
                 text = if (isBeta) "$it ${stringResource(Res.string.beta_tag)}" else it,
-                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Medium),
-                color = titleColor,
+                style =
+                    if (mochy) {
+                        MaterialTheme.typography.titleSmall.copy(
+                            fontFamily = mochyInterFontFamily(),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                        )
+                    } else {
+                        MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Medium)
+                    },
+                color = if (mochy) Color.White else titleColor,
                 modifier =
                     Modifier.padding(
                         bottom = if (description == null) 12.dp else 4.dp,
@@ -251,10 +272,24 @@ internal fun SettingsSubScreenItemRow(
     val isTv = LocalIsTv.current
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    val shape = segmentedGroupShape(isFirst, isLast, isPressed)
+    // the dark theme draws Mochy's grouped rows: one dark card with 28dp ends, the icon in a light circle
+    val mochy = !isTv && MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val shape =
+        if (mochy) {
+            RoundedCornerShape(
+                topStart = if (isFirst) 28.dp else 0.dp,
+                topEnd = if (isFirst) 28.dp else 0.dp,
+                bottomStart = if (isLast) 28.dp else 0.dp,
+                bottomEnd = if (isLast) 28.dp else 0.dp,
+            )
+        } else {
+            segmentedGroupShape(isFirst, isLast, isPressed)
+        }
     val backgroundColor by animateColorAsState(
         targetValue =
-            if (isPressed) {
+            if (mochy) {
+                if (isPressed) MochyRowPressed else MochyRowColor
+            } else if (isPressed) {
                 MaterialTheme.colorScheme.surfaceContainerHigh
             } else {
                 MaterialTheme.colorScheme.surfaceContainer
@@ -293,24 +328,24 @@ internal fun SettingsSubScreenItemRow(
                             )
                         },
                     ).padding(
-                        horizontal = 16.dp,
-                        vertical = 16.dp,
+                        horizontal = if (mochy) 20.dp else 16.dp,
+                        vertical = if (mochy) 14.dp else 16.dp,
                     ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             item.icon?.let { icon ->
                 Box(
-                    modifier = Modifier.size(32.dp),
+                    modifier = if (mochy) Modifier.size(32.dp).clip(CircleShape).background(MochyIconCircle) else Modifier.size(32.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
-                        tint = item.iconTint.takeOrElse { MaterialTheme.colorScheme.onSurfaceVariant },
-                        modifier = Modifier.size(24.dp),
+                        tint = if (mochy) MochyIconInk else item.iconTint.takeOrElse { MaterialTheme.colorScheme.onSurfaceVariant },
+                        modifier = Modifier.size(if (mochy) 16.dp else 24.dp),
                     )
                 }
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(if (mochy) 16.dp else 12.dp))
             }
 
             Column(
@@ -319,18 +354,30 @@ internal fun SettingsSubScreenItemRow(
                 Text(
                     text = if (item.isBeta) "${item.title} ${stringResource(Res.string.beta_tag)}" else item.title,
                     style =
-                        MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.W500,
-                            fontSize = 16.sp,
-                            lineHeight = 24.sp,
-                            letterSpacing = 0.15.sp,
-                            color =
-                                if (!item.enabled) {
-                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                                } else {
-                                    MaterialTheme.colorScheme.onSurface
-                                },
-                        ),
+                        if (mochy) {
+                            MaterialTheme.typography.titleSmall.copy(
+                                fontFamily = mochyInterFontFamily(),
+                                color =
+                                    if (item.enabled) {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                                    },
+                            )
+                        } else {
+                            MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.W500,
+                                fontSize = 16.sp,
+                                lineHeight = 24.sp,
+                                letterSpacing = 0.15.sp,
+                                color =
+                                    if (!item.enabled) {
+                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurface
+                                    },
+                            )
+                        },
                     maxLines = if (item.wrapTitle) Int.MAX_VALUE else 1,
                     modifier = if (item.wrapTitle) Modifier else Modifier.singleLineMarquee(),
                 )
@@ -366,6 +413,12 @@ internal fun SettingsSubScreenItemRow(
 }
 
 internal val LocalSettingsRowIsTv = staticCompositionLocalOf { false }
+
+// Mochy's grouped settings card, its icon circle and the icon on it
+private val MochyRowColor = Color(0xFF1C1C1E)
+private val MochyRowPressed = Color(0xFF26262A)
+private val MochyIconCircle = Color(0xFFE5E5EA)
+private val MochyIconInk = Color(0xFF1C1C1E)
 
 data class SettingsSubScreenItem(
     val title: String,
