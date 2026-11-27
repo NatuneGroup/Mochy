@@ -50,6 +50,7 @@ import com.metrolist.shared.settings.isDesktopMac
 import com.metrolist.shared.settings.normalizeDefaultOpenTab
 import com.metrolist.shared.settings.updateDefaultOpenTab
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.player.mochy.MochyOnlyPlayerTypes
 import com.metrolist.shared.ui.player.mochy.MochyStylePicker
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
@@ -620,18 +621,16 @@ internal fun SettingsUiRegistryBuilder.registerAppearanceSettings(host: SharedSe
                     SettingsChoice(PlayerType.MOCHY.name, stringResource(Res.string.player_type_mochy)),
                     SettingsChoice(PlayerType.TURNTABLE.name, stringResource(Res.string.player_type_turntable)),
                     SettingsChoice(PlayerType.IPOD.name, stringResource(Res.string.player_type_ipod)),
+                    SettingsChoice(PlayerType.POSTER.name, stringResource(Res.string.player_type_poster)),
+                    SettingsChoice(PlayerType.TIMELINE.name, stringResource(Res.string.player_type_timeline)),
+                    SettingsChoice(PlayerType.LYRICS_STAGE.name, stringResource(Res.string.player_type_lyrics_stage)),
                 )
             }
         val selectedPlayerType =
             when {
                 host.platform != SettingsPlatform.DESKTOP -> settings.playerType
-
                 settings.playerType == PlayerType.CLASSIC -> PlayerType.VINTAGE
-
-                settings.playerType == PlayerType.MOCHY ||
-                    settings.playerType == PlayerType.TURNTABLE ||
-                    settings.playerType == PlayerType.IPOD -> PlayerType.MODERN
-
+                settings.playerType in MochyOnlyPlayerTypes -> PlayerType.MODERN
                 else -> settings.playerType
             }
         val playerBackgroundChoices =

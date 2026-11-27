@@ -6250,4 +6250,12 @@
     <string name="integration_scrobbling_desc">%1$s scrobbling</string>
     <string name="integration_backup_desc">Keep your library and stats safe in your own cloud</string>
     <string name="module_youtube_desc">Sync likes, library, playlists and history</string>
+    <!-- Mochy player styles -->
+    <string name="menu_edit_player">Edit player</string>
+    <string name="ps_action_other_menu">Other menu</string>
+    <string name="ps_style_repeat_one">Repeat one</string>
+    <string name="ps_style_no_synced_lyrics">No synced lyrics for this song</string>
+    <string name="player_type_poster">Poster</string>
+    <string name="player_type_timeline">Timeline</string>
+    <string name="player_type_lyrics_stage">Lyrics stage</string>
 </resources>

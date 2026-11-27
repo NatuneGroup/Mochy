@@ -175,6 +175,11 @@ enum class PlayerType {
     MOCHY,
     TURNTABLE,
     IPOD,
+
+    // Mochy's alternate styles: the cover as a great circle over the lyrics, the song as time, the lyrics on stage
+    POSTER,
+    TIMELINE,
+    LYRICS_STAGE,
 }
 
 // the flagship's cover: the square card, the artwork bled to both screen edges, or a spinning record

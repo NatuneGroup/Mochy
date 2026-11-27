@@ -20,6 +20,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -31,6 +32,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
@@ -41,8 +43,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,6 +58,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -67,10 +73,19 @@ import com.metrolist.shared.generated.resources.mochy_menu_style_ipod
 import com.metrolist.shared.generated.resources.mochy_menu_style_modern
 import com.metrolist.shared.generated.resources.mochy_menu_style_turntable
 import com.metrolist.shared.generated.resources.mochy_menu_style_vintage
+import com.metrolist.shared.generated.resources.player_type_lyrics_stage
+import com.metrolist.shared.generated.resources.player_type_poster
+import com.metrolist.shared.generated.resources.player_type_timeline
+import com.metrolist.shared.playback.LocalPlayerSession
 import com.metrolist.shared.settings.PlayerType
 import com.metrolist.shared.settings.Settings
 import com.metrolist.shared.ui.components.PopupVisibility
 import com.metrolist.shared.ui.icons.MetrolistIcons
+import com.metrolist.shared.ui.player.mochy.styles.AlternatePlayerStyle
+import com.metrolist.shared.ui.player.mochy.styles.AlternateStyle
+import com.metrolist.shared.ui.player.mochy.styles.LocalStyleTrack
+import com.metrolist.shared.ui.player.mochy.styles.StyleActions
+import com.metrolist.shared.ui.player.mochy.styles.StyleTrack
 import com.metrolist.shared.ui.theme.mochyInterFontFamily
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -90,11 +105,28 @@ internal val MochyStyleColumns: List<List<Pair<PlayerType, StringResource>>> =
             PlayerType.TURNTABLE to Res.string.mochy_menu_style_turntable,
         ),
         listOf(PlayerType.IPOD to Res.string.mochy_menu_style_ipod),
+        listOf(PlayerType.POSTER to Res.string.player_type_poster),
+        // the lyrics stage sits under the timeline
+        listOf(
+            PlayerType.TIMELINE to Res.string.player_type_timeline,
+            PlayerType.LYRICS_STAGE to Res.string.player_type_lyrics_stage,
+        ),
         listOf(
             PlayerType.MODERN to Res.string.mochy_menu_style_modern,
             PlayerType.VINTAGE to Res.string.mochy_menu_style_vintage,
             PlayerType.CLASSIC to Res.string.mochy_menu_style_classic,
         ),
+    )
+
+/** The styles only Mochy's look draws; a TV, where they don't fit, falls back to the plain player. */
+internal val MochyOnlyPlayerTypes =
+    setOf(
+        PlayerType.MOCHY,
+        PlayerType.TURNTABLE,
+        PlayerType.IPOD,
+        PlayerType.POSTER,
+        PlayerType.TIMELINE,
+        PlayerType.LYRICS_STAGE,
     )
 
 private val CardWidth = 170.dp
@@ -257,6 +289,18 @@ private fun StylePreview(
     style: PlayerType,
     modifier: Modifier,
 ) {
+    val alternate =
+        when (style) {
+            PlayerType.POSTER -> AlternateStyle.POSTER
+            PlayerType.TIMELINE -> AlternateStyle.TIMELINE
+            PlayerType.LYRICS_STAGE -> AlternateStyle.LYRICS
+            else -> null
+        }
+    if (alternate != null) {
+        // the style itself, as the player draws it, laid out at the window's size and shrunk onto the card
+        LiveStylePreview(alternate, modifier)
+        return
+    }
     val loop = rememberInfiniteTransition(label = "mochyStylePreview")
     val phase by loop.animateFloat(
         initialValue = 0f,
@@ -370,5 +414,45 @@ fun MochyStylePickerHost() {
             onSelect = { Settings.shared.playerType = it },
             onDismiss = { MochyStylePicker.hide() },
         )
+    }
+}
+
+// what the cards' styles do when touched: nothing, a card shows its style rather than playing it
+private val PreviewActions = StyleActions(onOtherMenu = {}, onEditPlayer = {})
+
+@Composable
+private fun LiveStylePreview(
+    style: AlternateStyle,
+    modifier: Modifier,
+) {
+    val session = LocalPlayerSession.current
+    val song by (session?.currentSong ?: MutableStateFlow(null)).collectAsState()
+    val track =
+        remember(song) {
+            StyleTrack(
+                title = song?.title.orEmpty(),
+                artist = song?.artists?.joinToString { it.name }.orEmpty(),
+                album = song?.album?.name.orEmpty(),
+                artwork = song?.thumbnail,
+            )
+        }
+    val density = LocalDensity.current
+    val window = LocalWindowInfo.current.containerSize
+    val windowWidth = with(density) { window.width.toDp() }
+    val windowHeight = with(density) { window.height.toDp() }
+    BoxWithConstraints(modifier.background(Color.Black), contentAlignment = Alignment.Center) {
+        val scale = if (windowWidth > 0.dp) maxWidth / windowWidth else 1f
+        CompositionLocalProvider(LocalStyleTrack provides track) {
+            Box(
+                Modifier
+                    .requiredSize(windowWidth, windowHeight)
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                    },
+            ) {
+                AlternatePlayerStyle(style = style, actions = PreviewActions, preview = true, modifier = Modifier.fillMaxSize())
+            }
+        }
     }
 }

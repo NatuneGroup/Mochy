@@ -245,6 +245,8 @@ import com.metrolist.shared.ui.player.mochy.FlagshipHandle
 import com.metrolist.shared.ui.player.mochy.FlagshipLandscapePlayer
 import com.metrolist.shared.ui.player.mochy.FlagshipSidePadding
 import com.metrolist.shared.ui.player.mochy.FlagshipTransport
+import com.metrolist.shared.ui.player.mochy.MochyOnlyPlayerTypes
+import com.metrolist.shared.ui.player.mochy.MochyStylePicker
 import com.metrolist.shared.ui.player.mochy.coverBleed
 import com.metrolist.shared.ui.player.mochy.coverFadeToBottom
 import com.metrolist.shared.ui.player.mochy.flagshipFontFamily
@@ -252,6 +254,15 @@ import com.metrolist.shared.ui.player.mochy.ipod.IpodPlayerStyle
 import com.metrolist.shared.ui.player.mochy.ipod.isIpodWholeDevice
 import com.metrolist.shared.ui.player.mochy.ipod.rememberIpodLook
 import com.metrolist.shared.ui.player.mochy.isDiscLook
+import com.metrolist.shared.ui.player.mochy.styles.AlternatePlayerStyle
+import com.metrolist.shared.ui.player.mochy.styles.AlternateStyle
+import com.metrolist.shared.ui.player.mochy.styles.LocalStyleInteractive
+import com.metrolist.shared.ui.player.mochy.styles.LocalStyleLyricLines
+import com.metrolist.shared.ui.player.mochy.styles.LocalStyleLyricsOffset
+import com.metrolist.shared.ui.player.mochy.styles.LocalStyleSeedColor
+import com.metrolist.shared.ui.player.mochy.styles.LocalStyleTrack
+import com.metrolist.shared.ui.player.mochy.styles.StyleActions
+import com.metrolist.shared.ui.player.mochy.styles.StyleTrack
 import com.metrolist.shared.ui.player.mochy.turntable.TurntableControls
 import com.metrolist.shared.ui.player.mochy.turntable.TurntableStage
 import com.metrolist.shared.ui.share.SongShareCardDialog
@@ -694,7 +705,7 @@ fun PlayerScreen(
 
     val playerType =
         rememberMochyLook().playerType.let {
-            if (isTv && (it == PlayerType.MOCHY || it == PlayerType.TURNTABLE || it == PlayerType.IPOD)) {
+            if (isTv && it in MochyOnlyPlayerTypes) {
                 PlayerType.MODERN
             } else {
                 it
@@ -703,10 +714,19 @@ fun PlayerScreen(
     val usesMochyFlagship = playerType == PlayerType.MOCHY
     val usesMochyTurntable = playerType == PlayerType.TURNTABLE
     val usesIpodPlayer = playerType == PlayerType.IPOD
+    val alternateStyle =
+        when (playerType) {
+            PlayerType.POSTER -> AlternateStyle.POSTER
+            PlayerType.TIMELINE -> AlternateStyle.TIMELINE
+            PlayerType.LYRICS_STAGE -> AlternateStyle.LYRICS
+            else -> null
+        }
+    // a style that draws the whole player itself, with no cover, controls or bottom bar of the player's own
+    val usesStylePlayer = usesIpodPlayer || alternateStyle != null
     val usesMochyChrome = usesMochyFlagship || usesMochyTurntable
     val flagshipCoverStyle = if (usesMochyFlagship) Settings.shared.playerCoverStyle else PlayerCoverStyle.SQUARED
     val flagshipFont = if (usesMochyChrome) flagshipFontFamily() else null
-    val usesFullscreenThumbnail = playerThumbnailStyle == PlayerThumbnailStyle.FULLSCREEN && !usesMochyTurntable && !usesIpodPlayer
+    val usesFullscreenThumbnail = playerThumbnailStyle == PlayerThumbnailStyle.FULLSCREEN && !usesMochyTurntable && !usesStylePlayer
     val prefersTallCover = usesFullscreenThumbnail && !isLandscape
     val playbackNetwork by PlaybackNetworkStateStore.state.collectAsState()
     val artworkAllowedOnNetwork = Settings.shared.isAnimatedArtworkAllowedOnNetwork(playbackNetwork)
@@ -1417,6 +1437,35 @@ fun PlayerScreen(
                                 isCasting = castState.isConnected,
                                 isBuffering = castState.isBuffering,
                             )
+                        } else if (alternateStyle != null && !showVideoSurface && !uiState.isLyricsVisible) {
+                            val styleTrack =
+                                remember(currentSong) {
+                                    StyleTrack(
+                                        title = currentSong?.title.orEmpty(),
+                                        artist = currentSong?.artists?.joinToString { it.name }.orEmpty(),
+                                        album = currentSong?.album.orEmpty(),
+                                        artwork = currentSong?.displayThumbnail,
+                                    )
+                                }
+                            CompositionLocalProvider(
+                                LocalStyleTrack provides styleTrack,
+                                LocalStyleLyricLines provides uiState.lyrics,
+                                LocalStyleSeedColor provides (uiState.gradientColors.firstOrNull() ?: LocalStyleSeedColor.current),
+                                LocalStyleLyricsOffset provides { uiState.lyricsOffsetMs.toLong() },
+                                LocalStyleInteractive provides { playerContentState.isActive },
+                            ) {
+                                AlternatePlayerStyle(
+                                    style = alternateStyle,
+                                    actions =
+                                        StyleActions(
+                                            onOtherMenu = { showPlayerMenu = true },
+                                            onEditPlayer = MochyStylePicker::show,
+                                            onLyrics = { viewModel.setLyricsVisible(true) },
+                                            onQueue = ::openQueueSheet,
+                                        ),
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                            }
                         } else if (usesIpodPlayer && !showVideoSurface && !uiState.isLyricsVisible) {
                             IpodPlayerStyle(
                                 active = contentActive,
@@ -2655,6 +2704,9 @@ fun PlayerScreen(
                                                     PlayerType.MOCHY,
                                                     PlayerType.TURNTABLE,
                                                     PlayerType.IPOD,
+                                                    PlayerType.POSTER,
+                                                    PlayerType.TIMELINE,
+                                                    PlayerType.LYRICS_STAGE,
                                                     -> {
                                                         FlagshipTransport(
                                                             playing = isPlaying,
@@ -2729,7 +2781,7 @@ fun PlayerScreen(
                         }
                     }
 
-                    if (!useLandscapeLayout && !(usesIpodPlayer && !showVideoSurface && !uiState.isLyricsVisible)) {
+                    if (!useLandscapeLayout && !(usesStylePlayer && !showVideoSurface && !uiState.isLyricsVisible)) {
                         playerControlsTransition.AnimatedVisibility(
                             visible = { (_, minimalUi) -> !minimalUi },
                             enter =
@@ -2941,7 +2993,7 @@ fun PlayerScreen(
                         )
                     }
 
-                    if (useLandscapeLayout && !usesMochyChrome && !usesIpodPlayer) {
+                    if (useLandscapeLayout && !usesMochyChrome && !usesStylePlayer) {
                         Box(
                             Modifier
                                 .align(Alignment.CenterEnd)
