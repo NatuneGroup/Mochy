@@ -43,7 +43,7 @@ internal val TIKTOK_PROGRESS_ROW_HEIGHT = 44.dp
 
 @Composable
 internal fun TikTokBottomChrome(
-    displayPositionMs: Long,
+    displayPositionMs: () -> Long,
     durationMs: Long,
     onSeek: (Long) -> Unit,
     onSeekFinished: () -> Unit,
@@ -63,13 +63,14 @@ internal fun TikTokBottomChrome(
 
 @Composable
 internal fun TikTokProgressRow(
-    positionMs: Long,
+    positionMs: () -> Long,
     durationMs: Long,
     onSeek: (Long) -> Unit,
     onSeekFinished: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val seekEnabled = durationMs > 0L
+    val position = positionMs()
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -80,14 +81,14 @@ internal fun TikTokProgressRow(
                 .padding(horizontal = 16.dp, vertical = 10.dp),
     ) {
         Text(
-            text = formatDuration(positionMs),
+            text = formatDuration(position),
             color = TIKTOK_INACTIVE_GRAY,
             fontSize = 12.sp,
             maxLines = 1,
         )
         Spacer(Modifier.width(10.dp))
         TikTokProgressSlider(
-            positionMs = positionMs,
+            positionMs = position,
             durationMs = durationMs,
             enabled = seekEnabled,
             onSeek = onSeek,

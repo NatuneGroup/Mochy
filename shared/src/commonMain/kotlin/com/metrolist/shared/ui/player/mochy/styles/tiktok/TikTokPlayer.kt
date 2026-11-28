@@ -184,7 +184,8 @@ fun TikTokPlayerStyle(
                 lyricLines = if (isCurrentPage) lyricLines else emptyList(),
                 position = lyricsPosition,
                 liked = liked,
-                reduceAnimation = reduceAnimation,
+                // only the page in view drifts; the ones either side hold still
+                reduceAnimation = reduceAnimation || !isCurrentPage,
                 extractColors = { extractColors(song) },
                 topChromeHeight = topChromeHeight,
                 bottomChromeHeight = bottomChromeHeight,
@@ -225,8 +226,9 @@ fun TikTokPlayerStyle(
                     .fillMaxWidth()
                     .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0f), Color.Black.copy(alpha = 0.45f), Color.Black))),
         ) {
+            // read inside the bar, so only the bar redraws as the song plays, not the whole feed
             TikTokBottomChrome(
-                displayPositionMs = seekPreviewMs ?: livePosition.positionMs(),
+                displayPositionMs = { seekPreviewMs ?: livePosition.positionMs() },
                 durationMs = durationMs,
                 onSeek = { seekPreviewMs = it },
                 onSeekFinished = {
