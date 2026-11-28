@@ -1985,6 +1985,7 @@ fun MetrolistApp(
                                 requestPlayPauseFocus = focusPlayPauseOnPlayerExpand,
                                 onPlayPauseFocusRequested = { focusPlayPauseOnPlayerExpand = false },
                                 onLyricsVisibleChange = { lyricsVisible = it },
+                                onNavigateToTab = navigator::navigateToRoot,
                                 onClose = {
                                     playerBottomSheetState.collapseSoft()
                                     if (usesDirectionalNavigation) {

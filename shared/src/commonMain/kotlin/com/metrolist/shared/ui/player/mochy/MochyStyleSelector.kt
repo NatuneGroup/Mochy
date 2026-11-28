@@ -78,6 +78,7 @@ import com.metrolist.shared.generated.resources.player_type_bedside
 import com.metrolist.shared.generated.resources.player_type_lyrics_stage
 import com.metrolist.shared.generated.resources.player_type_namida
 import com.metrolist.shared.generated.resources.player_type_poster
+import com.metrolist.shared.generated.resources.player_type_tiktok
 import com.metrolist.shared.generated.resources.player_type_timeline
 import com.metrolist.shared.generated.resources.player_type_video
 import com.metrolist.shared.playback.LocalPlayerSession
@@ -110,6 +111,7 @@ internal val MochyStyleColumns: List<List<Pair<PlayerType, StringResource>>> =
         ),
         listOf(PlayerType.IPOD to Res.string.mochy_menu_style_ipod),
         listOf(PlayerType.NAMIDA to Res.string.player_type_namida),
+        listOf(PlayerType.TIKTOK to Res.string.player_type_tiktok),
         // the bedside clock and the full video, Mochy's two styles that fill the whole screen
         listOf(
             PlayerType.BEDSIDE to Res.string.player_type_bedside,
@@ -140,6 +142,7 @@ internal val MochyOnlyPlayerTypes =
         PlayerType.BEDSIDE,
         PlayerType.VIDEO,
         PlayerType.NAMIDA,
+        PlayerType.TIKTOK,
     )
 
 private val CardWidth = 170.dp
@@ -418,6 +421,38 @@ private fun StylePreview(
                 drawPath(path, Color.White.copy(alpha = 0.85f))
                 drawRect(Color.White.copy(alpha = 0.25f), Offset(w * 0.08f, h * 0.76f), Size(w * 0.84f, 4f))
                 drawRect(Color.White, Offset(w * 0.08f, h * 0.76f), Size(w * 0.84f * phase, 4f))
+            }
+
+            PlayerType.TIKTOK -> {
+                // the feed: a cover in the middle of a coloured page, the rail of round buttons down the right, the
+                // next page already showing under it as the card scrolls
+                val shift = (phase * h) % h
+                for (k in 0..1) {
+                    val top = k * h - shift
+                    drawRect(
+                        Brush.verticalGradient(listOf(Color(0xFF6B2E5C), Color(0xFF1E2A5A)), startY = top, endY = top + h),
+                        Offset(0f, top),
+                        Size(w, h),
+                    )
+                    drawRoundRect(Color(0xFFF1C27D), Offset(w * 0.14f, top + h * 0.26f), Size(w * 0.62f, w * 0.62f), CornerRadius(10f))
+                    for (i in 0 until 4) {
+                        drawCircle(
+                            if (i ==
+                                1
+                            ) {
+                                Color(0xFFFE2C55)
+                            } else {
+                                Color.White.copy(alpha = 0.85f)
+                            },
+                            w * 0.05f,
+                            Offset(
+                                w * 0.88f,
+                                top + h * (0.42f + i * 0.1f),
+                            ),
+                        )
+                    }
+                }
+                drawRect(Color.White.copy(alpha = 0.3f), Offset(w * 0.06f, h * 0.93f), Size(w * 0.88f, 3f))
             }
 
             PlayerType.NAMIDA -> {
