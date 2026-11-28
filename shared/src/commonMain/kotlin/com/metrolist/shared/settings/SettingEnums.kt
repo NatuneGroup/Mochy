@@ -190,6 +190,9 @@ enum class PlayerType {
 
     // Sora's TikTok-style feed: every song of the queue a page swiped through
     TIKTOK,
+
+    // Sora's port of Flamingo's Apple Music-style player
+    FLAMINGO,
 }
 
 // the flagship's bottom: Mochy's lyric and queue cards one behind the other, or the phone's volume with the
