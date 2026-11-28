@@ -117,8 +117,10 @@ import com.metrolist.shared.generated.resources.flamingo_np_volume
 import com.metrolist.shared.generated.resources.flamingo_np_volume_full
 import com.metrolist.shared.generated.resources.flamingo_queue_count
 import com.metrolist.shared.generated.resources.flamingo_queue_title
+import com.metrolist.shared.generated.resources.lyrics_not_found
 import com.metrolist.shared.model.LyricsEntry
 import com.metrolist.shared.model.SongItem
+import com.metrolist.shared.model.previewThumbnailUrl
 import com.metrolist.shared.playback.LocalPlayerSession
 import com.metrolist.shared.playback.PlayerSession
 import com.metrolist.shared.state.SongLikeState
@@ -182,7 +184,7 @@ fun FlamingoPlayerStyle(
     CompositionLocalProvider(LocalContentColor provides Color.White) {
         Box(modifier.fillMaxSize().background(Color.Black)) {
             FlamingoFloatingLight(
-                artworkUrl = current.thumbnail,
+                artworkUrl = current.previewThumbnailUrl,
                 dimmed = page != FlamingoPage.Lyric,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -213,7 +215,7 @@ fun FlamingoPlayerStyle(
                                 FlamingoPage.Album -> {
                                     Column(Modifier.fillMaxSize().padding(top = topInset + 22.dp)) {
                                         FlamingoAlbum(
-                                            artworkUrl = current.thumbnail,
+                                            artworkUrl = current.previewThumbnailUrl,
                                             isPlaying = isPlaying,
                                             modifier = shared,
                                         )
@@ -376,7 +378,7 @@ private fun FlamingoPlayingBar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AsyncImage(
-            model = song.thumbnail,
+            model = song.previewThumbnailUrl,
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier =
@@ -459,6 +461,13 @@ private fun FlamingoLyricsPane(
     ) {
         if (lines.isNotEmpty()) {
             ExpressiveLyrics(lines = lines, position = position, color = Color.White, baseSize = 30.sp, modifier = Modifier.fillMaxSize())
+        } else {
+            Text(
+                text = stringResource(Res.string.lyrics_not_found),
+                fontSize = 18.sp,
+                color = Color.White.copy(alpha = 0.35f),
+                modifier = Modifier.align(Alignment.Center).overlayEffect(),
+            )
         }
     }
 }
