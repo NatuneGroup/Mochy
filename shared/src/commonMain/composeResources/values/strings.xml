@@ -29,6 +29,10 @@
 
     <!-- Top bar -->
     <!-- Translators: Pluralized count or status for selected in the playback queue. %1$d is the selected-item count. -->
+    <plurals name="flamingo_queue_count">
+        <item quantity="one">%1$d song</item>
+        <item quantity="other">%1$d songs</item>
+    </plurals>
     <plurals name="n_selected">
         <item quantity="one">%1$d selected</item>
         <item quantity="other">%1$d selected</item>
@@ -5852,6 +5856,8 @@
     <string name="player_type_tiktok">TikTok</string>
     <string name="tiktok_feed_fullscreen">Full screen</string>
     <string name="tiktok_feed_exit_fullscreen">Exit full screen</string>
+    <string name="player_type_flamingo">Apple Music</string>
+    <string name="flamingo_queue_title">Playing next</string>
     <string name="mochy_library_tab_all">All</string>
     <string name="mochy_library_tab_local">Local &amp; downloaded</string>
     <string name="mochy_library_tab_cached">Cached</string>

@@ -75,6 +75,7 @@ import com.metrolist.shared.generated.resources.mochy_menu_style_modern
 import com.metrolist.shared.generated.resources.mochy_menu_style_turntable
 import com.metrolist.shared.generated.resources.mochy_menu_style_vintage
 import com.metrolist.shared.generated.resources.player_type_bedside
+import com.metrolist.shared.generated.resources.player_type_flamingo
 import com.metrolist.shared.generated.resources.player_type_lyrics_stage
 import com.metrolist.shared.generated.resources.player_type_namida
 import com.metrolist.shared.generated.resources.player_type_poster
@@ -112,6 +113,7 @@ internal val MochyStyleColumns: List<List<Pair<PlayerType, StringResource>>> =
         listOf(PlayerType.IPOD to Res.string.mochy_menu_style_ipod),
         listOf(PlayerType.NAMIDA to Res.string.player_type_namida),
         listOf(PlayerType.TIKTOK to Res.string.player_type_tiktok),
+        listOf(PlayerType.FLAMINGO to Res.string.player_type_flamingo),
         // the bedside clock and the full video, Mochy's two styles that fill the whole screen
         listOf(
             PlayerType.BEDSIDE to Res.string.player_type_bedside,
@@ -143,6 +145,7 @@ internal val MochyOnlyPlayerTypes =
         PlayerType.VIDEO,
         PlayerType.NAMIDA,
         PlayerType.TIKTOK,
+        PlayerType.FLAMINGO,
     )
 
 private val CardWidth = 170.dp
@@ -421,6 +424,32 @@ private fun StylePreview(
                 drawPath(path, Color.White.copy(alpha = 0.85f))
                 drawRect(Color.White.copy(alpha = 0.25f), Offset(w * 0.08f, h * 0.76f), Size(w * 0.84f, 4f))
                 drawRect(Color.White, Offset(w * 0.08f, h * 0.76f), Size(w * 0.84f * phase, 4f))
+            }
+
+            PlayerType.FLAMINGO -> {
+                // the cover over its own blurred colours, breathing in and out with the playback, the thin track
+                // and the three transport marks under it
+                drawRect(Brush.verticalGradient(listOf(Color(0xFF7A3E6A), Color(0xFF2B1A3A))))
+                val inset = w * (0.12f + 0.03f * pulse(phase))
+                drawRoundRect(Color(0xFFE7B4C9), Offset(inset, h * 0.08f), Size(w - inset * 2f, w - inset * 2f), CornerRadius(10f))
+                drawRect(Color.White.copy(alpha = 0.35f), Offset(w * 0.1f, h * 0.7f), Size(w * 0.8f, 5f))
+                drawRect(Color.White, Offset(w * 0.1f, h * 0.7f), Size(w * 0.8f * phase, 5f))
+                for (i in 0..2) {
+                    drawCircle(
+                        Color.White.copy(
+                            alpha =
+                                if (i ==
+                                    1
+                                ) {
+                                    0.95f
+                                } else {
+                                    0.7f
+                                },
+                        ),
+                        w * (if (i == 1) 0.07f else 0.05f),
+                        Offset(w * (0.28f + i * 0.22f), h * 0.82f),
+                    )
+                }
             }
 
             PlayerType.TIKTOK -> {

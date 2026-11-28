@@ -278,6 +278,7 @@ import com.metrolist.shared.ui.player.mochy.styles.LocalStyleSeedColor
 import com.metrolist.shared.ui.player.mochy.styles.LocalStyleTrack
 import com.metrolist.shared.ui.player.mochy.styles.StyleActions
 import com.metrolist.shared.ui.player.mochy.styles.StyleTrack
+import com.metrolist.shared.ui.player.mochy.styles.flamingo.FlamingoPlayerStyle
 import com.metrolist.shared.ui.player.mochy.styles.namida.NamidaPlayerStyle
 import com.metrolist.shared.ui.player.mochy.styles.tiktok.TikTokPlayerStyle
 import com.metrolist.shared.ui.player.mochy.turntable.TurntableControls
@@ -738,6 +739,7 @@ fun PlayerScreen(
     val usesVideoPlayer = playerType == PlayerType.VIDEO
     val usesNamidaPlayer = playerType == PlayerType.NAMIDA
     val usesTikTokPlayer = playerType == PlayerType.TIKTOK
+    val usesFlamingoPlayer = playerType == PlayerType.FLAMINGO
     val alternateStyle =
         when (playerType) {
             PlayerType.POSTER -> AlternateStyle.POSTER
@@ -746,7 +748,8 @@ fun PlayerScreen(
             else -> null
         }
     // a style that draws the whole player itself, with no cover, controls or bottom bar of the player's own
-    val usesStylePlayer = usesIpodPlayer || usesBedsidePlayer || usesNamidaPlayer || usesTikTokPlayer || alternateStyle != null
+    val usesStylePlayer =
+        usesIpodPlayer || usesBedsidePlayer || usesNamidaPlayer || usesTikTokPlayer || usesFlamingoPlayer || alternateStyle != null
     val usesMochyChrome = usesMochyFlagship || usesMochyTurntable
     val flagshipCoverStyle = if (usesMochyFlagship) Settings.shared.playerCoverStyle else PlayerCoverStyle.SQUARED
     val flagshipFont = if (usesMochyChrome) flagshipFontFamily() else null
@@ -1487,7 +1490,8 @@ fun PlayerScreen(
                                 isCasting = castState.isConnected,
                                 isBuffering = castState.isBuffering,
                             )
-                        } else if ((alternateStyle != null || usesNamidaPlayer || usesTikTokPlayer) && !showVideoSurface &&
+                        } else if ((alternateStyle != null || usesNamidaPlayer || usesTikTokPlayer || usesFlamingoPlayer) &&
+                            !showVideoSurface &&
                             !uiState.isLyricsVisible
                         ) {
                             val styleTrack =
@@ -1517,6 +1521,17 @@ fun PlayerScreen(
                                     AlternatePlayerStyle(
                                         style = alternateStyle,
                                         actions = styleActions,
+                                        modifier = Modifier.fillMaxSize(),
+                                    )
+                                } else if (usesFlamingoPlayer) {
+                                    // Sora's Apple Music-style player, after Flamingo: its own lyrics and queue pages
+                                    FlamingoPlayerStyle(
+                                        onCollapse = {
+                                            hapticManager.perform(HapticEvent.PRESS)
+                                            onClose()
+                                        },
+                                        onMore = { showPlayerMenu = true },
+                                        onOutput = openCastDialog,
                                         modifier = Modifier.fillMaxSize(),
                                     )
                                 } else if (usesTikTokPlayer) {
@@ -2836,6 +2851,7 @@ fun PlayerScreen(
                                                     PlayerType.VIDEO,
                                                     PlayerType.NAMIDA,
                                                     PlayerType.TIKTOK,
+                                                    PlayerType.FLAMINGO,
                                                     -> {
                                                         FlagshipTransport(
                                                             playing = isPlaying,

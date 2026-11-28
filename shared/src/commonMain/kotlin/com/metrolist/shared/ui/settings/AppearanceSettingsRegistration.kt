@@ -34,6 +34,7 @@ import com.metrolist.shared.generated.resources.mochy_pages_info
 import com.metrolist.shared.generated.resources.mochy_pages_slow_motion_video
 import com.metrolist.shared.generated.resources.mochy_pages_sparks
 import com.metrolist.shared.generated.resources.player_type_bedside
+import com.metrolist.shared.generated.resources.player_type_flamingo
 import com.metrolist.shared.generated.resources.player_type_namida
 import com.metrolist.shared.generated.resources.player_type_tiktok
 import com.metrolist.shared.generated.resources.player_type_video
@@ -651,6 +652,7 @@ internal fun SettingsUiRegistryBuilder.registerAppearanceSettings(host: SharedSe
                     SettingsChoice(PlayerType.VIDEO.name, stringResource(Res.string.player_type_video)),
                     SettingsChoice(PlayerType.NAMIDA.name, stringResource(Res.string.player_type_namida)),
                     SettingsChoice(PlayerType.TIKTOK.name, stringResource(Res.string.player_type_tiktok)),
+                    SettingsChoice(PlayerType.FLAMINGO.name, stringResource(Res.string.player_type_flamingo)),
                 )
             }
         val selectedPlayerType =
@@ -662,7 +664,8 @@ internal fun SettingsUiRegistryBuilder.registerAppearanceSettings(host: SharedSe
                 // the desktop draws the flagship and the alternate styles, not the turntable or the ipod
                 settings.playerType == PlayerType.TURNTABLE || settings.playerType == PlayerType.IPOD ||
                     settings.playerType == PlayerType.BEDSIDE || settings.playerType == PlayerType.VIDEO ||
-                    settings.playerType == PlayerType.NAMIDA || settings.playerType == PlayerType.TIKTOK -> PlayerType.MODERN
+                    settings.playerType == PlayerType.NAMIDA || settings.playerType == PlayerType.TIKTOK ||
+                    settings.playerType == PlayerType.FLAMINGO -> PlayerType.MODERN
 
                 else -> settings.playerType
             }
