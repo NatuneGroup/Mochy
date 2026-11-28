@@ -242,6 +242,7 @@ import com.metrolist.shared.ui.mochy.LikeBurstState
 import com.metrolist.shared.ui.mochy.LikeSlot
 import com.metrolist.shared.ui.mochy.lyrics.PlaybackClock
 import com.metrolist.shared.ui.navigation.NavigationBackHandler
+import com.metrolist.shared.ui.navigation.Screen
 import com.metrolist.shared.ui.navigation.blockInput
 import com.metrolist.shared.ui.player.mochy.BedsideClock
 import com.metrolist.shared.ui.player.mochy.FlagshipActions
@@ -278,6 +279,7 @@ import com.metrolist.shared.ui.player.mochy.styles.LocalStyleTrack
 import com.metrolist.shared.ui.player.mochy.styles.StyleActions
 import com.metrolist.shared.ui.player.mochy.styles.StyleTrack
 import com.metrolist.shared.ui.player.mochy.styles.namida.NamidaPlayerStyle
+import com.metrolist.shared.ui.player.mochy.styles.tiktok.TikTokPlayerStyle
 import com.metrolist.shared.ui.player.mochy.turntable.TurntableControls
 import com.metrolist.shared.ui.player.mochy.turntable.TurntableStage
 import com.metrolist.shared.ui.share.SongShareCardDialog
@@ -534,6 +536,8 @@ fun PlayerScreen(
     onNavigateToArtist: (String) -> Unit = {},
     onNavigateToListenTogether: () -> Unit = {},
     onNavigateToIntegrations: () -> Unit = {},
+    // goes to a top-level tab, for the styles with their own tab bar; null where the host can't
+    onNavigateToTab: ((Screen) -> Unit)? = null,
     modifier: Modifier = Modifier,
     requestPlayPauseFocus: Boolean = false,
     onPlayPauseFocusRequested: () -> Unit = {},
@@ -733,6 +737,7 @@ fun PlayerScreen(
     val usesBedsidePlayer = playerType == PlayerType.BEDSIDE
     val usesVideoPlayer = playerType == PlayerType.VIDEO
     val usesNamidaPlayer = playerType == PlayerType.NAMIDA
+    val usesTikTokPlayer = playerType == PlayerType.TIKTOK
     val alternateStyle =
         when (playerType) {
             PlayerType.POSTER -> AlternateStyle.POSTER
@@ -741,7 +746,7 @@ fun PlayerScreen(
             else -> null
         }
     // a style that draws the whole player itself, with no cover, controls or bottom bar of the player's own
-    val usesStylePlayer = usesIpodPlayer || usesBedsidePlayer || usesNamidaPlayer || alternateStyle != null
+    val usesStylePlayer = usesIpodPlayer || usesBedsidePlayer || usesNamidaPlayer || usesTikTokPlayer || alternateStyle != null
     val usesMochyChrome = usesMochyFlagship || usesMochyTurntable
     val flagshipCoverStyle = if (usesMochyFlagship) Settings.shared.playerCoverStyle else PlayerCoverStyle.SQUARED
     val flagshipFont = if (usesMochyChrome) flagshipFontFamily() else null
@@ -1482,7 +1487,9 @@ fun PlayerScreen(
                                 isCasting = castState.isConnected,
                                 isBuffering = castState.isBuffering,
                             )
-                        } else if ((alternateStyle != null || usesNamidaPlayer) && !showVideoSurface && !uiState.isLyricsVisible) {
+                        } else if ((alternateStyle != null || usesNamidaPlayer || usesTikTokPlayer) && !showVideoSurface &&
+                            !uiState.isLyricsVisible
+                        ) {
                             val styleTrack =
                                 remember(currentSong) {
                                     StyleTrack(
@@ -1510,6 +1517,20 @@ fun PlayerScreen(
                                     AlternatePlayerStyle(
                                         style = alternateStyle,
                                         actions = styleActions,
+                                        modifier = Modifier.fillMaxSize(),
+                                    )
+                                } else if (usesTikTokPlayer) {
+                                    // Sora's TikTok-style feed: its lyrics show in place of the cover, its queue is the app's
+                                    TikTokPlayerStyle(
+                                        onCollapse = {
+                                            hapticManager.perform(HapticEvent.PRESS)
+                                            onClose()
+                                        },
+                                        onShare = viewModel::shareSong,
+                                        onQueue = ::openQueueSheet,
+                                        onMore = { showPlayerMenu = true },
+                                        extractColors = viewModel::artworkGradient,
+                                        onNavigate = onNavigateToTab,
                                         modifier = Modifier.fillMaxSize(),
                                     )
                                 } else {
@@ -2814,6 +2835,7 @@ fun PlayerScreen(
                                                     PlayerType.BEDSIDE,
                                                     PlayerType.VIDEO,
                                                     PlayerType.NAMIDA,
+                                                    PlayerType.TIKTOK,
                                                     -> {
                                                         FlagshipTransport(
                                                             playing = isPlaying,

@@ -1270,6 +1270,23 @@ class PlayerViewModel(
         platform.shareText(ShareUrls.song(song.id))
     }
 
+    /** A song's cover colours, as the player's own background takes them, for a style that shows other songs too. */
+    suspend fun artworkGradient(song: SongItem): List<Color>? {
+        val url = song.thumbnail ?: return null
+        gradientColorsCache[url]?.let { return it.gradient }
+        val colors =
+            try {
+                platform.extractArtworkColors(song.id, url)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (_: Exception) {
+                null
+            } ?: return null
+        gradientColorsCache[url] = colors
+        while (gradientColorsCache.size > 32) gradientColorsCache.remove(gradientColorsCache.keys.first())
+        return colors.gradient
+    }
+
     fun shareSong(song: SongItem) {
         platform.shareText(ShareUrls.song(song.id))
     }

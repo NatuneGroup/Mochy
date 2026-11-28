@@ -187,6 +187,9 @@ enum class PlayerType {
 
     // Sora's port of namida's player
     NAMIDA,
+
+    // Sora's TikTok-style feed: every song of the queue a page swiped through
+    TIKTOK,
 }
 
 // the flagship's bottom: Mochy's lyric and queue cards one behind the other, or the phone's volume with the
