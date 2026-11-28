@@ -148,6 +148,8 @@ def arguments(graal, work, output, target, experiment=False, agent=None, macos_v
                '--exact-reachability-metadata', '--enable-url-protocols=http,https',
                '--enable-native-access=ALL-UNNAMED', '-Djava.awt.headless=false',
                '-H:+AddAllCharsets', '-H:+IncludeAllLocales',
+               # smbj registers an smb:// FileSystemProvider that the JDK instantiates while building; it holds only an empty map.
+               '--initialize-at-build-time=com.hierynomus.smbfs.SmbFileSystemProvider,com.hierynomus.smbfs.SmbFileSystemProvider$FactoryImpl',
                '-H:ConfigurationFileDirectories=' + ','.join(str(p.resolve()) for p in [*configurations(target, agent, experiment), work / 'serialization-config', platform_natives(work, target)])]
     if target.startswith('linux-'):
         # Module opens are fixed at build time; the JVM's runtime flag does not reach the image.
