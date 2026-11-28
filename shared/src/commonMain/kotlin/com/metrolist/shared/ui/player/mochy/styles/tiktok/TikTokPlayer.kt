@@ -113,7 +113,9 @@ fun TikTokPlayerStyle(
     // a drag on the bar shows where it will land until it's let go
     var seekPreviewMs by remember { mutableStateOf<Long?>(null) }
 
-    val pagerState = rememberPagerState(initialPage = currentIndex.coerceAtLeast(0)) { entries.size }
+    // read through state: the pager keeps its first count lambda, and the queue is often still filling then
+    val pageCount by rememberUpdatedState(entries.size)
+    val pagerState = rememberPagerState(initialPage = currentIndex.coerceAtLeast(0)) { pageCount }
     var pendingTarget by remember { mutableStateOf<Int?>(null) }
     var autoAdvancing by remember { mutableStateOf(false) }
 
