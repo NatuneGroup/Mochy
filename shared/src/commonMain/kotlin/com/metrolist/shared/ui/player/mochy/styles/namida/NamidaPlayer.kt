@@ -13,8 +13,10 @@
 
 package com.metrolist.shared.ui.player.mochy.styles.namida
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -23,6 +25,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -54,7 +57,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -100,7 +105,7 @@ private const val IMAGE_PARALLAX = 1.15f
 /** namida's MiniplayerThumbnailScale._base: the picture paints this far past its box. */
 private const val THUMBNAIL_PAINT_SCALE = 1.13f
 
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun NamidaPlayerStyle(
     actions: StyleActions,
@@ -151,11 +156,11 @@ fun NamidaPlayerStyle(
                 // the cover's tone fades down into the panel's own first colour, so the screen
                 // above the card is the song's colour rather than black
                 val spec =
-                    androidx.compose.animation.core.tween<androidx.compose.ui.graphics.Color>(
+                    tween<Color>(
                         300,
                     )
-                val top by androidx.compose.animation.animateColorAsState(palette.backdropTop, spec, label = "namidaBackdropTop")
-                val bottom by androidx.compose.animation.animateColorAsState(palette.panelGradientTop, spec, label = "namidaBackdropBottom")
+                val top by animateColorAsState(palette.backdropTop, spec, label = "namidaBackdropTop")
+                val bottom by animateColorAsState(palette.panelGradientTop, spec, label = "namidaBackdropBottom")
                 Box(
                     Modifier.fillMaxSize().drawBehind {
                         drawRect(Brush.verticalGradient(0f to top, 1f to bottom))
@@ -476,10 +481,9 @@ fun NamidaPlayerStyle(
                                         // namida's gradient: the current colour into its grey blend, 0 -> 0.7 stops
                                         Brush.linearGradient(
                                             colors = palette.playGradient,
-                                            start = androidx.compose.ui.geometry.Offset.Zero,
+                                            start = Offset.Zero,
                                             end =
-                                                androidx.compose.ui.geometry
-                                                    .Offset(1000f, 1000f),
+                                                Offset(1000f, 1000f),
                                         ),
                                     ).clickable(enabled = !preview) {
                                         connection?.togglePlayPause()

@@ -18,6 +18,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -57,6 +58,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
@@ -166,7 +168,7 @@ fun NamidaLyrics(
                 horizontalAlignment = if (fullscreen) Alignment.CenterHorizontally else Alignment.Start,
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 contentPadding =
-                    androidx.compose.foundation.layout.PaddingValues(
+                    PaddingValues(
                         horizontal = 24.dp,
                         vertical = 64.dp,
                     ),
@@ -204,7 +206,7 @@ private fun NamidaLyricsLine(
     line: LyricsEntry,
     positionMs: Long,
     isActive: Boolean,
-    baseSize: androidx.compose.ui.unit.TextUnit,
+    baseSize: TextUnit,
     alignCenter: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -301,7 +303,7 @@ private fun NamidaKaraokeText(
     positionMs: Long,
     lineStartMs: Long,
     color: Color,
-    fontSize: androidx.compose.ui.unit.TextUnit,
+    fontSize: TextUnit,
     textAlign: TextAlign,
 ) {
     val density = LocalDensity.current
@@ -311,8 +313,8 @@ private fun NamidaKaraokeText(
     // build the line's spans: sung words full, the singing word split at its
     // own progress, the rest dim — the sweep namida's karaoke text paints
     val annotated =
-        androidx.compose.runtime.remember(words, positionMs) {
-            androidx.compose.ui.text.buildAnnotatedString {
+        remember(words, positionMs) {
+            buildAnnotatedString {
                 for ((i, word) in words.withIndex()) {
                     val start = word.startTime.toLong()
                     val end = word.endTime.toLong()
@@ -320,15 +322,13 @@ private fun NamidaKaraokeText(
                     when {
                         positionMs >= end -> {
                             withStyle(
-                                androidx.compose.ui.text
-                                    .SpanStyle(color = sungColor),
+                                SpanStyle(color = sungColor),
                             ) { append(text) }
                         }
 
                         positionMs < start -> {
                             withStyle(
-                                androidx.compose.ui.text
-                                    .SpanStyle(color = unsungColor),
+                                SpanStyle(color = unsungColor),
                             ) { append(text) }
                         }
 
@@ -337,12 +337,10 @@ private fun NamidaKaraokeText(
                             val fraction = if (end > start) (positionMs - start).toFloat() / (end - start) else 1f
                             val cut = (text.length * fraction).roundToInt().coerceIn(0, text.length)
                             withStyle(
-                                androidx.compose.ui.text
-                                    .SpanStyle(color = sungColor),
+                                SpanStyle(color = sungColor),
                             ) { append(text.substring(0, cut)) }
                             withStyle(
-                                androidx.compose.ui.text
-                                    .SpanStyle(color = unsungColor),
+                                SpanStyle(color = unsungColor),
                             ) { append(text.substring(cut)) }
                         }
                     }

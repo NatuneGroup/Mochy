@@ -5,7 +5,7 @@
 // styles (core/themes.dart) and its panel/played colour blends (miniplayer_base.dart's
 // _ThemedMiniplayerPanel and WaveformMiniplayer).
 
-@file:OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
+@file:OptIn(ExperimentalTextApi::class)
 
 package com.metrolist.shared.ui.player.mochy.styles.namida
 
@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import com.metrolist.shared.generated.resources.Res

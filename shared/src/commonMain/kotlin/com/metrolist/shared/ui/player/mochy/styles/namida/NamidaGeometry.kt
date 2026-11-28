@@ -19,6 +19,8 @@
 package com.metrolist.shared.ui.player.mochy.styles.namida
 
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import kotlin.math.max
 import kotlin.math.min
@@ -100,8 +102,7 @@ internal class NamidaScale(
     /** a font size, which namida's scale boxes scale the same as everything else. */
     fun sp(value: Double) =
         (value * total).let {
-            androidx.compose.ui.unit
-                .TextUnit(it.toFloat(), androidx.compose.ui.unit.TextUnitType.Sp)
+            TextUnit(it.toFloat(), TextUnitType.Sp)
         }
 
     /** a real-dp inset of this screen, as the virtual dp namida's math wants. */

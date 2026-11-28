@@ -13,6 +13,7 @@ package com.metrolist.shared.ui.player.mochy.styles.namida
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -20,6 +21,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import kotlin.math.PI
@@ -79,7 +81,7 @@ fun NamidaWaveform(
 
     // the bars are computed in composition (the draw scope is not composable), from
     // the canvas width once it is known
-    var canvasWidthPx by androidx.compose.runtime.remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
+    var canvasWidthPx by remember { mutableFloatStateOf(0f) }
     val step = density.density
     val barCount = max(1, (canvasWidthPx / step).toInt())
     val bars = rememberWaveformBars(songId, barCount)
@@ -141,7 +143,7 @@ fun NamidaWaveform(
                 start = Offset(x, size.height / 2 - maxHeightPx / 2 - 4 * density.density),
                 end = Offset(x, size.height / 2 + maxHeightPx / 2 + 4 * density.density),
                 strokeWidth = 1.5f * density.density,
-                cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                cap = StrokeCap.Round,
             )
         }
     }

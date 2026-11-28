@@ -14,6 +14,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,6 +36,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,7 +44,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -80,7 +84,7 @@ fun NamidaQueue(
     var searchOpen by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
-    val jumpScope = androidx.compose.runtime.rememberCoroutineScope()
+    val jumpScope = rememberCoroutineScope()
 
     // namida's queue follower: open the list at the playing song
     LaunchedEffect(queueItems.size, windowIndex) {
@@ -178,7 +182,7 @@ fun NamidaQueue(
                                 onValueChange = { searchQuery = it },
                                 singleLine = true,
                                 textStyle =
-                                    androidx.compose.ui.text.TextStyle(
+                                    TextStyle(
                                         color = palette.textLarge,
                                         fontSize = 14.sp,
                                         fontFamily = NamidaFontFamily,
@@ -216,8 +220,7 @@ fun NamidaQueue(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding =
-                        androidx.compose.foundation.layout
-                            .PaddingValues(top = 6.dp, bottom = 12.dp),
+                        PaddingValues(top = 6.dp, bottom = 12.dp),
                 ) {
                     items(shown.size, key = { i -> shown[i].uid }) { i ->
                         val item = shown[i]
@@ -337,7 +340,7 @@ private fun NamidaQueueTile(
             AsyncImage(
                 model = artwork,
                 contentDescription = null,
-                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
             if (isCurrent) {
